@@ -1,16 +1,16 @@
 # src/FIT_python/split_utils.py
 
 import pandas as pd
-from pathlib import Path
+import numpy as np
 from typing import Tuple
-from sklearn.model_selection import StratifiedGroupKFold, GroupKFold
+from sklearn.model_selection import StratifiedGroupKFold
 from FIT_python.config import GLOBAL_RANDOM_SEED, TEST_SIZE, NUM_FOLDS, GROUP_COL
 
 def train_test_group_split(
     df: pd.DataFrame,
     test_size: float = TEST_SIZE,
     random_state: int = GLOBAL_RANDOM_SEED,
-    group_col: str = GROUP_COL,
+    group_col: str = "individual",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Simple group-based train/test split."""
     # 1) Gather unique group IDs
@@ -32,7 +32,7 @@ def group_stratified_kfold(
     n_splits: int = NUM_FOLDS,
     random_state: int = GLOBAL_RANDOM_SEED,
     group_col: str = GROUP_COL,
-    stratify_col: str = STRATIFY_COL
+    stratify_col: str = "sex"
 ) -> pd.DataFrame:
     """
     Assigns a 'Fold' column via StratifiedGroupKFold on groups,
