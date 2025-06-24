@@ -50,17 +50,52 @@ def main():
                 skipped.append(dataset)
                 continue
         X = np.load(X_path, allow_pickle=True)
-        y = np.load(y_path, allow_pickle=True)
+        y_raw = np.load(y_path, allow_pickle=True)
+        y_series = (
+            pd.Series(y_raw)
+            .fillna("unknown")
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .map({
+                "f": "female",
+                "female": "female",
+                "m": "male",
+                "male": "male",
+            })
+            .fillna("unknown")
+            .map({"female": 0, "male": 1, "unknown": 2})
+        )
 
         # Reconstruct DataFrame for column names
-        df_raw = pd.read_parquet(PROCESSED_DIR / dataset / "train.parquet")
+        # locate matching processed dataset folder (case-insensitive)
+        proc_match = None
+        for d in PROCESSED_DIR.iterdir():
+            if d.is_dir() and normalize_dataset_name(d.name) == dataset and d.name != "numeric":
+                if (d / "train.parquet").exists():
+                    proc_match = d
+                    break
+        if proc_match is None:
+            msg = f"No processed folder for {dataset} under {PROCESSED_DIR}"
+            if DEBUG_MODE:
+                raise FileNotFoundError(msg)
+            else:
+                print("Skipping:", msg)
+                skipped.append(dataset)
+                continue
+        df_raw = pd.read_parquet(proc_match / "train.parquet")
         if "otter" in dataset.lower():
             meta = OTTER_META_COLS
         else:
             meta = ["id"]
         feature_cols = [c for c in df_raw.columns if c not in meta + DEFAULT_TARGETS]
+
+        if y_series.nunique() < 2:
+            print(f"Skipping {dataset}: only one class present")
+            skipped.append(dataset)
+            continue
+
         X_df = pd.DataFrame(X, columns=feature_cols)
-        y_series = pd.Series(y, name="target")
 
         # Iterate through methods
         for method in FS_DEFAULT_METHODS:
