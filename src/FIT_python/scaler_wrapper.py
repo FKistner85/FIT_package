@@ -12,6 +12,7 @@ from FIT_python.config import (
     DEFAULT_SCALER,
     SCALER_PARAMS,
     normalize_dataset_name,
+    DEBUG_MODE,
 )
 from FIT_python.scaler_utils import get_standard_scaler, get_robust_scaler
 from FIT_python.transform_utils import convert_numeric
@@ -56,8 +57,12 @@ class ScalerWrapper:
             for split in ("train", "test"):
                 src = ds_folder / f"{split}.parquet"
                 if not src.exists():
-                    print(f"  Skipping {dataset}/{split}: file not found.")
-                    continue
+                    msg = f"Required file not found: {src}"
+                    if DEBUG_MODE:
+                        raise FileNotFoundError(msg)
+                    else:
+                        print("Skipping:", msg)
+                        continue
 
                 # load the split
                 df = pd.read_parquet(src)

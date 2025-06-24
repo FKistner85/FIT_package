@@ -10,6 +10,7 @@ from FIT_python.config import (
     DEFAULT_TARGETS,
     OTTER_META_COLS,
     normalize_dataset_name,
+    DEBUG_MODE,
 )
 from .transform_utils import convert_numeric, one_hot_encode_targets, save_target_mapping
 
@@ -36,7 +37,12 @@ class TransformWrapper:
                 for split in ["train", "test"]:
                     parquet_path = ds_folder / f"{split}.parquet"
                     if not parquet_path.exists():
-                        raise FileNotFoundError(parquet_path)
+                        msg = f"Required file not found: {parquet_path}"
+                        if DEBUG_MODE:
+                            raise FileNotFoundError(msg)
+                        else:
+                            self.logger.warning("Skipping: %s", msg)
+                            raise RuntimeError("skip")
                     df = pd.read_parquet(parquet_path)
                     if "otter" in dataset.lower():
                         meta = OTTER_META_COLS
@@ -51,6 +57,9 @@ class TransformWrapper:
                     save_target_mapping(mapping, out_dir / "target_mapping.json")
                     self.logger.info("Saved %s/%s", dataset, split)
                 successes.append(dataset)
+            except RuntimeError:
+                # skipped due to missing file in non-debug mode
+                continue
             except Exception as e:
                 failures.append(ds_folder.name)
                 self.logger.warning("Failed to transform %s: %s", ds_folder.name, e)
