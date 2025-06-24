@@ -3,7 +3,7 @@
 from pathlib import Path
 import pandas as pd
 from typing import Dict
-from FIT_python.config import RAW_DIR
+from FIT_python.config import RAW_DIR, DEBUG_MODE
 from FIT_python.data_import_utils import load_raw_files
 from FIT_python.grouped_splits import train_test_group_split
 from FIT_python.split_utils import create_train_test_split_otter
@@ -30,8 +30,12 @@ def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
             try:
                 train_df, test_df = train_test_group_split(df)
             except ValueError as e:
-                print(f"Skipping {name}: {e}")
-                continue
+                msg = f"Splitting failed for {name}: {e}"
+                if DEBUG_MODE:
+                    raise ValueError(msg)
+                else:
+                    print("Skipping:", msg)
+                    continue
             splits[name] = {
                 'train': train_df,
                 'test': test_df
