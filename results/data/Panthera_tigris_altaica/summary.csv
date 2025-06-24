@@ -1,0 +1,7 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+Panthera tigris altaica,train,All,Total,35,67,476,129
+Panthera tigris altaica,train,All,F,18,37,260,129
+Panthera tigris altaica,train,All,M,17,30,216,129
+Panthera tigris altaica,test,All,Total,9,18,129,129
+Panthera tigris altaica,test,All,F,5,12,84,129
+Panthera tigris altaica,test,All,M,4,6,45,129

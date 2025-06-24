@@ -1,0 +1,7 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+Acinonyx jubatus,train,All,Total,30,87,623,137
+Acinonyx jubatus,train,All,F,13,45,320,137
+Acinonyx jubatus,train,All,M,17,42,303,137
+Acinonyx jubatus,test,All,Total,8,22,158,137
+Acinonyx jubatus,test,All,F,3,10,66,137
+Acinonyx jubatus,test,All,M,5,12,92,137

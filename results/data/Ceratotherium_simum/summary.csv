@@ -1,0 +1,7 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+ Ceratotherium simum,train,All,Total,32,114,944,113
+ Ceratotherium simum,train,All,F,16,54,437,113
+ Ceratotherium simum,train,All,M,16,60,507,113
+ Ceratotherium simum,test,All,Total,9,39,329,113
+ Ceratotherium simum,test,All,F,5,24,205,113
+ Ceratotherium simum,test,All,M,4,15,124,113

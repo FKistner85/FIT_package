@@ -1,0 +1,79 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+A.j. jubatus,train,All,Total,32,64,447,137
+A.j. jubatus,train,All,F,19,37,258,137
+A.j. jubatus,train,All,M,13,27,189,137
+A.j. jubatus,test,All,Total,8,17,119,137
+A.j. jubatus,test,All,F,5,10,70,137
+A.j. jubatus,test,All,M,3,7,49,137
+Lutra lutra,train,All,Total,37,66,511,210
+Lutra lutra,train,All,F,17,35,275,210
+Lutra lutra,train,All,M,20,31,236,210
+Lutra lutra,train,Own Data Collection,Total,26,54,419,210
+Lutra lutra,train,Own Data Collection,F,12,29,228,210
+Lutra lutra,train,Own Data Collection,M,14,25,191,210
+Lutra lutra,train,Vetrecova et al,Total,11,12,92,210
+Lutra lutra,train,Vetrecova et al,F,5,6,47,210
+Lutra lutra,train,Vetrecova et al,M,6,6,45,210
+Lutra lutra,test,All,Total,4,5,36,210
+Lutra lutra,test,All,F,2,3,22,210
+Lutra lutra,test,All,M,2,2,14,210
+Lutra lutra,test,Fieldprints Lower Saxony,Total,4,5,36,210
+Lutra lutra,test,Fieldprints Lower Saxony,F,2,3,22,210
+Lutra lutra,test,Fieldprints Lower Saxony,M,2,2,14,210
+Lutra lutra,inference,All,Total,8,8,81,210
+Lutra lutra,inference,Fieldprints Portugal,Total,8,8,81,210
+Puma concolor,train,All,Total,28,61,416,134
+Puma concolor,train,All,F,15,35,232,134
+Puma concolor,train,All,M,13,27,184,134
+Puma concolor,test,All,Total,7,17,119,134
+Puma concolor,test,All,F,4,10,68,134
+Puma concolor,test,All,M,3,7,51,134
+A.j. soemmeringii,train,All,Total,20,43,300,137
+A.j. soemmeringii,train,All,F,10,21,147,137
+A.j. soemmeringii,train,All,M,10,22,153,137
+A.j. soemmeringii,test,All,Total,5,10,70,137
+A.j. soemmeringii,test,All,F,3,6,42,137
+A.j. soemmeringii,test,All,M,2,4,28,137
+ Ailuropoda melanoleuca,train,All,Total,33,61,404,125
+ Ailuropoda melanoleuca,train,All,F,17,36,238,125
+ Ailuropoda melanoleuca,train,All,M,16,25,166,125
+ Ailuropoda melanoleuca,test,All,Total,9,16,119,125
+ Ailuropoda melanoleuca,test,All,F,5,8,63,125
+ Ailuropoda melanoleuca,test,All,M,4,8,56,125
+Acinonyx jubatus,train,All,Total,30,87,623,137
+Acinonyx jubatus,train,All,F,13,45,320,137
+Acinonyx jubatus,train,All,M,17,42,303,137
+Acinonyx jubatus,test,All,Total,8,22,158,137
+Acinonyx jubatus,test,All,F,3,10,66,137
+Acinonyx jubatus,test,All,M,5,12,92,137
+Panthera tigris tigris,train,All,Total,32,66,454,129
+Panthera tigris tigris,train,All,F,12,25,172,129
+Panthera tigris tigris,train,All,M,15,35,252,129
+Panthera tigris tigris,test,All,Total,8,20,132,129
+Panthera tigris tigris,test,All,F,3,8,48,129
+Panthera tigris tigris,test,All,M,4,11,76,129
+ Ceratotherium simum,train,All,Total,32,114,944,113
+ Ceratotherium simum,train,All,F,16,54,437,113
+ Ceratotherium simum,train,All,M,16,60,507,113
+ Ceratotherium simum,test,All,Total,9,39,329,113
+ Ceratotherium simum,test,All,F,5,24,205,113
+ Ceratotherium simum,test,All,M,4,15,124,113
+Panthera tigris altaica,train,All,Total,35,67,476,129
+Panthera tigris altaica,train,All,F,18,37,260,129
+Panthera tigris altaica,train,All,M,17,30,216,129
+Panthera tigris altaica,test,All,Total,9,18,129,129
+Panthera tigris altaica,test,All,F,5,12,84,129
+Panthera tigris altaica,test,All,M,4,6,45,129
+Tapirus terrestris,full,All,Total,37,64,426,121
+Tapirus terrestris,full,All,F,19,31,192,121
+Tapirus terrestris,full,All,M,17,32,230,121
+Total,train,All,F,137,325,2339,137
+Total,train,All,M,137,299,2206,137
+Total,train,All,Total,279,629,4575,137
+Total,test,All,F,35,91,668,137
+Total,test,All,M,31,72,535,137
+Total,test,All,Total,67,164,1211,137
+Total,inference,All,Total,8,8,81,210
+Total,full,All,F,19,31,192,121
+Total,full,All,M,17,32,230,121
+Total,full,All,Total,37,64,426,121
