@@ -10,13 +10,17 @@ def convert_numeric(
     df: pd.DataFrame,
     feature_cols: List[str]
 ) -> pd.DataFrame:
-    """Convert feature columns to float, replacing comma decimal separators."""
+    """Convert feature columns to float, replacing comma decimal separators.
+
+    Non-convertible values are coerced to NaN so that mixed columns do not
+    raise errors during conversion.
+    """
     for col in feature_cols:
         df[col] = (
             df[col]
             .astype(str)
             .str.replace(',', '.', regex=False)
-            .astype(float)
+            .pipe(pd.to_numeric, errors="coerce")
         )
     return df
 
