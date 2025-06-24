@@ -26,9 +26,12 @@ def main():
 
     # Load only Otter data
     dfs = load_raw_files(raw_dir)
-    otter_df = dfs.get("Eurasian_Otter_New")
+    # Raw files are keyed by their filename stem with spaces replaced by
+    # underscores.  The only available otter dataset is "Eurasian Otter.csv"
+    # which becomes "Eurasian_Otter".
+    otter_df = dfs.get("Eurasian_Otter")
     if otter_df is None:
-        raise FileNotFoundError(f"Eurasian_Otter_New not found in {raw_dir}")
+        raise FileNotFoundError(f"Eurasian_Otter not found in {raw_dir}")
 
     # Determine feature columns: exclude meta + target
     feature_cols = [
