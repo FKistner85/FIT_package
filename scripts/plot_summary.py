@@ -12,9 +12,11 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from FIT_python.config import RESULTS_DATA_DIR, FIGURES_DIR
 
-DATA_PATH = Path("results/data/gesamt/summary_datasets.csv")
-OUT_DIR = Path("results/plots")
+
+DATA_PATH = RESULTS_DATA_DIR / "gesamt" / "summary_datasets.csv"
+OUT_DIR = FIGURES_DIR
 SPLITS = ["train", "val", "test"]
 SEXES = ["F", "M", "Unknown"]
 
