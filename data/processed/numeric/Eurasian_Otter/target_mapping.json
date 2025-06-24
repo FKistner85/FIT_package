@@ -1,0 +1,22 @@
+{
+  "species": [
+    "species_Lutra lutra"
+  ],
+  "individual_id": [
+    "individual_id_gen 96_1",
+    "individual_id_gen04_03",
+    "individual_id_gen_43",
+    "individual_id_gen_55"
+  ],
+  "trail": [
+    "trail_1.12.20 gen 96_1",
+    "trail_4.1.21 Genetik Probe gen04_03",
+    "trail_4.12.20 55_02-04, 04",
+    "trail_8.12.20 gen 55_5",
+    "trail_9.12.20 gen43_ 1+2"
+  ],
+  "sex": [
+    "sex_F",
+    "sex_M"
+  ]
+}

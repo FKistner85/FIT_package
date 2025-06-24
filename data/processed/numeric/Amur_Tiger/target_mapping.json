@@ -1,0 +1,40 @@
+{
+  "species": [
+    "species_Panthera tigris altaica"
+  ],
+  "individual_id": [
+    "individual_id_F1020",
+    "individual_id_F140",
+    "individual_id_F214",
+    "individual_id_F312",
+    "individual_id_F636",
+    "individual_id_M1084",
+    "individual_id_M198",
+    "individual_id_M261",
+    "individual_id_M681"
+  ],
+  "trail": [
+    "trail_F1020 A",
+    "trail_F1020 B",
+    "trail_F1020 C",
+    "trail_F140 A",
+    "trail_F140 B",
+    "trail_F214 A",
+    "trail_F214 B",
+    "trail_F312 A",
+    "trail_F312 B",
+    "trail_F636 A",
+    "trail_F636 B",
+    "trail_F636 C",
+    "trail_M1084",
+    "trail_M198 A",
+    "trail_M198 B",
+    "trail_M261 A",
+    "trail_M261 B",
+    "trail_M681"
+  ],
+  "sex": [
+    "sex_F",
+    "sex_M"
+  ]
+}

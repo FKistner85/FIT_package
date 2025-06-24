@@ -1,0 +1,37 @@
+{
+  "species": [
+    "species_Puma concolor"
+  ],
+  "individual_id": [
+    "individual_id_Female Cherry",
+    "individual_id_Female Sassy",
+    "individual_id_Female White spots 9",
+    "individual_id_Female Zoe",
+    "individual_id_MALE BOB 16",
+    "individual_id_Male Ex ger 2",
+    "individual_id_Male Twin 8"
+  ],
+  "trail": [
+    "trail_16A",
+    "trail_16B",
+    "trail_2A",
+    "trail_2B",
+    "trail_2C",
+    "trail_8A",
+    "trail_8B",
+    "trail_9A",
+    "trail_9B",
+    "trail_9C",
+    "trail_CHERRY A",
+    "trail_CHERRY B",
+    "trail_SASSY A",
+    "trail_SASSY B",
+    "trail_ZOE A",
+    "trail_ZOE B",
+    "trail_ZOE C"
+  ],
+  "sex": [
+    "sex_F",
+    "sex_M"
+  ]
+}
