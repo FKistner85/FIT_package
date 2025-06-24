@@ -1,7 +1,0 @@
-Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
-Panthera tigris tigris,train,All,Total,32,66,454,129
-Panthera tigris tigris,train,All,F,12,25,172,129
-Panthera tigris tigris,train,All,M,15,35,252,129
-Panthera tigris tigris,test,All,Total,8,20,132,129
-Panthera tigris tigris,test,All,F,3,8,48,129
-Panthera tigris tigris,test,All,M,4,11,76,129

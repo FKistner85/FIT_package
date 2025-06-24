@@ -1,7 +1,0 @@
-Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
-Puma concolor,train,All,Total,28,61,416,134
-Puma concolor,train,All,F,15,35,232,134
-Puma concolor,train,All,M,13,27,184,134
-Puma concolor,test,All,Total,7,17,119,134
-Puma concolor,test,All,F,4,10,68,134
-Puma concolor,test,All,M,3,7,51,134

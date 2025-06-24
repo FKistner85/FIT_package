@@ -1,7 +1,0 @@
-Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
-A.j. soemmeringii,train,All,Total,20,43,300,137
-A.j. soemmeringii,train,All,F,10,21,147,137
-A.j. soemmeringii,train,All,M,10,22,153,137
-A.j. soemmeringii,test,All,Total,5,10,70,137
-A.j. soemmeringii,test,All,F,3,6,42,137
-A.j. soemmeringii,test,All,M,2,4,28,137

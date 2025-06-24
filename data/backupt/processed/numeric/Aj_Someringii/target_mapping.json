@@ -1,0 +1,28 @@
+{
+  "species": [
+    "species_A.j. soemmeringii"
+  ],
+  "individual_id": [
+    "individual_id_Claude",
+    "individual_id_Darcy",
+    "individual_id_Florence",
+    "individual_id_Jake",
+    "individual_id_Olivia"
+  ],
+  "trail": [
+    "trail_Claude a 22-08-2023",
+    "trail_Claude b 22-08-2023",
+    "trail_Darcy a 30-06-2022",
+    "trail_Darcy b 30-06-2022",
+    "trail_Florence a 23-06-2022",
+    "trail_Florence b 24-06-2022",
+    "trail_Jake a 27-05-2022",
+    "trail_Jake b 05-06-2022",
+    "trail_Olivia a 24-06-2022",
+    "trail_Olivia b 28-06-2022"
+  ],
+  "sex": [
+    "sex_F",
+    "sex_M"
+  ]
+}
