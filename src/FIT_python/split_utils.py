@@ -3,37 +3,29 @@
 import pandas as pd
 from pathlib import Path
 from typing import Tuple
-from sklearn.model_selection import StratifiedShuffleSplit, StratifiedGroupKFold, GroupKFold
-from FIT_python.config import GLOBAL_RANDOM_SEED, TEST_SIZE, NUM_FOLDS, GROUP_COL, STRATIFY_COL
+from sklearn.model_selection import StratifiedGroupKFold, GroupKFold
+from FIT_python.config import GLOBAL_RANDOM_SEED, TEST_SIZE, NUM_FOLDS, GROUP_COL
 
 def train_test_group_split(
     df: pd.DataFrame,
     test_size: float = TEST_SIZE,
     random_state: int = GLOBAL_RANDOM_SEED,
     group_col: str = GROUP_COL,
-    stratify_col: str = STRATIFY_COL
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Group-stratified train/test split:
-    - Ensures no group appears in both sets.
-    - Stratifies by stratify_col proportion.
-    """
+    """Simple group-based train/test split."""
+    # 1) Gather unique group IDs
     groups = df[group_col].unique()
-    y_groups = (
-        df.drop_duplicates(group_col)[stratify_col]
-          .fillna("unknown")
-          .values
-    )
-    sss = StratifiedShuffleSplit(
-        n_splits=1, test_size=test_size, random_state=random_state
-    )
-    train_idx, test_idx = next(sss.split(groups.reshape(-1,1), y_groups))
-    train_groups = groups[train_idx]
-    test_groups  = groups[test_idx]
-    return (
-        df[df[group_col].isin(train_groups)],
-        df[df[group_col].isin(test_groups)]
-    )
+    # 2) Random shuffle of the group order
+    rng = np.random.default_rng(random_state)
+    rng.shuffle(groups)
+    # 3) Determine split index
+    split_idx = int(len(groups) * (1 - test_size))
+    train_groups = groups[:split_idx]
+    test_groups = groups[split_idx:]
+    # 4) Mask and return DataFrames
+    train_df = df[df[group_col].isin(train_groups)].reset_index(drop=True)
+    test_df = df[df[group_col].isin(test_groups)].reset_index(drop=True)
+    return train_df, test_df
 
 def group_stratified_kfold(
     df: pd.DataFrame,
