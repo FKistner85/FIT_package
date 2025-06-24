@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # scripts/scale_splits.py
+# Uses DEBUG_MODE from config to fail-fast on missing files
 
 """Scale all train/test splits using configured scalers."""
 
 from pathlib import Path
-from FIT_python.config import SPLITS_DIR, PROCESSED_DIR
+from FIT_python.config import SPLITS_DIR, PROCESSED_DIR, DEBUG_MODE
 from FIT_python.scaler_wrapper import ScalerWrapper
 
 def main():

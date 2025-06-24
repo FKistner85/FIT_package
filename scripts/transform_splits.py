@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Execute numeric transformation for all processed splits."""
+# Uses DEBUG_MODE from config to fail-fast on missing files
 
 import sys
 from FIT_python.transform_wrapper import TransformWrapper
+from FIT_python.config import DEBUG_MODE
 
 
 def main() -> int:

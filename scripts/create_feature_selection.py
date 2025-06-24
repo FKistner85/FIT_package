@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # scripts/create_feature_selection.py
+# Uses DEBUG_MODE from config to fail-fast on missing files
 
 """
 Script to run feature selection on all numeric datasets with result caching.
@@ -17,6 +18,7 @@ from FIT_python.config import (
     FS_DEFAULT_METHODS,
     FS_TARGET_FEATURE_COUNTS,
     normalize_dataset_name,
+    DEBUG_MODE,
 )
 from FIT_python.feature_utils import run_feature_selection_methods
 
@@ -34,10 +36,19 @@ def main():
 
         X_path = ds_folder / "X_train.npy"
         y_path = ds_folder / "y_train.npy"
-        if not X_path.exists() or not y_path.exists():
-            print(f"Skipping {dataset}: numeric arrays missing")
-            skipped.append(dataset)
-            continue
+        missing = None
+        for path in [X_path, y_path]:
+            if not path.exists():
+                missing = path
+                break
+        if missing:
+            msg = f"Required file not found: {missing}"
+            if DEBUG_MODE:
+                raise FileNotFoundError(msg)
+            else:
+                print("Skipping:", msg)
+                skipped.append(dataset)
+                continue
         X = np.load(X_path)
         y = np.load(y_path)
 
