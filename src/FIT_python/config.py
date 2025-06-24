@@ -1,13 +1,16 @@
 from pathlib import Path
 
-# Project root directory (two levels above this file)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+# Project root directory
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Data directories
 DATA_DIR      = PROJECT_ROOT / "data"
 RAW_DIR       = DATA_DIR / "raw"
 SPLITS_DIR    = DATA_DIR / "splits"
 PROCESSED_DIR = DATA_DIR / "processed"
+
+# Numeric processed directory
+NUMERIC_DIR = PROCESSED_DIR / "numeric"
 
 # Processed data files
 OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
@@ -32,6 +35,13 @@ STRATIFY_COL        = "sex"
 GLOBAL_RANDOM_SEED  = 42
 TEST_SIZE           = 0.2
 NUM_FOLDS           = 5
+
+# Scaling configuration
+DEFAULT_SCALER = "standard"
+SCALER_PARAMS = {
+    "standard": {},
+    "robust": {}
+}
 
 # Misc
 LOG_LEVEL = "INFO"

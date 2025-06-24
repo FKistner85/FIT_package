@@ -1,0 +1,1301 @@
+{
+  "dist1_2": {
+    "type": "dist1",
+    "points": [
+      2
+    ]
+  },
+  "dist1_3": {
+    "type": "dist1",
+    "points": [
+      3
+    ]
+  },
+  "dist1_4": {
+    "type": "dist1",
+    "points": [
+      4
+    ]
+  },
+  "dist1_5": {
+    "type": "dist1",
+    "points": [
+      5
+    ]
+  },
+  "dist1_6": {
+    "type": "dist1",
+    "points": [
+      6
+    ]
+  },
+  "dist1_7": {
+    "type": "dist1",
+    "points": [
+      7
+    ]
+  },
+  "dist1_8": {
+    "type": "dist1",
+    "points": [
+      8
+    ]
+  },
+  "dist1_9": {
+    "type": "dist1",
+    "points": [
+      9
+    ]
+  },
+  "dist1_10": {
+    "type": "dist1",
+    "points": [
+      10
+    ]
+  },
+  "dist1_11": {
+    "type": "dist1",
+    "points": [
+      11
+    ]
+  },
+  "dist1_12": {
+    "type": "dist1",
+    "points": [
+      12
+    ]
+  },
+  "dist1_13": {
+    "type": "dist1",
+    "points": [
+      13
+    ]
+  },
+  "dist1_14": {
+    "type": "dist1",
+    "points": [
+      14
+    ]
+  },
+  "dist1_15": {
+    "type": "dist1",
+    "points": [
+      15
+    ]
+  },
+  "dist1_16": {
+    "type": "dist1",
+    "points": [
+      16
+    ]
+  },
+  "dist1_17": {
+    "type": "dist1",
+    "points": [
+      17
+    ]
+  },
+  "dist2_3": {
+    "type": "dist2",
+    "points": [
+      3
+    ]
+  },
+  "dist2_4": {
+    "type": "dist2",
+    "points": [
+      4
+    ]
+  },
+  "dist2_5": {
+    "type": "dist2",
+    "points": [
+      5
+    ]
+  },
+  "dist2_6": {
+    "type": "dist2",
+    "points": [
+      6
+    ]
+  },
+  "dist2_7": {
+    "type": "dist2",
+    "points": [
+      7
+    ]
+  },
+  "dist2_8": {
+    "type": "dist2",
+    "points": [
+      8
+    ]
+  },
+  "dist2_9": {
+    "type": "dist2",
+    "points": [
+      9
+    ]
+  },
+  "dist2_10": {
+    "type": "dist2",
+    "points": [
+      10
+    ]
+  },
+  "dist2_11": {
+    "type": "dist2",
+    "points": [
+      11
+    ]
+  },
+  "dist2_12": {
+    "type": "dist2",
+    "points": [
+      12
+    ]
+  },
+  "dist2_13": {
+    "type": "dist2",
+    "points": [
+      13
+    ]
+  },
+  "dist2_14": {
+    "type": "dist2",
+    "points": [
+      14
+    ]
+  },
+  "dist2_15": {
+    "type": "dist2",
+    "points": [
+      15
+    ]
+  },
+  "dist2_16": {
+    "type": "dist2",
+    "points": [
+      16
+    ]
+  },
+  "dist2_17": {
+    "type": "dist2",
+    "points": [
+      17
+    ]
+  },
+  "dist3_4": {
+    "type": "dist3",
+    "points": [
+      4
+    ]
+  },
+  "dist3_5": {
+    "type": "dist3",
+    "points": [
+      5
+    ]
+  },
+  "dist3_6": {
+    "type": "dist3",
+    "points": [
+      6
+    ]
+  },
+  "dist3_7": {
+    "type": "dist3",
+    "points": [
+      7
+    ]
+  },
+  "dist3_8": {
+    "type": "dist3",
+    "points": [
+      8
+    ]
+  },
+  "dist3_9": {
+    "type": "dist3",
+    "points": [
+      9
+    ]
+  },
+  "dist3_10": {
+    "type": "dist3",
+    "points": [
+      10
+    ]
+  },
+  "dist3_11": {
+    "type": "dist3",
+    "points": [
+      11
+    ]
+  },
+  "dist3_12": {
+    "type": "dist3",
+    "points": [
+      12
+    ]
+  },
+  "dist3_13": {
+    "type": "dist3",
+    "points": [
+      13
+    ]
+  },
+  "dist3_14": {
+    "type": "dist3",
+    "points": [
+      14
+    ]
+  },
+  "dist3_15": {
+    "type": "dist3",
+    "points": [
+      15
+    ]
+  },
+  "dist3_16": {
+    "type": "dist3",
+    "points": [
+      16
+    ]
+  },
+  "dist3_17": {
+    "type": "dist3",
+    "points": [
+      17
+    ]
+  },
+  "dist4_5": {
+    "type": "dist4",
+    "points": [
+      5
+    ]
+  },
+  "dist4_6": {
+    "type": "dist4",
+    "points": [
+      6
+    ]
+  },
+  "dist4_7": {
+    "type": "dist4",
+    "points": [
+      7
+    ]
+  },
+  "dist4_8": {
+    "type": "dist4",
+    "points": [
+      8
+    ]
+  },
+  "dist4_9": {
+    "type": "dist4",
+    "points": [
+      9
+    ]
+  },
+  "dist4_10": {
+    "type": "dist4",
+    "points": [
+      10
+    ]
+  },
+  "dist4_11": {
+    "type": "dist4",
+    "points": [
+      11
+    ]
+  },
+  "dist4_12": {
+    "type": "dist4",
+    "points": [
+      12
+    ]
+  },
+  "dist4_13": {
+    "type": "dist4",
+    "points": [
+      13
+    ]
+  },
+  "dist4_14": {
+    "type": "dist4",
+    "points": [
+      14
+    ]
+  },
+  "dist4_15": {
+    "type": "dist4",
+    "points": [
+      15
+    ]
+  },
+  "dist4_16": {
+    "type": "dist4",
+    "points": [
+      16
+    ]
+  },
+  "dist4_17": {
+    "type": "dist4",
+    "points": [
+      17
+    ]
+  },
+  "dist5_6": {
+    "type": "dist5",
+    "points": [
+      6
+    ]
+  },
+  "dist5_7": {
+    "type": "dist5",
+    "points": [
+      7
+    ]
+  },
+  "dist5_8": {
+    "type": "dist5",
+    "points": [
+      8
+    ]
+  },
+  "dist5_9": {
+    "type": "dist5",
+    "points": [
+      9
+    ]
+  },
+  "dist5_10": {
+    "type": "dist5",
+    "points": [
+      10
+    ]
+  },
+  "dist5_11": {
+    "type": "dist5",
+    "points": [
+      11
+    ]
+  },
+  "dist5_12": {
+    "type": "dist5",
+    "points": [
+      12
+    ]
+  },
+  "dist5_13": {
+    "type": "dist5",
+    "points": [
+      13
+    ]
+  },
+  "dist5_14": {
+    "type": "dist5",
+    "points": [
+      14
+    ]
+  },
+  "dist5_15": {
+    "type": "dist5",
+    "points": [
+      15
+    ]
+  },
+  "dist5_16": {
+    "type": "dist5",
+    "points": [
+      16
+    ]
+  },
+  "dist5_17": {
+    "type": "dist5",
+    "points": [
+      17
+    ]
+  },
+  "dist6_7": {
+    "type": "dist6",
+    "points": [
+      7
+    ]
+  },
+  "dist6_8": {
+    "type": "dist6",
+    "points": [
+      8
+    ]
+  },
+  "dist6_9": {
+    "type": "dist6",
+    "points": [
+      9
+    ]
+  },
+  "dist6_10": {
+    "type": "dist6",
+    "points": [
+      10
+    ]
+  },
+  "dist6_11": {
+    "type": "dist6",
+    "points": [
+      11
+    ]
+  },
+  "dist6_12": {
+    "type": "dist6",
+    "points": [
+      12
+    ]
+  },
+  "dist6_13": {
+    "type": "dist6",
+    "points": [
+      13
+    ]
+  },
+  "dist6_14": {
+    "type": "dist6",
+    "points": [
+      14
+    ]
+  },
+  "dist6_15": {
+    "type": "dist6",
+    "points": [
+      15
+    ]
+  },
+  "dist6_16": {
+    "type": "dist6",
+    "points": [
+      16
+    ]
+  },
+  "dist6_17": {
+    "type": "dist6",
+    "points": [
+      17
+    ]
+  },
+  "dist7_8": {
+    "type": "dist7",
+    "points": [
+      8
+    ]
+  },
+  "dist7_9": {
+    "type": "dist7",
+    "points": [
+      9
+    ]
+  },
+  "dist7_10": {
+    "type": "dist7",
+    "points": [
+      10
+    ]
+  },
+  "dist7_11": {
+    "type": "dist7",
+    "points": [
+      11
+    ]
+  },
+  "dist7_12": {
+    "type": "dist7",
+    "points": [
+      12
+    ]
+  },
+  "dist7_13": {
+    "type": "dist7",
+    "points": [
+      13
+    ]
+  },
+  "dist7_14": {
+    "type": "dist7",
+    "points": [
+      14
+    ]
+  },
+  "dist7_15": {
+    "type": "dist7",
+    "points": [
+      15
+    ]
+  },
+  "dist7_16": {
+    "type": "dist7",
+    "points": [
+      16
+    ]
+  },
+  "dist7_17": {
+    "type": "dist7",
+    "points": [
+      17
+    ]
+  },
+  "dist8_9": {
+    "type": "dist8",
+    "points": [
+      9
+    ]
+  },
+  "dist8_10": {
+    "type": "dist8",
+    "points": [
+      10
+    ]
+  },
+  "dist8_11": {
+    "type": "dist8",
+    "points": [
+      11
+    ]
+  },
+  "dist8_12": {
+    "type": "dist8",
+    "points": [
+      12
+    ]
+  },
+  "dist8_13": {
+    "type": "dist8",
+    "points": [
+      13
+    ]
+  },
+  "dist8_14": {
+    "type": "dist8",
+    "points": [
+      14
+    ]
+  },
+  "dist8_15": {
+    "type": "dist8",
+    "points": [
+      15
+    ]
+  },
+  "dist8_16": {
+    "type": "dist8",
+    "points": [
+      16
+    ]
+  },
+  "dist8_17": {
+    "type": "dist8",
+    "points": [
+      17
+    ]
+  },
+  "dist9_10": {
+    "type": "dist9",
+    "points": [
+      10
+    ]
+  },
+  "dist9_11": {
+    "type": "dist9",
+    "points": [
+      11
+    ]
+  },
+  "dist9_12": {
+    "type": "dist9",
+    "points": [
+      12
+    ]
+  },
+  "dist9_13": {
+    "type": "dist9",
+    "points": [
+      13
+    ]
+  },
+  "dist9_14": {
+    "type": "dist9",
+    "points": [
+      14
+    ]
+  },
+  "dist9_15": {
+    "type": "dist9",
+    "points": [
+      15
+    ]
+  },
+  "dist9_16": {
+    "type": "dist9",
+    "points": [
+      16
+    ]
+  },
+  "dist9_17": {
+    "type": "dist9",
+    "points": [
+      17
+    ]
+  },
+  "dist10_11": {
+    "type": "dist10",
+    "points": [
+      11
+    ]
+  },
+  "dist10_12": {
+    "type": "dist10",
+    "points": [
+      12
+    ]
+  },
+  "dist10_13": {
+    "type": "dist10",
+    "points": [
+      13
+    ]
+  },
+  "dist10_14": {
+    "type": "dist10",
+    "points": [
+      14
+    ]
+  },
+  "dist10_15": {
+    "type": "dist10",
+    "points": [
+      15
+    ]
+  },
+  "dist10_16": {
+    "type": "dist10",
+    "points": [
+      16
+    ]
+  },
+  "dist10_17": {
+    "type": "dist10",
+    "points": [
+      17
+    ]
+  },
+  "dist11_12": {
+    "type": "dist11",
+    "points": [
+      12
+    ]
+  },
+  "dist11_13": {
+    "type": "dist11",
+    "points": [
+      13
+    ]
+  },
+  "dist11_14": {
+    "type": "dist11",
+    "points": [
+      14
+    ]
+  },
+  "dist11_15": {
+    "type": "dist11",
+    "points": [
+      15
+    ]
+  },
+  "dist11_16": {
+    "type": "dist11",
+    "points": [
+      16
+    ]
+  },
+  "dist11_17": {
+    "type": "dist11",
+    "points": [
+      17
+    ]
+  },
+  "dist12_13": {
+    "type": "dist12",
+    "points": [
+      13
+    ]
+  },
+  "dist12_14": {
+    "type": "dist12",
+    "points": [
+      14
+    ]
+  },
+  "dist12_15": {
+    "type": "dist12",
+    "points": [
+      15
+    ]
+  },
+  "dist12_16": {
+    "type": "dist12",
+    "points": [
+      16
+    ]
+  },
+  "dist12_17": {
+    "type": "dist12",
+    "points": [
+      17
+    ]
+  },
+  "dist13_14": {
+    "type": "dist13",
+    "points": [
+      14
+    ]
+  },
+  "dist13_15": {
+    "type": "dist13",
+    "points": [
+      15
+    ]
+  },
+  "dist13_16": {
+    "type": "dist13",
+    "points": [
+      16
+    ]
+  },
+  "dist13_17": {
+    "type": "dist13",
+    "points": [
+      17
+    ]
+  },
+  "dist14_15": {
+    "type": "dist14",
+    "points": [
+      15
+    ]
+  },
+  "dist14_16": {
+    "type": "dist14",
+    "points": [
+      16
+    ]
+  },
+  "dist14_17": {
+    "type": "dist14",
+    "points": [
+      17
+    ]
+  },
+  "dist15_16": {
+    "type": "dist15",
+    "points": [
+      16
+    ]
+  },
+  "dist15_17": {
+    "type": "dist15",
+    "points": [
+      17
+    ]
+  },
+  "dist16_17": {
+    "type": "dist16",
+    "points": [
+      17
+    ]
+  },
+  "ang2_1_5": {
+    "type": "ang2",
+    "points": [
+      1,
+      5
+    ]
+  },
+  "ang3_1_5": {
+    "type": "ang3",
+    "points": [
+      1,
+      5
+    ]
+  },
+  "ang4_1_5": {
+    "type": "ang4",
+    "points": [
+      1,
+      5
+    ]
+  },
+  "ang1_2_5": {
+    "type": "ang1",
+    "points": [
+      2,
+      5
+    ]
+  },
+  "ang3_2_5": {
+    "type": "ang3",
+    "points": [
+      2,
+      5
+    ]
+  },
+  "ang4_2_5": {
+    "type": "ang4",
+    "points": [
+      2,
+      5
+    ]
+  },
+  "ang1_3_5": {
+    "type": "ang1",
+    "points": [
+      3,
+      5
+    ]
+  },
+  "ang2_3_5": {
+    "type": "ang2",
+    "points": [
+      3,
+      5
+    ]
+  },
+  "ang4_3_5": {
+    "type": "ang4",
+    "points": [
+      3,
+      5
+    ]
+  },
+  "ang1_4_5": {
+    "type": "ang1",
+    "points": [
+      4,
+      5
+    ]
+  },
+  "ang2_4_5": {
+    "type": "ang2",
+    "points": [
+      4,
+      5
+    ]
+  },
+  "ang3_4_5": {
+    "type": "ang3",
+    "points": [
+      4,
+      5
+    ]
+  },
+  "ang2_1_4": {
+    "type": "ang2",
+    "points": [
+      1,
+      4
+    ]
+  },
+  "ang3_1_4": {
+    "type": "ang3",
+    "points": [
+      1,
+      4
+    ]
+  },
+  "ang5_1_4": {
+    "type": "ang5",
+    "points": [
+      1,
+      4
+    ]
+  },
+  "ang1_2_4": {
+    "type": "ang1",
+    "points": [
+      2,
+      4
+    ]
+  },
+  "ang3_2_4": {
+    "type": "ang3",
+    "points": [
+      2,
+      4
+    ]
+  },
+  "ang4_2_4": {
+    "type": "ang4",
+    "points": [
+      2,
+      4
+    ]
+  },
+  "ang1_3_4": {
+    "type": "ang1",
+    "points": [
+      3,
+      4
+    ]
+  },
+  "ang2_3_4": {
+    "type": "ang2",
+    "points": [
+      3,
+      4
+    ]
+  },
+  "ang5_3_4": {
+    "type": "ang5",
+    "points": [
+      3,
+      4
+    ]
+  },
+  "ang1_4_3": {
+    "type": "ang1",
+    "points": [
+      4,
+      3
+    ]
+  },
+  "ang2_4_3": {
+    "type": "ang2",
+    "points": [
+      4,
+      3
+    ]
+  },
+  "ang3_4_3": {
+    "type": "ang3",
+    "points": [
+      4,
+      3
+    ]
+  },
+  "ang7_6_10": {
+    "type": "ang7",
+    "points": [
+      6,
+      10
+    ]
+  },
+  "ang6_9_10": {
+    "type": "ang6",
+    "points": [
+      9,
+      10
+    ]
+  },
+  "ang4_9_5": {
+    "type": "ang4",
+    "points": [
+      9,
+      5
+    ]
+  },
+  "ang2_7_5": {
+    "type": "ang2",
+    "points": [
+      7,
+      5
+    ]
+  },
+  "ang6_10_4": {
+    "type": "ang6",
+    "points": [
+      10,
+      4
+    ]
+  },
+  "ang6_4_10": {
+    "type": "ang6",
+    "points": [
+      4,
+      10
+    ]
+  },
+  "t1_2_7": {
+    "type": "t1",
+    "points": [
+      2,
+      7
+    ]
+  },
+  "t2_3_7": {
+    "type": "t2",
+    "points": [
+      3,
+      7
+    ]
+  },
+  "t3_4_7": {
+    "type": "t3",
+    "points": [
+      4,
+      7
+    ]
+  },
+  "t3_7_16": {
+    "type": "t3",
+    "points": [
+      7,
+      16
+    ]
+  },
+  "t4_7_8": {
+    "type": "t4",
+    "points": [
+      7,
+      8
+    ]
+  },
+  "t3_4_16": {
+    "type": "t3",
+    "points": [
+      4,
+      16
+    ]
+  },
+  "t7_8_16": {
+    "type": "t7",
+    "points": [
+      8,
+      16
+    ]
+  },
+  "t4_5_8": {
+    "type": "t4",
+    "points": [
+      5,
+      8
+    ]
+  },
+  "t5_8_9": {
+    "type": "t5",
+    "points": [
+      8,
+      9
+    ]
+  },
+  "t1_6_7": {
+    "type": "t1",
+    "points": [
+      6,
+      7
+    ]
+  },
+  "t7_8_9": {
+    "type": "t7",
+    "points": [
+      8,
+      9
+    ]
+  },
+  "t6_7_9": {
+    "type": "t6",
+    "points": [
+      7,
+      9
+    ]
+  },
+  "t6_7_17": {
+    "type": "t6",
+    "points": [
+      7,
+      17
+    ]
+  },
+  "t7_8_17": {
+    "type": "t7",
+    "points": [
+      8,
+      17
+    ]
+  },
+  "t8_9_17": {
+    "type": "t8",
+    "points": [
+      9,
+      17
+    ]
+  },
+  "t6_9_17": {
+    "type": "t6",
+    "points": [
+      9,
+      17
+    ]
+  },
+  "t6_9_10": {
+    "type": "t6",
+    "points": [
+      9,
+      10
+    ]
+  },
+  "t5_9_10": {
+    "type": "t5",
+    "points": [
+      9,
+      10
+    ]
+  },
+  "t1_3_5": {
+    "type": "t1",
+    "points": [
+      3,
+      5
+    ]
+  },
+  "t2_3_5": {
+    "type": "t2",
+    "points": [
+      3,
+      5
+    ]
+  },
+  "t2_4_5": {
+    "type": "t2",
+    "points": [
+      4,
+      5
+    ]
+  },
+  "t3_4_5": {
+    "type": "t3",
+    "points": [
+      4,
+      5
+    ]
+  },
+  "t2_3_8": {
+    "type": "t2",
+    "points": [
+      3,
+      8
+    ]
+  },
+  "t2_4_8": {
+    "type": "t2",
+    "points": [
+      4,
+      8
+    ]
+  },
+  "t2_4_7": {
+    "type": "t2",
+    "points": [
+      4,
+      7
+    ]
+  },
+  "t3_5_7": {
+    "type": "t3",
+    "points": [
+      5,
+      7
+    ]
+  },
+  "t2_5_9": {
+    "type": "t2",
+    "points": [
+      5,
+      9
+    ]
+  },
+  "t2_5_6": {
+    "type": "t2",
+    "points": [
+      5,
+      6
+    ]
+  },
+  "t2_5_10": {
+    "type": "t2",
+    "points": [
+      5,
+      10
+    ]
+  },
+  "t3_5_10": {
+    "type": "t3",
+    "points": [
+      5,
+      10
+    ]
+  },
+  "t3_6_10": {
+    "type": "t3",
+    "points": [
+      6,
+      10
+    ]
+  },
+  "t4_6_10": {
+    "type": "t4",
+    "points": [
+      6,
+      10
+    ]
+  },
+  "t5_6_10": {
+    "type": "t5",
+    "points": [
+      6,
+      10
+    ]
+  },
+  "t6_10_11": {
+    "type": "t6",
+    "points": [
+      10,
+      11
+    ]
+  },
+  "t12_13_15": {
+    "type": "t12",
+    "points": [
+      13,
+      15
+    ]
+  },
+  "t13_14_15": {
+    "type": "t13",
+    "points": [
+      14,
+      15
+    ]
+  },
+  "t13_14_17": {
+    "type": "t13",
+    "points": [
+      14,
+      17
+    ]
+  },
+  "t12_15_17": {
+    "type": "t12",
+    "points": [
+      15,
+      17
+    ]
+  },
+  "t13_14_16": {
+    "type": "t13",
+    "points": [
+      14,
+      16
+    ]
+  }
+}
