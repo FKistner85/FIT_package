@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FIT_python"                    # aus name=
+version = "0.1.0"                      # aus version=
+description = "FIT Otter: Data import and analysis pipeline"  # aus description=
+readme = "README.md"                   # Optional, falls du ein README hast
+requires-python = ">=3.11"             # aus python_requires=
+dependencies = [                       # aus install_requires=
+  "pandas>=1.3",
+  "xlrd>=1.2",
+  "openpyxl>=3.0",
+  "numpy>=1.21",
+  "scikit-learn",
+  "matplotlib",
+  "seaborn",
+  "optuna",
+  "catboost",
+  "lightgbm",
+]
+
+authors = [                            # aus author=
+{ name = "Frederick Kistner" }
+]
+
+[tool.setuptools.packages.find]        # Nachbildung von find_packages()
+include = ["FIT_python", "FIT_python.*"]
