@@ -46,8 +46,10 @@ SCALER_PARAMS = {
 # Misc
 LOG_LEVEL = "INFO"
 
-# Global debug switch
-DEBUG_MODE = True    # Wenn True: brich Skripte bei jeder Fehlstelle ab; wenn False: Skip-Logik aktiv
+# Global debug switch controlling fail-fast behaviour
+# True  -> raise FileNotFoundError on missing files (development)
+# False -> merely log and continue (production)
+DEBUG_MODE = True
 
 # -------------------------------------------------------------------
 # Dataset name normalization
