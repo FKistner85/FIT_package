@@ -5,11 +5,12 @@ Generate landmark_map and point_map for Eurasian Otter dataset.
 """
 import json
 from pathlib import Path
+from FIT_python.config import RAW_DIR, PROCESSED_DIR
 from FIT_python.data_import_utils import load_raw_files
 
 def main():
-    raw_dir = Path('data/raw')
-    processed_dir = Path('data/processed')
+    raw_dir = RAW_DIR
+    processed_dir = PROCESSED_DIR
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     # Load only Otter data
