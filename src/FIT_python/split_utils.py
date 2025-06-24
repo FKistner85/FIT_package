@@ -10,7 +10,7 @@ def train_test_group_split(
     df: pd.DataFrame,
     test_size: float = TEST_SIZE,
     random_state: int = GLOBAL_RANDOM_SEED,
-    group_col: str = "individual",
+    group_col: str = GROUP_COL,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Simple group-based train/test split."""
     # 1) Gather unique group IDs
