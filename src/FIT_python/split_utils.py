@@ -74,7 +74,7 @@ def sample_individuals(
     Randomly select `n` unique individuals for a dataset/sex combination.
     Used for the fixed Otter test split.
     """
-    subset = df[(df["Dataorigin"] == dataset) & (df["sex"].str.lower() == sex.lower())]
+    subset = df[(df["dataorigin"] == dataset) & (df["sex"].str.lower() == sex.lower())]
     inds = subset["individual_id"].unique()
     sampled = (
         pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
@@ -89,11 +89,11 @@ def create_train_test_split_otter(
     Create deterministic train/test/inference splits for Otter.
     Returns (train_df, test_df, inference_df).
     """
-    inference_df = df[df["Dataorigin"] == "Fieldprints Portugal"]
-    df_clean = df[df["Dataorigin"] != "Fieldprints Portugal"]
+    inference_df = df[df["dataorigin"] == "Fieldprints Portugal"]
+    df_clean = df[df["dataorigin"] != "Fieldprints Portugal"]
 
     test_df = pd.concat([
-        df_clean[df_clean["Dataorigin"] == "Fieldprints Lower Saxony"],
+        df_clean[df_clean["dataorigin"] == "Fieldprints Lower Saxony"],
         sample_individuals(df_clean, "Own Data Collection", "Female", 3, seed),
         sample_individuals(df_clean, "Own Data Collection", "Male", 3, seed),
         sample_individuals(df_clean, "Vetrecova et al", "Female", 2, seed),
