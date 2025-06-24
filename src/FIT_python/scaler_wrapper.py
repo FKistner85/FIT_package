@@ -10,7 +10,8 @@ from FIT_python.config import (
     DEFAULT_TARGETS,
     OTTER_META_COLS,
     DEFAULT_SCALER,
-    SCALER_PARAMS
+    SCALER_PARAMS,
+    normalize_dataset_name,
 )
 from FIT_python.scaler_utils import get_standard_scaler, get_robust_scaler
 from FIT_python.transform_utils import convert_numeric
@@ -42,7 +43,7 @@ class ScalerWrapper:
             if not ds_folder.is_dir():
                 continue
 
-            dataset = ds_folder.name  # e.g. "Giant_Panda"
+            dataset = normalize_dataset_name(ds_folder.name)
             print(f"\nScaling dataset: {dataset}")
 
             # prepare output subfolder
