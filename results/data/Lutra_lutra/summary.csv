@@ -1,0 +1,18 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+Lutra lutra,train,All,Total,37,66,511,210
+Lutra lutra,train,All,F,17,35,275,210
+Lutra lutra,train,All,M,20,31,236,210
+Lutra lutra,train,Own Data Collection,Total,26,54,419,210
+Lutra lutra,train,Own Data Collection,F,12,29,228,210
+Lutra lutra,train,Own Data Collection,M,14,25,191,210
+Lutra lutra,train,Vetrecova et al,Total,11,12,92,210
+Lutra lutra,train,Vetrecova et al,F,5,6,47,210
+Lutra lutra,train,Vetrecova et al,M,6,6,45,210
+Lutra lutra,test,All,Total,4,5,36,210
+Lutra lutra,test,All,F,2,3,22,210
+Lutra lutra,test,All,M,2,2,14,210
+Lutra lutra,test,Fieldprints Lower Saxony,Total,4,5,36,210
+Lutra lutra,test,Fieldprints Lower Saxony,F,2,3,22,210
+Lutra lutra,test,Fieldprints Lower Saxony,M,2,2,14,210
+Lutra lutra,inference,All,Total,8,8,81,210
+Lutra lutra,inference,Fieldprints Portugal,Total,8,8,81,210

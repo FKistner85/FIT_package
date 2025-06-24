@@ -1,0 +1,7 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+A.j. jubatus,train,All,Total,32,64,447,137
+A.j. jubatus,train,All,F,19,37,258,137
+A.j. jubatus,train,All,M,13,27,189,137
+A.j. jubatus,test,All,Total,8,17,119,137
+A.j. jubatus,test,All,F,5,10,70,137
+A.j. jubatus,test,All,M,3,7,49,137

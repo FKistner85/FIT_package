@@ -1,0 +1,7 @@
+Species,Split,Dataorigin,Sex,UniqueIndividuals,Trails,Rows,Features
+ Ailuropoda melanoleuca,train,All,Total,33,61,404,125
+ Ailuropoda melanoleuca,train,All,F,17,36,238,125
+ Ailuropoda melanoleuca,train,All,M,16,25,166,125
+ Ailuropoda melanoleuca,test,All,Total,9,16,119,125
+ Ailuropoda melanoleuca,test,All,F,5,8,63,125
+ Ailuropoda melanoleuca,test,All,M,4,8,56,125
