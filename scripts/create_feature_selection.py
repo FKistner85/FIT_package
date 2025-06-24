@@ -91,9 +91,13 @@ def main():
         feature_cols = [c for c in df_raw.columns if c not in meta + DEFAULT_TARGETS]
 
         if y_series.nunique() < 2:
-            print(f"Skipping {dataset}: only one class present")
-            skipped.append(dataset)
-            continue
+            msg = f"Dataset {dataset} has only one class for 'sex'"
+            if DEBUG_MODE:
+                raise RuntimeError(msg)
+            else:
+                print("Skipping:", msg)
+                skipped.append(dataset)
+                continue
 
         X_df = pd.DataFrame(X, columns=feature_cols)
 
