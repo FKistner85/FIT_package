@@ -5,7 +5,7 @@ from typing import Tuple
 from sklearn.model_selection import StratifiedShuffleSplit, StratifiedGroupKFold
 
 # Default constants
-GROUP_COL       = "animal"
+GROUP_COL       = "individual_id"
 STRATIFY_COL    = "sex"
 GLOBAL_SEED     = 42
 TEST_SIZE       = 0.2

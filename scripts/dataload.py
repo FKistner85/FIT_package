@@ -5,7 +5,7 @@ Usage: run in a notebook or as a script.
 """
 from pathlib import Path
 import pandas as pd
-from FIT_python.data_loader import load_raw_files
+from FIT_python.data_import_utils import load_raw_files
 
 def main():
     # 1) Specify the raw data directory
