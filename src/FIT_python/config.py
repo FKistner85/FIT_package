@@ -82,3 +82,9 @@ FS_TARGET_FEATURE_COUNTS = [10, 20, 30]
 FS_P_THRESH = 0.05           # Stoppe, wenn p > 0.05 nach mindestens min_num_features
 FS_MIN_NUM_FEATURES = 3      # Minimal immer so viele Features einfügen
 FS_N_JOBS = 1                # Anzahl paralleler Prozesse für die Selektion
+# Validation parameters
+# "external_folds": use precomputed grouped/stratified folds
+# "internal_cv":    use sklearn GridSearchCV with cv=3
+VALIDATION_MODE = "external_folds"
+NUM_KFOLDS = 5
+
