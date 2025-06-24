@@ -8,14 +8,13 @@ from FIT_python.config import (
     NUMERIC_DIR,
     PROCESSED_DIR,
     DEFAULT_TARGETS,
-    OTTER_META_COLS
+    OTTER_META_COLS,
 )
 from FIT_python.feature_utils import run_feature_selection_methods
 
 class FeatureSelector:
-    """
-    Wrapper to apply feature selection methods to numeric datasets,
-    for each target column in DEFAULT_TARGETS.
+    """Wrapper to apply feature selection methods to numeric datasets
+    using only the ``sex`` target column.
     """
 
     def __init__(self):
@@ -42,19 +41,18 @@ class FeatureSelector:
             feature_cols = [c for c in df_raw.columns if c not in meta + DEFAULT_TARGETS]
             X_df = pd.DataFrame(X, columns=feature_cols)
 
-            # jetzt für jedes Target
-            for target in DEFAULT_TARGETS:
-                print(f"\n-- Target: {target} --")
-                # lade das originale label-series
-                y_series = df_raw[target]
+            # only the 'sex' target
+            target = "sex"
+            print(f"\n-- Target: {target} --")
+            y_series = df_raw[target]
 
-                # run selection
-                results = run_feature_selection_methods(X_df, y_series)
+            # run selection
+            results = run_feature_selection_methods(X_df, y_series)
 
-                # speichere pro Methode eine Datei unter feature_selection/<target>/
-                out_dir = out_base / target
-                out_dir.mkdir(parents=True, exist_ok=True)
-                for method, feats in results.items():
-                    path = out_dir / f"{method}.txt"
-                    pd.Series(feats).to_csv(path, index=False, header=False)
-                    print(f" Saved {target}/{method}.txt ({len(feats)} features)")
+            # save each method under feature_selection/sex/
+            out_dir = out_base / target
+            out_dir.mkdir(parents=True, exist_ok=True)
+            for method, feats in results.items():
+                path = out_dir / f"{method}.txt"
+                pd.Series(feats).to_csv(path, index=False, header=False)
+                print(f" Saved {target}/{method}.txt ({len(feats)} features)")
