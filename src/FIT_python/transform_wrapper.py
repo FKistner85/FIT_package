@@ -54,7 +54,9 @@ class TransformWrapper:
                     y, mapping = one_hot_encode_targets(df_num, DEFAULT_TARGETS)
                     np.save(out_dir / f"X_{split}.npy", X)
                     np.save(out_dir / f"y_{split}.npy", y)
-                    save_target_mapping(mapping, out_dir / "target_mapping.json")
+                    mapping_file = out_dir / "target_mapping.json"
+                    if not mapping_file.exists():
+                        save_target_mapping(mapping, mapping_file)
                     self.logger.info("Saved %s/%s", dataset, split)
                 successes.append(dataset)
             except RuntimeError:

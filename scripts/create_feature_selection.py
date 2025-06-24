@@ -7,6 +7,7 @@ Script to run feature selection on all numeric datasets with result caching.
 """
 
 from pathlib import Path
+import json
 import pandas as pd
 import numpy as np
 
@@ -60,7 +61,31 @@ def main():
             meta = ["id"]
         feature_cols = [c for c in df_raw.columns if c not in meta + DEFAULT_TARGETS]
         X_df = pd.DataFrame(X, columns=feature_cols)
-        y_series = pd.Series(y, name="target")
+
+        # Always convert y to a 1D label series
+        mapping_path = ds_folder / "target_mapping.json"
+        if mapping_path.exists():
+            with open(mapping_path, "r", encoding="utf-8") as f:
+                mapping = json.load(f)
+            # columns corresponding to the 'sex' target
+            oh_cols = mapping.get("sex", [])
+            start_idx = 0
+            for col in DEFAULT_TARGETS:
+                if col == "sex":
+                    break
+                start_idx += len(mapping.get(col, []))
+            if y.ndim > 1:
+                y_slice = y[:, start_idx : start_idx + len(oh_cols)]
+                idx = np.argmax(y_slice, axis=1)
+                labels = [oh_cols[i].split("_")[-1] for i in idx]
+                y_series = pd.Series(labels, name="sex")
+            else:
+                y_series = pd.Series(y, name="sex")
+        else:
+            if y.ndim > 1 and DEBUG_MODE:
+                raise FileNotFoundError(f"Missing mapping file: {mapping_path}")
+            # Fall back to simple series
+            y_series = pd.Series(y.ravel(), name="sex")
 
         # Iterate through methods
         for method in FS_DEFAULT_METHODS:
