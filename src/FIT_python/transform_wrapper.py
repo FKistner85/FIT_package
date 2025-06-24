@@ -34,7 +34,22 @@ class TransformWrapper:
 
             df = convert_numeric(df, feature_cols)
             X = df[feature_cols].to_numpy(dtype=float)
-            y = df["sex"].to_numpy()
+
+            sex = (
+                df["sex"].fillna("unknown")
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .map({
+                    "f": "female",
+                    "female": "female",
+                    "m": "male",
+                    "male": "male",
+                })
+                .fillna("unknown")
+            )
+            label_map = {"female": 0, "male": 1, "unknown": 2}
+            y = sex.map(label_map).to_numpy(dtype=int)
 
             np.save(out_dir / f"X_{split}.npy", X)
             np.save(out_dir / f"y_{split}.npy", y)

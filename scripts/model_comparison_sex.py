@@ -65,11 +65,14 @@ def load_optional(path: Path) -> np.ndarray | None:
     return np.load(path, allow_pickle=True)
 
 
-def last_two_to_labels(y: np.ndarray) -> np.ndarray:
-    """Convert one-hot encoded array to binary labels using last two columns."""
-    if y.shape[1] < 2:
-        raise ValueError("y array must have at least two columns for sex")
-    return np.argmax(y[:, -2:], axis=1)
+def ensure_1d_labels(y: np.ndarray, classes: list[str]) -> np.ndarray:
+    """Return 1D labels from either 1D array or one-hot encoded matrix."""
+    if y.ndim == 1:
+        return y
+    if y.ndim == 2:
+        idx = np.argmax(y, axis=1)
+        return np.array([classes[i] for i in idx])
+    raise ValueError(f"Unsupported label array shape: {y.shape}")
 
 
 def build_models() -> Dict[str, Dict[str, Any]]:
@@ -148,11 +151,11 @@ def main() -> None:
             y_train = load_numpy(ds_folder / "y_train.npy")
         except RuntimeError:
             continue
-        y_train = last_two_to_labels(y_train)
+        y_train = ensure_1d_labels(y_train, [0, 1, 2])
         X_test = load_optional(ds_folder / "X_test.npy")
         y_test = load_optional(ds_folder / "y_test.npy")
         if y_test is not None:
-            y_test = last_two_to_labels(y_test)
+            y_test = ensure_1d_labels(y_test, [0, 1, 2])
 
         # Validation setup
         if VALIDATION_MODE == "external_folds":
@@ -231,12 +234,11 @@ def main() -> None:
                 })
             results.append(row)
 
-    if not results:
-        print("No results to save.")
-        return
     df = pd.DataFrame(results)
     out_path = Path("data/results/model_comparison_sex.csv")
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    if df.empty and DEBUG_MODE:
+        raise RuntimeError("No model comparison results produced!")
     df.to_csv(out_path, index=False)
     print(f"Saved results to {out_path}")
 
