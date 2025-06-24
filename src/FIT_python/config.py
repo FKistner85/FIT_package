@@ -45,3 +45,26 @@ SCALER_PARAMS = {
 
 # Misc
 LOG_LEVEL = "INFO"
+
+
+# -------------------------------------------------------------------
+# Feature Selection parameters
+
+# Welche Methoden sollen standardmäßig ausgeführt werden
+FS_DEFAULT_METHODS = [
+    "forward_count",    # Forward‐Selektion mit fester Anzahl Features
+    "forward_p",        # Forward‐Selektion basierend auf p‐Wert
+    "random_forest",    # Wichtigkeit aus RandomForest
+    "anova_kbest",      # SelectKBest mit ANOVA F-Test
+    "mutual_info",      # SelectKBest mit Mutual Information
+    "chi2_kbest",       # SelectKBest mit Chi-Quadrat
+    "l1_logistic"       # L1-Regularisierung (Logistic Regression)
+]
+
+# Standard‐Anzahl von Features, die pro Methode ausgewählt werden
+FS_TARGET_FEATURE_COUNTS = [10, 20, 30]
+
+# Schwellen für ANCOVA-Forward-Selection
+FS_P_THRESH = 0.05           # Stoppe, wenn p > 0.05 nach mindestens min_num_features
+FS_MIN_NUM_FEATURES = 3      # Minimal immer so viele Features einfügen
+FS_N_JOBS = 1                # Anzahl paralleler Prozesse für die Selektion
