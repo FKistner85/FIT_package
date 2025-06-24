@@ -9,7 +9,7 @@ from FIT_python.data_loader import load_raw_files
 
 def main():
     # 1) Specify the raw data directory
-    raw_dir = Path('data/raw')  # Adjust path as needed
+    raw_dir = Path('../data/raw')  # Adjust path as needed
 
     # 2) Load all raw files
     dfs = load_raw_files(raw_dir)
