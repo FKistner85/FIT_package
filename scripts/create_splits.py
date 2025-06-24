@@ -3,7 +3,7 @@
 
 from pathlib import Path
 import pandas as pd
-from FIT_python.config import RAW_DIR, SPLITS_DIR
+from FIT_python.config import RAW_DIR, SPLITS_DIR, normalize_dataset_name
 from FIT_python.splits_wrapper import all_splits
 
 def ensure_dir(p: Path):
@@ -20,7 +20,8 @@ def main():
 
     splits = all_splits(raw_dir)
     for name, parts in splits.items():
-        base = split_dir / name.replace(" ", "_")
+        norm_name = normalize_dataset_name(name)
+        base = split_dir / norm_name
         for split_name, df in parts.items():
             save_df(df, base / f"{split_name}.parquet")
 

@@ -46,6 +46,17 @@ SCALER_PARAMS = {
 # Misc
 LOG_LEVEL = "INFO"
 
+# -------------------------------------------------------------------
+# Dataset name normalization
+
+def normalize_dataset_name(name: str) -> str:
+    """Return a normalized dataset name.
+
+    Spaces are replaced with underscores and the result is lowercased so that
+    all pipeline steps use consistent folder names.
+    """
+    return name.strip().replace(" ", "_").lower()
+
 
 # -------------------------------------------------------------------
 # Feature Selection parameters

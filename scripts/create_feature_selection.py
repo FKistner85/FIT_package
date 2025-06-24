@@ -15,23 +15,31 @@ from FIT_python.config import (
     DEFAULT_TARGETS,
     OTTER_META_COLS,
     FS_DEFAULT_METHODS,
-    FS_TARGET_FEATURE_COUNTS
+    FS_TARGET_FEATURE_COUNTS,
+    normalize_dataset_name,
 )
 from FIT_python.feature_utils import run_feature_selection_methods
 
 def main():
+    successes = []
+    skipped = []
     for ds_folder in NUMERIC_DIR.iterdir():
         if not ds_folder.is_dir():
             continue
-        dataset = ds_folder.name
+        dataset = normalize_dataset_name(ds_folder.name)
         print(f"\n=== Feature selection for {dataset} ===")
 
         out_dir = PROCESSED_DIR / dataset / "feature_selection"
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        # Load numeric data
-        X = np.load(ds_folder / "X_train.npy")
-        y = np.load(ds_folder / "y_train.npy")
+        X_path = ds_folder / "X_train.npy"
+        y_path = ds_folder / "y_train.npy"
+        if not X_path.exists() or not y_path.exists():
+            print(f"Skipping {dataset}: numeric arrays missing")
+            skipped.append(dataset)
+            continue
+        X = np.load(X_path)
+        y = np.load(y_path)
 
         # Reconstruct DataFrame for column names
         df_raw = pd.read_parquet(PROCESSED_DIR / dataset / "train.parquet")
@@ -79,6 +87,13 @@ def main():
                 # Save to txt
                 pd.Series(feats).to_csv(filepath, index=False, header=False)
                 print(f"Saved {filename} ({len(feats)} features)")
+
+        successes.append(dataset)
+
+    print("\nFeature selection summary:")
+    print("  Successful:", successes)
+    if skipped:
+        print("  Skipped:", skipped)
 
 if __name__ == "__main__":
     main()
