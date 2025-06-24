@@ -3,6 +3,7 @@
 
 from pathlib import Path
 import pandas as pd
+from FIT_python.config import RAW_DIR, SPLITS_DIR
 from FIT_python.splits_wrapper import all_splits
 
 def ensure_dir(p: Path):
@@ -14,9 +15,8 @@ def save_df(df: pd.DataFrame, path: Path):
     print(f"Saved {path} ({len(df)} rows)")
 
 def main():
-    project_root = Path(__file__).resolve().parent.parent
-    raw_dir  = project_root / "data" / "raw"
-    split_dir= project_root / "data" / "splits"
+    raw_dir = RAW_DIR
+    split_dir = SPLITS_DIR
 
     splits = all_splits(raw_dir)
     for name, parts in splits.items():

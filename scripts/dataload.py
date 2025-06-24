@@ -5,11 +5,12 @@ Usage: run in a notebook or as a script.
 """
 from pathlib import Path
 import pandas as pd
-from FIT_python.data_loader import load_raw_files
+from FIT_python.config import RAW_DIR
+from FIT_python.data_import_utils import load_raw_files
 
 def main():
     # 1) Specify the raw data directory
-    raw_dir = Path('../data/raw')  # Adjust path as needed
+    raw_dir = RAW_DIR
 
     # 2) Load all raw files
     dfs = load_raw_files(raw_dir)
