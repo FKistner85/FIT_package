@@ -9,6 +9,10 @@ RAW_DIR       = DATA_DIR / "raw"
 SPLITS_DIR    = DATA_DIR / "splits"
 PROCESSED_DIR = DATA_DIR / "processed"
 
+# Processed data files
+OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
+OTTER_POINT_MAP_PATH    = PROCESSED_DIR / "otter_point_map.json"
+
 # Results directories
 RESULTS_DIR       = PROJECT_ROOT / "results"
 RESULTS_DATA_DIR  = RESULTS_DIR / "data"
@@ -20,10 +24,10 @@ NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
 
 # Default column configurations
 OTTER_META_COLS = ["id", "date", "location", "dataorigin", "substrate"]
-DEFAULT_TARGETS = ["species", "animal", "trail", "sex"]
+DEFAULT_TARGETS = ["species", "individual_id", "trail", "sex"]
 
 # Splitting parameters
-GROUP_COL           = "individual"
+GROUP_COL           = "individual_id"
 STRATIFY_COL        = "sex"
 GLOBAL_RANDOM_SEED  = 42
 TEST_SIZE           = 0.2

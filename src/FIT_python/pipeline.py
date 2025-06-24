@@ -4,7 +4,13 @@ from pathlib import Path
 import pandas as pd
 from typing import Dict, Any, List, Optional
 
-from FIT_python.data_loader import load_raw_files, load_csv, load_excel, sanitize_labels
+from FIT_python.data_import_utils import (
+    load_raw_files,
+    load_csv,
+    load_excel,
+    sanitize_labels,
+    clean_columns,
+)
 
 class DataPipeline:
     def __init__(
@@ -46,8 +52,13 @@ class DataPipeline:
                 raise ValueError(f"Unsupported file type: {path.suffix}")
 
             # clean only the column names
-            from FIT_python.data_loader import clean_columns
             df.columns = clean_columns(df.columns)
+
+            # normalize individual column if present
+            if 'animal' in df.columns:
+                df.rename(columns={'animal': 'individual_id'}, inplace=True)
+            elif 'individual' in df.columns:
+                df.rename(columns={'individual': 'individual_id'}, inplace=True)
 
             # add id column
             stem = path.stem.replace(" ", "_")
