@@ -24,9 +24,9 @@ def sample_individuals(
     set.
     """
     subset = df[(df["Dataorigin"] == dataset) & (df["Sex"] == sex)]
-    inds = subset["individual"].unique()
+    inds = subset["individual_id"].unique()
     sampled = pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
-    return df[df["individual"].isin(sampled)]
+    return df[df["individual_id"].isin(sampled)]
 
 
 def create_train_test_split(
@@ -79,8 +79,8 @@ def create_train_test_split(
 
     # --- IMPORTANT FIX ---
     # Ensure that no individual can be present in both train and test:
-    # Only rows whose 'individual' does NOT appear in the test set are allowed in the training set.
-    train_df = df_clean[~df_clean["individual"].isin(test_df["individual"])]
+    # Only rows whose 'individual_id' does NOT appear in the test set are allowed in the training set.
+    train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
 
     # Optionally save splits as CSV
     if save_csv or save_pickle:
@@ -115,7 +115,7 @@ def create_group_kfold(
     Parameters
     ----------
     df : pd.DataFrame
-        Data with an ``'individual'`` column.
+        Data with an ``'individual_id'`` column.
     n_splits : int, default ``3``
         Number of cross-validation folds.
     seed : int, default ``GLOBAL_RANDOM_SEED``
@@ -126,15 +126,15 @@ def create_group_kfold(
     Returns
     -------
     pd.DataFrame
-        DataFrame mapping each unique ``individual`` to a fold.
+        DataFrame mapping each unique ``individual_id`` to a fold.
     """
     # Get unique individuals
-    unique_inds = df["individual"].dropna().unique()
-    fold_df = pd.DataFrame({"individual": unique_inds})
+    unique_inds = df["individual_id"].dropna().unique()
+    fold_df = pd.DataFrame({"individual_id": unique_inds})
     fold_df["Fold"] = -1  # initialize
 
     gkf = GroupKFold(n_splits=n_splits)
-    for fold, (_, val_idx) in enumerate(gkf.split(X=fold_df, groups=fold_df["individual"])):
+    for fold, (_, val_idx) in enumerate(gkf.split(X=fold_df, groups=fold_df["individual_id"])):
         fold_df.loc[val_idx, "Fold"] = fold
 
     if save_csv or save_pickle:
@@ -154,7 +154,7 @@ if __name__ == "__main__":
         print("pandas not installed, skipping self-test:", exc)
     else:
         data = pd.DataFrame({
-            "individual": ["i1", "i1", "i2", "i2", "i3", "i3"],
+            "individual_id": ["i1", "i1", "i2", "i2", "i3", "i3"],
             "Trail": ["t1", "t2", "t1", "t2", "t1", "t2"],
             "Sex": ["M", "M", "F", "F", "M", "M"],
             "Dataorigin": ["Own", "Own", "Own", "Own", "Own", "Own"],

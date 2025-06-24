@@ -20,7 +20,7 @@ def main():
 
     # Determine feature columns: exclude meta+target
     meta_cols = ['id', 'date', 'location', 'dataorigin', 'substrate']
-    target_cols = ['species', 'animal', 'trail', 'sex']
+    target_cols = ['species', 'individual_id', 'trail', 'sex']
     feature_cols = [c for c in otter_df.columns if c not in meta_cols + target_cols]
 
     # Build landmark_map

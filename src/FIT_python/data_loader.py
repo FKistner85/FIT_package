@@ -49,6 +49,12 @@ def load_raw_files(folder: Path) -> dict[str, pd.DataFrame]:
         # Clean column names
         df.columns = clean_columns(df.columns)
 
+        # Standardize individual identifier column
+        if "animal" in df.columns:
+            df = df.rename(columns={"animal": "individual_id"})
+        if "individual" in df.columns:
+            df = df.rename(columns={"individual": "individual_id"})
+
         # Add id column
         stem = file.stem.replace(" ", "_")
         df.insert(0, 'id', [f"{stem}_{i}" for i in range(1, len(df)+1)])
