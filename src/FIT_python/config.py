@@ -1,7 +1,7 @@
 from pathlib import Path
 
-# Project root directory
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# Project root directory (two levels up from this file)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # Data directories
 DATA_DIR      = PROJECT_ROOT / "data"

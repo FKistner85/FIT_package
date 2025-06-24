@@ -13,6 +13,7 @@ from FIT_python.config import (
     SCALER_PARAMS
 )
 from FIT_python.scaler_utils import get_standard_scaler, get_robust_scaler
+from FIT_python.transform_utils import convert_numeric
 
 class ScalerWrapper:
     """
@@ -71,6 +72,9 @@ class ScalerWrapper:
                     c for c in df.columns
                     if c not in meta_cols + target_cols
                 ]
+
+                # convert numeric columns before scaling
+                df = convert_numeric(df, feature_cols)
 
                 # apply scaling if requested
                 if scaler:
