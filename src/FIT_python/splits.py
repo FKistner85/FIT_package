@@ -3,6 +3,7 @@
 from pathlib import Path
 import pandas as pd
 from typing import Dict
+from FIT_python.config import RAW_DIR
 from FIT_python.data_import_utils import load_raw_files
 from FIT_python.grouped_splits import train_test_group_split
 from FIT_python.split_utils import create_train_test_split_otter
@@ -35,7 +36,7 @@ def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
 
 if __name__ == "__main__":
     # Example usage
-    raw_dir = Path("data/raw")
+    raw_dir = RAW_DIR
     splits = all_splits(raw_dir)
     for name, parts in splits.items():
         print(f"Dataset: {name}")

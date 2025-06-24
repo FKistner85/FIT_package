@@ -9,6 +9,10 @@ RAW_DIR       = DATA_DIR / "raw"
 SPLITS_DIR    = DATA_DIR / "splits"
 PROCESSED_DIR = DATA_DIR / "processed"
 
+# Processed data files
+OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
+OTTER_POINT_MAP_PATH    = PROCESSED_DIR / "otter_point_map.json"
+
 # Results directories
 RESULTS_DIR       = PROJECT_ROOT / "results"
 RESULTS_DATA_DIR  = RESULTS_DIR / "data"
