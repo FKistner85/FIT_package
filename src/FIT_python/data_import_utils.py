@@ -44,6 +44,12 @@ def load_raw_files(
         # Clean column names
         df.columns = clean_columns(df.columns)
 
+        # Normalize individual identifier column
+        if 'animal' in df.columns:
+            df.rename(columns={'animal': 'individual_id'}, inplace=True)
+        elif 'individual' in df.columns:
+            df.rename(columns={'individual': 'individual_id'}, inplace=True)
+
         # Add id column if requested
         if add_id:
             stem = id_prefix if id_prefix else file.stem.replace(' ', '_')

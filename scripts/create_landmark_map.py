@@ -5,22 +5,23 @@ Generate landmark_map and point_map for Eurasian Otter dataset.
 """
 import json
 from pathlib import Path
-from FIT_python.data_loader import load_raw_files
+from FIT_python.config import RAW_DIR, PROCESSED_DIR
+from FIT_python.data_import_utils import load_raw_files
 
 def main():
-    raw_dir = Path('data/raw')
-    processed_dir = Path('data/processed')
+    raw_dir = RAW_DIR
+    processed_dir = PROCESSED_DIR
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     # Load only Otter data
     dfs = load_raw_files(raw_dir)
-    otter_df = dfs.get('Eurasian_Otter_New')
+    otter_df = dfs.get('Eurasian_Otter')
     if otter_df is None:
-        raise FileNotFoundError('Eurasian_Otter_New dataset not found in data/raw')
+        raise FileNotFoundError('Eurasian_Otter dataset not found in data/raw')
 
     # Determine feature columns: exclude meta+target
     meta_cols = ['id', 'date', 'location', 'dataorigin', 'substrate']
-    target_cols = ['species', 'animal', 'trail', 'sex']
+    target_cols = ['species', 'individual_id', 'trail', 'sex']
     feature_cols = [c for c in otter_df.columns if c not in meta_cols + target_cols]
 
     # Build landmark_map

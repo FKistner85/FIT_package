@@ -20,10 +20,10 @@ NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
 
 # Default column configurations
 OTTER_META_COLS = ["id", "date", "location", "dataorigin", "substrate"]
-DEFAULT_TARGETS = ["species", "animal", "trail", "sex"]
+DEFAULT_TARGETS = ["species", "individual_id", "trail", "sex"]
 
 # Splitting parameters
-GROUP_COL           = "individual"
+GROUP_COL           = "individual_id"
 STRATIFY_COL        = "sex"
 GLOBAL_RANDOM_SEED  = 42
 TEST_SIZE           = 0.2

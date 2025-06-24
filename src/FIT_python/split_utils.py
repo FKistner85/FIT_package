@@ -75,9 +75,11 @@ def sample_individuals(
     Used for the fixed Otter test split.
     """
     subset = df[(df["Dataorigin"] == dataset) & (df["sex"].str.lower() == sex.lower())]
-    inds = subset["animal"].unique()
-    sampled = pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
-    return df[df["animal"].isin(sampled)]
+    inds = subset["individual_id"].unique()
+    sampled = (
+        pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
+    )
+    return df[df["individual_id"].isin(sampled)]
 
 def create_train_test_split_otter(
     df: pd.DataFrame,
@@ -98,5 +100,5 @@ def create_train_test_split_otter(
         sample_individuals(df_clean, "Vetrecova et al", "Male", 2, seed),
     ]).drop_duplicates()
 
-    train_df = df_clean[~df_clean["animal"].isin(test_df["animal"])]
+    train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
     return train_df, test_df, inference_df
