@@ -13,11 +13,19 @@ from FIT_python.config import (
     OTTER_POINT_MAP_PATH,
     OTTER_META_COLS,
     DEFAULT_TARGETS,
+    DEBUG_MODE,
 )
 from FIT_python.data_import_utils import load_raw_files
 
 def main():
     raw_dir = RAW_DIR
+    if not raw_dir.exists():
+        msg = f"Required file not found: {raw_dir}"
+        if DEBUG_MODE:
+            raise FileNotFoundError(msg)
+        else:
+            print("Skipping:", msg)
+            return
     lm_path = OTTER_LANDMARK_MAP_PATH
     pm_path = OTTER_POINT_MAP_PATH
 

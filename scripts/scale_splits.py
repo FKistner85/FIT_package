@@ -12,6 +12,14 @@ def main():
     # Ensure processed directory exists
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
+    if not SPLITS_DIR.exists():
+        msg = f"Required file not found: {SPLITS_DIR}"
+        if DEBUG_MODE:
+            raise FileNotFoundError(msg)
+        else:
+            print("Skipping:", msg)
+            return
+
     # Instantiate wrapper (use default scaler from config)
     scaler = ScalerWrapper()
     scaler.scale_all()

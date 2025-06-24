@@ -56,13 +56,13 @@ def load_numpy(path: Path) -> np.ndarray:
         else:
             print(f"Warning: skipping missing {path}")
             raise RuntimeError("skip")
-    return np.load(path)
+    return np.load(path, allow_pickle=True)
 
 
 def load_optional(path: Path) -> np.ndarray | None:
     if not path.exists():
         return None
-    return np.load(path)
+    return np.load(path, allow_pickle=True)
 
 
 def last_two_to_labels(y: np.ndarray) -> np.ndarray:

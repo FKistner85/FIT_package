@@ -49,8 +49,8 @@ def main():
                 print("Skipping:", msg)
                 skipped.append(dataset)
                 continue
-        X = np.load(X_path)
-        y = np.load(y_path)
+        X = np.load(X_path, allow_pickle=True)
+        y = np.load(y_path, allow_pickle=True)
 
         # Reconstruct DataFrame for column names
         df_raw = pd.read_parquet(PROCESSED_DIR / dataset / "train.parquet")

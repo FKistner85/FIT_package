@@ -17,6 +17,13 @@ def main():
     n_components = 2
 
     X_dict = {}
+    if not PROCESSED_DIR.exists():
+        msg = f"Required file not found: {PROCESSED_DIR}"
+        if DEBUG_MODE:
+            raise FileNotFoundError(msg)
+        else:
+            print("Skipping:", msg)
+            return
     for ds_folder in PROCESSED_DIR.iterdir():
         if not ds_folder.is_dir() or ds_folder.name == "numeric":
             continue

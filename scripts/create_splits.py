@@ -3,7 +3,7 @@
 
 from pathlib import Path
 import pandas as pd
-from FIT_python.config import RAW_DIR, SPLITS_DIR, normalize_dataset_name
+from FIT_python.config import RAW_DIR, SPLITS_DIR, normalize_dataset_name, DEBUG_MODE
 from FIT_python.splits_wrapper import all_splits
 
 def ensure_dir(p: Path):
@@ -16,6 +16,13 @@ def save_df(df: pd.DataFrame, path: Path):
 
 def main():
     raw_dir = RAW_DIR
+    if not raw_dir.exists():
+        msg = f"Required file not found: {raw_dir}"
+        if DEBUG_MODE:
+            raise FileNotFoundError(msg)
+        else:
+            print("Skipping:", msg)
+            return
     split_dir = SPLITS_DIR
 
     splits = all_splits(raw_dir)
