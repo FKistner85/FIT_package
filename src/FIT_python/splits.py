@@ -27,7 +27,11 @@ def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
                 'inference': inference_df
             }
         else:
-            train_df, test_df = train_test_group_split(df)
+            try:
+                train_df, test_df = train_test_group_split(df)
+            except ValueError as e:
+                print(f"Skipping {name}: {e}")
+                continue
             splits[name] = {
                 'train': train_df,
                 'test': test_df

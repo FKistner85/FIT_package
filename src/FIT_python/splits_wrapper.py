@@ -34,7 +34,11 @@ def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
             out["folds"] = folds_df
 
         else:
-            train_df, test_df = train_test_group_split(df)
+            try:
+                train_df, test_df = train_test_group_split(df)
+            except ValueError as e:
+                print(f"Skipping {name}: {e}")
+                continue
             out["train"] = train_df
             out["test"]  = test_df
             folds_df = group_stratified_kfold(train_df)
