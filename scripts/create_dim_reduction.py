@@ -3,7 +3,12 @@
 
 from pathlib import Path
 import pandas as pd
-from FIT_python.config import PROCESSED_DIR, DEFAULT_TARGETS, OTTER_META_COLS
+from FIT_python.config import (
+    PROCESSED_DIR,
+    DEFAULT_TARGETS,
+    OTTER_META_COLS,
+    DEBUG_MODE,
+)
 from FIT_python.dim_reduction_wrapper import reduce_all
 
 
@@ -18,7 +23,12 @@ def main():
         dataset = ds_folder.name
         train_path = ds_folder / "train.parquet"
         if not train_path.exists():
-            continue
+            msg = f"Required file not found: {train_path}"
+            if DEBUG_MODE:
+                raise FileNotFoundError(msg)
+            else:
+                print("Skipping:", msg)
+                continue
         df = pd.read_parquet(train_path)
         if "otter" in dataset.lower():
             meta = OTTER_META_COLS

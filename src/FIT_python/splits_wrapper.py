@@ -8,8 +8,9 @@ from FIT_python.data_import_utils import load_raw_files
 from FIT_python.split_utils import (
     train_test_group_split,
     group_stratified_kfold,
-    create_train_test_split_otter
+    create_train_test_split_otter,
 )
+from FIT_python.config import DEBUG_MODE
 
 def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
@@ -37,8 +38,12 @@ def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
             try:
                 train_df, test_df = train_test_group_split(df)
             except ValueError as e:
-                print(f"Skipping {name}: {e}")
-                continue
+                msg = f"Splitting failed for {name}: {e}"
+                if DEBUG_MODE:
+                    raise ValueError(msg)
+                else:
+                    print("Skipping:", msg)
+                    continue
             out["train"] = train_df
             out["test"]  = test_df
             folds_df = group_stratified_kfold(train_df)
