@@ -5,65 +5,65 @@ import pandas as pd
 import numpy as np
 import logging
 from FIT_python.config import (
-    PROCESSED_DIR,
+    SPLITS_DIR,
     NUMERIC_DIR,
     DEFAULT_TARGETS,
     OTTER_META_COLS,
-    normalize_dataset_name,
     DEBUG_MODE,
 )
-from .transform_utils import convert_numeric, one_hot_encode_targets, save_target_mapping
+from .transform_utils import convert_numeric
 
 class TransformWrapper:
-    """
-    Applies numeric conversion and one-hot encoding to processed splits.
-    Saves numpy arrays and mappings under NUMERIC_DIR/<Dataset>/.
-    """
+    """Numeric transformation of train/test splits into NumPy arrays."""
+
     def __init__(self, logger: logging.Logger | None = None):
         self.logger = logger or logging.getLogger(__name__)
 
-    def transform_all(self):
+    def transform_dataset(self, dataset_name: str, train_path: Path, test_path: Path) -> None:
+        """Transform a single dataset given train and test parquet paths."""
+
+        dataset = dataset_name.replace(" ", "_")
+        out_dir = NUMERIC_DIR / dataset
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        for split, pq_path in ("train", train_path), ("test", test_path):
+            df = pd.read_parquet(pq_path)
+
+            meta_cols = OTTER_META_COLS if "otter" in dataset.lower() else ["id"]
+            feature_cols = [c for c in df.columns if c not in meta_cols + DEFAULT_TARGETS]
+
+            df = convert_numeric(df, feature_cols)
+            X = df[feature_cols].to_numpy(dtype=float)
+            y = df["sex"].to_numpy()
+
+            np.save(out_dir / f"X_{split}.npy", X)
+            np.save(out_dir / f"y_{split}.npy", y)
+            self.logger.info("Saved %s/%s", dataset, split)
+
+    def transform_all(self) -> None:
+        """Transform all datasets found in :data:`SPLITS_DIR`."""
+
         NUMERIC_DIR.mkdir(parents=True, exist_ok=True)
-        successes = []
-        failures = []
-        for ds_folder in PROCESSED_DIR.iterdir():
+
+        for ds_folder in SPLITS_DIR.iterdir():
             if not ds_folder.is_dir():
                 continue
-            dataset = normalize_dataset_name(ds_folder.name)
-            out_dir = NUMERIC_DIR / dataset
-            out_dir.mkdir(parents=True, exist_ok=True)
 
-            try:
-                for split in ["train", "test"]:
-                    parquet_path = ds_folder / f"{split}.parquet"
-                    if not parquet_path.exists():
-                        msg = f"Required file not found: {parquet_path}"
-                        if DEBUG_MODE:
-                            raise FileNotFoundError(msg)
-                        else:
-                            self.logger.warning("Skipping: %s", msg)
-                            raise RuntimeError("skip")
-                    df = pd.read_parquet(parquet_path)
-                    if "otter" in dataset.lower():
-                        meta = OTTER_META_COLS
-                    else:
-                        meta = ["id"]
-                    features = [c for c in df.columns if c not in meta + DEFAULT_TARGETS]
-                    df_num = convert_numeric(df.copy(), features)
-                    X = df_num[features].to_numpy()
-                    y, mapping = one_hot_encode_targets(df_num, DEFAULT_TARGETS)
-                    np.save(out_dir / f"X_{split}.npy", X)
-                    np.save(out_dir / f"y_{split}.npy", y)
-                    save_target_mapping(mapping, out_dir / "target_mapping.json")
-                    self.logger.info("Saved %s/%s", dataset, split)
-                successes.append(dataset)
-            except RuntimeError:
-                # skipped due to missing file in non-debug mode
-                continue
-            except Exception as e:
-                failures.append(ds_folder.name)
-                self.logger.warning("Failed to transform %s: %s", ds_folder.name, e)
+            name = ds_folder.name.replace(" ", "_")
+            train_pq = ds_folder / "train.parquet"
+            test_pq = ds_folder / "test.parquet"
 
-        self.logger.info("Transformation complete. Success: %s", successes)
-        if failures:
-            self.logger.warning("Datasets failed: %s", failures)
+            missing = None
+            for path in (train_pq, test_pq):
+                if not path.exists():
+                    missing = path
+                    break
+            if missing:
+                msg = f"Required file not found: {missing}"
+                if DEBUG_MODE:
+                    raise FileNotFoundError(msg)
+                else:
+                    self.logger.warning("Skipping dataset: %s", msg)
+                    continue
+
+            self.transform_dataset(name, train_pq, test_pq)
