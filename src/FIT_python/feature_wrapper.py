@@ -32,7 +32,7 @@ class FeatureSelector:
             out_base.mkdir(parents=True, exist_ok=True)
 
             # load numeric X once
-            X = np.load(ds_folder / "X_train.npy")
+            X = np.load(ds_folder / "X_train.npy", allow_pickle=True)
             df_raw = pd.read_parquet(PROCESSED_DIR / dataset / "train.parquet")
             # determine feature names
             if "otter" in dataset.lower():

@@ -14,6 +14,13 @@ from FIT_python.config import DEBUG_MODE, SPLITS_DIR
 def main() -> int:
     wrapper = TransformWrapper()
     try:
+        if not SPLITS_DIR.exists():
+            msg = f"Required file not found: {SPLITS_DIR}"
+            if DEBUG_MODE:
+                raise FileNotFoundError(msg)
+            else:
+                print("Skipping:", msg)
+                return 1
         for folder in SPLITS_DIR.iterdir():
             if not folder.is_dir():
                 continue

@@ -5,12 +5,19 @@ Usage: run in a notebook or as a script.
 """
 from pathlib import Path
 import pandas as pd
-from FIT_python.config import RAW_DIR
+from FIT_python.config import RAW_DIR, DEBUG_MODE
 from FIT_python.data_import_utils import load_raw_files
 
 def main():
     # 1) Specify the raw data directory
     raw_dir = RAW_DIR
+    if not raw_dir.exists():
+        msg = f"Required file not found: {raw_dir}"
+        if DEBUG_MODE:
+            raise FileNotFoundError(msg)
+        else:
+            print("Skipping:", msg)
+            return
 
     # 2) Load all raw files
     dfs = load_raw_files(raw_dir)
