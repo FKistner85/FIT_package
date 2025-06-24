@@ -19,16 +19,17 @@ Create the parent directory for a given path if it does not already exist.
 Helper used by the script to save a `DataFrame` to a parquet file.
 
 ### `all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]`
-Function from `FIT_python.splits_wrapper`. For every dataset under `raw_dir` it creates train/test splits (and folds and inference data for the otter dataset). Internally it uses `train_test_group_split`, `group_stratified_kfold` and `create_train_test_split_otter` from `FIT_python.split_utils`.
+Function from `FIT_python.splits_wrapper`. For every dataset under `raw_dir` it
+creates simple train/test splits by calling `train_test_group_split`.
 
 ### `train_test_group_split(df: pd.DataFrame, ...) -> Tuple[pd.DataFrame, pd.DataFrame]`
-Group aware train/test split ensuring that no individual appears in both sets and that the `sex` distribution is preserved.
+Group-aware train/test split ensuring that no individual appears in both sets.
 
 ### `group_stratified_kfold(df: pd.DataFrame, ...) -> pd.DataFrame`
-Assigns a `Fold` column to the data using `StratifiedGroupKFold` so that cross validation keeps individuals together and respects the `sex` stratification.
+*Deprecated.* Used to assign folds via `StratifiedGroupKFold`.
 
 ### `create_train_test_split_otter(df: pd.DataFrame, seed: int = GLOBAL_RANDOM_SEED)`
-Deterministically constructs train, test and inference splits for the otter dataset.
+*Deprecated.* Former helper for deterministic Otter splits.
 
 ### `main()` (in `scripts/create_splits.py`)
 Runs `all_splits` on the raw data directory and saves all resulting dataframes to `data/splits`.
