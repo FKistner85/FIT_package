@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV, PredefinedSplit
+from sklearn.model_selection import GridSearchCV, PredefinedSplit, StratifiedKFold
 from sklearn.metrics import get_scorer
 import joblib
 
@@ -26,6 +26,7 @@ from FIT_python.config import (
     MODELS,
     METRICS,
     RESULTS_DIR,
+    NUM_KFOLDS,
 )
 
 class PipelineWrapper:
@@ -98,10 +99,18 @@ class PipelineWrapper:
                 X_test = X_test[mask_te]
                 y_test = y_test[mask_te]
 
-            if "fold" not in df_train.columns:
-                raise KeyError("Column 'fold' not found in split file; cannot build PredefinedSplit")
-            folds = df_train["fold"].to_numpy()
-            ps = PredefinedSplit(test_fold=folds)
+            if "fold" in df_train.columns or "Fold" in df_train.columns:
+                col = "fold" if "fold" in df_train.columns else "Fold"
+                folds = df_train[col].to_numpy()
+                ps = PredefinedSplit(test_fold=folds)
+            else:
+                self.logger.warning(
+                    "Column 'fold' not found in split file; using StratifiedKFold"
+                )
+                from sklearn.model_selection import StratifiedKFold
+                ps = StratifiedKFold(
+                    n_splits=NUM_KFOLDS, shuffle=True, random_state=self.seed
+                )
 
             for model_name in self.models:
                 self.logger.info("Building pipeline for model: %s", model_name)
