@@ -55,8 +55,22 @@ def load_raw_files(
             stem = id_prefix if id_prefix else file.stem.replace(' ', '_')
             df.insert(0, 'id', [f"{stem}_{i}" for i in range(1, len(df) + 1)])
 
+        # Attempt to coerce comma decimal strings to float
+        df = coerce_numeric_columns(df)
+
         data_frames[file.stem.replace(' ', '_')] = df
     return data_frames
+
+
+def coerce_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert numeric-looking object columns with comma decimal separator."""
+    for col in df.select_dtypes(include="object").columns:
+        series = df[col].astype(str).str.replace(',', '.', regex=False)
+        numeric = pd.to_numeric(series, errors="coerce")
+        # Convert if majority of non-null values are numeric
+        if numeric.notna().sum() >= len(df) * 0.8 and numeric.notna().sum() > 0:
+            df[col] = numeric.astype(float)
+    return df
 
 def sanitize_labels(
     df: pd.DataFrame,
