@@ -18,6 +18,8 @@ def setup_dummy_dataset(tmp_path):
         "feat2": range(10,18),
         "feat3": np.linspace(0,1,8)
     })
+    # introduce comma decimal strings in feat3
+    df["feat3"] = df["feat3"].map(lambda x: str(round(x,6)).replace('.',','))
     df.to_csv(raw_dir / "demo.csv", index=False)
     return raw_dir
 
@@ -27,6 +29,7 @@ def patch_config(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "RAW_DIR", tmp_path / "raw")
     monkeypatch.setattr(config, "PROCESSED_SPLITS_DIR", proc / "splits")
     monkeypatch.setattr(config, "SCALED_DIR", proc / "scaled")
+    monkeypatch.setattr(config, "NUMERIC_DIR", proc / "numeric")
     monkeypatch.setattr(config, "FEATURE_SELECTED_DIR", proc / "feature_selected")
     monkeypatch.setattr(config, "DIM_REDUCED_DIR", proc / "dim_reduced")
     monkeypatch.setattr(config, "DEFAULT_TARGETS", ["individual_id", "sex"])
@@ -56,6 +59,9 @@ def test_full_pipeline(tmp_path, monkeypatch):
     feats = ["feat1", "feat2", "feat3"]
     assert np.allclose(scaled_train[feats].mean(), 0, atol=1e-6)
     assert np.allclose(scaled_train[feats].std(ddof=0), 1, atol=1e-6)
+    np_dir = config.NUMERIC_DIR / "demo"
+    for f in ["X_train.npy", "y_train.npy", "X_test.npy", "y_test.npy"]:
+        assert (np_dir / f).exists()
 
     create_feature_selection.main()
     fs_train = pd.read_parquet(config.FEATURE_SELECTED_DIR / "demo_train.parquet")

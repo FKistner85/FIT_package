@@ -6,6 +6,7 @@
 
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 import sys
 
@@ -14,9 +15,11 @@ from FIT_python.config import (
     SCALED_DIR,
     DEFAULT_TARGETS,
     OTTER_META_COLS,
+    NUMERIC_DIR,
     DEBUG_MODE,
 )
 from FIT_python.path_utils import split_path, scaled_path
+from FIT_python.transform_utils import convert_numeric
 
 def main():
     print(f"[INFO] Starting scaling of all splits in {PROCESSED_SPLITS_DIR}")
@@ -64,6 +67,10 @@ def main():
         print(f"[INFO] Target columns: {DEFAULT_TARGETS}")
         print(f"[INFO] Feature columns ({len(feature_cols)}): {feature_cols}")
 
+        # convert numeric strings like "3,5" to float
+        df_train = convert_numeric(df_train, feature_cols)
+        df_test = convert_numeric(df_test, feature_cols)
+
         scaler = StandardScaler()
         print("[INFO] Fitting scaler on training features...")
         df_train.loc[:, feature_cols] = scaler.fit_transform(df_train[feature_cols])
@@ -76,6 +83,14 @@ def main():
         print(f"[SUCCESS] Wrote scaled train split to {out_train}")
         df_test.to_parquet(out_test, index=False)
         print(f"[SUCCESS] Wrote scaled test split to  {out_test}")
+
+        # Also persist numeric numpy arrays for fast loading
+        np_dir = NUMERIC_DIR / dataset.replace(" ", "_")
+        np_dir.mkdir(parents=True, exist_ok=True)
+        np.save(np_dir / "X_train.npy", df_train[feature_cols].to_numpy())
+        np.save(np_dir / "y_train.npy", df_train["sex"].to_numpy())
+        np.save(np_dir / "X_test.npy", df_test[feature_cols].to_numpy())
+        np.save(np_dir / "y_test.npy", df_test["sex"].to_numpy())
 
     print("\n[INFO] All datasets scaled.")
     return 0
