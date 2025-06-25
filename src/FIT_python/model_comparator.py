@@ -168,7 +168,7 @@ class ModelComparator:
                 for fs_name, feats in fs_results.items():
                     fs_idx = [feature_cols.index(f) for f in feats]
                     for model_name, model in config.MODELS.items():
-                        param_grid = config.PIPELINE_PARAM_GRIDS["sex"].get(model_name, {})
+                        param_grid = config.BAYES_SPACES.get(model_name, {})
                         wrapper = ModelWrapper(model, param_grid, config.METRICS["sex"])
                         cv = StratifiedKFold(n_splits=3)
                         wrapper.fit(X_train, y_train, cv, fs_idx, config.N_COMPONENTS)

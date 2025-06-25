@@ -1,13 +1,18 @@
+"""Simple wrapper around Optuna-based hyperparameter optimisation utilities."""
 
-"""Wrapper class for hyperparameter tuning, reading settings from config."""
+from __future__ import annotations
 
-from FIT_python.config import GLOBAL_RANDOM_SEED, DEBUG_MODE, # if hyperopt config exists
-from FIT_python.hyperparameter_utils import optimize_hyperparameters, get_best_hyperparameters
+import pandas as pd
+
+from FIT_python.config import GLOBAL_RANDOM_SEED, HYPER_N_TRIALS
+from FIT_python.hyperparameter_utils import get_best_hyperparameters
+
 
 class HyperparameterWrapper:
-    def __init__(self, n_trials: int = None, seed: int = None):
-        from FIT_python.config import HYPEROPTURA_TRIALS as default_trials
-        self.n_trials = n_trials or default_trials
+    """Expose a stable interface used by other wrappers."""
+
+    def __init__(self, n_trials: int | None = None, seed: int | None = None) -> None:
+        self.n_trials = n_trials or HYPER_N_TRIALS
         self.seed = seed or GLOBAL_RANDOM_SEED
 
     def tune(
@@ -15,15 +20,17 @@ class HyperparameterWrapper:
         model_name: str,
         X: pd.DataFrame,
         y: pd.Series,
+        individual_ids: pd.Series,
+        fold_assignments: pd.DataFrame,
+        scoring: str,
     ) -> dict:
-        # Assume fold assignments and individual_ids come externally
-        from FIT_python.config import # ACCORDING CONFIG VARIABLES NEEDED
+        """Return the best hyperparameters for the given data."""
         return get_best_hyperparameters(
             model_name=model_name,
             X=X,
             y=y,
-            individual_ids=...,
-            fold_assignments=...,
-            scoring=...,
-            seed=self.seed
+            individual_ids=individual_ids,
+            fold_assignments=fold_assignments,
+            scoring=scoring,
+            seed=self.seed,
         )

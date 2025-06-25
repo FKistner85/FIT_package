@@ -6,7 +6,9 @@ import numpy as np
 import logging
 import FIT_python.config as config
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
-from .transform_utils import convert_numeric
+# ``transform`` is a package, the helper lives in ``utils`` within the same
+# package.  Using a relative import keeps this wrapper working when installed.
+from .utils import convert_numeric
 
 class TransformWrapper:
     """Numeric transformation of train/test splits into NumPy arrays."""
