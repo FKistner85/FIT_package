@@ -8,6 +8,11 @@ DATA_DIR      = PROJECT_ROOT / "data"
 RAW_DIR       = DATA_DIR / "raw"
 SPLITS_DIR    = DATA_DIR / "splits"
 PROCESSED_DIR = DATA_DIR / "processed"
+# Pipeline sub-directories under processed data
+PROCESSED_SPLITS_DIR = PROCESSED_DIR / "splits"
+SCALED_DIR           = PROCESSED_DIR / "scaled"
+FEATURE_SELECTED_DIR = PROCESSED_DIR / "feature_selected"
+DIM_REDUCED_DIR      = PROCESSED_DIR / "dim_reduced"
 
 # Numeric processed directory
 NUMERIC_DIR = PROCESSED_DIR / "numeric"

@@ -3,8 +3,9 @@
 
 from pathlib import Path
 import pandas as pd
-from FIT_python.config import RAW_DIR, SPLITS_DIR, normalize_dataset_name, DEBUG_MODE
+from FIT_python.config import RAW_DIR, PROCESSED_SPLITS_DIR, normalize_dataset_name, DEBUG_MODE
 from FIT_python.splits_wrapper import all_splits
+from FIT_python.path_utils import split_path
 
 def ensure_dir(p: Path):
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -23,14 +24,13 @@ def main():
         else:
             print("Skipping:", msg)
             return
-    split_dir = SPLITS_DIR
+    out_dir = PROCESSED_SPLITS_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     splits = all_splits(raw_dir)
     for name, parts in splits.items():
-        norm_name = normalize_dataset_name(name)
-        base = split_dir / norm_name
         for split_name, df in parts.items():
-            save_df(df, base / f"{split_name}.parquet")
+            save_df(df, split_path(name, split_name))
 
 if __name__ == "__main__":
     main()
