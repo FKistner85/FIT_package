@@ -168,6 +168,9 @@ BAYES_SPACES = {
     },
 }
 
+# Backwards compatibility for wrappers expecting PIPELINE_PARAM_GRIDS
+PIPELINE_PARAM_GRIDS = BAYES_SPACES
+
 # Hyperparameter optimisation configuration
 HYPER_METHOD = "bayes"
 HYPER_N_TRIALS = 50

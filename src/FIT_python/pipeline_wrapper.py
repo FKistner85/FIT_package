@@ -22,7 +22,7 @@ from FIT_python.config import (
     DEBUG_MODE,
     PIPELINE_TARGETS,
     PIPELINE_STEPS,
-    PIPELINE_PARAM_GRIDS,
+    BAYES_SPACES,
     MODELS,
     METRICS,
     RESULTS_DIR,
@@ -39,7 +39,10 @@ class PipelineWrapper:
         self.splits_dir = Path(PROCESSED_SPLITS_DIR)
         self.numeric_dir = Path(NUMERIC_DIR)
         self.steps = PIPELINE_STEPS  # e.g. ['scaler', 'select', 'pca', 'clf']
-        self.param_grids = PIPELINE_PARAM_GRIDS[target]
+        # ``BAYES_SPACES`` contains search spaces per model; older code expected
+        # ``PIPELINE_PARAM_GRIDS`` keyed by target.  Since only the ``sex``
+        # target is supported, reuse the global BAYES_SPACES mapping.
+        self.param_grids = BAYES_SPACES
         self.models = MODELS
         self.scoring = METRICS
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -52,10 +55,12 @@ class PipelineWrapper:
             if step == 'scaler':
                 step_list.append(('scaler', StandardScaler()))
             elif step == 'select':
-                k = PIPELINE_PARAM_GRIDS.get('feature_selection_k', None)
+                # No configured feature count -> use all features
+                k = None
                 step_list.append(('select', SelectKBest(k=k)))
             elif step == 'pca':
-                n = PIPELINE_PARAM_GRIDS.get('pca_n_components', None)
+                # Default to all components when not specified
+                n = None
                 step_list.append(('pca', PCA(n_components=n, random_state=self.seed)))
             elif step == 'clf':
                 step_list.append(('clf', self.models[model_name]))
