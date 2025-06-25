@@ -92,4 +92,4 @@ FS_N_JOBS = 1  # Anzahl paralleler Prozesse für die Selektion
 # "external_folds": use precomputed grouped/stratified folds
 # "internal_cv":    use sklearn GridSearchCV with cv=3
 VALIDATION_MODE = "external_folds"
-NUM_KFOLDS = 5
+NUM_KFOLDS = 3

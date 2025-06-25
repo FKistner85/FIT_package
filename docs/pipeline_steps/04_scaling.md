@@ -21,3 +21,5 @@ computed.
 | StandardScaler | Centre to zero mean and unit variance | O(n × p) |
 | RobustScaler | Scale by median and IQR | O(n × p) |
 
+
+

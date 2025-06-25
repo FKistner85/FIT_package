@@ -22,7 +22,3 @@ libraries are available.
 | PCA | Linear projection via SVD | O(min(n × p², p × n²)) |
 | t-SNE | Probabilistic embedding with gradient descent | ~O(n²) |
 | UMAP | Fuzzy simplicial set projection | ~O(n log n) |
-
-[Maaten08]: https://doi.org/10.1007/978-3-540-74958-5_7
-[McInnes18]: https://arxiv.org/abs/1802.03426
-

@@ -1,10 +1,5 @@
 # Step 8: Model Comparison
 
-Two scripts illustrate model training.  `compare_models.py` fits a
-simple logistic regression and a support vector machine (SVM).  The
-more comprehensive `model_comparison_sex.py` performs a grid search
-over several classifiers using `GridSearchCV`.
-
 **Selectable Methods**
 - **Logistic Regression** – a linear classifier optimising the
   cross-entropy loss with optional L1 or L2 regularisation.
@@ -36,4 +31,5 @@ over several classifiers using `GridSearchCV`.
 
 Grid search multiplies these base costs by the number of tested
 hyperparameter combinations and cross-validation folds.
+
 
