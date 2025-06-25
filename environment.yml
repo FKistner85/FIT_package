@@ -16,8 +16,12 @@ dependencies:
   - jupyterlab
   - optuna
   - catboost
+  - xgboost
   - lightgbm
-  - pyarrow   
+  - scikit-optimize
+  - scipy
+  - umap-learn
+  - pyarrow
   - pip
   - pip:
     - -e .
