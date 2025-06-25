@@ -8,7 +8,9 @@ from typing import Dict, Optional, List
 
 from FIT_python.data_import_utils import load_raw_files, sanitize_labels
 from FIT_python.transform_utils import convert_numeric
+import FIT_python.config as config
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
+import sys
 
 class DataImporter:
     """Class to import, clean, and convert data from raw files."""
@@ -66,3 +68,32 @@ class DataImporter:
         # always convert numeric features before scaling
         dfs = self.convert(dfs)
         return dfs
+
+
+class DataImportWrapper:
+    """High-level wrapper to clean all raw datasets and persist Parquet files."""
+
+    def __init__(self) -> None:
+        pass
+
+    def clean_all(self) -> int:
+        """Load raw files, clean labels and save Parquet outputs.
+
+        Returns 0 on success, 1 on failure.
+        """
+        if not config.RAW_DIR.exists():
+            msg = f"Required directory not found: {config.RAW_DIR}"
+            print(f"[ERROR] {msg}", file=sys.stderr)
+            if config.DEBUG_MODE:
+                raise FileNotFoundError(msg)
+            return 1
+
+        config.CLEANED_DIR.mkdir(parents=True, exist_ok=True)
+        importer = DataImporter(config.RAW_DIR, target_cols=DEFAULT_TARGETS)
+        dfs = importer.run()
+        for name, df in dfs.items():
+            out = config.CLEANED_DIR / f"{name}.parquet"
+            df.to_parquet(out, index=False)
+            print(f"[REPORT] cleaned {name}: shape={df.shape}")
+        print("[SUCCESS] clean_all completed.")
+        return 0
