@@ -44,11 +44,13 @@ class DimReducer:
         out_dir: Path | None = None,
         methods: Optional[List[str]] = None,
         n_components: int | None = None,
+        params: Optional[Dict[str, dict]] = None,
     ) -> None:
         self.feature_dir = feature_dir or config.FEATURE_SELECTED_DIR
         self.out_dir = out_dir or config.DIM_REDUCED_DIR
         self.methods = methods or getattr(config, "DIM_REDUCTION_METHODS", ["pca"])
         self.n_components = n_components or getattr(config, "N_COMPONENTS", 2)
+        self.params = params or getattr(config, "DIM_PARAMS", {})
 
     def reduce_all(self) -> int:
         if not self.feature_dir.exists():
@@ -78,8 +80,14 @@ class DimReducer:
                         raise ValueError(f"Unknown method '{dm}'")
                     out_base = self.out_dir / dm / method_name
                     out_base.mkdir(parents=True, exist_ok=True)
-                    red_train = func(X_train, self.n_components)
-                    red_test = func(X_test, self.n_components)
+                    method_params = {"n_components": self.n_components}
+                    method_params.update(self.params.get(dm, {}))
+                    try:
+                        red_train = func(X_train, **method_params)
+                        red_test = func(X_test, **method_params)
+                    except Exception as exc:  # pragma: no cover - optional methods may fail
+                        print(f"[WARN] {dm} failed on {ds}: {exc}")
+                        continue
                     pd.concat([df_train[meta_cols + DEFAULT_TARGETS], red_train], axis=1).to_parquet(
                         out_base / f"{ds}_train.parquet", index=False
                     )
@@ -93,7 +101,7 @@ class DimReducer:
                 # backward compatible PCA file without subdirectories
                 default_out = self.out_dir / f"{ds}_train.parquet"
                 if not default_out.exists():
-                    default_train = reduce_pca(X_train, self.n_components)
+                    default_train = reduce_pca(X_train, self.n_components, random_state=config.GLOBAL_RANDOM_SEED)
                     default_train.to_parquet(default_out, index=False)
         print("[SUCCESS] dimensionality reduction completed.")
         return 0
