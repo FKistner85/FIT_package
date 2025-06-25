@@ -6,7 +6,9 @@ import pandas as pd
 
 from FIT_python.data_import_utils import load_raw_files
 from FIT_python.split_utils import train_test_group_split
-from FIT_python.config import DEBUG_MODE
+import FIT_python.config as config
+from FIT_python.path_utils import split_path
+import sys
 
 def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
     """Create simple train/test splits for each dataset under ``raw_dir``."""
@@ -26,3 +28,28 @@ def all_splits(raw_dir: Path) -> Dict[str, Dict[str, pd.DataFrame]]:
         results[name] = {"train": train_df, "test": test_df}
 
     return results
+
+
+class SplitsWrapper:
+    """Convenience wrapper to create and store train/test splits."""
+
+    def __init__(self) -> None:
+        pass
+
+    def split_all(self) -> int:
+        if not config.RAW_DIR.exists():
+            msg = f"Required directory not found: {config.RAW_DIR}"
+            print(f"[ERROR] {msg}", file=sys.stderr)
+            if config.DEBUG_MODE:
+                raise FileNotFoundError(msg)
+            return 1
+
+        config.PROCESSED_SPLITS_DIR.mkdir(parents=True, exist_ok=True)
+        splits = all_splits(config.RAW_DIR)
+        for name, parts in splits.items():
+            for split_name, df in parts.items():
+                out = split_path(name, split_name)
+                df.to_parquet(out, index=False)
+                print(f"[REPORT] {name} {split_name}: shape={df.shape}")
+        print("[SUCCESS] split_all completed.")
+        return 0

@@ -4,13 +4,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import logging
-from FIT_python.config import (
-    SPLITS_DIR,
-    NUMERIC_DIR,
-    DEFAULT_TARGETS,
-    OTTER_META_COLS,
-    DEBUG_MODE,
-)
+import FIT_python.config as config
+from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 from .transform_utils import convert_numeric
 
 class TransformWrapper:
@@ -23,7 +18,7 @@ class TransformWrapper:
         """Transform a single dataset given train and test parquet paths."""
 
         dataset = dataset_name.replace(" ", "_")
-        out_dir = NUMERIC_DIR / dataset
+        out_dir = config.NUMERIC_DIR / dataset
         out_dir.mkdir(parents=True, exist_ok=True)
 
         for split, pq_path in ("train", train_path), ("test", test_path):
@@ -58,9 +53,9 @@ class TransformWrapper:
     def transform_all(self) -> None:
         """Transform all datasets found in :data:`SPLITS_DIR`."""
 
-        NUMERIC_DIR.mkdir(parents=True, exist_ok=True)
+        config.NUMERIC_DIR.mkdir(parents=True, exist_ok=True)
 
-        for ds_folder in SPLITS_DIR.iterdir():
+        for ds_folder in config.SPLITS_DIR.iterdir():
             if not ds_folder.is_dir():
                 continue
 
@@ -75,7 +70,7 @@ class TransformWrapper:
                     break
             if missing:
                 msg = f"Required file not found: {missing}"
-                if DEBUG_MODE:
+                if config.DEBUG_MODE:
                     raise FileNotFoundError(msg)
                 else:
                     self.logger.warning("Skipping dataset: %s", msg)

@@ -3,13 +3,10 @@
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import sys
 
-from FIT_python.config import (
-    NUMERIC_DIR,
-    PROCESSED_DIR,
-    DEFAULT_TARGETS,
-    OTTER_META_COLS,
-)
+import FIT_python.config as config
+from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 from FIT_python.feature_utils import run_feature_selection_methods
 
 class FeatureSelector:
@@ -20,39 +17,34 @@ class FeatureSelector:
     def __init__(self):
         pass
 
-    def select_all(self):
-        for ds_folder in NUMERIC_DIR.iterdir():
-            if not ds_folder.is_dir():
-                continue
-            dataset = ds_folder.name
-            print(f"\n=== Feature selection for {dataset} ===")
+    def select_all(self) -> int:
+        if not config.SCALED_DIR.exists():
+            print(f"[ERROR] {config.SCALED_DIR} not found", file=sys.stderr)
+            if config.DEBUG_MODE:
+                raise FileNotFoundError(config.SCALED_DIR)
+            return 1
 
-            out_base = PROCESSED_DIR / dataset / "feature_selection"
-            out_base.mkdir(parents=True, exist_ok=True)
+        config.FEATURE_SELECTED_DIR.mkdir(parents=True, exist_ok=True)
+        datasets = {p.stem.rsplit("_", 1)[0] for p in config.SCALED_DIR.glob("*_train.parquet")}
 
-            # load numeric X once
-            X = np.load(ds_folder / "X_train.npy", allow_pickle=True)
-            df_raw = pd.read_parquet(PROCESSED_DIR / dataset / "train.parquet")
-            # determine feature names
-            if "otter" in dataset.lower():
-                meta = OTTER_META_COLS
-            else:
-                meta = ["id"]
-            feature_cols = [c for c in df_raw.columns if c not in meta + DEFAULT_TARGETS]
-            X_df = pd.DataFrame(X, columns=feature_cols)
+        for dataset in datasets:
+            train_p = config.SCALED_DIR / f"{dataset}_train.parquet"
+            test_p = config.SCALED_DIR / f"{dataset}_test.parquet"
+            df_train = pd.read_parquet(train_p)
+            df_test = pd.read_parquet(test_p)
 
-            # only the 'sex' target
-            target = "sex"
-            print(f"\n-- Target: {target} --")
-            y_series = df_raw[target]
+            meta_cols = OTTER_META_COLS if "otter" in dataset.lower() else ["id"]
+            feature_cols = [c for c in df_train.columns if c not in meta_cols + DEFAULT_TARGETS]
 
-            # run selection
-            results = run_feature_selection_methods(X_df, y_series)
+            variances = df_train[feature_cols].var().sort_values(ascending=False)
+            n_feats = getattr(config, "N_FEATURES", 2)
+            selected = variances.head(n_feats).index.tolist()
 
-            # save each method under feature_selection/sex/
-            out_dir = out_base / target
-            out_dir.mkdir(parents=True, exist_ok=True)
-            for method, feats in results.items():
-                path = out_dir / f"{method}.txt"
-                pd.Series(feats).to_csv(path, index=False, header=False)
-                print(f" Saved {target}/{method}.txt ({len(feats)} features)")
+            for split_name, df in [("train", df_train), ("test", df_test)]:
+                out_path = config.FEATURE_SELECTED_DIR / f"{dataset}_{split_name}.parquet"
+                df_sel = df[meta_cols + DEFAULT_TARGETS + selected]
+                df_sel.to_parquet(out_path, index=False)
+            print(f"[REPORT] {dataset} selected features: {selected}")
+
+        print("[SUCCESS] feature selection completed.")
+        return 0

@@ -12,6 +12,8 @@ from FIT_python.summary_utils import (
     compute_summary,
     plot_summary_table,
 )
+import FIT_python.config as config
+import sys
 
 
 ALLOWED_ORIGINS = {"train", "test", "inference"}
@@ -53,3 +55,34 @@ def run_summary(
 
     if plot:
         plot_summary_table(df_summary, fig_dir)
+
+
+class SummaryWrapper:
+    """Wrapper providing default configuration for dataset summaries."""
+
+    def __init__(self) -> None:
+        pass
+
+    def summarize_all(
+        self,
+        splits_dir: Path | None = None,
+        output_table: Path | None = None,
+        fig_dir: Path | None = None,
+    ) -> int:
+        try:
+            run_summary(
+                splits_dir or config.SPLITS_DIR,
+                output_table or config.RESULTS_DATA_DIR / "summary.csv",
+                fig_dir or config.FIGURES_DIR / "summary",
+                force=True,
+                plot=True,
+            )
+            print(
+                f"[SUCCESS] summary written to {config.RESULTS_DATA_DIR / 'summary.csv'}"
+            )
+            return 0
+        except Exception as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            if config.DEBUG_MODE:
+                raise
+            return 1

@@ -93,3 +93,14 @@ FS_N_JOBS = 1  # Anzahl paralleler Prozesse für die Selektion
 # "internal_cv":    use sklearn GridSearchCV with cv=3
 VALIDATION_MODE = "external_folds"
 NUM_KFOLDS = 3
+
+# -------------------------------------------------------------------
+# Simplified pipeline parameters
+
+# Number of top-variance features to retain in the simple feature
+# selection script.
+N_FEATURES = 2
+
+# Number of principal components produced by the basic PCA reduction
+# step.
+N_COMPONENTS = 2

@@ -2,17 +2,16 @@
 
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import joblib
 
+import FIT_python.config as config
 from FIT_python.config import (
-    SPLITS_DIR,
-    PROCESSED_DIR,
     DEFAULT_TARGETS,
     OTTER_META_COLS,
     DEFAULT_SCALER,
     SCALER_PARAMS,
     normalize_dataset_name,
-    DEBUG_MODE,
 )
 from FIT_python.scaler_utils import get_standard_scaler, get_robust_scaler
 from FIT_python.transform_utils import convert_numeric
@@ -38,27 +37,27 @@ class ScalerWrapper:
 
     def scale_all(self):
         # Ensure processed base exists
-        PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+        config.SCALED_DIR.mkdir(parents=True, exist_ok=True)
 
-        for ds_folder in SPLITS_DIR.iterdir():
-            if not ds_folder.is_dir():
-                continue
+        datasets = {
+            p.stem.rsplit("_", 1)[0]
+            for p in config.PROCESSED_SPLITS_DIR.glob("*_train.parquet")
+        }
 
-            dataset = normalize_dataset_name(ds_folder.name)
+        for dataset in sorted(datasets):
             print(f"\nScaling dataset: {dataset}")
 
-            # prepare output subfolder
-            out_folder = PROCESSED_DIR / dataset
+            out_folder = config.SCALED_DIR
             out_folder.mkdir(parents=True, exist_ok=True)
 
             # instantiate scaler once per dataset
             scaler = self._make_scaler()
 
             for split in ("train", "test"):
-                src = ds_folder / f"{split}.parquet"
+                src = config.PROCESSED_SPLITS_DIR / f"{dataset}_{split}.parquet"
                 if not src.exists():
                     msg = f"Required file not found: {src}"
-                    if DEBUG_MODE:
+                    if config.DEBUG_MODE:
                         raise FileNotFoundError(msg)
                     else:
                         print("Skipping:", msg)
@@ -90,7 +89,7 @@ class ScalerWrapper:
                         self.scalers[dataset] = scaler
                         joblib.dump(
                             scaler,
-                            out_folder / f"{dataset}_scaler.pkl"
+                            config.SCALED_DIR / f"{dataset}_scaler.pkl"
                         )
                     else:
                         scaled = scaler.transform(df[feature_cols])
@@ -98,8 +97,18 @@ class ScalerWrapper:
                     df.loc[:, feature_cols] = scaled
 
                 # write out the scaled DataFrame
-                dest = out_folder / f"{split}.parquet"
+                dest = out_folder / f"{dataset}_{split}.parquet"
                 df.to_parquet(dest, index=False)
                 print(f"  Saved scaled {split}: {dest} ({len(df)} rows)")
 
-        print(f"\nAll datasets processed. Scaled files are under '{PROCESSED_DIR}'")
+            # also persist numeric numpy arrays
+            np_dir = config.NUMERIC_DIR / dataset
+            np_dir.mkdir(parents=True, exist_ok=True)
+            np.save(np_dir / "X_train.npy", pd.read_parquet(out_folder / f"{dataset}_train.parquet")[feature_cols].to_numpy())
+            np.save(np_dir / "y_train.npy", pd.read_parquet(out_folder / f"{dataset}_train.parquet")[["sex"]].to_numpy())
+            np.save(np_dir / "X_test.npy", pd.read_parquet(out_folder / f"{dataset}_test.parquet")[feature_cols].to_numpy())
+            np.save(np_dir / "y_test.npy", pd.read_parquet(out_folder / f"{dataset}_test.parquet")[["sex"]].to_numpy())
+
+        print(
+            f"\nAll datasets processed. Scaled files are under '{config.SCALED_DIR}'"
+        )
