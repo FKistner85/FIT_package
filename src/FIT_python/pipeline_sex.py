@@ -12,7 +12,11 @@ def main() -> int:
     logging.info("Starting pipeline for target: %s", target)
     wrapper = PipelineWrapper(target)
     try:
-        wrapper.run()
+        results = wrapper.run_pipeline(filter_na=True)
+        if results:
+            import pandas as pd
+            df = pd.DataFrame(results)[["dataset", "model", "cv_score", "test_score"]]
+            logging.info("\n%s", df)
     except Exception as e:
         logging.error("Pipeline failed for target %s: %s", target, e)
         if DEBUG_MODE:

@@ -13,6 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, PredefinedSplit
 from sklearn.metrics import get_scorer
+import joblib
 
 from FIT_python.config import (
     PROCESSED_SPLITS_DIR,
@@ -24,6 +25,7 @@ from FIT_python.config import (
     PIPELINE_PARAM_GRIDS,
     MODELS,
     METRICS,
+    RESULTS_DIR,
 )
 
 class PipelineWrapper:
@@ -61,25 +63,39 @@ class PipelineWrapper:
                 raise ValueError(f"Unknown pipeline step: {step}")
         return Pipeline(step_list)
 
-    def run(self):
+    def run_pipeline(self, filter_na: bool = False):
         """Run pipelines for all datasets and models for the given target."""
+        results = []
+        model_dir = RESULTS_DIR / "models"
+        model_dir.mkdir(parents=True, exist_ok=True)
+
         for ds_folder in self.numeric_dir.iterdir():
             if not ds_folder.is_dir():
                 continue
             dataset = ds_folder.name
             self.logger.info("Processing dataset: %s for target: %s", dataset, self.target)
 
-            # Load numeric arrays
-            X_train = np.load(ds_folder / f"X_train.npy", mmap_mode='r')
-            y_train = np.load(ds_folder / f"y_{self.target}.npy", mmap_mode='r')
-            X_test  = np.load(ds_folder / f"X_test.npy",  mmap_mode='r')
-            y_test  = np.load(ds_folder / f"y_{self.target}.npy",  mmap_mode='r')
+            X_train = np.load(ds_folder / "X_train.npy", mmap_mode="r")
+            y_train = np.load(ds_folder / f"y_{self.target}.npy", mmap_mode="r")
+            X_test = np.load(ds_folder / "X_test.npy", mmap_mode="r")
+            y_test = np.load(ds_folder / f"y_{self.target}.npy", mmap_mode="r")
 
-            # Load fold assignments from splits parquet
             df_train = pd.read_parquet(self.splits_dir / f"{dataset}_train.parquet")
-            if 'fold' not in df_train.columns:
+            df_test = pd.read_parquet(self.splits_dir / f"{dataset}_test.parquet")
+
+            if filter_na:
+                mask_tr = df_train["sex"].isin(["male", "female"])
+                mask_te = df_test["sex"].isin(["male", "female"])
+                df_train = df_train[mask_tr]
+                df_test = df_test[mask_te]
+                X_train = X_train[mask_tr]
+                y_train = y_train[mask_tr]
+                X_test = X_test[mask_te]
+                y_test = y_test[mask_te]
+
+            if "fold" not in df_train.columns:
                 raise KeyError("Column 'fold' not found in split file; cannot build PredefinedSplit")
-            folds = df_train['fold'].to_numpy()
+            folds = df_train["fold"].to_numpy()
             ps = PredefinedSplit(test_fold=folds)
 
             for model_name in self.models:
@@ -94,7 +110,7 @@ class PipelineWrapper:
                     cv=ps,
                     scoring=self.scoring,
                     n_jobs=-1,
-                    verbose=DEBUG_MODE
+                    verbose=DEBUG_MODE,
                 )
                 self.logger.info("Starting GridSearchCV for %s on %s", model_name, dataset)
                 gs.fit(X_train, y_train)
@@ -104,6 +120,19 @@ class PipelineWrapper:
 
                 test_score = gs.score(X_test, y_test)
                 self.logger.info("Test score for %s: %f", model_name, test_score)
+
+                joblib.dump(gs.best_estimator_, model_dir / f"{dataset}_{model_name}.joblib")
+                results.append({
+                    "dataset": dataset,
+                    "model": model_name,
+                    "cv_score": gs.best_score_,
+                    "test_score": test_score,
+                    "best_params": gs.best_params_,
+                })
+        return results
+
+    def run(self, filter_na: bool = False):
+        return self.run_pipeline(filter_na=filter_na)
 
     def build_and_run(self, target: str):
         self.run()
