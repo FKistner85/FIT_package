@@ -25,11 +25,20 @@ Creates train/test splits for every dataset under `data/raw` using group-aware s
 - **Complexity**: dominated by Pandas operations and the split logic; roughly linear in dataset size.
 
 ## `scale_splits.py`
-Applies `StandardScaler` from scikit-learn to each train/test split. The script reads every split, scales feature columns and writes the result back.
+
+Applies scikit-learn scalers to each train/test split and saves the
+result.
 
 - **Uses**: `StandardScaler`, `split_path`, `scaled_path`
-- **Method**: Standardisation (zero mean, unit variance). See [scikit-learn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html).
-- **Complexity**: O(n \* p) where *n* is number of rows and *p* the number of features.
+- **Methods**:
+  - **StandardScaler** – subtract mean and divide by standard deviation.
+  - **RobustScaler** – scale via median and IQR to resist outliers.
+
+| Method | Summary | Complexity |
+| ------ | ------- | ---------- |
+| StandardScaler | Zero mean, unit variance | O(n × p) |
+| RobustScaler | Median and IQR | O(n × p) |
+
 
 ## `create_feature_selection.py`
 Selects the top features by variance on each scaled dataset and saves the reduced tables.
@@ -44,6 +53,16 @@ Runs Principal Component Analysis (PCA) with a fixed number of components (two) 
 - **Uses**: `PCA`, `feature_selected_path`, `dim_reduced_path`
 - **Method**: PCA finds orthogonal directions maximising variance. A canonical reference is Jolliffe "Principal Component Analysis" (Springer, 2002).
 - **Complexity**: dominated by SVD, approximately O(min(n p^2, p n^2)).
+
+
+Other implementations of the wrapper also expose **t-SNE** and
+**UMAP**, which are non-linear techniques for projection.
+
+| Method | Idea | Complexity |
+| ------ | ---- | ---------- |
+| PCA | Linear projection via SVD | O(min(n × p², p × n²)) |
+| t-SNE | Probabilistic embedding | ~O(n²) |
+| UMAP | Manifold approximation | ~O(n log n) |
 
 ## `transform_splits.py`
 Converts Parquet train/test splits to NumPy arrays for modelling. Meta columns are dropped and labels are encoded numerically.
@@ -62,11 +81,32 @@ Small example comparing `LogisticRegression` and `SVC` on the scaled splits. Acc
   - Logistic Regression: typically O(n p) per iteration.
   - SVM with RBF kernel: between O(n^2) and O(n^3) depending on solver.
 
+
+| Method | Idea | Complexity |
+| ------ | ---- | ---------- |
+| Logistic Regression | Linear model | O(n × p) per iter. |
+| SVC | Kernel-based margin maximisation | O(n²)–O(n³) |
+
+
+
 ## `model_comparison_sex.py`
 Comprehensive model comparison for the target `sex`. Supports many estimators including logistic regression, SVM, random forest, k-NN, LDA, Naive Bayes, AdaBoost and optional gradient boosting models. Hyperparameters are tuned using `GridSearchCV`.
 
 - **Uses**: a large set of scikit-learn models (`LogisticRegression`, `SVC`, `RandomForestClassifier`, `KNeighborsClassifier`, `LinearDiscriminantAnalysis`, `GaussianNB`, `AdaBoostClassifier`) and optionally `CatBoostClassifier`, `LGBMClassifier`, `XGBClassifier` if installed. Hyperparameter search is performed with `GridSearchCV` and `PredefinedSplit`.
 - **Complexity**: depends on the estimator. Grid search scales with the number of parameter combinations \* cross‑validation folds.
+
+
+| Estimator | Brief Description |
+| --------- | ----------------- |
+| Logistic Regression | Linear classifier |
+| SVC | Margin-based kernel method |
+| Random Forest | Bagging of decision trees |
+| k-NN | Voting among nearest neighbours |
+| LDA | Gaussian generative model |
+| Gaussian NB | Independent Gaussian features |
+| AdaBoost | Weighted ensemble of weak learners |
+| CatBoost/LightGBM/XGBoost | Gradient boosting trees |
+
 
 ## `create_summary.py`
 Computes dataset summary statistics such as number of individuals, trails and features. Summaries are stored under `results/data` for later plotting.
