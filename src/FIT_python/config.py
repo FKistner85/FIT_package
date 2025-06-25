@@ -34,7 +34,7 @@ GROUP_COL           = "individual_id"
 STRATIFY_COL        = "sex"
 GLOBAL_RANDOM_SEED  = 42
 TEST_SIZE           = 0.2
-NUM_FOLDS           = 5
+NUM_FOLDS           = 3
 
 # Scaling configuration
 DEFAULT_SCALER = "standard"
