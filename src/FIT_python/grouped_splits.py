@@ -2,6 +2,7 @@
 
 import pandas as pd
 from typing import Tuple
+import logging
 from sklearn.model_selection import StratifiedShuffleSplit, StratifiedGroupKFold
 
 # Default constants
@@ -45,13 +46,41 @@ def group_stratified_kfold(
     Assigns a 'Fold' column via StratifiedGroupKFold on groups,
     stratified by stratify_col.
     """
+    logger = logging.getLogger(__name__)
+
     individuals = df[[group_col, stratify_col]].drop_duplicates()
     individuals[stratify_col] = individuals[stratify_col].fillna("unknown")
-    sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
-    fold_series = pd.Series(-1, index=df.index, name="Fold")
-    for fold, (_, test_inds) in enumerate(
-        sgkf.split(individuals, individuals[stratify_col], groups=individuals[group_col])
-    ):
-        fold_groups = individuals.iloc[test_inds][group_col]
-        fold_series.loc[df[group_col].isin(fold_groups)] = fold
-    return df.assign(Fold=fold_series)
+
+    class_counts = individuals[stratify_col].value_counts()
+    n_splits = min(n_splits, class_counts.min())
+    logger.debug("Initial n_splits=%s based on class counts %s", n_splits, class_counts.to_dict())
+
+    if n_splits < 2:
+        raise ValueError("Zu wenige Gruppen in einer Klasse für Stratifizierung")
+
+    seed = random_state
+    for attempt in range(5):
+        logger.debug("StratifiedGroupKFold attempt %s with seed=%s", attempt + 1, seed)
+        sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        fold_series = pd.Series(-1, index=df.index, name="Fold")
+
+        for fold, (_, test_inds) in enumerate(
+            sgkf.split(individuals, individuals[stratify_col], groups=individuals[group_col])
+        ):
+            fold_groups = individuals.iloc[test_inds][group_col]
+            fold_series.loc[df[group_col].isin(fold_groups)] = fold
+            classes = df[df[group_col].isin(fold_groups)][stratify_col].dropna().unique()
+            logger.debug("seed=%s fold=%s classes=%s", seed, fold, classes)
+
+        valid = True
+        for fold in range(n_splits):
+            cls = df[fold_series == fold][stratify_col].dropna().unique()
+            if len(cls) < 2:
+                valid = False
+                break
+        if valid:
+            return df.assign(Fold=fold_series)
+
+        seed += 1
+
+    raise RuntimeError("Konnte keine ausgewogene Stratifikation finden")
