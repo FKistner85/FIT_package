@@ -1,50 +1,53 @@
 #!/usr/bin/env python3
-"""Run dimensionality reduction on all processed datasets."""
+"""Apply PCA on feature selected datasets."""
 
-from pathlib import Path
 import pandas as pd
+from sklearn.decomposition import PCA
+
 from FIT_python.config import (
-    PROCESSED_DIR,
+    FEATURE_SELECTED_DIR,
+    DIM_REDUCED_DIR,
     DEFAULT_TARGETS,
     OTTER_META_COLS,
     DEBUG_MODE,
 )
-from FIT_python.dim_reduction_wrapper import reduce_all
+from FIT_python.path_utils import feature_selected_path, dim_reduced_path
+
+N_COMPONENTS = 2
 
 
-def main():
-    methods = ["pca", "tsne", "umap"]
-    n_components = 2
-
-    X_dict = {}
-    if not PROCESSED_DIR.exists():
-        msg = f"Required file not found: {PROCESSED_DIR}"
+def main() -> None:
+    if not FEATURE_SELECTED_DIR.exists():
+        msg = f"Required file not found: {FEATURE_SELECTED_DIR}"
         if DEBUG_MODE:
             raise FileNotFoundError(msg)
         else:
             print("Skipping:", msg)
             return
-    for ds_folder in PROCESSED_DIR.iterdir():
-        if not ds_folder.is_dir() or ds_folder.name == "numeric":
-            continue
-        dataset = ds_folder.name
-        train_path = ds_folder / "train.parquet"
-        if not train_path.exists():
-            msg = f"Required file not found: {train_path}"
+
+    DIM_REDUCED_DIR.mkdir(parents=True, exist_ok=True)
+    datasets = set(p.stem.rsplit("_", 1)[0] for p in FEATURE_SELECTED_DIR.glob("*_train.parquet"))
+
+    for dataset in datasets:
+        train_p = feature_selected_path(dataset, "train")
+        if not train_p.exists():
+            msg = f"Required file not found: {train_p}"
             if DEBUG_MODE:
                 raise FileNotFoundError(msg)
             else:
                 print("Skipping:", msg)
                 continue
-        df = pd.read_parquet(train_path)
-        if "otter" in dataset.lower():
-            meta = OTTER_META_COLS
-        else:
-            meta = ["id"]
-        feature_cols = [c for c in df.columns if c not in meta + DEFAULT_TARGETS]
-        X_dict[dataset] = df[feature_cols]
 
-    reduce_all(X_dict, methods, n_components)
+        df_train = pd.read_parquet(train_p)
+        meta_cols = OTTER_META_COLS if "otter" in dataset.lower() else ["id"]
+        feature_cols = [c for c in df_train.columns if c not in meta_cols + DEFAULT_TARGETS]
+
+        pca = PCA(n_components=N_COMPONENTS, random_state=0)
+        comps = pca.fit_transform(df_train[feature_cols])
+        cols = [f"PC{i+1}" for i in range(N_COMPONENTS)]
+        df_out = pd.DataFrame(comps, columns=cols)
+        df_out.to_parquet(dim_reduced_path(dataset, "train"), index=False)
+        print(f"Dimensionality reduced for {dataset}")
 
 
 if __name__ == "__main__":
