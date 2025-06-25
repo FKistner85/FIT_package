@@ -18,7 +18,11 @@ dependencies = [                       # aus install_requires=
   "seaborn",
   "optuna",
   "catboost",
+  "xgboost",
   "lightgbm",
+  "scipy",
+  "umap-learn",
+  "scikit-optimize",
 ]
 
 authors = [                            # aus author=
