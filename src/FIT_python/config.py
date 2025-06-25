@@ -104,3 +104,34 @@ N_FEATURES = 2
 # Number of principal components produced by the basic PCA reduction
 # step.
 N_COMPONENTS = 2
+
+# -------------------------------------------------------------------
+# Advanced pipeline configuration
+
+# Dimensionality reduction methods to evaluate. If empty, all available
+# methods from ``dim_reduction_utils`` are used.
+DIM_REDUCTION_METHODS = ["pca"]
+
+# Models to compare in the sex classification pipeline. Only very small
+# defaults are provided here for demonstration purposes.
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+
+MODELS = {
+    "logreg": LogisticRegression(max_iter=1000, solver="liblinear"),
+    "svc": SVC(),
+}
+
+# Hyper-parameter grids per model and target.
+PIPELINE_PARAM_GRIDS = {
+    "sex": {
+        "logreg": {"clf__C": [0.1, 1, 10]},
+        "svc": {"clf__C": [0.1, 1, 10], "clf__kernel": ["linear", "rbf"]},
+    }
+}
+
+# Metric used for optimisation during grid-search.
+METRICS = {"sex": "accuracy"}
+
+# Targets supported by the pipeline scripts.
+PIPELINE_TARGETS = ["sex"]
