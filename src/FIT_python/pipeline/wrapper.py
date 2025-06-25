@@ -76,9 +76,16 @@ class PipelineWrapper:
             self.logger.info("Processing dataset: %s for target: %s", dataset, self.target)
 
             X_train = np.load(ds_folder / "X_train.npy", mmap_mode="r")
-            y_train = np.load(ds_folder / f"y_{self.target}.npy", mmap_mode="r")
+            y_path_train = ds_folder / f"y_{self.target}.npy"
+            if not y_path_train.exists():
+                y_path_train = ds_folder / "y_train.npy"
+            y_train = np.load(y_path_train, mmap_mode="r")
+
             X_test = np.load(ds_folder / "X_test.npy", mmap_mode="r")
-            y_test = np.load(ds_folder / f"y_{self.target}.npy", mmap_mode="r")
+            y_path_test = ds_folder / f"y_{self.target}.npy"
+            if not y_path_test.exists():
+                y_path_test = ds_folder / "y_test.npy"
+            y_test = np.load(y_path_test, mmap_mode="r")
 
             df_train = pd.read_parquet(self.splits_dir / f"{dataset}_train.parquet")
             df_test = pd.read_parquet(self.splits_dir / f"{dataset}_test.parquet")
