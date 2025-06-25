@@ -108,30 +108,66 @@ N_COMPONENTS = 2
 # -------------------------------------------------------------------
 # Advanced pipeline configuration
 
-# Dimensionality reduction methods to evaluate. If empty, all available
-# methods from ``dim_reduction_utils`` are used.
-DIM_REDUCTION_METHODS = ["pca"]
-
-# Models to compare in the sex classification pipeline. Only very small
-# defaults are provided here for demonstration purposes.
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-
-MODELS = {
-    "logreg": LogisticRegression(max_iter=1000, solver="liblinear"),
-    "svc": SVC(),
-}
-
-# Hyper-parameter grids per model and target.
-PIPELINE_PARAM_GRIDS = {
-    "sex": {
-        "logreg": {"clf__C": [0.1, 1, 10]},
-        "svc": {"clf__C": [0.1, 1, 10], "clf__kernel": ["linear", "rbf"]},
-    }
-}
-
-# Metric used for optimisation during grid-search.
+# Metric used for optimisation during model evaluation.
 METRICS = {"sex": "accuracy"}
 
 # Targets supported by the pipeline scripts.
 PIPELINE_TARGETS = ["sex"]
+
+# -------------------------------------------------------------------
+# New pipeline parameters for fully configurable sklearn.Pipeline
+
+# Order of processing steps used when constructing the pipeline
+PIPELINE_STEPS = ["scaler", "feature_selection", "dim_reduction", "modeling"]
+
+# Available scaler methods
+SCALER_METHODS = ["standard", "robust"]
+
+# Feature selection strategies to evaluate
+FEATURE_SELECTION_METHODS = [
+    "forward_count",
+    "forward_p",
+    "random_forest",
+    "anova_kbest",
+    "mutual_info",
+    "chi2_kbest",
+    "l1_logistic",
+]
+
+# Dimensionality reduction methods and their parameters
+DIM_REDUCTION_METHODS = ["pca", "tsne", "umap"]
+DIM_PARAMS = {
+    "pca": {"n_components": N_COMPONENTS},
+    # use small perplexity so tests with tiny datasets don't fail
+    "tsne": {"n_components": N_COMPONENTS, "perplexity": 1, "random_state": GLOBAL_RANDOM_SEED},
+    "umap": {"n_components": N_COMPONENTS, "n_neighbors": 1, "random_state": GLOBAL_RANDOM_SEED},
+}
+
+# Models used for classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+
+MODELS = {
+    "logreg": LogisticRegression(max_iter=1000, solver="liblinear"),
+    "svc": SVC(),
+    "rf": RandomForestClassifier(random_state=GLOBAL_RANDOM_SEED),
+    "xgb": XGBClassifier(random_state=GLOBAL_RANDOM_SEED, use_label_encoder=False, eval_metric="logloss"),
+}
+
+# Bayesian search spaces per model
+BAYES_SPACES = {
+    "logreg": {"clf__C": (1e-3, 1e1, "log-uniform")},
+    "svc": {"clf__C": (1e-3, 1e1, "log-uniform"), "clf__gamma": (1e-4, 1e-1, "log-uniform")},
+    "rf": {"clf__n_estimators": (50, 300, "integer"), "clf__max_depth": (3, 30, "integer")},
+    "xgb": {
+        "clf__n_estimators": (50, 300, "integer"),
+        "clf__learning_rate": (0.01, 0.3, "log-uniform"),
+        "clf__max_depth": (3, 10, "integer"),
+    },
+}
+
+# Hyperparameter optimisation configuration
+HYPER_METHOD = "bayes"
+HYPER_N_TRIALS = 50
