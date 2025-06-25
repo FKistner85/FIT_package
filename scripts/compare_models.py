@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Very small model comparison using scaled splits."""
 
-from FIT_python.model_comparator import ModelComparator
+from FIT_python.model_comparator import LegacyModelComparator
 
 
 def main() -> int:
-    comparator = ModelComparator()
+    comparator = LegacyModelComparator()
     return comparator.compare_all()
 
 
