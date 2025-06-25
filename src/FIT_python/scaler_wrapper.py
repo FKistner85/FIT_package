@@ -1,6 +1,7 @@
 # src/FIT_python/scaler_wrapper.py
 
 from pathlib import Path
+from typing import Optional
 import pandas as pd
 import numpy as np
 import joblib
@@ -17,15 +18,18 @@ from FIT_python.scaler_utils import get_standard_scaler, get_robust_scaler
 from FIT_python.transform_utils import convert_numeric
 
 class ScalerWrapper:
-    """
-    Applies scaling (none, standard, robust) to train/test Parquet splits.
-    Reads from SPLITS_DIR/<Dataset>/{train,test}.parquet and writes
-    scaled versions to PROCESSED_DIR/<Dataset>/{train,test}.parquet.
-    """
+    """Apply a single scaler to all dataset splits."""
 
-    def __init__(self, scaler_type: str = None):
+    def __init__(
+        self,
+        scaler_type: str | None = None,
+        out_dir: Path | None = None,
+        numeric_dir: Path | None = None,
+    ) -> None:
         self.scaler_type = (scaler_type or DEFAULT_SCALER).lower()
-        self.scalers = {}  # to store fitted scaler per dataset
+        self.scalers: dict[str, object] = {}
+        self.out_dir = out_dir or config.SCALED_DIR
+        self.numeric_dir = numeric_dir or config.NUMERIC_DIR
 
     def _make_scaler(self):
         if self.scaler_type == "standard":
@@ -37,7 +41,7 @@ class ScalerWrapper:
 
     def scale_all(self):
         # Ensure processed base exists
-        config.SCALED_DIR.mkdir(parents=True, exist_ok=True)
+        self.out_dir.mkdir(parents=True, exist_ok=True)
 
         datasets = {
             p.stem.rsplit("_", 1)[0]
@@ -47,7 +51,7 @@ class ScalerWrapper:
         for dataset in sorted(datasets):
             print(f"\nScaling dataset: {dataset}")
 
-            out_folder = config.SCALED_DIR
+            out_folder = self.out_dir
             out_folder.mkdir(parents=True, exist_ok=True)
 
             # instantiate scaler once per dataset
@@ -89,7 +93,7 @@ class ScalerWrapper:
                         self.scalers[dataset] = scaler
                         joblib.dump(
                             scaler,
-                            config.SCALED_DIR / f"{dataset}_scaler.pkl"
+                            out_folder / f"{dataset}_scaler.pkl"
                         )
                     else:
                         scaled = scaler.transform(df[feature_cols])
@@ -102,7 +106,7 @@ class ScalerWrapper:
                 print(f"  Saved scaled {split}: {dest} ({len(df)} rows)")
 
             # also persist numeric numpy arrays
-            np_dir = config.NUMERIC_DIR / dataset
+            np_dir = self.numeric_dir / dataset
             np_dir.mkdir(parents=True, exist_ok=True)
             np.save(np_dir / "X_train.npy", pd.read_parquet(out_folder / f"{dataset}_train.parquet")[feature_cols].to_numpy())
             np.save(np_dir / "y_train.npy", pd.read_parquet(out_folder / f"{dataset}_train.parquet")[["sex"]].to_numpy())
@@ -110,5 +114,5 @@ class ScalerWrapper:
             np.save(np_dir / "y_test.npy", pd.read_parquet(out_folder / f"{dataset}_test.parquet")[["sex"]].to_numpy())
 
         print(
-            f"\nAll datasets processed. Scaled files are under '{config.SCALED_DIR}'"
+            f"\nAll datasets processed. Scaled files are under '{self.out_dir}'"
         )
