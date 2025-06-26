@@ -29,3 +29,4 @@ dependencies:
     - coverage
     - flake8
     - mypy
+    - missingpy
