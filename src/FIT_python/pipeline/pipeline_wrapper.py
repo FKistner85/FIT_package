@@ -5,8 +5,17 @@ import pandas as pd
 from joblib import Memory
 from time import perf_counter
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.model_selection import PredefinedSplit, cross_val_score
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    classification_report,
+)
+from sklearn.model_selection import (
+    PredefinedSplit,
+    cross_val_score,
+    StratifiedGroupKFold,
+    StratifiedKFold,
+)
 
 from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR
 from FIT_python.step_02_a_splitting_train_test.wrapper import SplitWrapper
@@ -122,13 +131,55 @@ class PipelineWrapper:
                 pipe = Pipeline(steps, memory=memory)
 
                 # --- CV ---
+                cv_mean = None
+                cv_bal_mean = None
                 try:
                     cv_scores = cross_val_score(
-                        pipe, X_train, y_train, cv=ps, scoring='accuracy', n_jobs=-1
+                        pipe,
+                        X_train,
+                        y_train,
+                        cv=ps,
+                        scoring='balanced_accuracy',
+                        n_jobs=-1,
                     )
                     cv_mean = float(cv_scores.mean())
+                    cv_bal_mean = cv_mean
                 except Exception:
-                    cv_mean = None
+                    groups = X_train.get('individual_id')
+                    n_folds = ps.get_n_splits()
+                    for splits in range(n_folds - 1, 1, -1):
+                        try:
+                            sgkf = StratifiedGroupKFold(n_splits=splits, shuffle=True, random_state=42)
+                            cv_scores = cross_val_score(
+                                pipe,
+                                X_train,
+                                y_train,
+                                cv=sgkf,
+                                groups=groups,
+                                scoring='balanced_accuracy',
+                                n_jobs=-1,
+                            )
+                            cv_mean = float(cv_scores.mean())
+                            cv_bal_mean = cv_mean
+                            break
+                        except Exception:
+                            continue
+                    if cv_bal_mean is None:
+                        try:
+                            skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+                            cv_scores = cross_val_score(
+                                pipe,
+                                X_train,
+                                y_train,
+                                cv=skf,
+                                scoring='balanced_accuracy',
+                                n_jobs=-1,
+                            )
+                            cv_mean = float(cv_scores.mean())
+                            cv_bal_mean = cv_mean
+                        except Exception:
+                            cv_mean = None
+                            cv_bal_mean = None
 
                 # --- Final Fit + Timing pro Schritt ---
                 times: dict[str, float] = {}
@@ -155,13 +206,16 @@ class PipelineWrapper:
                 times["time_predict"] = perf_counter() - t0
 
                 test_acc = float(accuracy_score(y_test, y_pred))
+                test_bal = float(balanced_accuracy_score(y_test, y_pred))
                 report   = classification_report(y_test, y_pred, output_dict=True)
 
                 # Record zusammenbauen
                 record = {
                     'species': species_dir.name,
                     'model': key,
+                    'cv_balanced_accuracy': cv_bal_mean,
                     'cv_accuracy': cv_mean,
+                    'test_balanced_accuracy': test_bal,
                     'test_accuracy': test_acc,
                     'classification_report': report
                 }
