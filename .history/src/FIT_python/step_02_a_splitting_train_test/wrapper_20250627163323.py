@@ -62,11 +62,11 @@ class SplitWrapper:
             print(f"❌ Keine Rohdaten gefunden in {self.input_dir}")
             return 1
 
-        # 2) Für jeden bereinigten DataFrame: Split + Fold
+        # 2) Für jeden bereinigten DataFrame Split und Fold
         for name, df in dfs.items():
             dataset = name.lower().replace("_cleaned", "")
 
-            # 2a) OTTER-Spezialfall (fixed split für lutra_lutra)
+            # 2a) OTTER-Spezialfall
             species_col = df.get("Species") or df.get("species")
             is_otter = (
                 species_col.astype(str)
@@ -78,7 +78,7 @@ class SplitWrapper:
 
             if is_otter:
                 train_df, test_df, inference_df = create_train_test_split_otter(df)
-                # Validitätscheck: beide Klassen f/m in allen Splits?
+                # Validitätscheck: Beide Klassen in allen Splits?
                 def valid_split(dd):
                     vals = set(dd["sex"].dropna().str.lower())
                     return {"f", "m"}.issubset(vals)
@@ -100,7 +100,10 @@ class SplitWrapper:
                     & ~df["individual_id"].isin(test_df["individual_id"])
                 ]
 
-            # 3) Fallback-Fold-Generierung für train_df via _make_folds
+            # 3) Fallback-Fold-Generierung für train_df
+            #    nutzt _make_folds aus utils.py
+            #    gibt (fold_ids, methode_name) zurück
+            #    und probiert predefined, stratified_group, group, kfold
             y_ser = train_df["sex"].map({"f": 0, "m": 1})
             fold_ids, fold_method = _make_folds(
                 train_df, y_ser, n_splits=NUM_FOLDS, group_col=GROUP_COL
@@ -116,9 +119,11 @@ class SplitWrapper:
                 ["train", "test", "inference"],
                 [train_df, test_df, inference_df],
             ):
+                # Parquet
                 split_df.to_parquet(
                     out_dir / f"{split_name}.parquet", index=False
                 )
+                # Optional CSV
                 if as_csv:
                     split_df.to_csv(
                         out_dir / f"{split_name}.csv", index=False

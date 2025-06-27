@@ -12,12 +12,6 @@ from sklearn.model_selection import (
     KFold,
 )
 
-from pathlib import Path
-import pandas as pd
-
-from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL
-from FIT_python.step_02_a_splitting_train_test.utils import _make_folds, _check_valid
-from FIT_python.step_02_a_splitting_train_test.wrapper import SplitWrapper
 
 def train_test_group_split(
     df: pd.DataFrame,
@@ -150,38 +144,6 @@ def _check_valid(fold_ids: np.ndarray, y: pd.Series, n_splits: int) -> bool:
         if classes != {0, 1}:
             return False
     return True
-
-
-
-def ensure_valid_splits() -> None:
-    """
-    Prüft, ob für jede Spezies in SPLITS_DIR eine gültige 'Fold'-Spalte existiert,
-    d.h. in jedem Fold beide Klassen (0 und 1) vertreten sind.
-    Falls nicht, wird SplitWrapper().split_all() ausgeführt.
-    """
-    for species_dir in Path(SPLITS_DIR).iterdir():
-        if not species_dir.is_dir():
-            continue
-        train_fp = species_dir / "train.parquet"
-        if not train_fp.exists():
-            # kein Split da → neu generieren
-            SplitWrapper().split_all()
-            return
-
-        df = pd.read_parquet(train_fp)
-        if "Fold" not in df.columns:
-            SplitWrapper().split_all()
-            return
-
-        # Labels kodieren
-        y = df["sex"].map({"f": 0, "m": 1})
-        # Prüfen, ob die vorhandenen Fold-IDs valide sind
-        fold_ids = df["Fold"].values.astype(int)
-        if not _check_valid(fold_ids, y, NUM_FOLDS):
-            SplitWrapper().split_all()
-            return
-
-    # wenn wir hier ankommen, sind alle Splits valide
 
 
 def _make_folds(

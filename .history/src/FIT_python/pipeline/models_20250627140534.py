@@ -13,13 +13,13 @@ from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 
 MODELS = {
-    "log_reg":   LogisticRegression(max_iter=200),
-    "rf":        RandomForestClassifier(n_estimators=10),
+   # "log_reg":   LogisticRegression(max_iter=200),
+   # "rf":        RandomForestClassifier(n_estimators=10),
     "et":        ExtraTreesClassifier(n_estimators=10),
-    "knn":       KNeighborsClassifier(n_neighbors=3),
+   # "knn":       KNeighborsClassifier(n_neighbors=3),
     "svm":       SVC(kernel='linear', probability=True),
     "lda":       LinearDiscriminantAnalysis(),
-    "xgb":       XGBClassifier(n_estimators=10, verbosity=0, use_label_encoder=False),
+   # "xgb":       XGBClassifier(n_estimators=10, verbosity=0, use_label_encoder=False),
    # "lgbm":      LGBMClassifier(n_estimators=10, verbose=-1),
    # "catboost":  CatBoostClassifier(iterations=10, verbose=0),
 }

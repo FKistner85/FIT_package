@@ -12,12 +12,6 @@ from sklearn.model_selection import (
     KFold,
 )
 
-from pathlib import Path
-import pandas as pd
-
-from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL
-from FIT_python.step_02_a_splitting_train_test.utils import _make_folds, _check_valid
-from FIT_python.step_02_a_splitting_train_test.wrapper import SplitWrapper
 
 def train_test_group_split(
     df: pd.DataFrame,
@@ -142,7 +136,6 @@ def splits_available() -> bool:
             return True
     return False
 
-
 def _check_valid(fold_ids: np.ndarray, y: pd.Series, n_splits: int) -> bool:
     """Verifiziert, dass in jedem Fold beide Klassen 0 und 1 vorkommen."""
     for fold_i in range(n_splits):
@@ -151,49 +144,16 @@ def _check_valid(fold_ids: np.ndarray, y: pd.Series, n_splits: int) -> bool:
             return False
     return True
 
-
-
-def ensure_valid_splits() -> None:
-    """
-    Prüft, ob für jede Spezies in SPLITS_DIR eine gültige 'Fold'-Spalte existiert,
-    d.h. in jedem Fold beide Klassen (0 und 1) vertreten sind.
-    Falls nicht, wird SplitWrapper().split_all() ausgeführt.
-    """
-    for species_dir in Path(SPLITS_DIR).iterdir():
-        if not species_dir.is_dir():
-            continue
-        train_fp = species_dir / "train.parquet"
-        if not train_fp.exists():
-            # kein Split da → neu generieren
-            SplitWrapper().split_all()
-            return
-
-        df = pd.read_parquet(train_fp)
-        if "Fold" not in df.columns:
-            SplitWrapper().split_all()
-            return
-
-        # Labels kodieren
-        y = df["sex"].map({"f": 0, "m": 1})
-        # Prüfen, ob die vorhandenen Fold-IDs valide sind
-        fold_ids = df["Fold"].values.astype(int)
-        if not _check_valid(fold_ids, y, NUM_FOLDS):
-            SplitWrapper().split_all()
-            return
-
-    # wenn wir hier ankommen, sind alle Splits valide
-
-
 def _make_folds(
     df: pd.DataFrame,
     y: pd.Series,
     n_splits: int,
     group_col: str
-) -> Tuple[np.ndarray, str]:
+) -> tuple[np.ndarray, str]:
     """
-    Versucht in folgender Reihenfolge:
-      1) vorhandene 'Fold'-Spalte (predefined),
-      2) StratifiedGroupKFold via group_stratified_kfold(),
+    Versucht in Reihenfolge:
+      1) vorhandene 'Fold'-Spalte (PredefinedSplit),
+      2) StratifiedGroupKFold,
       3) GroupKFold,
       4) KFold.
     Gibt (fold_ids, methode_name) zurück.
@@ -204,21 +164,21 @@ def _make_folds(
         if _check_valid(fold_ids, y, n_splits):
             return fold_ids, "predefined"
 
-    # 2) StratifiedGroupKFold via euren Helper (bis zu 3 Versuche)
+    # 2) StratifiedGroupKFold, bis zu 3 Versuche mit verschiedenen Seeds
     for attempt in range(3):
         seed = GLOBAL_RANDOM_SEED + attempt
-        try:
-            # group_stratified_kfold fügt 'Fold' in df zurück
-            df_folds = group_stratified_kfold(
-                df, n_splits=n_splits, random_state=seed, group_col=group_col
-            )
-            fold_ids = df_folds["Fold"].values.astype(int)
-            if _check_valid(fold_ids, y, n_splits):
-                return fold_ids, "stratified_group"
-        except Exception:
-            continue
+        sgkf = StratifiedGroupKFold(
+            n_splits=n_splits, shuffle=True, random_state=seed
+        )
+        fold_ids = np.empty(len(df), dtype=int)
+        for fold, (_, val_idx) in enumerate(
+            sgkf.split(df, y, groups=df[group_col])
+        ):
+            fold_ids[val_idx] = fold
+        if _check_valid(fold_ids, y, n_splits):
+            return fold_ids, "stratified_group"
 
-    # 3) GroupKFold (bis zu 3 Versuche)
+    # 3) GroupKFold, bis zu 3 Versuche
     for attempt in range(3):
         gkf = GroupKFold(n_splits=n_splits)
         fold_ids = np.empty(len(df), dtype=int)
