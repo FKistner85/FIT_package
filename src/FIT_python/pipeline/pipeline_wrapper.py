@@ -21,6 +21,21 @@ from .models import MODELS
 _cache_dir = Path(RESULTS_DATA_DIR) / "pipeline_cache"
 memory = Memory(location=_cache_dir, verbose=0)
 
+# Cache for already loaded train/test splits so repeated runs avoid disk I/O
+_DATA_CACHE: dict[str, dict[str, pd.DataFrame]] = {}
+
+
+def splits_available() -> bool:
+    """Return True if at least one train/test split exists."""
+    if not Path(SPLITS_DIR).exists():
+        return False
+    for d in Path(SPLITS_DIR).iterdir():
+        if not d.is_dir():
+            continue
+        if (d / "train.parquet").exists() and (d / "test.parquet").exists():
+            return True
+    return False
+
 def get_pipeline_steps(
     fs_method: str = "forward",
     fs_k: int = 20,
@@ -85,7 +100,9 @@ class PipelineWrapper:
         self.reduce_post_method = reduce_post_method
 
     def run(self) -> pd.DataFrame:
-        SplitWrapper().split_all()
+        # Avoid expensive re-splitting when the data already exist
+        if not splits_available():
+            SplitWrapper().split_all()
         records: list[dict] = []
 
         for species_dir in sorted(Path(SPLITS_DIR).iterdir()):
@@ -93,12 +110,21 @@ class PipelineWrapper:
 
             train_p = species_dir / 'train.parquet'
             test_p  = species_dir / 'test.parquet'
-            if not train_p.exists() or not test_p.exists(): continue
+            if not train_p.exists() or not test_p.exists():
+                continue
 
-            df_train = pd.read_parquet(train_p).dropna(subset=['sex'])
-            df_test  = pd.read_parquet(test_p).dropna(subset=['sex'])
-            df_train = df_train[df_train['sex'].isin(['f','m'])]
-            df_test  = df_test[df_test['sex'].isin(['f','m'])]
+            # load DataFrames once and keep them cached for subsequent runs
+            cache_key = species_dir.name
+            if cache_key in _DATA_CACHE:
+                data = _DATA_CACHE[cache_key]
+                df_train = data['train']
+                df_test = data['test']
+            else:
+                df_train = pd.read_parquet(train_p).dropna(subset=['sex'])
+                df_test = pd.read_parquet(test_p).dropna(subset=['sex'])
+                df_train = df_train[df_train['sex'].isin(['f', 'm'])]
+                df_test = df_test[df_test['sex'].isin(['f', 'm'])]
+                _DATA_CACHE[cache_key] = {'train': df_train, 'test': df_test}
 
             y_train = df_train['sex'].map({'f':0,'m':1})
             y_test  = df_test['sex'].map({'f':0,'m':1})
@@ -123,8 +149,9 @@ class PipelineWrapper:
 
                 # --- CV ---
                 try:
+                    # use a single job here so outer loops can parallelise
                     cv_scores = cross_val_score(
-                        pipe, X_train, y_train, cv=ps, scoring='accuracy', n_jobs=-1
+                        pipe, X_train, y_train, cv=ps, scoring='accuracy', n_jobs=1
                     )
                     cv_mean = float(cv_scores.mean())
                 except Exception:
