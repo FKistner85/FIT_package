@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Transform all split datasets to NumPy format."""
 
-from FIT_python.transform_wrapper import TransformWrapper
+from FIT_python.old_files.transform_wrapper import TransformWrapper
 
 
 def main() -> int:

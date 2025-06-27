@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Create train/test splits for all raw datasets."""
 
-from FIT_python.splits_wrapper import SplitsWrapper
+from FIT_python.pipeline.split_wrapper import SplitWrapper
 
 
 def main() -> int:
-    wrapper = SplitsWrapper()
+    wrapper = SplitWrapper()
     return wrapper.split_all()
 
 

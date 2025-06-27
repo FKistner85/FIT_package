@@ -25,13 +25,13 @@ from FIT_python.config import (
     GLOBAL_RANDOM_SEED,
     NUM_FOLDS,
     GROUP_COL,
+    FIGURES_DIR,
 )
+from .config import FS_METHODS
 # ← Hier die Utility-Funktionen importieren:
-from FIT_python.step_02_a_splitting_train_test.utils import (
-    splits_available,
-    _make_folds,
-)
-from FIT_python.step_02_a_splitting_train_test.wrapper import SplitWrapper
+from .split_utils import splits_available, _make_folds
+from .split_wrapper import SplitWrapper
+from .summary_wrapper import run_summary
 
 from .transform_wrapper import NumericTransformer
 from .imputation_wrapper import ImputationWrapper
@@ -48,8 +48,6 @@ memory = Memory(location=_cache_dir, verbose=0)
 # In-Memory Cache der geladenen Splits
 _DATA_CACHE: dict[str, dict[str, pd.DataFrame]] = {}
 
-# Erlaubte FS-Methoden
-_ALLOWED_FS = ["forward", "random_forest", "variance", "univariate", "lasso"]
 
 
 def get_pipeline_steps(
@@ -106,8 +104,10 @@ class PipelineWrapper:
         self.model_keys = model_keys or list(MODELS.keys())
 
         # Validate FS-method
-        if fs_method not in (None, "all", *_ALLOWED_FS):
-            raise ValueError(f"fs_method must be one of None, 'all', {_ALLOWED_FS}, got {fs_method!r}")
+        if fs_method not in (None, "all", *FS_METHODS):
+            raise ValueError(
+                f"fs_method must be one of None, 'all', {FS_METHODS}, got {fs_method!r}"
+            )
         self.fs_method         = fs_method
         self.fs_k              = fs_k
         self.impute_method     = impute_method
@@ -124,16 +124,17 @@ class PipelineWrapper:
         self._model_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self) -> pd.DataFrame:
-        # 1) Splits generieren, falls fehlen
-        ensure_valid_splits()
-
+        # 1) Create splits and summary if necessary
+        if not splits_available():
+            SplitWrapper().split_all()
+        run_summary(SPLITS_DIR, RESULTS_DATA_DIR / "summary.csv", FIGURES_DIR / "summary")
 
         records: list[dict] = []
 
         # FS-method loop: einzelne oder alle
         fs_methods = []
         if self.fs_method == "all":
-            fs_methods = _ALLOWED_FS.copy()
+            fs_methods = FS_METHODS.copy()
         elif self.fs_method:
             fs_methods = [self.fs_method]
         else:

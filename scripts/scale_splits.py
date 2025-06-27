@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scale all train/test splits using configured scalers."""
 
-from FIT_python.scaler_wrapper import ScalerWrapper
+from FIT_python.old_files.scaler_wrapper import ScalerWrapper
 
 
 def main() -> int:

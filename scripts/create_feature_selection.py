@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Simple feature selection on scaled datasets."""
 
-from FIT_python.feature_wrapper import FeatureSelector
+from FIT_python.old_files.feature_wrapper import FeatureSelector
 
 
 def main() -> int:

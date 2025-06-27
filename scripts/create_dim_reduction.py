@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apply PCA on feature selected datasets."""
 
-from FIT_python.dim_reduction_wrapper import DimReducer
+from FIT_python.old_files.dim_reduction_wrapper import DimReducer
 
 
 def main() -> int:

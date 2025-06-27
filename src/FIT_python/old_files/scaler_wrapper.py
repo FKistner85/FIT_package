@@ -79,7 +79,7 @@ class ScalerWrapper:
 
                 feature_cols = [
                     c for c in df.columns
-                    if c not in meta_cols + target_cols
+                    if c not in meta_cols + target_cols and c != "Fold"
                 ]
 
                 # convert numeric columns before scaling
@@ -101,6 +101,7 @@ class ScalerWrapper:
                     df.loc[:, feature_cols] = scaled
 
                 # write out the scaled DataFrame
+                df = df.drop(columns=["Fold"], errors="ignore")
                 dest = out_folder / f"{dataset}_{split}.parquet"
                 df.to_parquet(dest, index=False)
                 print(f"  Saved scaled {split}: {dest} ({len(df)} rows)")

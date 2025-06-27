@@ -42,4 +42,31 @@ GLOBAL_RANDOM_SEED = 42
 TEST_SIZE = 0.2
 NUM_FOLDS = 3
 
+# Feature selection defaults (for legacy wrappers)
+FS_P_THRESH = 0.05
+FS_MIN_NUM_FEATURES = 3
+FS_N_JOBS = 1
+FS_DEFAULT_METHODS = [
+    "forward_count",
+    "forward_p",
+    "random_forest",
+    "anova_kbest",
+    "mutual_info",
+    "chi2_kbest",
+    "l1_logistic",
+]
+FS_TARGET_FEATURE_COUNTS = [10, 20, 30]
+
+# Scaling defaults
+DEFAULT_SCALER = "standard"
+SCALER_PARAMS = {"standard": {}, "robust": {}}
+
+# Misc settings
+DEBUG_MODE = True
+
+
+def normalize_dataset_name(name: str) -> str:
+    """Normalize dataset folder names consistently."""
+    return name.strip().replace(" ", "_").lower()
+
 #

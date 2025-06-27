@@ -8,9 +8,9 @@ from sklearn.model_selection import PredefinedSplit
 from skopt import BayesSearchCV
 import joblib
 
-from FIT_python.scaler_wrapper import ScalerWrapper
-from FIT_python.feature_wrapper import FeatureSelector
-from FIT_python.dim_reduction_wrapper import DimReducer
+from FIT_python.old_files.scaler_wrapper import ScalerWrapper
+from FIT_python.old_files.feature_wrapper import FeatureSelector
+from FIT_python.old_files.dim_reduction_wrapper import DimReducer
 from FIT_python.config import (
     PROCESSED_SPLITS_DIR,
     DEFAULT_TARGETS,

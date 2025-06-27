@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """CLI entrypoint to create dataset summary tables and plots."""
 
-from FIT_python.summary_wrapper import SummaryWrapper
+from FIT_python.pipeline.summary_wrapper import SummaryWrapper
 import argparse
 from pathlib import Path
 from FIT_python import config
