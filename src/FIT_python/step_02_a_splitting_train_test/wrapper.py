@@ -57,7 +57,7 @@ class SplitWrapper:
                 .astype(str)
                 .str.strip()
                 .str.lower()
-                .eq("lutra lutra")
+                .eq("lutra_lutra")
                 .any()
             )
 

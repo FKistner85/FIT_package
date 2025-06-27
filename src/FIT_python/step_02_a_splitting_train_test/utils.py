@@ -109,10 +109,10 @@ def create_train_test_split_otter(
 
     test_df = pd.concat([
         df_clean[df_clean["dataorigin"] == "Fieldprints Lower Saxony"],
-        sample_individuals(df_clean, "Own Data Collection", "Female", 3, seed),
-        sample_individuals(df_clean, "Own Data Collection", "Male", 3, seed),
-        sample_individuals(df_clean, "Vetrecova et al", "Female", 2, seed),
-        sample_individuals(df_clean, "Vetrecova et al", "Male", 2, seed),
+        sample_individuals(df_clean, "Own Data Collection", "f", 3, seed),
+        sample_individuals(df_clean, "Own Data Collection", "m", 3, seed),
+        sample_individuals(df_clean, "Vetrecova et al", "f", 2, seed),
+        sample_individuals(df_clean, "Vetrecova et al", "m", 2, seed),
     ]).drop_duplicates()
 
     train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
