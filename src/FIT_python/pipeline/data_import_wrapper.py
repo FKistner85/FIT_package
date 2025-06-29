@@ -6,8 +6,8 @@ from pathlib import Path
 import pandas as pd
 from typing import Dict, Optional, List
 
-from FIT_python.data_import_utils import load_raw_files, sanitize_labels
-from FIT_python.transform_utils import convert_numeric
+from FIT_python.pipeline.data_import_utils import load_raw_files, sanitize_labels
+from FIT_python.pipeline.transform_utils import convert_numeric
 import FIT_python.config as config
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 import sys
