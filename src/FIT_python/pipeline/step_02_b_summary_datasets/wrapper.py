@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import sys
 
-from FIT_python.step_02_b_summary_datasets.utils import (
+from FIT_python.pipeline.step_02_b_summary_datasets.utils import (
     discover_splits,
     load_split_data,
     compute_summary,

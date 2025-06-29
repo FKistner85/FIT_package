@@ -16,8 +16,6 @@ from pathlib import Path
 import pandas as pd
 
 from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL
-from FIT_python.pipeline.split_utils import _make_folds, _check_valid
-from FIT_python.pipeline.split_wrapper import SplitWrapper
 
 def train_test_group_split(
     df: pd.DataFrame,
@@ -159,6 +157,8 @@ def ensure_valid_splits() -> None:
     d.h. in jedem Fold beide Klassen (0 und 1) vertreten sind.
     Falls nicht, wird SplitWrapper().split_all() ausgeführt.
     """
+    from FIT_python.pipeline.split_wrapper import SplitWrapper
+
     for species_dir in Path(SPLITS_DIR).iterdir():
         if not species_dir.is_dir():
             continue

@@ -30,6 +30,7 @@ from FIT_python.config import (
 from FIT_python.pipeline.split_utils import (
     splits_available,
     _make_folds,
+    ensure_valid_splits,
 )
 from FIT_python.pipeline.split_wrapper import SplitWrapper
 

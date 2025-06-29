@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 from typing import Optional
 
-from FIT_python.data_import_wrapper import DataImporter
+from FIT_python.pipeline.data_import_wrapper import DataImporter
 from FIT_python.pipeline.split_utils import (
     create_train_test_split_otter,
     train_test_group_split,
