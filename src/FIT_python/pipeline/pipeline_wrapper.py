@@ -1,11 +1,13 @@
 # src/FIT_python/pipeline/pipeline_wrapper.py
 
+"""Run sklearn pipelines on all species using balanced accuracy."""
+
 from pathlib import Path
 import pandas as pd
 from joblib import Memory
 from time import perf_counter
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import balanced_accuracy_score, classification_report
 from sklearn.model_selection import PredefinedSplit, cross_val_score
 
 from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR
@@ -124,7 +126,12 @@ class PipelineWrapper:
                 # --- CV ---
                 try:
                     cv_scores = cross_val_score(
-                        pipe, X_train, y_train, cv=ps, scoring='accuracy', n_jobs=-1
+                        pipe,
+                        X_train,
+                        y_train,
+                        cv=ps,
+                        scoring='balanced_accuracy',
+                        n_jobs=-1,
                     )
                     cv_mean = float(cv_scores.mean())
                 except Exception:
@@ -154,15 +161,15 @@ class PipelineWrapper:
                 y_pred = pipe.predict(X_test)
                 times["time_predict"] = perf_counter() - t0
 
-                test_acc = float(accuracy_score(y_test, y_pred))
+                test_acc = float(balanced_accuracy_score(y_test, y_pred))
                 report   = classification_report(y_test, y_pred, output_dict=True)
 
                 # Record zusammenbauen
                 record = {
                     'species': species_dir.name,
                     'model': key,
-                    'cv_accuracy': cv_mean,
-                    'test_accuracy': test_acc,
+                    'cv_balanced_accuracy': cv_mean,
+                    'test_balanced_accuracy': test_acc,
                     'classification_report': report
                 }
                 # Pipeline-Parametrisierung

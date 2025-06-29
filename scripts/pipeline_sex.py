@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Bayesian optimised sklearn pipeline for the 'sex' target."""
+"""Bayesian optimised sklearn pipeline for the 'sex' target.
+
+Evaluation is performed using balanced accuracy."""
 
 from pathlib import Path
 import pandas as pd
@@ -62,7 +64,9 @@ def run_for_dataset(ds: str) -> None:
         y_test = df_test["sex"].to_numpy()
         test_score = opt.score(X_test, y_test)
 
-        print(f"[REPORT] {ds} | {name} | CV={opt.best_score_:.3f} | Test={test_score:.3f}")
+        print(
+            f"[REPORT] {ds} | {name} | CV={opt.best_score_:.3f} | Test={test_score:.3f}"
+        )
         out = RESULTS_DATA_DIR / f"pipeline_sex_{ds}_{name}.joblib"
         out.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(opt.best_estimator_, out)
