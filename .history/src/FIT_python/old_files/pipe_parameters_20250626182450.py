@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import PredefinedSplit, cross_val_score
 
 from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR
-from FIT_python.pipeline.split_wrapper import SplitWrapper
+from FIT_python.step_02_a_splitting_train_test.wrapper import SplitWrapper
 from .pipe_parameters import get_pipeline_steps
 from ..pipeline.models import MODELS
 
