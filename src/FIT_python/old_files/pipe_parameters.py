@@ -1,9 +1,11 @@
 # src/FIT_python/pipeline/pipeline_wrapper.py
 
+"""Legacy pipeline using balanced accuracy for evaluation."""
+
 from pathlib import Path
 import pandas as pd
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import balanced_accuracy_score, classification_report
 from sklearn.model_selection import PredefinedSplit, cross_val_score
 
 from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR
@@ -89,7 +91,11 @@ class PipelineWrapper:
                 # 6a) CV auf X_train, y_train
                 try:
                     cv_scores = cross_val_score(
-                        pipe, X_train, y_train, cv=ps, scoring='accuracy'
+                        pipe,
+                        X_train,
+                        y_train,
+                        cv=ps,
+                        scoring='balanced_accuracy'
                     )
                     cv_mean = cv_scores.mean()
                 except Exception:
@@ -98,7 +104,7 @@ class PipelineWrapper:
                 # 6b) Finales Fit & Test
                 pipe.fit(X_train, y_train)
                 y_pred = pipe.predict(X_test)
-                test_acc = accuracy_score(y_test, y_pred)
+                test_acc = balanced_accuracy_score(y_test, y_pred)
                 report   = classification_report(y_test, y_pred, output_dict=True)
 
                 records.append({
@@ -111,8 +117,8 @@ class PipelineWrapper:
                     'scaler_method': self.scaler_method,
                     'reduce_pre_method': self.reduce_pre_method,
                     'reduce_post_method': self.reduce_post_method,
-                    'cv_accuracy': cv_mean,
-                    'test_accuracy': test_acc,
+                    'cv_balanced_accuracy': cv_mean,
+                    'test_balanced_accuracy': test_acc,
                     'classification_report': report
                 })
 

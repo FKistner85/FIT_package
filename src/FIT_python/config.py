@@ -109,7 +109,7 @@ N_COMPONENTS = 2
 # Advanced pipeline configuration
 
 # Metric used for optimisation during model evaluation.
-METRICS = {"sex": "accuracy"}
+METRICS = {"sex": "balanced_accuracy"}
 
 # Targets supported by the pipeline scripts.
 PIPELINE_TARGETS = ["sex"]
