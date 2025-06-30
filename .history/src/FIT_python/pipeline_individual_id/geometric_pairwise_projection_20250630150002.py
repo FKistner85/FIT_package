@@ -74,42 +74,14 @@ def geometric_pairwise_projection(
 
 
 
-from collections import defaultdict
-import random
-from typing import List, Dict
-import pandas as pd
-
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
     id_col: str = "individual_id",
-    group_sizes: List[int] = [3, 5, 7, 10],
-    n_repeats: int = 5,
-    mode: str = 'both',
-    selfmatch_factor: float = 2.0
-) -> List[Dict]:
-    """
-    Erzeuge Paarvergleiche zwischen Trails (verschiedene oder gleiche Individuen).
-
-    Parameter
-    ---------
-    df : pd.DataFrame
-        Eingabedaten mit mindestens einer 'individual_id'-Spalte.
-    id_col : str
-        Spaltenname der individuellen ID.
-    group_sizes : list of int
-        Gruppengrößen (Anzahl Trails), die für die Vergleiche verwendet werden sollen.
-    n_repeats : int
-        Wie oft jeder Vergleichstyp wiederholt werden soll.
-    mode : str
-        "symmetric", "asymmetric" oder "both", je nach erlaubten Größenkombinationen.
-    selfmatch_factor : float
-        Multiplikator für die Anzahl der Selbstvergleiche.
-
-    Rückgabe
-    --------
-    List[Dict]
-        Liste von Vergleichsdictionaries mit Trails und Metadaten.
-    """
+    group_sizes=[3, 5, 7, 10],
+    n_repeats=5,
+    mode='both',
+    selfmatch_factor=2.0
+):
     individuals = defaultdict(list)
     for idx, row in df.iterrows():
         individuals[row[id_col]].append(idx)
@@ -126,7 +98,6 @@ def generate_pairwise_comparisons_from_df(
             eligible_inds_a = [ind for ind, samples in individuals.items() if len(samples) >= size_a]
             eligible_inds_b = [ind for ind, samples in individuals.items() if len(samples) >= size_b]
 
-            # Cross-individual comparisons
             for ind_a in eligible_inds_a:
                 for ind_b in eligible_inds_b:
                     if ind_a >= ind_b:
@@ -144,7 +115,6 @@ def generate_pairwise_comparisons_from_df(
                             'same_individual': False
                         })
 
-            # Same-individual comparisons
             for ind in individuals:
                 if len(individuals[ind]) < size_a + size_b:
                     continue
@@ -164,7 +134,6 @@ def generate_pairwise_comparisons_from_df(
                     })
 
     return comparisons
-
 
 def run_all_pairwise_projections(
     comparisons: List[Dict],
@@ -334,23 +303,7 @@ def run_all_pairwise_projections_parallel(
                 "center_distance_rcv_a": np.linalg.norm(center_a - center_r),
                 "center_distance_rcv_b": np.linalg.norm(center_b - center_r),
                 "comparison_id": i,
-                
-                # Mittelwerte der Koordinaten
-                "center_a_x": center_a[0] if len(center_a) > 0 else None,
-                "center_a_y": center_a[1] if len(center_a) > 1 else None,
-                "center_b_x": center_b[0] if len(center_b) > 0 else None,
-                "center_b_y": center_b[1] if len(center_b) > 1 else None,
-
-                # Rohdaten der Koordinaten
-                "coords_a": coords_a.tolist(),
-                "coords_b": coords_b.tolist(),
-
-                # Vergleichsgrößen
-                "min_observations": min(len(comp["samples_a"]), len(comp["samples_b"])),
-                "max_observations": max(len(comp["samples_a"]), len(comp["samples_b"])),
-                "n_selected_features": len(selected_features),
             }
-
 
             return result
 
