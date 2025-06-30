@@ -64,11 +64,11 @@ def get_pipeline_steps(
     reduce_post_method: Optional[str] = None
 ) -> list[tuple[str, object]]:
     """
-    Baut die Liste von (name, transformer)-Schritten für die Pipeline zusammen,
-    je nach gewählten Hyperparametern.
+    Build list of (name, transformer) steps for the pipeline
+    based on selected hyperparameters.
     """
 
-    # 1) Validation
+    # Validation
     if fs_method not in _ALLOWED_FS:
         raise ValueError(f"fs_method must be one of {_ALLOWED_FS}, got {fs_method!r}")
     if impute_method not in _ALLOWED_IMPUTE:
@@ -84,14 +84,14 @@ def get_pipeline_steps(
 
     steps: list[tuple[str, object]] = []
 
-    # 2) Numeric conversion
+    # Numeric conversion
     steps.append(("transform", NumericTransformer()))
 
-    # 3) Imputation
+    # Imputation
     if impute_method == "miss_forest":
         steps.append(("impute", ImputationWrapper()))
 
-    # 4) Outlier cleaning
+    # Outlier cleaning
     if outlier_method == "clip":
         steps.append((
             "outlier",
@@ -103,22 +103,22 @@ def get_pipeline_steps(
             OutlierCleanerTransformer(method="zscore", z_thresh=3.0)
         ))
 
-    # 5) Scaling
+    # Scaling
     if scaler_method in ("standard", "robust"):
         steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
 
-    # 6) Pre-dimensionality reduction
+    # Pre-dimensionality reduction
     if reduce_pre_method in ("pca", "umap", "tsne"):
         steps.append((
             "reduce_pre",
             DimensionalityReducerTransformer(method=reduce_pre_method, n_components=10)
         ))
 
-    # 7) Feature selection
+    # Feature selection
     if fs_method:
         steps.append(("select", FeatureSelectionTransformer(method=fs_method, k=fs_k)))
 
-    # 8) Post-dimensionality reduction
+    # Post-dimensionality reduction
     if reduce_post_method in ("pca", "umap", "tsne"):
         steps.append((
             "reduce_post",
@@ -130,8 +130,8 @@ def get_pipeline_steps(
 
 class PipelineWrapper:
     """
-    Wrapper zum einmaligen Prepare (Import, Split, Summary) und
-    zum Train/Evaluate aller Arten & Modelle.
+    Wrapper for one-time prepare (import, split, summary) and
+    for training/evaluating all species & models.
     """
 
     def __init__(
@@ -165,7 +165,7 @@ class PipelineWrapper:
 
 
     def prepare(self):
-        """Einmaliges Importieren, Splitten und Zusammenfassen."""
+        """One-time data import, splitting & summary."""
         print("\n📥 Schritt 1: Datenimport & Cleaning")
         DataImportWrapper().clean_all()
         print("\n✂️ Schritt 2: Splitting & Fold-Zuordnung")
@@ -176,10 +176,9 @@ class PipelineWrapper:
 
 
     def train(self) -> pd.DataFrame:
-        """Trainiert alle Modelle und speichert nur raw_results.csv (append)."""
+        """Train all models, append to raw_results.csv, update best_results.csv."""
         records: list[dict] = []
 
-        # Schleife über alle fs-Varianten (entweder eine oder None)
         fs_methods = [self.fs_method] if self.fs_method else [None]
         for fs_m in fs_methods:
             for species_dir in sorted(Path(SPLITS_DIR).iterdir()):
@@ -192,7 +191,6 @@ class PipelineWrapper:
                     continue
 
                 key = species_dir.name
-                # Daten aus Cache oder Parquet laden
                 if key in _DATA_CACHE:
                     df_train = _DATA_CACHE[key]["train"]
                     df_test  = _DATA_CACHE[key]["test"]
@@ -209,11 +207,10 @@ class PipelineWrapper:
                     )
                     _DATA_CACHE[key] = {"train": df_train, "test": df_test}
 
-                # Labels kodieren
                 y_train = df_train["sex"].map({"f": 0, "m": 1})
-                y_test  = df_test ["sex"].map({"f": 0, "m": 1})
+                y_test  = df_test["sex"].map({"f": 0, "m": 1})
 
-                # CV-Setup
+                # CV setup
                 if self.validation_strategy == "custom":
                     fold_ids, cv_method = _make_folds(df_train, y_train, NUM_FOLDS, GROUP_COL)
                     df_train = df_train.assign(Fold=fold_ids)
@@ -230,7 +227,6 @@ class PipelineWrapper:
                 X_train = df_train.drop(columns=["Fold"])
                 X_test  = df_test
 
-                # Schleife über alle Modelle
                 for mk in self.model_keys:
                     model = MODELS[mk]
                     steps = get_pipeline_steps(
@@ -245,7 +241,7 @@ class PipelineWrapper:
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
 
-                    # CV-Auswertung
+                    # CV
                     try:
                         acc = cross_val_score(pipe, X_train, y_train, cv=cv, scoring="accuracy", n_jobs=1)
                         bal = cross_val_score(pipe, X_train, y_train, cv=cv, scoring="balanced_accuracy", n_jobs=1)
@@ -275,15 +271,15 @@ class PipelineWrapper:
                     y_pred = pipe.predict(X_test)
                     times["time_predict"] = perf_counter() - t0
 
-                    # Kennzahlen
+                    # Metrics
                     test_acc     = accuracy_score(y_test, y_pred)
                     test_bal_acc = balanced_accuracy_score(y_test, y_pred)
                     report       = classification_report(y_test, y_pred, output_dict=True)
-                    fs_trans     = pipe.named_steps.get("select")
-                    selected     = getattr(fs_trans, "selected_features_", None)
-                    ranking      = getattr(fs_trans, "feature_ranking_", None)
 
-                    # Record anlegen
+                    fs_trans = pipe.named_steps.get("select")
+                    selected_feats = getattr(fs_trans, "selected_features_", None)
+                    ranking        = getattr(fs_trans, "feature_ranking_", None)
+
                     rec = {
                         "species":                key,
                         "model":                  mk,
@@ -296,7 +292,7 @@ class PipelineWrapper:
                         "test_accuracy":          float(test_acc),
                         "test_balanced_accuracy": float(test_bal_acc),
                         "classification_report":  report,
-                        "selected_features":      selected,
+                        "selected_features":      selected_feats,
                         "feature_ranking":        ranking,
                         "impute_method":          self.impute_method,
                         "outlier_method":         self.outlier_method,
@@ -308,24 +304,44 @@ class PipelineWrapper:
                     }
                     records.append(rec)
 
-        # --- Nur raw_results.csv anhängen ---
-        df_new  = pd.DataFrame(records)
-        raw_out = Path(RESULTS_DATA_DIR) / "raw_results.csv"
-        df_new.to_csv(
-            raw_out,
-            mode='a',
-            header=not raw_out.exists(),
-            index=False
-        )
+        # Helper to read existing CSVs safely
+        def safe_read(path: Path, cols):
+            try:
+                return pd.read_csv(path)
+            except Exception:
+                return pd.DataFrame(columns=cols)
 
-        # --- Finale Pipelines fit & dump ---
-        for _, row in df_new.iterrows():
+        # Save results
+        df_new = pd.DataFrame(records)
+        raw_out  = Path(RESULTS_DATA_DIR) / "raw_results.csv"
+        best_out = Path(RESULTS_DATA_DIR) / "best_results.csv"
+
+        # Append to raw_results.csv
+        df_old = safe_read(raw_out, df_new.columns) if raw_out.exists() else pd.DataFrame(columns=df_new.columns)
+        df_raw = pd.concat([df_old, df_new], ignore_index=True)
+        df_raw.to_csv(raw_out, index=False)
+
+        # Update best_results.csv
+        df_old_best = safe_read(best_out, df_new.columns) if best_out.exists() else pd.DataFrame(columns=df_new.columns)
+        df_comb = pd.concat([df_old_best, df_new], ignore_index=True)
+        for col in ["fs_method", "impute_method", "outlier_method", "scaler_method", "reduce_pre_method", "reduce_post_method"]:
+            df_comb[col] = df_comb[col].where(df_comb[col].notna(), None)
+        df_best = (
+            df_comb
+            .sort_values("test_balanced_accuracy", ascending=False)
+            .drop_duplicates(subset=["species"], keep="first")
+            .reset_index(drop=True)
+        )
+        df_best.to_csv(best_out, index=False)
+
+        # Fit & dump final pipelines
+        for _, row in df_best.iterrows():
             species = row["species"]
             mk      = row["model"]
             df_t    = _DATA_CACHE[species]["train"]
             y_t     = df_t["sex"].map({"f": 0, "m": 1})
             X_t     = df_t.drop(columns=["Fold", "sex"])
-            steps   = get_pipeline_steps(
+            steps = get_pipeline_steps(
                 fs_method         = row["fs_method"],
                 fs_k              = row["fs_k"],
                 impute_method     = row["impute_method"],
@@ -339,4 +355,4 @@ class PipelineWrapper:
             final_pipe.fit(X_t, y_t)
             dump(final_pipe, self._model_dir / f"{species}.joblib")
 
-        return df_new
+        return df_raw

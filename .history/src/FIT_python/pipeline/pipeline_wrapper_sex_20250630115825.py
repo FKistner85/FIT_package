@@ -176,10 +176,9 @@ class PipelineWrapper:
 
 
     def train(self) -> pd.DataFrame:
-        """Trainiert alle Modelle und speichert nur raw_results.csv (append)."""
+        """Trainiert alle Modelle und speichert nur raw_results.csv."""
         records: list[dict] = []
 
-        # Schleife über alle fs-Varianten (entweder eine oder None)
         fs_methods = [self.fs_method] if self.fs_method else [None]
         for fs_m in fs_methods:
             for species_dir in sorted(Path(SPLITS_DIR).iterdir()):
@@ -192,7 +191,6 @@ class PipelineWrapper:
                     continue
 
                 key = species_dir.name
-                # Daten aus Cache oder Parquet laden
                 if key in _DATA_CACHE:
                     df_train = _DATA_CACHE[key]["train"]
                     df_test  = _DATA_CACHE[key]["test"]
@@ -209,11 +207,10 @@ class PipelineWrapper:
                     )
                     _DATA_CACHE[key] = {"train": df_train, "test": df_test}
 
-                # Labels kodieren
                 y_train = df_train["sex"].map({"f": 0, "m": 1})
-                y_test  = df_test ["sex"].map({"f": 0, "m": 1})
+                y_test  = df_test["sex"].map({"f": 0, "m": 1})
 
-                # CV-Setup
+                # CV setup
                 if self.validation_strategy == "custom":
                     fold_ids, cv_method = _make_folds(df_train, y_train, NUM_FOLDS, GROUP_COL)
                     df_train = df_train.assign(Fold=fold_ids)
@@ -230,7 +227,6 @@ class PipelineWrapper:
                 X_train = df_train.drop(columns=["Fold"])
                 X_test  = df_test
 
-                # Schleife über alle Modelle
                 for mk in self.model_keys:
                     model = MODELS[mk]
                     steps = get_pipeline_steps(
@@ -245,7 +241,7 @@ class PipelineWrapper:
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
 
-                    # CV-Auswertung
+                    # CV
                     try:
                         acc = cross_val_score(pipe, X_train, y_train, cv=cv, scoring="accuracy", n_jobs=1)
                         bal = cross_val_score(pipe, X_train, y_train, cv=cv, scoring="balanced_accuracy", n_jobs=1)
@@ -275,15 +271,15 @@ class PipelineWrapper:
                     y_pred = pipe.predict(X_test)
                     times["time_predict"] = perf_counter() - t0
 
-                    # Kennzahlen
+                    # Metrics
                     test_acc     = accuracy_score(y_test, y_pred)
                     test_bal_acc = balanced_accuracy_score(y_test, y_pred)
                     report       = classification_report(y_test, y_pred, output_dict=True)
-                    fs_trans     = pipe.named_steps.get("select")
-                    selected     = getattr(fs_trans, "selected_features_", None)
-                    ranking      = getattr(fs_trans, "feature_ranking_", None)
 
-                    # Record anlegen
+                    fs_trans       = pipe.named_steps.get("select")
+                    selected_feats = getattr(fs_trans, "selected_features_", None)
+                    ranking        = getattr(fs_trans, "feature_ranking_", None)
+
                     rec = {
                         "species":                key,
                         "model":                  mk,
@@ -296,7 +292,7 @@ class PipelineWrapper:
                         "test_accuracy":          float(test_acc),
                         "test_balanced_accuracy": float(test_bal_acc),
                         "classification_report":  report,
-                        "selected_features":      selected,
+                        "selected_features":      selected_feats,
                         "feature_ranking":        ranking,
                         "impute_method":          self.impute_method,
                         "outlier_method":         self.outlier_method,
@@ -308,17 +304,22 @@ class PipelineWrapper:
                     }
                     records.append(rec)
 
-        # --- Nur raw_results.csv anhängen ---
+        # --- Safe read helper for raw_results ---
+        def safe_read(path: Path, cols):
+            try:
+                return pd.read_csv(path)
+            except Exception:
+                return pd.DataFrame(columns=cols)
+
+        # --- Write only raw_results.csv ---
         df_new  = pd.DataFrame(records)
         raw_out = Path(RESULTS_DATA_DIR) / "raw_results.csv"
-        df_new.to_csv(
-            raw_out,
-            mode='a',
-            header=not raw_out.exists(),
-            index=False
-        )
 
-        # --- Finale Pipelines fit & dump ---
+        df_old = safe_read(raw_out, df_new.columns) if raw_out.exists() else pd.DataFrame(columns=df_new.columns)
+        df_raw = pd.concat([df_old, df_new], ignore_index=True)
+        df_raw.to_csv(raw_out, index=False)
+
+        # --- Also dump final pipelines for later use ---
         for _, row in df_new.iterrows():
             species = row["species"]
             mk      = row["model"]
@@ -339,4 +340,4 @@ class PipelineWrapper:
             final_pipe.fit(X_t, y_t)
             dump(final_pipe, self._model_dir / f"{species}.joblib")
 
-        return df_new
+        return df_raw
