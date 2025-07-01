@@ -1,83 +1,15 @@
-import pandas as pd
+from typing import List, Dict, Union
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from typing import List, Dict
-from collections import defaultdict
-import random
-from FIT_python.pipeline_individual_id.generate_rcv import generate_rcv
-from FIT_python.pipeline_individual_id.feature_selection_wrapper import FeatureSelectionTransformer
-from collections import defaultdict
-import random
-
-
-def geometric_pairwise_projection(
-    comparison: Dict,
-    df: pd.DataFrame,
-    rcv_df: pd.DataFrame,
-    feature_cols: List[str],
-    k_features: int = 10,
-    reducer: str = "pca",
-    n_components: int = 2,
-    debug: bool = False
-):
-    idx_a = comparison["samples_a"]
-    idx_b = comparison["samples_b"]
-    df_a = df.loc[idx_a, feature_cols].copy()
-    df_b = df.loc[idx_b, feature_cols].copy()
-    df_r = rcv_df[feature_cols].copy()
-
-    X_ab = pd.concat([df_a, df_b], ignore_index=True)
-    y_ab = np.concatenate([
-        np.zeros(len(df_a), dtype=int),
-        np.ones(len(df_b), dtype=int)
-    ])
-
-    selector = FeatureSelectionTransformer(method="forward", k=k_features)
-    selector.fit(X_ab, y_ab)
-    selected_features = selector.selected_features_
-
-    if debug:
-        print("Selected features:", selected_features)
-
-    if reducer == "pca":
-        reducer_model = PCA(n_components=n_components)
-    elif reducer == "lda":
-        reducer_model = LinearDiscriminantAnalysis(n_components=1)
-    else:
-        raise ValueError("Reducer muss 'pca' oder 'lda' sein")
-
-    reducer_model.fit(X_ab[selected_features], y_ab)
-    coords_a = reducer_model.transform(df_a[selected_features])
-    coords_b = reducer_model.transform(df_b[selected_features])
-    coords_r = reducer_model.transform(df_r[selected_features])
-
-    center_a = coords_a.mean(axis=0)
-    center_b = coords_b.mean(axis=0)
-    center_r = coords_r.mean(axis=0)
-
-    result = {
-        "ind_a": comparison["ind_a"],
-        "ind_b": comparison["ind_b"],
-        "selected_features": selected_features,
-        "center_distance_ab": np.linalg.norm(center_a - center_b),
-        "center_distance_rcv_a": np.linalg.norm(center_r - center_a),
-        "center_distance_rcv_b": np.linalg.norm(center_r - center_b),
-        "coords": {
-            "A": coords_a.tolist(),
-            "B": coords_b.tolist(),
-            "RCV": coords_r.tolist(),
-        }
-    }
-    return result
-
-
-
-
-from collections import defaultdict
-import random
-from typing import List, Dict
 import pandas as pd
+from joblib import Parallel, delayed
+from tqdm import tqdm
+from sklearn.model_selection import StratifiedKFold
+
+from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
+from FIT_python.pipeline_individual_id.feature_selection_wrapper import FeatureSelectionTransformer
+from FIT_python.pipeline_individual_id.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+from FIT_python.pipeline_individual_id.distance_metrics import compute_distances
+
 
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
@@ -85,37 +17,23 @@ def generate_pairwise_comparisons_from_df(
     group_sizes: List[int] = [3, 5, 7, 10],
     n_repeats: int = 5,
     mode: str = 'both',
-    selfmatch_factor: float = 2.0
+    selfmatch_factor: float = 2.0,
+    n_folds: int = 5,
+    random_state: int = 0
 ) -> List[Dict]:
     """
-    Erzeuge Paarvergleiche zwischen Trails (verschiedene oder gleiche Individuen).
-
-    Parameter
-    ---------
-    df : pd.DataFrame
-        Eingabedaten mit mindestens einer 'individual_id'-Spalte.
-    id_col : str
-        Spaltenname der individuellen ID.
-    group_sizes : list of int
-        Gruppengrößen (Anzahl Trails), die für die Vergleiche verwendet werden sollen.
-    n_repeats : int
-        Wie oft jeder Vergleichstyp wiederholt werden soll.
-    mode : str
-        "symmetric", "asymmetric" oder "both", je nach erlaubten Größenkombinationen.
-    selfmatch_factor : float
-        Multiplikator für die Anzahl der Selbstvergleiche.
-
-    Rückgabe
-    --------
-    List[Dict]
-        Liste von Vergleichsdictionaries mit Trails und Metadaten.
+    Erzeuge Paarvergleiche und teile sie in n_folds ein (stratifiziert nach same_individual).
+    Jedes Dict enthält zusätzlich 'fold'.
     """
+    from collections import defaultdict
+    import random
+
+    # 1) Sammle alle Roh-Paare
     individuals = defaultdict(list)
     for idx, row in df.iterrows():
         individuals[row[id_col]].append(idx)
 
-    comparisons = []
-
+    raw = []
     for size_a in group_sizes:
         for size_b in group_sizes:
             if mode == 'symmetric' and size_a != size_b:
@@ -123,245 +41,191 @@ def generate_pairwise_comparisons_from_df(
             if mode == 'asymmetric' and size_a == size_b:
                 continue
 
-            eligible_inds_a = [ind for ind, samples in individuals.items() if len(samples) >= size_a]
-            eligible_inds_b = [ind for ind, samples in individuals.items() if len(samples) >= size_b]
+            elig_a = [ind for ind, s in individuals.items() if len(s) >= size_a]
+            elig_b = [ind for ind, s in individuals.items() if len(s) >= size_b]
 
-            # Cross-individual comparisons
-            for ind_a in eligible_inds_a:
-                for ind_b in eligible_inds_b:
+            # cross-individual
+            for ind_a in elig_a:
+                for ind_b in elig_b:
                     if ind_a >= ind_b:
                         continue
                     for _ in range(n_repeats):
-                        samples_a = random.sample(individuals[ind_a], size_a)
-                        samples_b = random.sample(individuals[ind_b], size_b)
-                        comparisons.append({
-                            'ind_a': ind_a,
-                            'ind_b': ind_b,
-                            'size_a': size_a,
-                            'size_b': size_b,
-                            'samples_a': samples_a,
-                            'samples_b': samples_b,
-                            'same_individual': False
-                        })
+                        sa = random.sample(individuals[ind_a], size_a)
+                        sb = random.sample(individuals[ind_b], size_b)
+                        raw.append((ind_a, ind_b, sa, sb, False))
 
-            # Same-individual comparisons
+            # same-individual
             for ind in individuals:
                 if len(individuals[ind]) < size_a + size_b:
                     continue
-                self_repeats = int(n_repeats * selfmatch_factor)
-                for _ in range(self_repeats):
-                    combined = random.sample(individuals[ind], size_a + size_b)
-                    samples_a = combined[:size_a]
-                    samples_b = combined[size_a:]
-                    comparisons.append({
-                        'ind_a': ind,
-                        'ind_b': ind,
-                        'size_a': size_a,
-                        'size_b': size_b,
-                        'samples_a': samples_a,
-                        'samples_b': samples_b,
-                        'same_individual': True
-                    })
+                for _ in range(int(n_repeats * selfmatch_factor)):
+                    combo = random.sample(individuals[ind], size_a + size_b)
+                    sa, sb = combo[:size_a], combo[size_a:]
+                    raw.append((ind, ind, sa, sb, True))
+
+    # 2) Stratified k-fold auf Pair-Level (a,b)
+    pair_keys = []
+    y = []
+    seen = {}
+    for ind_a, ind_b, sa, sb, same in raw:
+        key = (ind_a, ind_b)
+        if key not in seen:
+            seen[key] = same
+            pair_keys.append(key)
+            y.append(1 if same else 0)
+
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
+    fold_map = {}
+    for fold_idx, (_, val_idx) in enumerate(skf.split(pair_keys, y)):
+        for pi in val_idx:
+            fold_map[pair_keys[pi]] = fold_idx
+
+    # 3) Baue finale Liste mit 'fold'
+    comparisons = []
+    for ind_a, ind_b, sa, sb, same in raw:
+        comparisons.append({
+            "ind_a": ind_a,
+            "ind_b": ind_b,
+            "size_a": len(sa),
+            "size_b": len(sb),
+            "samples_a": sa,
+            "samples_b": sb,
+            "same_individual": same,
+            "fold": fold_map[(ind_a, ind_b)]
+        })
 
     return comparisons
 
-
-def run_all_pairwise_projections(
-    comparisons: List[Dict],
-    df: pd.DataFrame,
-    feature_cols: List[str],
-    k_features: int = 10,
-    reducer: str = "pca",
-    selection_method: str = "forward",
-    n_components: int = 2,
-    debug: bool = False
-):
-    results = []
-    df = df.copy()
-    df_features = df[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df.update(df_features)
-    df_base = df.reset_index(drop=True)
-
-    for i, comp in enumerate(comparisons):
-        if debug and i % 100 == 0:
-            print(f"Processing comparison {i+1}/{len(comparisons)}")
-
-        try:
-            idx_a = comp["samples_a"]
-            idx_b = comp["samples_b"]
-            df_a = df_base.loc[idx_a, feature_cols]
-            df_b = df_base.loc[idx_b, feature_cols]
-            X_ab = pd.concat([df_a, df_b], ignore_index=True)
-            y_ab = np.concatenate([
-                np.zeros(len(df_a), dtype=int),
-                np.ones(len(df_b), dtype=int)
-            ])
-
-            selector = FeatureSelectionTransformer(method=selection_method, k=k_features)
-            selector.fit(X_ab, y_ab)
-            selected_features = selector.selected_features_
-
-            exclude = idx_a + idx_b
-            df_r = generate_rcv(df_base, exclude)[selected_features]
-
-            df_all = pd.concat([
-                df_a[selected_features],
-                df_b[selected_features],
-                df_r
-            ], ignore_index=True)
-            y_all = np.concatenate([
-                np.zeros(len(df_a), dtype=int),
-                np.ones(len(df_b), dtype=int),
-                np.full(len(df_r), 2, dtype=int)
-            ])
-
-            if reducer == "pca":
-                reducer_model = PCA(n_components=n_components)
-            elif reducer == "lda":
-                reducer_model = LinearDiscriminantAnalysis(n_components=min(n_components, len(np.unique(y_all)) - 1))
-            else:
-                raise ValueError("Reducer muss 'pca' oder 'lda' sein")
-
-            reducer_model.fit(df_all, y_all)
-            coords_all = reducer_model.transform(df_all)
-
-            coords_a = coords_all[:len(df_a)]
-            coords_b = coords_all[len(df_a):len(df_a)+len(df_b)]
-            coords_r = coords_all[len(df_a)+len(df_b):]
-
-            center_a = coords_a.mean(axis=0)
-            center_b = coords_b.mean(axis=0)
-            center_r = coords_r.mean(axis=0)
-
-            result = {
-                "ind_a": comp["ind_a"],
-                "ind_b": comp["ind_b"],
-                "same_individual": comp["same_individual"],
-                "selected_features": selected_features,
-                "selection_method": selection_method,
-                "reducer": reducer,
-                "k_features": k_features,
-                "group_size_a": len(idx_a),
-                "group_size_b": len(idx_b),
-                "center_distance_ab": np.linalg.norm(center_a - center_b),
-                "center_distance_rcv_a": np.linalg.norm(center_a - center_r),
-                "center_distance_rcv_b": np.linalg.norm(center_b - center_r),
-                "comparison_id": i,
-            }
-
-            results.append(result)
-
-        except Exception as e:
-            if debug:
-                print(f"[ERROR] Comparison {i} failed: {e}")
-
-    return results
-
-from joblib import Parallel, delayed
-from tqdm import tqdm
 
 def run_all_pairwise_projections_parallel(
     comparisons: List[Dict],
     df: pd.DataFrame,
     feature_cols: List[str],
-    k_features: int = 15,
-    reducer: str = "lda",
+    k_features: Union[int, List[int]] = 15,
+    reducers: List[str] = ["lda"],
     selection_method: str = "forward",
-    n_components: int = 2,
+    n_components: Union[int, List[int]] = 2,
     debug: bool = False,
     n_jobs: int = -1
-):
-    df = df.copy()
-    df_features = df[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df.update(df_features)
-    df_base = df.reset_index(drop=True)
+) -> List[Dict]:
+    """
+    Für jede Paarung:
+      1) Einmal Feature-Selection mit k_max
+      2) Für jede Kombination (reducer, n_components, k) → Projektion + Distanz
+      3) Clamp für LDA: n_components_eff = min(requested, n_features, n_classes-1)
+    """
+    # 1) Parameter in Listen
+    ks = k_features if isinstance(k_features, (list, tuple)) else [k_features]
+    k_max = max(ks)
+    ncs = n_components if isinstance(n_components, (list, tuple)) else [n_components]
 
-    def process_single_projection(i, comp):
+    # 2) Bereite DataFrame vor
+    df2 = df.copy()
+    df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
+    df_base = df2.reset_index(drop=True)
+
+    def process_pair(i: int, comp: Dict) -> List[Dict]:
         try:
-            idx_a = comp["samples_a"]
-            idx_b = comp["samples_b"]
+            idx_a, idx_b = comp["samples_a"], comp["samples_b"]
             df_a = df_base.loc[idx_a, feature_cols]
             df_b = df_base.loc[idx_b, feature_cols]
+
+            # Feature-Selection einmal mit k_max
             X_ab = pd.concat([df_a, df_b], ignore_index=True)
-            y_ab = np.concatenate([
-                np.zeros(len(df_a), dtype=int),
-                np.ones(len(df_b), dtype=int)
-            ])
-
-            selector = FeatureSelectionTransformer(method=selection_method, k=k_features)
+            y_ab = np.concatenate([np.zeros(len(df_a), int), np.ones(len(df_b), int)])
+            selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
             selector.fit(X_ab, y_ab)
-            selected_features = selector.selected_features_
+            full_ranking = selector.feature_ranking_
 
-            exclude = idx_a + idx_b
-            df_r = generate_rcv(df_base, exclude)[selected_features]
+            # RCV
+            df_r_full = generate_rcv(df_base, idx_a + idx_b)
 
-            df_all = pd.concat([
-                df_a[selected_features],
-                df_b[selected_features],
-                df_r
-            ], ignore_index=True)
-            y_all = np.concatenate([
-                np.zeros(len(df_a), dtype=int),
-                np.ones(len(df_b), dtype=int),
-                np.full(len(df_r), 2, dtype=int)
-            ])
+            out = []
+            for reducer in reducers:
+                supervised = reducer in ("lda", "umap")
+                for nc in ncs:
+                    for k in ks:
+                        sel_feats = [feat for feat,_ in full_ranking[:k]]
+                        da, db, dr = df_a[sel_feats], df_b[sel_feats], df_r_full[sel_feats]
 
-            if reducer == "pca":
-                reducer_model = PCA(n_components=n_components)
-            elif reducer == "lda":
-                reducer_model = LinearDiscriminantAnalysis(n_components=min(n_components, len(np.unique(y_all)) - 1))
-            else:
-                raise ValueError("Reducer muss 'pca' oder 'lda' sein")
+                        arr = pd.concat([da, db, dr], ignore_index=True)
+                        y_all = np.concatenate([
+                            np.zeros(len(da), int),
+                            np.ones(len(db), int),
+                            np.full(len(dr), 2, int)
+                        ])
 
-            reducer_model.fit(df_all, y_all)
-            coords_all = reducer_model.transform(df_all)
+                        # Clamp für LDA
+                        nc_eff = nc
+                        if reducer == "lda":
+                            n_classes = len(np.unique(y_all))
+                            nc_eff = min(nc, len(sel_feats), n_classes - 1)
+                            if nc_eff < 1:
+                                if debug:
+                                    print(f"[DEBUG] Skipping LDA pair {i}, k={k}, nc={nc}")
+                                continue
 
-            coords_a = coords_all[:len(df_a)]
-            coords_b = coords_all[len(df_a):len(df_a)+len(df_b)]
-            coords_r = coords_all[len(df_a)+len(df_b):]
+                        dr_model = DimensionalityReducerTransformer(
+                            method=reducer,
+                            n_components=nc_eff,
+                            supervised=supervised
+                        )
+                        dr_model.fit(arr, y_all if supervised else None)
+                        coords = dr_model.transform(arr)
 
-            center_a = coords_a.mean(axis=0)
-            center_b = coords_b.mean(axis=0)
-            center_r = coords_r.mean(axis=0)
+                        ca = coords[:len(da)]
+                        cb = coords[len(da):len(da)+len(db)]
+                        cr = coords[len(da)+len(db):]
 
-            result = {
-                "ind_a": comp["ind_a"],
-                "ind_b": comp["ind_b"],
-                "same_individual": comp["same_individual"],
-                "selected_features": selected_features,
-                "selection_method": selection_method,
-                "center_distance_ab": np.linalg.norm(center_a - center_b),
-                "center_distance_rcv_a": np.linalg.norm(center_a - center_r),
-                "center_distance_rcv_b": np.linalg.norm(center_b - center_r),
-                "comparison_id": i,
-                
-                # Mittelwerte der Koordinaten
-                "center_a_x": center_a[0] if len(center_a) > 0 else None,
-                "center_a_y": center_a[1] if len(center_a) > 1 else None,
-                "center_b_x": center_b[0] if len(center_b) > 0 else None,
-                "center_b_y": center_b[1] if len(center_b) > 1 else None,
+                        cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
+                        dists = compute_distances(cA, cB)
 
-                # Rohdaten der Koordinaten
-                "coords_a": coords_a.tolist(),
-                "coords_b": coords_b.tolist(),
+                        res = {
+                            "ind_a": comp["ind_a"],
+                            "ind_b": comp["ind_b"],
+                            "same_individual": comp["same_individual"],
+                            "fold": comp["fold"],
+                            "pipeline": f"{selection_method}_k{k}_{reducer}_nc{nc_eff}",
+                            "selection_method": selection_method,
+                            "reducer": reducer,
+                            "k_features": k,
+                            "n_components": nc_eff,
+                            "comparison_id": i,
+                            "center_a_x": cA[0] if cA.size > 0 else None,
+                            "center_a_y": cA[1] if cA.size > 1 else None,
+                            "center_b_x": cB[0] if cB.size > 0 else None,
+                            "center_b_y": cB[1] if cB.size > 1 else None,
+                            "center_r_x": cR[0] if cR.size > 0 else None,
+                            "center_r_y": cR[1] if cR.size > 1 else None,
+                            "coords_a_x": ca[:, 0].tolist(),
+                            "coords_a_y": ca[:, 1].tolist() if ca.shape[1] > 1 else [],
+                            "coords_b_x": cb[:, 0].tolist(),
+                            "coords_b_y": cb[:, 1].tolist() if cb.shape[1] > 1 else [],
+                            "coords_r_x": cr[:, 0].tolist(),
+                            "coords_r_y": cr[:, 1].tolist() if cr.shape[1] > 1 else [],
+                        }
+                        # Abstände hinzufügen
+                        for m, v in dists.items():
+                            res[f"dist_{m}"] = float(v) if not np.isnan(v) else None
 
-                # Vergleichsgrößen
-                "min_observations": min(len(comp["samples_a"]), len(comp["samples_b"])),
-                "max_observations": max(len(comp["samples_a"]), len(comp["samples_b"])),
-                "n_selected_features": len(selected_features),
-            }
+                        res["min_observations"] = min(len(idx_a), len(idx_b))
+                        res["max_observations"] = max(len(idx_a), len(idx_b))
 
+                        out.append(res)
 
-            return result
+            return out
 
         except Exception as e:
             if debug:
-                print(f"[ERROR] Comparison {i} failed: {e}")
-            return None
+                print(f"[ERROR] pair {i} failed: {e}")
+            return []
 
-    results = Parallel(n_jobs=n_jobs)(
-        delayed(process_single_projection)(i, comp)
-        for i, comp in tqdm(enumerate(comparisons), total=len(comparisons))
+    nested = Parallel(n_jobs=n_jobs)(  # progress bar optional via tqdm_joblib
+        delayed(process_pair)(i, comp)
+        for i, comp in tqdm(enumerate(comparisons),
+                            total=len(comparisons),
+                            desc="Processing Pairs")
     )
 
-    return [r for r in results if r is not None]
+    # flatten
+    return [r for sub in nested for r in sub]

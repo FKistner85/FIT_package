@@ -22,6 +22,8 @@ dependencies:
   - scipy
   - umap-learn
   - pyarrow
+  - tqdm-joblib
+  - joblib
   - pip
   - pip:
     - -e .
