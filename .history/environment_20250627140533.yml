@@ -23,7 +23,6 @@ dependencies:
   - umap-learn
   - pyarrow
   - pip
-  - tabulate
   - pip:
     - -e .
     - pytest

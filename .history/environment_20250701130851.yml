@@ -22,8 +22,9 @@ dependencies:
   - scipy
   - umap-learn
   - pyarrow
+  - tqdm-joblib
+  - joblib
   - pip
-  - tabulate
   - pip:
     - -e .
     - pytest

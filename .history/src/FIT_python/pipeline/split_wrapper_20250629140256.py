@@ -1,0 +1,139 @@
+from pathlib import Path
+import pandas as pd
+from typing import Optional
+
+from FIT_python.pipeline.data_import_wrapper import DataImporter
+from FIT_python.pipeline.split_utils import (
+    create_train_test_split_otter,
+    train_test_group_split,
+    _make_folds,
+)
+from FIT_python.config import (
+    RAW_DIR,
+    SPLITS_DIR,
+    DEFAULT_TARGETS,
+    GLOBAL_RANDOM_SEED,
+    NUM_FOLDS,
+    GROUP_COL,
+)
+
+
+class SplitWrapper:
+    """Wrapper, der Rohdaten bereinigt, splittet und Folds robust erzeugt."""
+
+    def __init__(
+        self,
+        input_dir: Optional[Path] = None,
+        output_dir: Optional[Path] = None,
+    ):
+        self.input_dir = input_dir or RAW_DIR
+        self.output_dir = output_dir or SPLITS_DIR
+
+    def print_summary(self, df: pd.DataFrame, name: str):
+        n_rows = len(df)
+        n_individuals = (
+            df["individual_id"].nunique()
+            if "individual_id" in df.columns
+            else 0
+        )
+        n_trails = df["trail"].nunique() if "trail" in df.columns else 0
+        sex_counts = (
+            df["sex"]
+            .fillna("Unknown")
+            .astype(str)
+            .str.strip()
+            .value_counts()
+        )
+        print(
+            f"\n📊 {name} – {n_rows} Zeilen | "
+            f"{n_individuals} Individuen | {n_trails} Trails"
+        )
+        print(sex_counts.to_string())
+
+    def split_all(self, as_csv: bool = True) -> int:
+        # 1) Lade und bereinige mit DataImporter
+        importer = DataImporter(
+            raw_dir=self.input_dir, target_cols=DEFAULT_TARGETS
+        )
+        dfs = importer.run()
+        if not dfs:
+            print(f"❌ Keine Rohdaten gefunden in {self.input_dir}")
+            return 1
+
+        # 2) Für jeden bereinigten DataFrame: Split + Fold
+        for name, df in dfs.items():
+            dataset = name.lower().replace("_cleaned", "")
+
+            # 2a) OTTER-Spezialfall (fixed split für lutra_lutra)
+            species_col = df.get("Species") or df.get("species")
+            is_otter = (
+                species_col.astype(str)
+                .str.strip()
+                .str.lower()
+                .eq("lutra_lutra")
+                .any()
+            )
+
+            if is_otter:
+                train_df, test_df, inference_df = create_train_test_split_otter(df)
+
+                def valid_split(dd):
+                    # robust gegen NaN, "unknown", leere Strings
+                    vals = set(dd["sex"].fillna("unknown").str.strip().str.lower())
+                    return {"f", "m"}.issubset(vals)
+
+                if not (
+                    valid_split(train_df)
+                    and valid_split(test_df)
+                ):
+                    print(f"⚠️ OTTER-Splits für {dataset} ungültig, fallback auf Gruppen-Split")
+                    train_df, test_df = train_test_group_split(df)
+                    inference_df = df.loc[
+                        ~df["individual_id"].isin(train_df["individual_id"])
+                        & ~df["individual_id"].isin(test_df["individual_id"])
+                    ]
+            else:
+                train_df, test_df = train_test_group_split(df)
+                inference_df = df.loc[
+                    ~df["individual_id"].isin(train_df["individual_id"])
+                    & ~df["individual_id"].isin(test_df["individual_id"])
+                ]
+
+            # 3) Fallback-Fold-Generierung für train_df via _make_folds – nur wenn nicht schon vorhanden
+            if "Fold" in train_df.columns and train_df["Fold"].notna().all():
+                print(f"✔️ Fold-Spalte in {dataset} schon gesetzt – keine erneute Zuweisung.")
+                fold_method = "predefined"
+            else:
+                y_ser = train_df["sex"].map({"f": 0, "m": 1})
+                fold_ids, fold_method = _make_folds(
+                    train_df, y_ser, n_splits=NUM_FOLDS, group_col=GROUP_COL
+                )
+                train_df = train_df.assign(Fold=fold_ids)
+
+            if fold_method != "stratified_group":
+                print(f"⚠️ Stratified Group Fold fehlgeschlagen für {dataset} – Fallback auf '{fold_method}'")
+            else:
+                print(f"✔️ Stratified Group Fold erfolgreich für {dataset}")
+
+            # 4) Speichern & Summary
+            out_dir = self.output_dir / dataset
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            for split_name, split_df in zip(
+                ["train", "test", "inference"],
+                [train_df, test_df, inference_df],
+            ):
+                split_df.to_parquet(
+                    out_dir / f"{split_name}.parquet", index=False
+                )
+                if as_csv:
+                    split_df.to_csv(
+                        out_dir / f"{split_name}.csv", index=False
+                    )
+                self.print_summary(
+                    split_df, f"{dataset} – {split_name}"
+                )
+
+            print(f"\n✅ {dataset} gespeichert (csv & parquet)")
+
+        return 0
