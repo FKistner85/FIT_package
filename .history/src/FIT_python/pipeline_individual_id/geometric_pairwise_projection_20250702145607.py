@@ -254,7 +254,7 @@ def run_all_pairwise_projections_parallel(
                             "ind_b":             ind_b,
                             "same_individual":   comp["same_individual"],
                             "fold":              comp["fold"],
-                            "pipeline": (    f"{selection_method}_k{k}_{reducer}_nc{nc_eff}_"f"{'sex_on' if use_sexmodel_prediction else 'sex_off'}"),
+                            "pipeline":          f"{selection_method}_k{k}_{reducer}_nc{nc_eff}",
                             "selection_method":  selection_method,
                             "reducer":           reducer,
                             "k_features":        k,
