@@ -1,12 +1,16 @@
 from typing import List, Dict, Union
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed, load
+from joblib import Parallel, delayed, load, Memory
 from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 from collections import defaultdict
 import random
+from pathlib import Path
 from sklearn.model_selection import StratifiedKFold
+
+_cache_dir = Path(__file__).parent / "__cache__"
+memory = Memory(location=_cache_dir, verbose=0)
 
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
 from FIT_python.pipeline_individual_id.feature_selection_wrapper import FeatureSelectionTransformer
@@ -14,6 +18,7 @@ from FIT_python.pipeline_individual_id.dimensionality_reduction_wrapper import D
 from FIT_python.pipeline_individual_id.distance_metrics import compute_distances
 
 
+@memory.cache
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
     id_col: str = "individual_id",
@@ -22,7 +27,8 @@ def generate_pairwise_comparisons_from_df(
     mode: str = 'both',
     selfmatch_factor: float = 2.0,
     n_folds: int = 5,
-    random_state: int = 0
+    random_state: int = 0,
+    show_progress: bool = False
 ) -> List[Dict]:
     """
     Erzeuge Trail-Paarvergleiche mit:
@@ -33,12 +39,15 @@ def generate_pairwise_comparisons_from_df(
     """
     # 1) Alle Roh-Paare sammeln
     individuals = defaultdict(list)
-    for idx, row in df.iterrows():
+    it = df.iterrows()
+    if show_progress:
+        it = tqdm(it, total=len(df), desc="index", leave=False)
+    for idx, row in it:
         individuals[row[id_col]].append(idx)
 
     raw = []
-    for size_a in group_sizes:
-        for size_b in group_sizes:
+    for size_a in tqdm(group_sizes, desc="size_a", leave=False, disable=not show_progress):
+        for size_b in tqdm(group_sizes, desc=f"size_b({size_a})", leave=False, disable=not show_progress):
             if mode == 'symmetric' and size_a != size_b:
                 continue
             if mode == 'asymmetric' and size_a == size_b:
@@ -87,7 +96,10 @@ def generate_pairwise_comparisons_from_df(
 
     # 4) Finale Liste mit Trail-IDs und Fold
     comparisons = []
-    for ind_a, ind_b, sa, sb, same in raw:
+    it_raw = raw
+    if show_progress:
+        it_raw = tqdm(raw, desc="pairs", leave=False)
+    for ind_a, ind_b, sa, sb, same in it_raw:
         size_a = len(sa)
         trail_counters[(ind_a, size_a)] += 1
         letter_a = chr(ord('a') + (trail_counters[(ind_a, size_a)] - 1) % 26)
@@ -123,7 +135,8 @@ def run_all_pairwise_projections_parallel(
     use_sexmodel_prediction: bool = False,
     sexmodel_path: str = None,
     debug: bool = False,
-    n_jobs: int = -1
+    n_jobs: int = -1,
+    batch_size: int | None = None
 ) -> List[Dict]:
     """
     Für jede Paarung:
@@ -136,6 +149,11 @@ def run_all_pairwise_projections_parallel(
          - DimRed erzeugen
          - Abstände berechnen
          - Result-Dict inkl. avg_proba_A_0/1, avg_proba_B_0/1, avg_proba_R_0/1
+
+    Parameters
+    ----------
+    batch_size : int or None, optional
+        Wenn gesetzt, werden die Vergleiche in Batches dieser Größe verarbeitet.
     """
     # 0) Sex-Modell
     if use_sexmodel_prediction:
@@ -295,12 +313,18 @@ def run_all_pairwise_projections_parallel(
                 print(f"[ERROR] pair {i} failed: {e}")
             return []
 
-    # 11) Parallel-Ausführung mit äußerem Fortschritt
-    with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(comparisons))):
-        nested = Parallel(n_jobs=n_jobs)(
-            delayed(process_pair)(i, comp)
-            for i, comp in enumerate(comparisons)
-        )
+    cached_pair = memory.cache(process_pair)
 
-    # flatten und zurückgeben
-    return [row for group in nested for row in group]
+    results: List[Dict] = []
+    batches = [comparisons[i:i+batch_size] for i in range(0, len(comparisons), batch_size)] if batch_size else [comparisons]
+    offset = 0
+    for batch in tqdm(batches, desc="batches", leave=False):
+        with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(batch), leave=False)):
+            nested = Parallel(n_jobs=n_jobs)(
+                delayed(cached_pair)(offset + i, comp)
+                for i, comp in enumerate(batch)
+            )
+        results.extend(row for group in nested for row in group)
+        offset += len(batch)
+
+    return results
