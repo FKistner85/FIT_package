@@ -1,0 +1,33 @@
+name: FIT_python_conda_env
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+  - pandas>=1.3
+  - xlrd>=1.2
+  - openpyxl>=3.0
+  - numpy>=1.21
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - jupyterlab
+  - optuna
+  - catboost
+  - xgboost
+  - lightgbm
+  - scikit-optimize
+  - scipy
+  - umap-learn
+  - pyarrow
+  - pip
+  - tabulate
+  - pip:
+    - -e .
+    - pytest
+    - coverage
+    - flake8
+    - mypy
+    - missingpy
