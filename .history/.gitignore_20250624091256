@@ -14,8 +14,3 @@ htmlcov/
 .vscode/
 .DS_Store
 Thumbs.db
-/results/*.parquet
-/results/*.joblib
-
-results/**/*.parquet
-results/**/*.joblib
