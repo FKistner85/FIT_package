@@ -9,20 +9,17 @@ from time import perf_counter
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, classification_report
-from sklearn.model_selection import PredefinedSplit, cross_val_score, KFold
+from sklearn.model_selection import cross_val_score
 
 from FIT_python.config import (
     SPLITS_DIR,
     RESULTS_DATA_DIR,
     GLOBAL_RANDOM_SEED,
-    NUM_FOLDS,
-    GROUP_COL,
 )
 
 # Utility functions
 from FIT_python.pipeline_sex.split_utils import (
     ensure_valid_splits,
-    _make_folds,
 )
 
 # Wrappers for data preparation
@@ -142,7 +139,6 @@ class PipelineWrapper:
         scaler_method: Optional[str] = None,
         reduce_pre_method: Optional[str] = None,
         reduce_post_method: Optional[str] = None,
-        validation_strategy: str = "custom",
     ):
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys        = model_keys or list(MODELS.keys())
@@ -154,9 +150,7 @@ class PipelineWrapper:
         self.reduce_pre_method = reduce_pre_method
         self.reduce_post_method= reduce_post_method
 
-        if validation_strategy not in ("custom", "cv5"):
-            raise ValueError("validation_strategy must be 'custom' or 'cv5'")
-        self.validation_strategy = validation_strategy
+        self.validation_strategy = "cv5"
 
         self._model_dir = Path(RESULTS_DATA_DIR) / "sex_models"
         self._model_dir.mkdir(parents=True, exist_ok=True)
@@ -206,21 +200,16 @@ class PipelineWrapper:
                 y_test  = df_test["sex"].map({"f": 0, "m": 1})
 
                 # CV
-                if self.validation_strategy == "custom":
-                    fold_ids, cv_method = _make_folds(df_train, y_train, NUM_FOLDS, GROUP_COL)
-                    df_train = df_train.assign(Fold=fold_ids)
-                    cv = PredefinedSplit(test_fold=fold_ids)
+                cv_method = "cv5"
+                cv = 5
+                if "Fold" in df_train.columns:
+                    X_train = df_train.drop(columns=["Fold"])
                 else:
-                    cv_method = "cv5"
-                    kf = KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=GLOBAL_RANDOM_SEED)
-                    fold_ids = np.empty(len(df_train), dtype=int)
-                    for fold, (_, idx) in enumerate(kf.split(df_train)):
-                        fold_ids[idx] = fold
-                    df_train = df_train.assign(Fold=fold_ids)
-                    cv = PredefinedSplit(test_fold=fold_ids)
-
-                X_train = df_train.drop(columns=["Fold"])
-                X_test  = df_test
+                    X_train = df_train
+                if "Fold" in df_test.columns:
+                    X_test = df_test.drop(columns=["Fold"])
+                else:
+                    X_test = df_test
 
                 # loop über alle Modelle
                 for mk in self.model_keys:
