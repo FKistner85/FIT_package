@@ -197,7 +197,9 @@ class PipelineWrapper:
                 y_train = df_train["sex"].map({"f": 0, "m": 1})
                 y_test  = df_test["sex"].map({"f": 0, "m": 1})
 
-  
+                # CV
+                cv_method = "cv5"
+                cv = 5
                 if "Fold" in df_train.columns:
                     X_train = df_train.drop(columns=["Fold"])
                 else:
@@ -262,6 +264,8 @@ class PipelineWrapper:
                         "model":                mk,
                         "fs_method":            fs_m,
                         "fs_k":                 self.fs_k,
+                        "cv_method":            cv_method,
+                        "validation_strategy":  self.validation_strategy,
                         "cv_accuracy":          cv_acc_mean,
                         "cv_balanced_accuracy": cv_bal_mean,
                         "test_accuracy":        float(test_acc),

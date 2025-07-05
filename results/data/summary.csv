@@ -25,7 +25,7 @@ cheetah Train,M,290,15,40,19.33,7.65,2.67,1.14
 cheetah Train,Unknown,0,0,0,0.0,0.0,0.0,0.0
 eurasian_otter Inference,F,0,0,0,0.0,0.0,0.0,0.0
 eurasian_otter Inference,M,0,0,0,0.0,0.0,0.0,0.0
-eurasian_otter Inference,Unknown,81,8,8,10.12,3.79,1.0,0.0
+eurasian_otter Inference,Unknown,81,1,8,81.0,0.0,8.0,0.0
 eurasian_otter Test,F,92,7,13,13.14,6.75,2.0,0.93
 eurasian_otter Test,M,76,7,10,10.86,7.08,1.43,0.73
 eurasian_otter Test,Unknown,0,0,0,0.0,0.0,0.0,0.0

@@ -262,6 +262,7 @@ class PipelineWrapper:
                         "model":                mk,
                         "fs_method":            fs_m,
                         "fs_k":                 self.fs_k,
+                        "cv_method":            cv_method,
                         "cv_accuracy":          cv_acc_mean,
                         "cv_balanced_accuracy": cv_bal_mean,
                         "test_accuracy":        float(test_acc),
