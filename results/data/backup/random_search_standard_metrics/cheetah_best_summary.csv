@@ -1,0 +1,13 @@
+select__method,select__k,scale__method,reduce_pre__whiten,reduce_pre__n_neighbors,reduce_pre__n_components,reduce_pre__min_dist,reduce_pre__method,reduce_post__whiten,reduce_post__n_neighbors,reduce_post__n_components,reduce_post__min_dist,reduce_post__method,outlier__method,clf,female_train_acc,male_train_acc,balanced_train_acc,female_test_acc,male_test_acc,balanced_test_acc,female_full_acc,male_full_acc,balanced_full_acc,maj_train_count,maj_train_wrong,maj_train_pct,maj_test_count,maj_test_wrong,maj_test_pct,maj_full_count,maj_full_wrong,maj_full_pct,best_metric
+,10,,True,15,2,0.5,,True,5,2,0.0,umap,,<catboost.core.CatBoostClassifier object at 0x00000212EBCA6290>,0.8862079558135562,0.9344274482659238,0.9103177020397399,0.30952380952380953,0.8777489177489177,0.5936363636363636,0.7420369192411196,0.9241222608991955,0.8330795900701575,30,0,1.0,4,4,0.5,34,4,0.8947368421052632,maj_test_pct
+lasso,20,,False,30,5,0.0,pca,True,5,2,0.5,pca,zscore,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",1.0,1.0,1.0,0.37103174603174605,0.48125541125541127,0.42614357864357866,0.8427579365079365,0.9056828020464384,0.8742203692771875,30,0,1.0,2,6,0.25,32,6,0.8421052631578947,balanced_full_acc

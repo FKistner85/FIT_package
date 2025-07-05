@@ -1,0 +1,41 @@
+mean_test_accuracy,mean_test_balanced_accuracy,mean_test_neg_log_loss,select__method,select__k,scale__method,reduce_pre__whiten,reduce_pre__n_neighbors,reduce_pre__n_components,reduce_pre__min_dist,reduce_pre__method,reduce_post__whiten,reduce_post__n_neighbors,reduce_post__n_components,reduce_post__min_dist,reduce_post__method,outlier__method,clf,female_train_acc,male_train_acc,balanced_train_acc,female_test_acc,male_test_acc,balanced_test_acc,female_full_acc,male_full_acc,balanced_full_acc,maj_train_count,maj_train_wrong,maj_train_pct,maj_test_count,maj_test_wrong,maj_test_pct,maj_full_count,maj_full_wrong,maj_full_pct
+0.5296414767426363,0.5291806691992986,-0.9262140138812468,univariate,3,robust,False,30,2,0.1,pca,False,15,5,0.1,,zscore,"ExtraTreesClassifier(n_estimators=200, n_jobs=-1)",1.0,1.0,1.0,0.19444444444444445,0.46341991341991345,0.32893217893217896,0.7986111111111112,0.9024399842581662,0.8505255476846387,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.5588831134212981,0.5603941408533022,-1.1334654631424106,lasso,20,,False,30,5,0.0,pca,True,5,2,0.5,pca,zscore,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",1.0,1.0,1.0,0.37103174603174605,0.48125541125541127,0.42614357864357866,0.8427579365079365,0.9056828020464384,0.8742203692771875,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.5541383446621352,0.5538099064874341,-1.0280563064435062,univariate,5,robust,True,15,2,0.5,,False,5,10,0.5,umap,clip,"LGBMClassifier(max_depth=10, verbose=-1)",0.9915824915824917,0.9883821584189233,0.9899823250007075,0.1378968253968254,0.5997619047619047,0.36882936507936503,0.778161075036075,0.9177239304812836,0.8479425027586793,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.565507130481141,0.5667473334307422,-0.944844413233389,random_forest,2,standard,True,5,10,0.0,umap,True,15,5,0.5,pca,zscore,LGBMClassifier(verbose=-1),0.9173722522902771,0.9100149568709407,0.9136936045806089,0.185515873015873,0.506969696969697,0.346242784992785,0.7344081574716761,0.83673400052526,0.785571078998468,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.5409436225509795,0.5375904076563413,-1.1704491425218073,random_forest,50,standard,True,5,10,0.0,umap,False,30,5,0.5,,clip,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",1.0,1.0,1.0,0.16269841269841268,0.5756709956709957,0.36918470418470417,0.7906746031746033,0.9228492719401811,0.8567619375573922,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.5671198187391709,0.5698677673874927,-1.3964725583203892,forward,2,,True,30,10,0.5,,True,5,5,0.1,umap,clip,"RandomForestClassifier(max_depth=15, n_estimators=50, n_jobs=-1)",0.9953703703703703,0.9925722425722425,0.9939713064713065,0.21825396825396826,0.5702380952380952,0.39424603174603173,0.8010912698412698,0.9157842157842158,0.8584377428127428,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.5409436225509795,0.5375904076563413,-1.1704491425218073,random_forest,50,standard,True,5,2,0.0,umap,True,30,2,0.5,,clip,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",1.0,1.0,1.0,0.16269841269841268,0.5756709956709957,0.36918470418470417,0.7906746031746033,0.9228492719401811,0.8567619375573922,30,0,1.0,2,6,0.25,32,6,0.8421052631578947
+0.5129414900706384,0.5075924167153711,-0.7821309098188971,,10,,True,15,2,0.5,,True,5,2,0.0,umap,,<catboost.core.CatBoostClassifier object at 0x000002819ADB8810>,0.8862079558135562,0.9344274482659238,0.9103177020397399,0.30952380952380953,0.8777489177489177,0.5936363636363636,0.7420369192411196,0.9241222608991955,0.8330795900701575,30,0,1.0,4,4,0.5,34,4,0.8947368421052632
+0.5621218179394909,0.5644149985388662,-2.608421910705252,random_forest,20,,True,5,5,0.5,,False,30,2,0.5,,clip,KNeighborsClassifier(n_neighbors=7),0.9147327094028742,0.8589604917618154,0.8868466005823448,0.3829365079365079,0.5656709956709957,0.4743037518037518,0.7817836590362828,0.8056351288362119,0.7937093939362474,29,1,0.9666666666666667,3,5,0.375,32,6,0.8421052631578947
+0.5358789817406371,0.5352589859731152,-2.1720552683554244,random_forest,5,robust,False,30,2,0.5,pca,False,30,10,0.1,pca,,KNeighborsClassifier(n_neighbors=7),0.8474777510234782,0.7093980256425544,0.7784378883330163,0.2906746031746032,0.4068831168831169,0.34877886002886005,0.7082769640612594,0.6543953149590203,0.6813361395101398,26,4,0.8666666666666667,3,5,0.375,29,9,0.7631578947368421
