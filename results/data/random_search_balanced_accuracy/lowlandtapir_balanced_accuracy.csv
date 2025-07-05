@@ -1,2 +1,2 @@
 species,train_balanced_acc,best_params,test_balanced_acc
-lowlandtapir,0.5132344470046084,"{'select__method': 'variance', 'select__k': 1, 'scale__method': 'standard', 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': RandomForestClassifier(max_depth=20, n_jobs=-1)}",0.4582191780821918
+lowlandtapir,0.5831183499915936,"{'select__method': 'lasso', 'select__k': 50, 'scale__method': None, 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': LinearDiscriminantAnalysis()}",0.5604109589041096

@@ -6,13 +6,11 @@ setup(
     description="FIT Otter: Data import and analysis pipeline",
     author="Frederick Kistner",
 
-    # ← Ein packages-Argument, auf den src-Ordner zeigend
+    # ← Nur EIN packages-Argument!
     packages=find_packages(where="src"),
     package_dir={"": "src"},
 
-    python_requires=">=3.11",
     install_requires=[
-        # core runtime deps
         "pandas>=1.3",
         "xlrd>=1.2",
         "openpyxl>=3.0",
@@ -22,23 +20,7 @@ setup(
         "seaborn",
         "optuna",
         "catboost",
-        "xgboost",
-        "lightgbm",
-        "scikit-optimize",
-        "scipy",
-        "umap-learn",
-        "pyarrow",
-        "tqdm-joblib",
-        "joblib",
+        "lightgbm"
     ],
-    extras_require={
-        # dev/testing tools
-        "dev": [
-            "pytest",
-            "coverage",
-            "flake8",
-            "mypy",
-            "missingpy",
-        ]
-    },
+    python_requires='>=3.11',
 )

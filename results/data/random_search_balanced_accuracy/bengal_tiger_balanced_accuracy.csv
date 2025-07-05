@@ -1,2 +1,2 @@
 species,train_balanced_acc,best_params,test_balanced_acc
-bengal_tiger,0.867653397104198,"{'select__method': 'univariate', 'select__k': 5, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': None, 'clf': SVC(probability=True)}",0.6961550993809058
+bengal_tiger,0.9082554872028555,"{'select__method': 'forward', 'select__k': 5, 'scale__method': 'standard', 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'zscore', 'clf': LGBMClassifier(max_depth=10, verbose=-1)}",0.704138155751059

@@ -1,2 +1,2 @@
 species,train_balanced_acc,best_params,test_balanced_acc
-aj_someringii,0.5352918586789555,"{'select__method': 'variance', 'select__k': 1, 'scale__method': 'standard', 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': RandomForestClassifier(max_depth=20, n_jobs=-1)}",0.4948979591836735
+aj_someringii,0.5993648461543113,"{'select__method': 'forward', 'select__k': 50, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': None, 'outlier__method': None, 'clf': LinearDiscriminantAnalysis()}",0.7321428571428572

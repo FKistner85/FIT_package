@@ -1,0 +1,2 @@
+species,train_balanced_acc,best_params,test_balanced_acc
+white_rhino,0.5939814270600682,"{'select__method': None, 'select__k': 2, 'scale__method': 'standard', 'reduce_pre__method': 'umap', 'reduce_post__method': None, 'outlier__method': None, 'clf': <catboost.core.CatBoostClassifier object at 0x000001CE7444A110>}",0.37248339559983396

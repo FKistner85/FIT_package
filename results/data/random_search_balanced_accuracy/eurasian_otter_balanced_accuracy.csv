@@ -1,2 +1,2 @@
 species,train_balanced_acc,best_params,test_balanced_acc
-eurasian_otter,0.8433116883116882,"{'select__method': 'univariate', 'select__k': 5, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': None, 'clf': SVC(probability=True)}",0.7993305144467935
+eurasian_otter,0.8496686401620631,"{'select__method': 'univariate', 'select__k': 1, 'scale__method': None, 'reduce_pre__method': None, 'reduce_post__method': 'umap', 'outlier__method': None, 'clf': KNeighborsClassifier(n_neighbors=7)}",0.7695560253699789

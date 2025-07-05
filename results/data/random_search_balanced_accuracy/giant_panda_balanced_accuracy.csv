@@ -1,2 +1,2 @@
 species,train_balanced_acc,best_params,test_balanced_acc
-giant_panda,0.7727288810260947,"{'select__method': 'univariate', 'select__k': 5, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': None, 'clf': SVC(probability=True)}",0.6722972972972974
+giant_panda,0.7893618295019157,"{'select__method': 'variance', 'select__k': 20, 'scale__method': 'standard', 'reduce_pre__method': None, 'reduce_post__method': None, 'outlier__method': 'zscore', 'clf': SVC(kernel='linear', probability=True)}",0.612331081081081
