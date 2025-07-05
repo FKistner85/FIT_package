@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed, load
 from sklearn.model_selection import StratifiedKFold
+from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 
@@ -143,40 +144,25 @@ def run_all_pairwise_projections_parallel(
                 avg_B_0, avg_B_1 = float(pb[:,0].mean()), float(pb[:,1].mean())
                 avg_R_0, avg_R_1 = float(pr[:,0].mean()), float(pr[:,1].mean())
 
-            # --- 4) Schleife über Outlier-Methoden ---
+            # --- 4) Schleifen über Outlier- und Scaler-Methoden ---
             for out_method in outs:
-                # Outlier-Cleaner initialisieren & fit auf A+B
-                if out_method:
-                    oc = OutlierCleanerTransformer(method=out_method)
-                    X_ab_raw = pd.concat([df_a, df_b], ignore_index=True)
-                    oc.fit(X_ab_raw)
-                    df_a_proc = oc.transform(df_a)
-                    df_b_proc = oc.transform(df_b)
-                    df_r_proc = oc.transform(df_r)
-                else:
-                    df_a_proc = df_a.copy()
-                    df_b_proc = df_b.copy()
-                    df_r_proc = df_r.copy()
-
-                # --- 5) Schleife über Scaler-Methoden ---
                 for scaler_method in scalers:
+                    steps = []
+                    if out_method:
+                        steps.append(("outlier", OutlierCleanerTransformer(method=out_method)))
                     if scaler_method:
-                        sc = FeatureScalerTransformer(method=scaler_method)
-                        X_ab_in = pd.concat([df_a_proc, df_b_proc], ignore_index=True)
-                        sc.fit(X_ab_in)
-                        df_a_fs = sc.transform(df_a_proc)
-                        df_b_fs = sc.transform(df_b_proc)
-                        df_r_fs = sc.transform(df_r_proc)
-                    else:
-                        df_a_fs = df_a_proc.copy()
-                        df_b_fs = df_b_proc.copy()
-                        df_r_fs = df_r_proc.copy()
-
-                    # --- 6) Feature-Selection auf A+B ---
-                    X_ab_fs = pd.concat([df_a_fs, df_b_fs], ignore_index=True)
+                        steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
                     selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
-                    selector.fit(X_ab_fs, y_ab)
+                    steps.append(("select", selector))
+                    pipe = Pipeline(steps)
+
+                    X_ab_raw = pd.concat([df_a, df_b], ignore_index=True)
+                    pipe.fit(X_ab_raw, y_ab)
                     full_ranking = selector.feature_ranking_
+
+                    df_a_fs = pipe.transform(df_a)
+                    df_b_fs = pipe.transform(df_b)
+                    df_r_fs = pipe.transform(df_r)
 
                     # --- 7) Schleifen über Reducer, n_components & k_features ---
                     for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
