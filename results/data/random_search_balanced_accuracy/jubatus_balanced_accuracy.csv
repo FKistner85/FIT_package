@@ -1,2 +1,2 @@
-species,train_balanced_acc,best_params,test_balanced_acc
-jubatus,0.60355859808107,"{'select__method': 'variance', 'select__k': 1, 'scale__method': 'standard', 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'zscore', 'clf': <catboost.core.CatBoostClassifier object at 0x000001CE7444A110>}",0.5476190476190476
+species,train_balanced_acc,test_balanced_acc,avg_female_indiv_tr,avg_male_indiv_tr,avg_bal_indiv_tr,avg_female_indiv_te,avg_male_indiv_te,avg_bal_indiv_te,avg_female_indiv_all,avg_male_indiv_all,avg_bal_indiv_all,best_params
+jubatus,0.5662482648437704,0.5833333333333334,0.799305957200694,0.5,0.649652978600347,0.8857142857142858,0.2619047619047619,0.5738095238095239,0.8173076923076924,0.45535714285714285,0.6363324175824177,"{'select__method': 'univariate', 'select__k': 20, 'scale__method': None, 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': LinearDiscriminantAnalysis()}"

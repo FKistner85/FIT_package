@@ -1,2 +1,12 @@
-species,train_balanced_acc,best_params,test_balanced_acc
-lowlandtapir,0.5831183499915936,"{'select__method': 'lasso', 'select__k': 50, 'scale__method': None, 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': LinearDiscriminantAnalysis()}",0.5604109589041096
+species,train_balanced_acc,test_balanced_acc,avg_female_indiv_tr,avg_male_indiv_tr,avg_bal_indiv_tr,avg_female_indiv_te,avg_male_indiv_te,avg_bal_indiv_te,avg_female_indiv_all,avg_male_indiv_all,avg_bal_indiv_all,best_params
+lowlandtapir,0.5340251615216488,0.5471232876712329,0.840537518037518,0.9002600177600178,0.8703987678987679,0.5507575757575757,0.5607287449392713,0.5557431603484235,0.7795312143996354,0.8203703065080774,0.7999507604538564,"{'select__method': 'forward', 'select__k': 10, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': 'clip', 'clf': XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)}"

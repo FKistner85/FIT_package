@@ -1,12 +1,2 @@
-species,train_balanced_acc,best_params,test_balanced_acc
-mountain_lion,0.9297351136290158,"{'select__method': 'random_forest', 'select__k': 20, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': 'zscore', 'clf': XGBClassifier(base_score=None, booster=None, callbacks=None,
-              colsample_bylevel=None, colsample_bynode=None,
-              colsample_bytree=None, device=None, early_stopping_rounds=None,
-              enable_categorical=False, eval_metric=None, feature_types=None,
-              feature_weights=None, gamma=None, grow_policy=None,
-              importance_type=None, interaction_constraints=None,
-              learning_rate=None, max_bin=None, max_cat_threshold=None,
-              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
-              max_leaves=None, min_child_weight=None, missing=nan,
-              monotone_constraints=None, multi_strategy=None, n_estimators=100,
-              n_jobs=None, num_parallel_tree=None, ...)}",0.8548717948717949
+species,train_balanced_acc,test_balanced_acc,avg_female_indiv_tr,avg_male_indiv_tr,avg_bal_indiv_tr,avg_female_indiv_te,avg_male_indiv_te,avg_bal_indiv_te,avg_female_indiv_all,avg_male_indiv_all,avg_bal_indiv_all,best_params
+mountain_lion,0.9210325306510704,0.814871794871795,0.9721119867404698,0.9040584415584415,0.9380852141494557,0.8333333333333333,0.6886538461538462,0.7609935897435898,0.9575037074344553,0.8367445054945055,0.8971241064644804,"{'select__method': 'univariate', 'select__k': 20, 'scale__method': None, 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': LinearDiscriminantAnalysis()}"

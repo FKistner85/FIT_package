@@ -1,2 +1,2 @@
-species,train_balanced_acc,best_params,test_balanced_acc
-white_rhino,0.5939814270600682,"{'select__method': None, 'select__k': 2, 'scale__method': 'standard', 'reduce_pre__method': 'umap', 'reduce_post__method': None, 'outlier__method': None, 'clf': <catboost.core.CatBoostClassifier object at 0x000001CE7444A110>}",0.37248339559983396
+species,train_balanced_acc,test_balanced_acc,avg_female_indiv_tr,avg_male_indiv_tr,avg_bal_indiv_tr,avg_female_indiv_te,avg_male_indiv_te,avg_bal_indiv_te,avg_female_indiv_all,avg_male_indiv_all,avg_bal_indiv_all,best_params
+white_rhino,0.5906247142875801,0.3462536322125363,0.48405823963468075,0.7872591315644611,0.635658685599571,0.27802656062748576,0.4517813267813269,0.3649039437044063,0.425192045632625,0.7369374608469909,0.5810647532398079,"{'select__method': None, 'select__k': 3, 'scale__method': None, 'reduce_pre__method': 'pca', 'reduce_post__method': 'pca', 'outlier__method': None, 'clf': SVC(kernel='linear', probability=True)}"

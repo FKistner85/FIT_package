@@ -1,2 +1,2 @@
-species,train_balanced_acc,best_params,test_balanced_acc
-eurasian_otter,0.8496686401620631,"{'select__method': 'univariate', 'select__k': 1, 'scale__method': None, 'reduce_pre__method': None, 'reduce_post__method': 'umap', 'outlier__method': None, 'clf': KNeighborsClassifier(n_neighbors=7)}",0.7695560253699789
+species,train_balanced_acc,test_balanced_acc,avg_female_indiv_tr,avg_male_indiv_tr,avg_bal_indiv_tr,avg_female_indiv_te,avg_male_indiv_te,avg_bal_indiv_te,avg_female_indiv_all,avg_male_indiv_all,avg_bal_indiv_all,best_params
+eurasian_otter,0.8134445302527734,0.788231148696265,0.8635612617105751,0.812441724941725,0.83800149332615,0.6355980988886782,0.8392857142857143,0.7374419065871962,0.7837741547229112,0.8213897213897214,0.8025819380563164,"{'select__method': 'univariate', 'select__k': 20, 'scale__method': None, 'reduce_pre__method': 'umap', 'reduce_post__method': 'umap', 'outlier__method': 'clip', 'clf': LinearDiscriminantAnalysis()}"
