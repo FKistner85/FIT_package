@@ -121,10 +121,15 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X: Union[pd.DataFrame, np.ndarray]):
+        """Return the selected feature columns as the same type as the input."""
         if isinstance(X, pd.DataFrame):
-            return X[self.selected_features_].values
-        else:
-            arr = np.asarray(X, float)
-            all_feat_names = [f"f{i}" for i in range(arr.shape[1])]
-            selected_indices = [all_feat_names.index(f) for f in self.selected_features_]
-            return arr[:, selected_indices]
+            return X[self.selected_features_].copy()
+
+        arr = np.asarray(X, float)
+        all_feat_names = [f"f{i}" for i in range(arr.shape[1])]
+        selected_indices = [all_feat_names.index(f) for f in self.selected_features_]
+        return arr[:, selected_indices]
+
+    # Provide sklearn style API for feature names
+    def get_feature_names_out(self, input_features=None) -> List[str]:
+        return self.selected_features_
