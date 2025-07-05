@@ -139,6 +139,7 @@ class PipelineWrapper:
         scaler_method: Optional[str] = None,
         reduce_pre_method: Optional[str] = None,
         reduce_post_method: Optional[str] = None,
+        validation_strategy: Optional[str] = None,
     ):
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys        = model_keys or list(MODELS.keys())
@@ -149,6 +150,7 @@ class PipelineWrapper:
         self.scaler_method     = scaler_method
         self.reduce_pre_method = reduce_pre_method
         self.reduce_post_method= reduce_post_method
+        self.validation_strategy = validation_strategy
 
         self._model_dir = Path(RESULTS_DATA_DIR) / "sex_models"
         self._model_dir.mkdir(parents=True, exist_ok=True)
