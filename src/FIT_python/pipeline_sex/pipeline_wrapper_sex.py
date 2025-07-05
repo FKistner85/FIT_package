@@ -8,7 +8,7 @@ from joblib import Memory, dump
 from time import perf_counter
 
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, classification_report
+from sklearn.metrics import balanced_accuracy_score, classification_report
 from sklearn.model_selection import cross_val_score
 
 from FIT_python.config import (
@@ -221,14 +221,14 @@ class PipelineWrapper:
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
 
-                    # cross-val
+                    # cross-val using balanced accuracy
                     try:
-                        acc = cross_val_score(pipe, X_train, y_train, cv=5, scoring="accuracy", n_jobs=1)
-                        bal = cross_val_score(pipe, X_train, y_train, cv=5, scoring="balanced_accuracy", n_jobs=1)
-                        cv_acc_mean = float(acc.mean())
+                        bal = cross_val_score(
+                            pipe, X_train, y_train,
+                            cv=5, scoring="balanced_accuracy", n_jobs=1
+                        )
                         cv_bal_mean = float(bal.mean())
                     except Exception:
-                        cv_acc_mean = None
                         cv_bal_mean = None
 
                     # fit & predict
@@ -249,7 +249,6 @@ class PipelineWrapper:
                     times["time_predict"] = perf_counter() - t0
 
                     # metrics
-                    test_acc     = accuracy_score(y_test, y_pred)
                     test_bal_acc = balanced_accuracy_score(y_test, y_pred)
                     report       = classification_report(y_test, y_pred, output_dict=True)
                     fs_trans     = pipe.named_steps.get("select")
@@ -262,9 +261,7 @@ class PipelineWrapper:
                         "model":                mk,
                         "fs_method":            fs_m,
                         "fs_k":                 self.fs_k,
-                        "cv_accuracy":          cv_acc_mean,
                         "cv_balanced_accuracy": cv_bal_mean,
-                        "test_accuracy":        float(test_acc),
                         "test_balanced_accuracy": float(test_bal_acc),
                         "classification_report": report,
                         "selected_features":    selected,
