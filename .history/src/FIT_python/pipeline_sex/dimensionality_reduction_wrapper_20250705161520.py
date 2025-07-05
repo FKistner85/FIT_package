@@ -40,17 +40,10 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         self.reducer_ = None
         self.feature_names_out_: list[str] = []
 
-    def get_params(self, deep=True):
-        # Nur die Parameter aus __init__ zurückgeben, ohne interne kwargs
-        return {
-            "method": self.method,
-            "n_components": self.n_components,
-            "supervised": self.supervised,
-        }
-
     def fit(self, X, y=None):
         # Identity-Fall
         if self.method is None:
+            # Feature-Namen beibehalten
             if isinstance(X, pd.DataFrame):
                 self.feature_names_out_ = X.columns.tolist()
             else:
@@ -59,6 +52,7 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             self.reducer_ = None
             return self
 
+        # sonstige Reducer
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
         n_samples, n_features = arr.shape
         max_c = min(n_samples, n_features)

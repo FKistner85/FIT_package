@@ -1,0 +1,2 @@
+species,train_balanced_acc,best_params,test_balanced_acc
+giant_panda,0.7727288810260947,"{'select__method': 'univariate', 'select__k': 5, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': None, 'clf': SVC(probability=True)}",0.6722972972972974

@@ -1,0 +1,2 @@
+species,train_balanced_acc,best_params,test_balanced_acc
+bengal_tiger,0.867653397104198,"{'select__method': 'univariate', 'select__k': 5, 'scale__method': 'robust', 'reduce_pre__method': 'umap', 'reduce_post__method': 'pca', 'outlier__method': None, 'clf': SVC(probability=True)}",0.6961550993809058

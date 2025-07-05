@@ -1,4 +1,4 @@
-# src/FIT_python/pipeline_sex/dimensionality_reduction_wrapper.py
+# src/FIT_python/pipeline/dimensionality_reduction_wrapper.py
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,6 @@ import umap
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     """
     Wrapper für Dimensionsreduktion:
-      - None: Identity (kein Reduzieren)
       - PCA (unsupervised)
       - UMAP (unsupervised + supervised)
       - t-SNE (unsupervised)
@@ -21,18 +20,18 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     """
     def __init__(
         self,
-        method: str | None = None,
+        method: str = "pca",
         n_components: int = 2,
         supervised: bool = False,
         **kwargs
     ):
-        # Methode None erlaubt: Identity-Operation
-        if method is not None:
-            method = method.lower()
-            if method not in ("pca", "umap", "tsne", "lda", "mds", "isomap"):
-                raise ValueError(f"Unknown method: {method!r}")
+        method = method.lower()
+        if method not in ("pca", "umap", "tsne", "lda", "mds", "isomap"):
+            raise ValueError(f"Unknown method: {method!r}")
+
+        # exakt die Parameter aus der Signatur als Attribute setzen:
         self.method = method
-        self.n_components = n_components
+        self.n_components = n_components         # ← genau so muss es sein
         self.requested_n = n_components
         self.supervised = supervised
         self.kwargs = kwargs
@@ -40,68 +39,62 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         self.reducer_ = None
         self.feature_names_out_: list[str] = []
 
-    def get_params(self, deep=True):
-        # Nur die Parameter aus __init__ zurückgeben, ohne interne kwargs
-        return {
-            "method": self.method,
-            "n_components": self.n_components,
-            "supervised": self.supervised,
-        }
+
 
     def fit(self, X, y=None):
-        # Identity-Fall
-        if self.method is None:
-            if isinstance(X, pd.DataFrame):
-                self.feature_names_out_ = X.columns.tolist()
-            else:
-                arr = np.asarray(X, dtype=float)
-                self.feature_names_out_ = [f"f{i}" for i in range(arr.shape[1])]
-            self.reducer_ = None
-            return self
-
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
         n_samples, n_features = arr.shape
         max_c = min(n_samples, n_features)
         n_used = min(self.requested_n, max_c)
 
-        if self.method in ("umap", "lda") and self.supervised and y is None:
+        # supervised-Check
+        if self.supervised and y is None:
             raise ValueError(f"Supervised {self.method.upper()} requires target labels `y`.")
 
+        # Wähle und fitte den passenden Reducer
         if self.method == "pca":
             reducer = PCA(n_components=n_used, **self.kwargs).fit(arr)
+
         elif self.method == "umap":
             if self.supervised and y is not None:
                 reducer = umap.UMAP(n_components=n_used, target_metric="categorical", **self.kwargs).fit(arr, y)
             else:
                 reducer = umap.UMAP(n_components=n_used, **self.kwargs).fit(arr)
+
         elif self.method == "tsne":
+            # t-SNE wird direkt in transform erneut fit benutzt
             reducer = TSNE(n_components=n_used, **self.kwargs)
+
         elif self.method == "lda":
+            # LDA ist per se supervised
             reducer = LinearDiscriminantAnalysis(n_components=n_used, **self.kwargs).fit(arr, y)
+
         elif self.method == "mds":
             reducer = MDS(n_components=n_used, **self.kwargs).fit(arr)
+
         elif self.method == "isomap":
             reducer = Isomap(n_components=n_used, **self.kwargs).fit(arr)
+
         else:
+            # sollte nie erreicht werden
             raise ValueError(f"Unhandled reduction method: {self.method!r}")
 
+        # speichere
         self.reducer_ = reducer
+        # Feature-Namen Output
         self.feature_names_out_ = [f"{self.method.upper()}{i+1}" for i in range(n_used)]
         return self
 
     def transform(self, X):
-        # Identity-Fall: Daten unverändert zurück
-        if self.method is None:
-            if isinstance(X, pd.DataFrame):
-                return X.values
-            return np.asarray(X, dtype=float)
-
         if self.reducer_ is None:
             raise RuntimeError("DimensionalityReducerTransformer must be fitted before transform.")
-
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+
+        # PCA, UMAP, LDA, MDS, Isomap nutzen transform()
         if self.method in ("pca", "umap", "lda", "mds", "isomap"):
             return self.reducer_.transform(arr)
+
+        # t-SNE neu fitten und transformieren
         elif self.method == "tsne":
             return self.reducer_.fit_transform(arr)
 

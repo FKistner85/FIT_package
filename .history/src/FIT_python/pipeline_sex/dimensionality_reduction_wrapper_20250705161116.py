@@ -21,12 +21,12 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     """
     def __init__(
         self,
-        method: str | None = None,
+        method: str = "pca",       # kann jetzt auch None sein
         n_components: int = 2,
         supervised: bool = False,
         **kwargs
     ):
-        # Methode None erlaubt: Identity-Operation
+        # erlauben, dass method None sein darf
         if method is not None:
             method = method.lower()
             if method not in ("pca", "umap", "tsne", "lda", "mds", "isomap"):
@@ -40,32 +40,26 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         self.reducer_ = None
         self.feature_names_out_: list[str] = []
 
-    def get_params(self, deep=True):
-        # Nur die Parameter aus __init__ zurückgeben, ohne interne kwargs
-        return {
-            "method": self.method,
-            "n_components": self.n_components,
-            "supervised": self.supervised,
-        }
-
     def fit(self, X, y=None):
-        # Identity-Fall
+        # Identity-Fall: nichts tun
         if self.method is None:
+            self.reducer_ = None
+            # Feature-Namen bleiben gleich wie input
             if isinstance(X, pd.DataFrame):
                 self.feature_names_out_ = X.columns.tolist()
             else:
-                arr = np.asarray(X, dtype=float)
+                arr = np.asarray(X, float)
                 self.feature_names_out_ = [f"f{i}" for i in range(arr.shape[1])]
-            self.reducer_ = None
             return self
 
+        # Sonstige Methoden wie gehabt:
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
         n_samples, n_features = arr.shape
         max_c = min(n_samples, n_features)
         n_used = min(self.requested_n, max_c)
 
-        if self.method in ("umap", "lda") and self.supervised and y is None:
-            raise ValueError(f"Supervised {self.method.upper()} requires target labels `y`.")
+        if self.supervised and y is None and self.method in ("umap", "lda"):
+            raise ValueError(f"Supervised {self.method.upper()} requires labels `y`.")
 
         if self.method == "pca":
             reducer = PCA(n_components=n_used, **self.kwargs).fit(arr)
@@ -90,11 +84,12 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        # Identity-Fall: Daten unverändert zurück
+        # Identity-Fall: original Daten zurückgeben
         if self.method is None:
             if isinstance(X, pd.DataFrame):
                 return X.values
-            return np.asarray(X, dtype=float)
+            else:
+                return np.asarray(X, float)
 
         if self.reducer_ is None:
             raise RuntimeError("DimensionalityReducerTransformer must be fitted before transform.")
