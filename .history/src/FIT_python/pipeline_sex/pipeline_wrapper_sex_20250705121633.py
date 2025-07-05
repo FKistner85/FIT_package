@@ -224,7 +224,7 @@ class PipelineWrapper:
                     # cross-val
                     try:
                         acc = cross_val_score(pipe, X_train, y_train, cv=5, scoring="accuracy", n_jobs=1)
-                        bal = cross_val_score(pipe, X_train, y_train, cv=5, scoring="balanced_accuracy", n_jobs=1)
+                        bal = cross_val_score(pipe, X_train, y_train, cv=5 scoring="balanced_accuracy", n_jobs=1)
                         cv_acc_mean = float(acc.mean())
                         cv_bal_mean = float(bal.mean())
                     except Exception:
