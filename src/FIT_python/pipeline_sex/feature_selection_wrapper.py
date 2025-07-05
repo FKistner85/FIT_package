@@ -11,47 +11,48 @@ def _forward_ranking(
     X_arr: np.ndarray,
     y_arr: np.ndarray,
     feature_names: List[str],
-    k_max: int
+    k_max: int,
 ) -> List[Tuple[str, float]]:
-    selected: List[str] = []
-    ranking: List[Tuple[str, float]] = []
-    remaining = list(feature_names)
+    """Greedy forward selection using vectorised F-statistics."""
+
     n = len(y_arr)
+    group_dummies = pd.get_dummies(y_arr, drop_first=True).values.astype(float)
 
-    group_dummies = pd.get_dummies(y_arr, drop_first=True).values
     feat_idx = {feat: i for i, feat in enumerate(feature_names)}
-
-    def score(feat: str) -> float:
-        idx = feat_idx[feat]
-        if selected:
-            cov_idx = [feat_idx[f] for f in selected]
-            X_cov = X_arr[:, cov_idx]
-        else:
-            X_cov = np.zeros((n, 0))
-
-        resp = X_arr[:, idx]
-        X_full = np.hstack([np.ones((n, 1)), X_cov, group_dummies])
-        H_full = X_full @ np.linalg.pinv(X_full.T @ X_full) @ X_full.T
-        rss_full = ((resp - H_full @ resp) ** 2).sum()
-
-        if X_cov.shape[1] > 0:
-            X_red = np.hstack([np.ones((n, 1)), X_cov])
-            H_red = X_red @ np.linalg.pinv(X_red.T @ X_red) @ X_red.T
-            rss_red = ((resp - H_red @ resp) ** 2).sum()
-        else:
-            rss_red = ((resp - resp.mean()) ** 2).sum()
-
-        df1 = group_dummies.shape[1]
-        df2 = n - np.linalg.matrix_rank(X_full)
-        msb = (rss_red - rss_full) / (df1 or 1)
-        msw = rss_full / (df2 or 1)
-        return msb / msw if msw > 0 else 0.0
+    remaining = list(feature_names)
+    selected: list[str] = []
+    ranking: list[Tuple[str, float]] = []
 
     while len(ranking) < k_max and remaining:
-        scores = [(feat, score(feat)) for feat in remaining]
-        best_feat, best_score = max(scores, key=lambda x: x[1])
+        sel_idx = [feat_idx[f] for f in selected]
+        X_sel = X_arr[:, sel_idx] if sel_idx else np.empty((n, 0))
+        Z_red = np.hstack([np.ones((n, 1)), X_sel])
+        Z_full = np.hstack([Z_red, group_dummies])
+
+        pinv_red = np.linalg.pinv(Z_red)
+        pinv_full = np.linalg.pinv(Z_full)
+
+        cand_idx = [feat_idx[f] for f in remaining]
+        Y = X_arr[:, cand_idx]
+
+        res_full = Y - Z_full @ (pinv_full @ Y)
+        rss_full = np.sum(res_full * res_full, axis=0)
+
+        res_red = Y - Z_red @ (pinv_red @ Y)
+        rss_red = np.sum(res_red * res_red, axis=0)
+
+        df1 = group_dummies.shape[1]
+        df2 = n - np.linalg.matrix_rank(Z_full)
+
+        msb = (rss_red - rss_full) / (df1 or 1)
+        msw = rss_full / (df2 or 1)
+        f_scores = np.divide(msb, msw, out=np.zeros_like(msb), where=msw > 0)
+
+        best_pos = int(np.argmax(f_scores))
+        best_feat = remaining.pop(best_pos)
+        best_score = float(f_scores[best_pos])
+
         ranking.append((best_feat, best_score))
-        remaining.remove(best_feat)
         selected.append(best_feat)
 
     return ranking

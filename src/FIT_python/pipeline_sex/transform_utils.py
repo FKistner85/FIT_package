@@ -8,20 +8,24 @@ from typing import Tuple, Dict, List
 
 def convert_numeric(
     df: pd.DataFrame,
-    feature_cols: List[str]
+    feature_cols: List[str],
 ) -> pd.DataFrame:
-    """Convert feature columns to float, replacing comma decimal separators.
+    """Convert multiple feature columns to floats in a vectorized way.
 
-    Non-convertible values are coerced to NaN so that mixed columns do not
-    raise errors during conversion.
+    Comma decimal separators are replaced with dots and non-convertible
+    values are coerced to ``NaN``.  The input ``df`` is modified in-place
+    and returned for convenience.
     """
-    for col in feature_cols:
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.replace(',', '.', regex=False)
-            .pipe(pd.to_numeric, errors="coerce")
-        )
+    if not feature_cols:
+        return df
+
+    subset = (
+        df[feature_cols]
+        .astype(str)
+        .replace(",", ".", regex=False)
+        .apply(pd.to_numeric, errors="coerce")
+    )
+    df[feature_cols] = subset
     return df
 
 def one_hot_encode_targets(
