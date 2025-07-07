@@ -271,6 +271,16 @@ def run_all_pairwise_projections_parallel(
                             for m, v in dists.items():
                                 res[f"dist_{m}"] = float(v)
 
+                                # if distance could not be computed (e.g. Mahalanobis without covariance)
+                                if np.isnan(v):
+                                    res[f"mean_{m}_between"] = None
+                                    res[f"median_{m}_between"] = None
+                                    res[f"mean_{m}_within_a"] = None
+                                    res[f"median_{m}_within_a"] = None
+                                    res[f"mean_{m}_within_b"] = None
+                                    res[f"median_{m}_within_b"] = None
+                                    continue
+
                                 # zusätzliche Kennzahlen: paarweise Distanzen zwischen A und B
                                 A = da.to_numpy()
                                 B = db.to_numpy()
