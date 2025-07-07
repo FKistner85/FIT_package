@@ -68,13 +68,16 @@ def run_all_pairwise_projections_parallel(
 ) -> List[Dict]:
     """
     Für jede Paarung:
-      0) Falls use_sexmodel_prediction, Sex-Modell laden & predict_proba vorberechnen
+      0) Falls ``use_sexmodel_prediction`` aktiv ist, das Sex-Modell laden und
+         ``predict_proba`` vorberechnen. ``sexmodel_path`` muss dabei auf eine
+         gültige ``.joblib``-Datei zeigen.
       1) Basis-DF bereinigen
       2) Pipeline-Schritte: Outlier-Cleaning & Feature-Scaling
-      3) Feature-Selection (einmal mit k_max)
+      3) Feature-Selection (einmal mit ``k_max``)
       4) RCV-Set als Komplement
       5) Sex-probas extrahieren & mitteln
-      6) Für jede Kombi (outlier, scaler, reducer, n_components, k):
+      6) Für jede Kombi (``outlier``, ``scaler``, ``reducer``, ``n_components``,
+         ``k``):
          - apply LDA/PCA/UMAP
          - Abstände berechnen
          - Result-Dict inkl. avg_proba_A/B/R 0/1
@@ -85,19 +88,11 @@ def run_all_pairwise_projections_parallel(
         if not sexmodel_path:
             raise ValueError("sexmodel_path must be provided when use_sexmodel_prediction=True")
 
-        if os.path.isdir(sexmodel_path):
-            perf_csv = os.path.join(sexmodel_path, "raw_results.csv")
-            perf = pd.read_csv(perf_csv)
-            best = (
-                perf
-                .loc[perf["model"] == "sex_model"]
-                .sort_values("test_balanced_accuracy", ascending=False)
-                .iloc[0]
-            )
-            best_fname = f"{best['species']}.joblib"
-            sexmodel_path = os.path.join(sexmodel_path, best_fname)
+        model_fp = Path(sexmodel_path)
+        if not model_fp.is_file():
+            raise FileNotFoundError(f"Sex model file not found: {sexmodel_path}")
 
-        sex_clf = load(sexmodel_path)
+        sex_clf = load(model_fp)
 
     # --- 1) Basis-DF vorbereiten ---
     df2 = df.copy()
