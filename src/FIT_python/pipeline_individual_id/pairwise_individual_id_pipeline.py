@@ -174,6 +174,16 @@ def run_all_pairwise_projections_parallel(
                 df_b_fs = pipe.transform(df_b)
                 df_r_fs = pipe.transform(df_r)
 
+                # "Pipeline.transform" kann je nach scikit-learn Version ein
+                # ``np.ndarray`` zurueckgeben. Die spaeteren Schritte erwarten
+                # jedoch ein ``DataFrame`` mit Spaltennamen.  Falls also ein
+                # Array herauskommt, wandle es entsprechend um.
+                if not isinstance(df_a_fs, pd.DataFrame):
+                    feat_names = selector.get_feature_names_out()
+                    df_a_fs = pd.DataFrame(df_a_fs, columns=feat_names, index=df_a.index)
+                    df_b_fs = pd.DataFrame(df_b_fs, columns=feat_names, index=df_b.index)
+                    df_r_fs = pd.DataFrame(df_r_fs, columns=feat_names, index=df_r.index)
+
                 # 5) Schleifen über Reducer, n_components & k_features
                 for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
                     supervised = reducer in ("lda", "umap")
