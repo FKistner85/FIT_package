@@ -154,162 +154,162 @@ def run_all_pairwise_projections_parallel(
             avg_B_0, avg_B_1 = float(pb[:,0].mean()), float(pb[:,1].mean())
             avg_R_0, avg_R_1 = float(pr[:,0].mean()), float(pr[:,1].mean())
 
-            # 4) Schleifen über Outlier- und Scaler-Methoden
-            for out_method in outs:
-                for scaler_method in scalers:
-                    steps = []
-                    if out_method:
-                        steps.append(("outlier", OutlierCleanerTransformer(method=out_method)))
-                    if scaler_method:
-                        steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
-                    selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
-                    steps.append(("select", selector))
-                    pipe = Pipeline(steps)
+        # 4) Schleifen über Outlier- und Scaler-Methoden
+        for out_method in outs:
+            for scaler_method in scalers:
+                steps = []
+                if out_method:
+                    steps.append(("outlier", OutlierCleanerTransformer(method=out_method)))
+                if scaler_method:
+                    steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
+                selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
+                steps.append(("select", selector))
+                pipe = Pipeline(steps)
 
-                    X_ab_raw = pd.concat([df_a, df_b], ignore_index=True)
-                    pipe.fit(X_ab_raw, y_ab)
-                    full_ranking = selector.feature_ranking_
+                X_ab_raw = pd.concat([df_a, df_b], ignore_index=True)
+                pipe.fit(X_ab_raw, y_ab)
+                full_ranking = selector.feature_ranking_
 
-                    df_a_fs = pipe.transform(df_a)
-                    df_b_fs = pipe.transform(df_b)
-                    df_r_fs = pipe.transform(df_r)
+                df_a_fs = pipe.transform(df_a)
+                df_b_fs = pipe.transform(df_b)
+                df_r_fs = pipe.transform(df_r)
 
-                    # 5) Schleifen über Reducer, n_components & k_features
-                    for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
-                        supervised = reducer in ("lda", "umap")
-                        for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
-                            for k in tqdm(ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False):
-                                sel_feats = [feat for feat,_ in full_ranking[:k]]
+                # 5) Schleifen über Reducer, n_components & k_features
+                for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
+                    supervised = reducer in ("lda", "umap")
+                    for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
+                        for k in tqdm(ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False):
+                            sel_feats = [feat for feat,_ in full_ranking[:k]]
 
-                                da = df_a_fs[sel_feats].copy()
-                                db = df_b_fs[sel_feats].copy()
-                                dr = df_r_fs[sel_feats].copy()
+                            da = df_a_fs[sel_feats].copy()
+                            db = df_b_fs[sel_feats].copy()
+                            dr = df_r_fs[sel_feats].copy()
 
-                                # Sex-probas als Features anhängen
-                                if use_sexmodel_prediction:
-                                    da["proba_0"], da["proba_1"] = pa[:,0], pa[:,1]
-                                    db["proba_0"], db["proba_1"] = pb[:,0], pb[:,1]
-                                    dr["proba_0"], dr["proba_1"] = pr[:,0], pr[:,1]
+                            # Sex-probas als Features anhängen
+                            if use_sexmodel_prediction:
+                                da["proba_0"], da["proba_1"] = pa[:,0], pa[:,1]
+                                db["proba_0"], db["proba_1"] = pb[:,0], pb[:,1]
+                                dr["proba_0"], dr["proba_1"] = pr[:,0], pr[:,1]
 
-                                # Kombinieren + Labels
-                                arr = pd.concat([da, db, dr], ignore_index=True)
-                                y_all = np.concatenate([
-                                    np.zeros(len(da), int),
-                                    np.ones(len(db), int),
-                                    np.full(len(dr), 2, int)
-                                ])
+                            # Kombinieren + Labels
+                            arr = pd.concat([da, db, dr], ignore_index=True)
+                            y_all = np.concatenate([
+                                np.zeros(len(da), int),
+                                np.ones(len(db), int),
+                                np.full(len(dr), 2, int)
+                            ])
 
-                                # Clamp für LDA
-                                nc_eff = nc
-                                if reducer == "lda":
-                                    n_cls = len(np.unique(y_all))
-                                    nc_eff = min(nc, arr.shape[1], n_cls - 1)
-                                    if nc_eff < 1:
-                                        if debug:
-                                            print(f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}")
-                                        continue
+                            # Clamp für LDA
+                            nc_eff = nc
+                            if reducer == "lda":
+                                n_cls = len(np.unique(y_all))
+                                nc_eff = min(nc, arr.shape[1], n_cls - 1)
+                                if nc_eff < 1:
+                                    if debug:
+                                        print(f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}")
+                                    continue
 
-                                # Fit & Transform
-                                dr_model = DimensionalityReducerTransformer(
-                                    method=reducer,
-                                    n_components=nc_eff,
-                                    supervised=supervised
-                                )
-                                dr_model.fit(arr, y_all if supervised else None)
-                                coords = dr_model.transform(arr)
+                            # Fit & Transform
+                            dr_model = DimensionalityReducerTransformer(
+                                method=reducer,
+                                n_components=nc_eff,
+                                supervised=supervised
+                            )
+                            dr_model.fit(arr, y_all if supervised else None)
+                            coords = dr_model.transform(arr)
 
-                                ca = coords[:len(da)]
-                                cb = coords[len(da):len(da)+len(db)]
-                                cr = coords[len(da)+len(db):]
+                            ca = coords[:len(da)]
+                            cb = coords[len(da):len(da)+len(db)]
+                            cr = coords[len(da)+len(db):]
 
-                                cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
-                                dists = compute_distances(cA, cB)
+                            cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
+                            dists = compute_distances(cA, cB)
 
-                                # Result-Dict
-                                pipeline_name = (
-                                    f"{selection_method}"
-                                    f"_{out_method or 'no_out'}"
-                                    f"_{scaler_method or 'no_scale'}"
-                                    f"_k{k}_{reducer}_nc{nc_eff}"
-                                    f"_{'sex_on' if use_sexmodel_prediction else 'sex_off'}"
-                                )
-                                res = {
-                                    "trail_a_id":        comp["trail_a_id"],
-                                    "trail_b_id":        comp["trail_b_id"],
-                                    "samples_a":         idx_a,
-                                    "samples_b":         idx_b,
-                                    "ind_a":             ind_a,
-                                    "ind_b":             ind_b,
-                                    "same_individual":   comp["same_individual"],
-                                    "fold":              comp["fold"],
-                                    "pipeline":          pipeline_name,
-                                    "selection_method":  selection_method,
-                                    "reducer":           reducer,
-                                    "outlier_method":    out_method,
-                                    "scaler_method":     scaler_method,
-                                    "k_features":        k,
-                                    "n_components":      nc_eff,
-                                    "comparison_id":     i,
-                                    "min_observations":  min(size_a, size_b),
-                                    "max_observations":  max(size_a, size_b),
-                                    "use_sexmodel_prediction": use_sexmodel_prediction,
-                                    **({
-                                        "avg_proba_A_0": avg_A_0,
-                                        "avg_proba_A_1": avg_A_1,
-                                        "avg_proba_B_0": avg_B_0,
-                                        "avg_proba_B_1": avg_B_1,
-                                        "avg_proba_R_0": avg_R_0,
-                                        "avg_proba_R_1": avg_R_1,
-                                    } if use_sexmodel_prediction else {}),
-                                    "center_a_x": float(cA[0]) if cA.size>0 else None,
-                                    "center_a_y": float(cA[1]) if cA.size>1 else None,
-                                    "center_b_x": float(cB[0]) if cB.size>0 else None,
-                                    "center_b_y": float(cB[1]) if cB.size>1 else None,
-                                    "center_r_x": float(cR[0]) if cR.size>0 else None,
-                                    "center_r_y": float(cR[1]) if cR.size>1 else None,
-                                    "coords_a_x": ca[:,0].tolist(),
-                                    "coords_a_y": ca[:,1].tolist() if ca.shape[1]>1 else [],
-                                    "coords_b_x": cb[:,0].tolist(),
-                                    "coords_b_y": cb[:,1].tolist() if cb.shape[1]>1 else [],
-                                    "coords_r_x": cr[:,0].tolist(),
-                                    "coords_r_y": cr[:,1].tolist() if cr.shape[1]>1 else [],
-                                }
-                                for m, v in dists.items():
-                                    res[f"dist_{m}"] = float(v)
+                            # Result-Dict
+                            pipeline_name = (
+                                f"{selection_method}"
+                                f"_{out_method or 'no_out'}"
+                                f"_{scaler_method or 'no_scale'}"
+                                f"_k{k}_{reducer}_nc{nc_eff}"
+                                f"_{'sex_on' if use_sexmodel_prediction else 'sex_off'}"
+                            )
+                            res = {
+                                "trail_a_id":        comp["trail_a_id"],
+                                "trail_b_id":        comp["trail_b_id"],
+                                "samples_a":         idx_a,
+                                "samples_b":         idx_b,
+                                "ind_a":             ind_a,
+                                "ind_b":             ind_b,
+                                "same_individual":   comp["same_individual"],
+                                "fold":              comp["fold"],
+                                "pipeline":          pipeline_name,
+                                "selection_method":  selection_method,
+                                "reducer":           reducer,
+                                "outlier_method":    out_method,
+                                "scaler_method":     scaler_method,
+                                "k_features":        k,
+                                "n_components":      nc_eff,
+                                "comparison_id":     i,
+                                "min_observations":  min(size_a, size_b),
+                                "max_observations":  max(size_a, size_b),
+                                "use_sexmodel_prediction": use_sexmodel_prediction,
+                                **({
+                                    "avg_proba_A_0": avg_A_0,
+                                    "avg_proba_A_1": avg_A_1,
+                                    "avg_proba_B_0": avg_B_0,
+                                    "avg_proba_B_1": avg_B_1,
+                                    "avg_proba_R_0": avg_R_0,
+                                    "avg_proba_R_1": avg_R_1,
+                                } if use_sexmodel_prediction else {}),
+                                "center_a_x": float(cA[0]) if cA.size>0 else None,
+                                "center_a_y": float(cA[1]) if cA.size>1 else None,
+                                "center_b_x": float(cB[0]) if cB.size>0 else None,
+                                "center_b_y": float(cB[1]) if cB.size>1 else None,
+                                "center_r_x": float(cR[0]) if cR.size>0 else None,
+                                "center_r_y": float(cR[1]) if cR.size>1 else None,
+                                "coords_a_x": ca[:,0].tolist(),
+                                "coords_a_y": ca[:,1].tolist() if ca.shape[1]>1 else [],
+                                "coords_b_x": cb[:,0].tolist(),
+                                "coords_b_y": cb[:,1].tolist() if cb.shape[1]>1 else [],
+                                "coords_r_x": cr[:,0].tolist(),
+                                "coords_r_y": cr[:,1].tolist() if cr.shape[1]>1 else [],
+                            }
+                            for m, v in dists.items():
+                                res[f"dist_{m}"] = float(v)
 
-                                    # zusätzliche Kennzahlen: paarweise Distanzen zwischen A und B
-                                    A = da.to_numpy()
-                                    B = db.to_numpy()
-                                    d_ab = cdist(A, B, metric=m)
-                                    flat_ab = d_ab.ravel()
-                                    res[f"mean_{m}_between"]  = float(np.mean(flat_ab))
-                                    res[f"median_{m}_between"] = float(np.median(flat_ab))
+                                # zusätzliche Kennzahlen: paarweise Distanzen zwischen A und B
+                                A = da.to_numpy()
+                                B = db.to_numpy()
+                                d_ab = cdist(A, B, metric=m)
+                                flat_ab = d_ab.ravel()
+                                res[f"mean_{m}_between"]  = float(np.mean(flat_ab))
+                                res[f"median_{m}_between"] = float(np.median(flat_ab))
 
-                                    # innerhalb A
-                                    if len(A) > 1:
-                                        d_aa = cdist(A, A, metric=m)
-                                        iu = np.triu_indices(len(A), k=1)
-                                        flat_aa = d_aa[iu]
-                                        res[f"mean_{m}_within_a"]  = float(np.mean(flat_aa))
-                                        res[f"median_{m}_within_a"] = float(np.median(flat_aa))
-                                    else:
-                                        res[f"mean_{m}_within_a"]  = None
-                                        res[f"median_{m}_within_a"] = None
+                                # innerhalb A
+                                if len(A) > 1:
+                                    d_aa = cdist(A, A, metric=m)
+                                    iu = np.triu_indices(len(A), k=1)
+                                    flat_aa = d_aa[iu]
+                                    res[f"mean_{m}_within_a"]  = float(np.mean(flat_aa))
+                                    res[f"median_{m}_within_a"] = float(np.median(flat_aa))
+                                else:
+                                    res[f"mean_{m}_within_a"]  = None
+                                    res[f"median_{m}_within_a"] = None
 
-                                    # innerhalb B
-                                    if len(B) > 1:
-                                        d_bb = cdist(B, B, metric=m)
-                                        iu = np.triu_indices(len(B), k=1)
-                                        flat_bb = d_bb[iu]
-                                        res[f"mean_{m}_within_b"]  = float(np.mean(flat_bb))
-                                        res[f"median_{m}_within_b"] = float(np.median(flat_bb))
-                                    else:
-                                        res[f"mean_{m}_within_b"]  = None
-                                        res[f"median_{m}_within_b"] = None
+                                # innerhalb B
+                                if len(B) > 1:
+                                    d_bb = cdist(B, B, metric=m)
+                                    iu = np.triu_indices(len(B), k=1)
+                                    flat_bb = d_bb[iu]
+                                    res[f"mean_{m}_within_b"]  = float(np.mean(flat_bb))
+                                    res[f"median_{m}_within_b"] = float(np.median(flat_bb))
+                                else:
+                                    res[f"mean_{m}_within_b"]  = None
+                                    res[f"median_{m}_within_b"] = None
 
-                                out.append(res)
+                            out.append(res)
 
-            return out
+        return out
 
     # --- 6) Parallel-Ausführung ---
     with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(comparisons))):
