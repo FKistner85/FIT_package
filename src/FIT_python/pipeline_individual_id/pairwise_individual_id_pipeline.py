@@ -126,34 +126,33 @@ def run_all_pairwise_projections_parallel(
 
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
-        try:
-            ind_a, ind_b   = comp["ind_a"], comp["ind_b"]
-            idx_a, idx_b   = comp["samples_a"], comp["samples_b"]
-            size_a, size_b = len(idx_a), len(idx_b)
+        ind_a, ind_b   = comp["ind_a"], comp["ind_b"]
+        idx_a, idx_b   = comp["samples_a"], comp["samples_b"]
+        size_a, size_b = len(idx_a), len(idx_b)
 
-            trail_a_id = comp["trail_a_id"]
-            trail_b_id = comp["trail_b_id"]
+        trail_a_id = comp["trail_a_id"]
+        trail_b_id = comp["trail_b_id"]
 
-            # Feature-Matrizen A & B
-            df_a = df_base.loc[idx_a, feature_cols]
-            df_b = df_base.loc[idx_b, feature_cols]
+        # Feature-Matrizen A & B
+        df_a = df_base.loc[idx_a, feature_cols]
+        df_b = df_base.loc[idx_b, feature_cols]
 
-            # RCV-Set als Komplement
-            all_idx = np.arange(len(df_base))
-            rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
-            df_r = df_base.loc[rcv_idx, feature_cols]
+        # RCV-Set als Komplement
+        all_idx = np.arange(len(df_base))
+        rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
+        df_r = df_base.loc[rcv_idx, feature_cols]
 
-            # Labels für Selection
-            y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
+        # Labels für Selection
+        y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
 
-            # Sex-probas extrahieren, falls benötigt
-            if use_sexmodel_prediction:
-                pa = proba_all[idx_a]
-                pb = proba_all[idx_b]
-                pr = proba_all[rcv_idx]
-                avg_A_0, avg_A_1 = float(pa[:,0].mean()), float(pa[:,1].mean())
-                avg_B_0, avg_B_1 = float(pb[:,0].mean()), float(pb[:,1].mean())
-                avg_R_0, avg_R_1 = float(pr[:,0].mean()), float(pr[:,1].mean())
+        # Sex-probas extrahieren, falls benötigt
+        if use_sexmodel_prediction:
+            pa = proba_all[idx_a]
+            pb = proba_all[idx_b]
+            pr = proba_all[rcv_idx]
+            avg_A_0, avg_A_1 = float(pa[:,0].mean()), float(pa[:,1].mean())
+            avg_B_0, avg_B_1 = float(pb[:,0].mean()), float(pb[:,1].mean())
+            avg_R_0, avg_R_1 = float(pr[:,0].mean()), float(pr[:,1].mean())
 
             # 4) Schleifen über Outlier- und Scaler-Methoden
             for out_method in outs:
@@ -311,11 +310,6 @@ def run_all_pairwise_projections_parallel(
                                 out.append(res)
 
             return out
-
-        except Exception as e:
-            if debug:
-                print(f"[ERROR] pair {i} failed: {e}")
-            return []
 
     # --- 6) Parallel-Ausführung ---
     with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(comparisons))):
