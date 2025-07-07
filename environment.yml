@@ -22,8 +22,7 @@ dependencies:
   - scipy
   - umap-learn
   - pyarrow
-  - tqdm-joblib
-  - joblib
+ 
   - pip
   - pip:
     - -e .
@@ -32,3 +31,5 @@ dependencies:
     - flake8
     - mypy
     - missingpy
+    - tqdm-joblib
+    - joblib
