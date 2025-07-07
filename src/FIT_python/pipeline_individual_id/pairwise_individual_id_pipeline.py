@@ -97,7 +97,12 @@ def run_all_pairwise_projections_parallel(
     # --- 1) Basis-DF vorbereiten ---
     df2 = df.copy()
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
+    # Reset the index so we can use position based indexing with ``iloc``
+    # but keep a mapping from the original index values to the new
+    # 0..n-1 positions. This is important because the comparison
+    # definitions refer to the original DataFrame indices.
     df_base = df2.reset_index(drop=True)
+    index_map = {orig_idx: pos for pos, orig_idx in enumerate(df2.index)}
 
     # --- 2) predict_proba komplett vorberechnen ---
     if use_sexmodel_prediction:
@@ -127,21 +132,29 @@ def run_all_pairwise_projections_parallel(
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         try:
-            ind_a, ind_b   = comp["ind_a"], comp["ind_b"]
-            idx_a, idx_b   = comp["samples_a"], comp["samples_b"]
+            ind_a, ind_b = comp["ind_a"], comp["ind_b"]
+            # Keep the original indices for the result output
+            orig_idx_a = comp["samples_a"]
+            orig_idx_b = comp["samples_b"]
+            # Convert the original DataFrame indices of the samples to
+            # positional indices so that ``iloc`` can be used throughout the
+            # processing. This avoids mismatches when the incoming DataFrame
+            # has a custom/non‑consecutive index.
+            idx_a = [index_map[i] for i in orig_idx_a]
+            idx_b = [index_map[i] for i in orig_idx_b]
             size_a, size_b = len(idx_a), len(idx_b)
 
             trail_a_id = comp["trail_a_id"]
             trail_b_id = comp["trail_b_id"]
 
             # Feature-Matrizen A & B
-            df_a = df_base.loc[idx_a, feature_cols]
-            df_b = df_base.loc[idx_b, feature_cols]
+            df_a = df_base.iloc[idx_a][feature_cols]
+            df_b = df_base.iloc[idx_b][feature_cols]
 
             # RCV-Set als Komplement
             all_idx = np.arange(len(df_base))
             rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
-            df_r = df_base.loc[rcv_idx, feature_cols]
+            df_r = df_base.iloc[rcv_idx][feature_cols]
 
             # Labels für Selection
             y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
@@ -237,8 +250,11 @@ def run_all_pairwise_projections_parallel(
                                 res = {
                                     "trail_a_id":        comp["trail_a_id"],
                                     "trail_b_id":        comp["trail_b_id"],
-                                    "samples_a":         idx_a,
-                                    "samples_b":         idx_b,
+                                    # Store the original sample indices so that
+                                    # downstream analysis can reference the
+                                    # correct rows in the input data set.
+                                    "samples_a":         orig_idx_a,
+                                    "samples_b":         orig_idx_b,
                                     "ind_a":             ind_a,
                                     "ind_b":             ind_b,
                                     "same_individual":   comp["same_individual"],
