@@ -27,31 +27,31 @@ def stratified_individual_split(
     df: pd.DataFrame,
     test_size: float = 0.2,
     random_state: int = 42,
-    group_col: str = "individual_id",   # neu
-    stratify_col: str = "sex"           # neu
+    group_col: str = "individual_id",
+    stratify_col: str = "sex",
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Split df on the level of individuals (group_col), stratified by stratify_col.
-    - Alle Zeilen eines Individuums gehen zusammen in Train oder Test
-    - Ungültige/fehlende Gruppen landen im inference_df
+    Split ``df`` by ``group_col`` while stratifying by ``stratify_col``.
+    - All rows for one individual are kept together in train or test
+    - Invalid or missing groups are placed into ``inference_df``
     """
-    # 1) Prüfe Argumente
+    # 1) Validate arguments
     if group_col not in df.columns:
-        raise ValueError(f"Gruppenspalte '{group_col}' nicht im DataFrame.")
+        raise ValueError(f"Group column '{group_col}' not found in DataFrame.")
     if stratify_col not in df.columns:
-        raise ValueError(f"Stratifizierungs-Spalte '{stratify_col}' nicht im DataFrame.")
+        raise ValueError(f"Stratify column '{stratify_col}' not found in DataFrame.")
 
-    # 2) Metadaten: ein Eintrag pro Individuum mit gültigem Sex
+    # 2) Metadata: one entry per individual with a valid sex label
     meta = (
         df[[group_col, stratify_col]]
         .dropna(subset=[group_col, stratify_col])
         .drop_duplicates(subset=[group_col])
     )
-    # Nur m/f zulassen
+    # Allow only m/f values
     meta = meta[meta[stratify_col].astype(str).str.lower().isin(["m","f"])].copy()
     meta[stratify_col] = meta[stratify_col].str.lower()
 
-    # 3) Stratified Split auf Gruppen-Ebene
+    # 3) Stratified split on the group level
     ids    = meta[group_col].tolist()
     labels = meta[stratify_col].map({"f":0, "m":1}).tolist()
     train_ids, test_ids = train_test_split(
@@ -61,7 +61,7 @@ def stratified_individual_split(
         stratify=labels
     )
 
-    # 4) DataFrame-Splits
+    # 4) DataFrame splits
     train_df     = df[df[group_col].isin(train_ids)].reset_index(drop=True)
     test_df      = df[df[group_col].isin(test_ids)].reset_index(drop=True)
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
@@ -110,7 +110,7 @@ def group_stratified_kfold(
     logger.debug("Initial n_splits=%s based on class counts %s", n_splits, class_counts.to_dict())
 
     if n_splits < 2:
-        raise ValueError("Zu wenige Gruppen in einer Klasse für Stratifizierung")
+        raise ValueError("Not enough groups in one class for stratification")
 
     seed = random_state
     for attempt in range(5):
@@ -137,7 +137,7 @@ def group_stratified_kfold(
 
         seed += 1
 
-    raise RuntimeError("Konnte keine ausgewogene Stratifikation finden")
+    raise RuntimeError("Could not determine a balanced stratification")
 
 def sample_individuals(
     df: pd.DataFrame,
@@ -197,14 +197,14 @@ def create_train_test_split_otter(
     print("📊 Test 'dataorigin':", test_df["dataorigin"].value_counts().to_string())
     print("🧬 Test 'sex':", test_df["sex"].value_counts().to_string())
 
-    # 4) Train-Split (alle übrigen)
+    # 4) Train split with the remaining data
     train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
     print(f"\n🧠 Train-Split – {len(train_df)} Zeilen")
     print("👤 Train-Individual IDs:", train_df["individual_id"].nunique())
     print("📊 Train 'dataorigin':", train_df["dataorigin"].value_counts().to_string())
     print("🧬 Train 'sex':", train_df["sex"].value_counts().to_string())
 
-    # 5) Fold-Zuordnung
+    # 5) Assign folds
     print("\n🎲 Berechne Fold-Zuordnung...")
     y_train = train_df["sex"].map({"f": 0, "m": 1})
     fold_ids, method = _make_folds(
@@ -212,7 +212,7 @@ def create_train_test_split_otter(
     )
     train_df["Fold"] = fold_ids
 
-    print(f"\n✅ Fold-Methode verwendet: {method}")
+    print(f"\n✅ Fold method used: {method}")
     print("📊 Fold-Verteilung:")
     print(train_df["Fold"].value_counts().sort_index())
 
@@ -222,7 +222,7 @@ def create_train_test_split_otter(
 
 
 def splits_available() -> bool:
-    """Prüft, ob mindestens ein gültiges Train/Test-Paar existiert."""
+    """Return ``True`` if at least one valid train/test pair exists."""
     if not Path(SPLITS_DIR).exists():
         return False
     for d in Path(SPLITS_DIR).iterdir():
@@ -234,7 +234,7 @@ def splits_available() -> bool:
 
 
 def _check_valid(fold_ids: np.ndarray, y: pd.Series, n_splits: int) -> bool:
-    """Verifiziert, dass in jedem Fold beide Klassen 0 und 1 vorkommen."""
+    """Check that each fold contains both classes 0 and 1."""
     for fold_i in range(n_splits):
         classes = set(y[fold_ids == fold_i].unique())
         if classes != {0, 1}:
@@ -244,23 +244,26 @@ def _check_valid(fold_ids: np.ndarray, y: pd.Series, n_splits: int) -> bool:
 
 
 def ensure_valid_splits() -> None:
-    """
-    Prüft, ob für jede Spezies in SPLITS_DIR eine gültige 'Fold'-Spalte existiert,
-    d.h. in jedem Fold beide Klassen (0 und 1) vertreten sind.
-    Falls nicht, wird eine Warnung ausgegeben.
-    """
+    """Validate that each species in ``SPLITS_DIR`` has a valid ``Fold`` column
+    with both classes present in every fold.  Warns if any split is invalid."""
     for species_dir in Path(SPLITS_DIR).iterdir():
         if not species_dir.is_dir():
             continue
 
         train_fp = species_dir / "train.parquet"
         if not train_fp.exists():
-            warnings.warn(f"Kein train.parquet in {species_dir} gefunden – Split fehlt.", UserWarning)
+            warnings.warn(
+                f"Missing train.parquet in {species_dir} – split not found.",
+                UserWarning,
+            )
             continue
 
         df = pd.read_parquet(train_fp)
         if "Fold" not in df.columns:
-            warnings.warn(f"In {species_dir}: Spalte 'Fold' fehlt.", UserWarning)
+            warnings.warn(
+                f"Column 'Fold' missing in {species_dir}.",
+                UserWarning,
+            )
             continue
 
         # Labels kodieren
@@ -268,12 +271,12 @@ def ensure_valid_splits() -> None:
         fold_ids = df["Fold"].values.astype(int)
         if not _check_valid(fold_ids, y, NUM_FOLDS):
             warnings.warn(
-                f"In {species_dir}: Ungültige Fold-Verteilung (nicht in jedem Fold beide Klassen).",
-                UserWarning
+                f"Invalid fold distribution in {species_dir} (not all folds contain both classes).",
+                UserWarning,
             )
             continue
 
-    # wenn wir hier ankommen, sind alle Splits valide
+    # reaching this point means all splits are valid
 
 
 def _make_folds(
@@ -282,13 +285,11 @@ def _make_folds(
     n_splits: int,
     group_col: str
 ) -> Tuple[np.ndarray, str]:
-    """
-    Versucht in folgender Reihenfolge:
-      1) vorhandene 'Fold'-Spalte (predefined),
-      2) StratifiedGroupKFold via group_stratified_kfold(),
-      3) GroupKFold,
-      4) KFold.
-    Gibt (fold_ids, methode_name) zurück.
+    """Return ``(fold_ids, method_name)`` using the following strategy:
+      1) existing ``Fold`` column (predefined)
+      2) ``StratifiedGroupKFold`` via :func:`group_stratified_kfold`
+      3) ``GroupKFold``
+      4) ``KFold``
     """
     # 1) vorhandene Fold-Spalte?
     if "Fold" in df.columns:
@@ -296,11 +297,11 @@ def _make_folds(
         if _check_valid(fold_ids, y, n_splits):
             return fold_ids, "predefined"
 
-    # 2) StratifiedGroupKFold via euren Helper (bis zu 3 Versuche)
+    # 2) Try ``StratifiedGroupKFold`` up to three times
     for attempt in range(3):
         seed = GLOBAL_RANDOM_SEED + attempt
         try:
-            # group_stratified_kfold fügt 'Fold' in df zurück
+            # ``group_stratified_kfold`` adds the ``Fold`` column to ``df``
             df_folds = group_stratified_kfold(
                 df, n_splits=n_splits, random_state=seed, group_col=group_col
             )
@@ -310,7 +311,7 @@ def _make_folds(
         except Exception:
             continue
 
-    # 3) GroupKFold (bis zu 3 Versuche)
+    # 3) Try ``GroupKFold`` up to three times
     for attempt in range(3):
         gkf = GroupKFold(n_splits=n_splits)
         fold_ids = np.empty(len(df), dtype=int)
@@ -321,7 +322,7 @@ def _make_folds(
         if _check_valid(fold_ids, y, n_splits):
             return fold_ids, "group"
 
-    # 4) Klassisches KFold
+    # 4) Plain ``KFold``
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=GLOBAL_RANDOM_SEED)
     fold_ids = np.empty(len(df), dtype=int)
     for fold, (_, val_idx) in enumerate(kf.split(df)):

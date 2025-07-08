@@ -10,14 +10,16 @@ import umap
 
 
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
-    """
-    Wrapper für Dimensionsreduktion:
-      - PCA (unsupervised)
-      - UMAP (unsupervised + supervised)
-      - t-SNE (unsupervised)
-      - LDA (supervised)
-      - MDS (unsupervised)
-      - Isomap (unsupervised)
+    """Apply various dimensionality reduction techniques.
+
+    Supported methods
+    -----------------
+    - PCA (unsupervised)
+    - UMAP (unsupervised or supervised)
+    - t-SNE (unsupervised)
+    - LDA (supervised)
+    - MDS (unsupervised)
+    - Isomap (unsupervised)
     """
 
     def __init__(self, method: str = "pca", n_components: int = 2, supervised: bool = False, **kwargs):

@@ -57,14 +57,14 @@ class SplitWrapper:
         )
         dfs = importer.run()
         if not dfs:
-            print(f"❌ Keine Rohdaten gefunden in {self.input_dir}")
+            print(f"❌ No raw data found in {self.input_dir}")
             return 1
 
-        # 2) Für jeden bereinigten DataFrame: Split + Fold
+        # 2) For each cleaned DataFrame: split and assign folds
         for name, df in dfs.items():
             dataset = name.lower().replace("_cleaned", "")
 
-            # 2a) OTTER-Spezialfall: fixed Split
+            # 2a) OTTER special case: fixed split
             species_col = df.get("Species") or df.get("species")
             is_otter = (
                 species_col.astype(str)
@@ -75,14 +75,16 @@ class SplitWrapper:
             )
 
             if is_otter:
-                print(f"🦦 Verwende Otter-Splits für {dataset}")
+                print(f"🦦 Using otter-specific splits for {dataset}")
                 train_df, test_df, inference_df = create_train_test_split_otter(df)
             else:
                 train_df, test_df, inference_df = stratified_individual_split(df, group_col="individual_id", stratify_col="sex")
 
-            # 3) Fold-Generierung für train_df – nur wenn nicht vorhanden
+            # 3) Generate folds for ``train_df`` if not already present
             if "Fold" in train_df.columns and train_df["Fold"].notna().all():
-                print(f"✔️ Fold-Spalte in {dataset} schon gesetzt – keine erneute Zuweisung.")
+                print(
+                    f"✔️ Fold column in {dataset} already set – skipping reassignment."
+                )
                 fold_method = "predefined"
             else:
                 y_ser = train_df["sex"].map({"f": 0, "m": 1})
@@ -91,7 +93,7 @@ class SplitWrapper:
                 )
                 train_df = train_df.assign(Fold=fold_ids)
 
-            print(f"✅ Fold-Methode verwendet: {fold_method}")
+            print(f"✅ Fold method used: {fold_method}")
             print(train_df["Fold"].value_counts().sort_index().rename("count").to_string())
 
             # 4) Speichern & Summary
