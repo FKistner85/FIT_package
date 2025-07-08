@@ -1,6 +1,8 @@
 # Step 8: Model Comparison
+## Overview
+This step evaluates multiple classification algorithms on the prepared dataset to identify the best-performing model.
 
-**Selectable Methods**
+## Selectable Methods
 - **Logistic Regression** – a linear classifier optimising the
   cross-entropy loss with optional L1 or L2 regularisation.
 - **Support Vector Machine (SVC)** – maximises the margin between

@@ -1,10 +1,11 @@
 # Step 4: Scaling
+## Overview
 
 `scale_splits.py` standardises features of each split.  In the
 library this is handled by the `ScalerWrapper` which can dispatch to
 different scalers from scikit-learn.
 
-**Selectable Methods**
+## Selectable Methods
 - `StandardScaler` – subtracts the mean and divides by the
   standard deviation of each feature.  This assumes a Gaussian-like
   distribution and can be sensitive to extreme values.

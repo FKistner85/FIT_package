@@ -1,10 +1,11 @@
 # Step 5: Feature Selection
+## Overview
 
 `create_feature_selection.py` ranks features by variance but the
 `FeatureSelector` wrapper in `FIT_python.feature_utils` exposes several
 alternative strategies.
 
-**Selectable Methods**
+## Selectable Methods
 - `forward_count` / `forward_p` – stepwise forward selection based on
   ANCOVA statistics.  Features are added one by one if their p-value is
   below a threshold or they improve the model count the most.  This
