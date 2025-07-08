@@ -1,6 +1,12 @@
 # feature_scaler_wrapper.py
 
-Der FeatureScalerTransformer skaliert numerische Eingaben.
-Je nach Einstellung nutzt er eine Standardisierung oder eine robuste Skalierung.
-In fit wird der entsprechende Scikit‑Learn‑Scaler auf die Daten angepasst.
-transform skaliert danach neue Beobachtungen und gibt bei Bedarf einen DataFrame mit den ursprünglichen Spalten zurück.
+Der `FeatureScalerTransformer` stellt zwei Varianten des Skalierens bereit:
+
+```python
+    Scaler für numerische Features, mit zwei Modi:
+      - method='standard': StandardScaler (z-Transformation)
+      - method='robust':   RobustScaler (Median & IQR)
+```
+【F:src/FIT_python/pipeline_sex/feature_scaler_wrapper.py†L10-L14】
+
+*StandardScaler* setzt Mittelwert 0 und Varianz 1 voraus und reagiert empfindlich auf Ausreißer. *RobustScaler* nutzt Median und Interquartilsabstand und ist stabiler bei Extremwerten, kann aber skalengetreue Merkmale verzerren.

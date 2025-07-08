@@ -1,6 +1,18 @@
 # imputation_wrapper.py
 
-Die Klasse ImputationWrapper setzt auf einen IterativeImputer mit Random‑Forest‑Regressor, um fehlende Werte zu schätzen.
-Beim Erzeugen des Objekts lassen sich Anzahl der Bäume, Iterationen und ein Zufallszustand angeben.
-Die fit-Methode trainiert den Imputer auf allen numerischen Spalten.
-transform füllt anschließend die entsprechenden Lücken in DataFrames oder Arrays auf.
+Der `ImputationWrapper` nutzt einen `IterativeImputer` mit Random-Forest-Regressor:
+
+```python
+    self.imputer = IterativeImputer(
+        estimator=RandomForestRegressor(
+            n_estimators=n_estimators,
+            random_state=random_state
+        ),
+        max_iter=max_iter,
+        initial_strategy='median',
+        random_state=random_state
+    )
+```
+【F:src/FIT_python/pipeline_sex/imputation_wrapper.py†L17-L26】
+
+Der Ansatz kann komplexe Abhängigkeiten zwischen Features abbilden und produziert plausible Werte, erfordert aber mehr Rechenzeit als einfache Strategien wie Mittelwert-Imputation.
