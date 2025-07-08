@@ -85,7 +85,7 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         k_max = self.k or arr.shape[1]
 
         if self.method is None:
-            self.selected_features_ = feat_names  # ALLE Features verwenden
+            self.selected_features_ = feat_names  # use all features
             self.feature_ranking_ = [(f, 1.0) for f in feat_names]
 
         elif self.method == "forward":

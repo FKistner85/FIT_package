@@ -31,27 +31,30 @@ def generate_pairwise_comparisons_from_df(
     random_state: int = 0,
     fallback_col: str = "trail"
 ) -> Tuple[List[Dict], pd.DataFrame]:
-    """
-    1) Erzeuge group_id = individual_id, bzw. wenn NaN/unknown dann fallback trail.
-    2) Sample pro group_id nicht-überlappende Chunks der Länge chunk_size,
-       daraus bis zu max_trails_per_animal Trails jeder Länge in trail_size_list.
-    3) Baue alle Cross-Individual-Paare UND alle Within-Individual, cross-chunk Paare.
-    4) same_individual = True/False, oder "unknown" wenn eine Seite fallback benutzt.
-    5) same_sex = True/False/"unknown" analog.
-    6) StratifiedKFold nach trail_size_a.
-    7) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
+    """Generate all pairwise trail comparisons.
+
+    Steps
+    -----
+    1. Build ``group_id`` equal to ``individual_id`` or ``fallback_col`` if the former is missing.
+    2. For each ``group_id`` sample non-overlapping chunks of length ``chunk_size``
+       and create trails of lengths given in ``trail_size_list``.
+    3. Construct all cross-individual pairs and all within-individual cross-chunk pairs.
+    4. ``same_individual`` is ``True``/``False`` or ``"unknown"`` when a fallback id is used.
+    5. ``same_sex`` behaves analogously.
+    6. Perform ``StratifiedKFold`` by ``trail_size_a``.
+    7. Produce a summary table including average and standard deviation of pair counts.
     """
     rng = np.random.default_rng(random_state)
     df = df.copy()
 
-    # --- 0) group_id und sex_map, fallback_map ---
+    # --- 0) prepare group_id, sex_map and fallback_map ---
     orig = df[id_col]
     if fallback_col not in df.columns:
         raise ValueError(f"fallback column '{fallback_col}' not found in DataFrame")
-    # group_id: original id wenn vorhanden & != "unknown", sonst trail
+    # group_id: original id if available and not "unknown", otherwise ``fallback_col``
     df['_group_id'] = orig.where(orig.notna() & (orig != "unknown"),
                                  df[fallback_col]).astype(str)
-    # sex_map: erster non-null sex pro group_id, unknown sonst
+    # sex_map: first non-null sex per group_id, otherwise "unknown"
     sex_map = (
         df
         .set_index('_group_id')['sex']
@@ -59,18 +62,18 @@ def generate_pairwise_comparisons_from_df(
         .replace("", "unknown")
         .to_dict()
     )
-    # fallback_map: True für alle group_ids, die aus fallback_col kamen
+    # fallback_map: True for all group_ids originating from ``fallback_col``
     fallback_gids = df.loc[orig.isna() | (orig == "unknown"), '_group_id'].unique().tolist()
     fallback_map = {gid: True for gid in fallback_gids}
     for gid in df['_group_id'].unique():
         fallback_map.setdefault(gid, False)
 
-    # --- 1) Tiere einschränken ---
+    # --- 1) restrict animals if requested ---
     all_ids = df['_group_id'].unique().tolist()
     if max_individuals is not None and len(all_ids) > max_individuals:
         all_ids = rng.choice(all_ids, size=max_individuals, replace=False).tolist()
 
-    # --- 2) Chunks & Trails pro group_id ---
+    # --- 2) create chunks and trails per group_id ---
     trails_per_animal: Dict[str, Dict[int, List[Tuple[int,List[int]]]]] = {
         ind: {size: [] for size in trail_size_list}
         for ind in all_ids
@@ -173,7 +176,7 @@ def generate_pairwise_comparisons_from_df(
             "n_animals": n_anim,
             "n_trails": n_trails
         })
-    # Total-Zeile
+    # add total row
     summary_rows.append({
         "sub_size":  "Total",
         "n_animals": len(all_ids),
@@ -181,7 +184,7 @@ def generate_pairwise_comparisons_from_df(
     })
     summary_df = pd.DataFrame(summary_rows)
 
-    # --- 7) Ergänze avg/sd Vergleiche pro Individuum und ratio same/diff ---
+    # --- 7) compute avg/sd comparisons per individual and ratio same/diff ---
     same_counts = []
     diff_counts = []
     for ind in all_ids:
@@ -198,7 +201,7 @@ def generate_pairwise_comparisons_from_df(
     sd_diff  = float(np.std(diff_counts, ddof=1)) if len(diff_counts)>1 else 0.0
     ratio    = float(comp_df.same_individual.eq(True).sum() / max(1, comp_df.same_individual.eq(False).sum()))
 
-    # Schreibe in die Total-Zeile
+    # write statistics into the total row
     summary_df.loc[summary_df.sub_size=="Total", [
         "avg_comp_per_ind_same",
         "sd_comp_per_ind_same",

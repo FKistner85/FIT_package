@@ -34,12 +34,11 @@ def generate_pairwise_comparisons_from_df(
     random_state: int = 0,
     show_progress: bool = False,
 ) -> List[Dict]:
-    """
-    Erzeuge Trail-Paarvergleiche mit:
-      - 'samples_a'/'samples_b': Listen der Original-Indizes
-      - 'trail_a_id'/'trail_b_id': eindeutige IDs
-      - 'same_individual': bool
-      - 'fold': Stratified k-fold nach same_individual
+    """Create trail pair comparisons with metadata:
+      - ``samples_a``/``samples_b``: lists of original indices
+      - ``trail_a_id``/``trail_b_id``: unique identifiers
+      - ``same_individual``: boolean flag
+      - ``fold``: stratified k-fold based on ``same_individual``
     """
     # 1) Alle Roh-Paare sammeln
     individuals = defaultdict(list)
@@ -102,10 +101,10 @@ def generate_pairwise_comparisons_from_df(
         for pi in val_idx:
             fold_map[pair_keys[pi]] = fold_idx
 
-    # 3) Trail-ID-Zähler pro (Individuum, Gruppengröße)
+    # 3) trail ID counter per individual and group size
     trail_counters = defaultdict(int)
 
-    # 4) Finale Liste mit Trail-IDs und Fold
+    # 4) final list with trail IDs and fold assignment
     comparisons = []
     it_raw = raw
     if show_progress:
@@ -151,22 +150,24 @@ def run_all_pairwise_projections_parallel(
     n_jobs: int = -1,
     batch_size: int | None = None,
 ) -> List[Dict]:
-    """
-    Für jede Paarung:
-      0) Falls use_sexmodel_prediction, Sex-Modell laden & predict_proba auf ganzem df_base vorberechnen
-      1) Basis-DF bereinigen
-      2) Feature-Selection (einmal mit k_max)
-      3) RCV-Set als Komplement der Indizes
-      4) predict_proba für A, B, R extrahieren und mitteln (jeweils avg für 0/1)
-      5) Für jede (reducer, n_components, k):
-         - DimRed erzeugen
-         - Abstände berechnen
-         - Result-Dict inkl. avg_proba_A_0/1, avg_proba_B_0/1, avg_proba_R_0/1
+    """Run projections for all pairings.
+
+    Steps
+    -----
+    0. If ``use_sexmodel_prediction`` is ``True``, load the sex model and precompute ``predict_proba`` on the entire base DataFrame.
+    1. Clean the base DataFrame.
+    2. Perform feature selection once with ``k_max``.
+    3. Use an RCV set comprising the remaining indices.
+    4. Extract ``predict_proba`` for A, B and R and compute their averages.
+    5. For every combination of ``reducer``, ``n_components`` and ``k``:
+       - apply the dimensionality reducer
+       - compute distances
+       - record results including averaged probabilities
 
     Parameters
     ----------
     batch_size : int or None, optional
-        Wenn gesetzt, werden die Vergleiche in Batches dieser Größe verarbeitet.
+        If set, comparisons are processed in batches of this size.
     """
     # 0) Sex-Modell
     if use_sexmodel_prediction:
@@ -203,23 +204,23 @@ def run_all_pairwise_projections_parallel(
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
-        # 1) Feature‐Matrices für A & B
+        # 1) feature matrices for A & B
         df_a = df_base.iloc[idx_a][feature_cols]
         df_b = df_base.iloc[idx_b][feature_cols]
 
-        # 2) Feature‐Selection mit k_max
+        # 2) feature selection using ``k_max``
         X_ab = pd.concat([df_a, df_b], ignore_index=True)
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
         selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
         selector.fit(X_ab, y_ab)
         full_ranking = selector.feature_ranking_
 
-        # 3) RCV‐Set als Komplement
+        # 3) RCV set as the complement
         all_idx = np.arange(len(df_base))
         rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
         df_r = df_base.iloc[rcv_idx][feature_cols]
 
-        # 4) Sex‐Probas pro Gruppe extrahieren & mitteln
+        # 4) extract and average sex probabilities per group
         if use_sexmodel_prediction:
             pa = proba_all[idx_a]  # shape (size_a,2)
             pb = proba_all[idx_b]  # shape (size_b,2)
@@ -228,7 +229,7 @@ def run_all_pairwise_projections_parallel(
             avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
             avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
 
-            # 5) Projection & Distance
+            # 5) projection and distance
             for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
                 supervised = reducer in ("lda", "umap")
                 for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
@@ -240,13 +241,13 @@ def run_all_pairwise_projections_parallel(
                         db = df_b[sel_feats].copy()
                         dr = df_r[sel_feats].copy()
 
-                        # 6) Sex‐Probas als Features anhängen
+                        # 6) append sex probabilities as features
                         if use_sexmodel_prediction:
                             da["proba_0"], da["proba_1"] = pa[:, 0], pa[:, 1]
                             db["proba_0"], db["proba_1"] = pb[:, 0], pb[:, 1]
                             dr["proba_0"], dr["proba_1"] = pr[:, 0], pr[:, 1]
 
-                        # 7) Combine + Labeled array
+                        # 7) combine and build labeled array
                         arr = pd.concat([da, db, dr], ignore_index=True)
                         y_all = np.concatenate(
                             [
@@ -256,7 +257,7 @@ def run_all_pairwise_projections_parallel(
                             ]
                         )
 
-                        # 8) Clamp für LDA
+                        # 8) clamp dimensions for LDA
                         nc_eff = nc
                         if reducer == "lda":
                             n_classes = len(np.unique(y_all))

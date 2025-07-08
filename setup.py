@@ -1,3 +1,5 @@
+"""Setup configuration for the FIT_python package."""
+
 from setuptools import setup, find_packages
 
 setup(
@@ -6,7 +8,7 @@ setup(
     description="FIT Otter: Data import and analysis pipeline",
     author="Frederick Kistner",
 
-    # ← Ein packages-Argument, auf den src-Ordner zeigend
+    # packages argument pointing to the ``src`` directory
     packages=find_packages(where="src"),
     package_dir={"": "src"},
 

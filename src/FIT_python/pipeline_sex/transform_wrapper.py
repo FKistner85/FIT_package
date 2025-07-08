@@ -8,26 +8,28 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 
 class NumericTransformer(TransformerMixin, BaseEstimator):
-    """
-    Reiner Numeric-Transformer:
-      1) Komma → Punkt in allen Feature-Spalten
-      2) Coercion zu float (non-convertible → NaN)
-      3) Liefert reines NumPy-Array X zurück.
-    
-    Die Zielspalten (DEFAULT_TARGETS) bleiben unberührt und sollten
-    außerhalb dieses Transformers separat extrahiert werden.
+    """Convert feature columns to numeric ``numpy`` arrays.
+
+    Steps
+    -----
+    1. Replace commas with dots in all feature columns.
+    2. Coerce values to ``float`` (non-convertible values become ``NaN``).
+    3. Return a plain ``numpy`` array ``X``.
+
+    Target columns (``DEFAULT_TARGETS``) remain untouched and should be
+    extracted outside of this transformer.
     """
 
     def __init__(self):
         self.feature_cols: List[str] = []
 
     def fit(self, df: pd.DataFrame, y=None):
-        # Bestimme Meta-Spalten: falls OTTER_META_COLS komplett enthalten, sonst nur 'id'
+        # determine meta columns: use ``OTTER_META_COLS`` if all are present, otherwise ``id`` only
         if all(col in df.columns for col in OTTER_META_COLS):
             meta = OTTER_META_COLS
         else:
             meta = ['id']
-        # Alle DEFAULT_TARGETS (z.B. ['sex']) als Ziel, Rest sind Features
+        # treat all ``DEFAULT_TARGETS`` (e.g. ``['sex']``) as targets; the rest are features
         self.feature_cols = [
             col for col in df.columns
             if col not in meta + DEFAULT_TARGETS
@@ -35,10 +37,10 @@ class NumericTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, df: pd.DataFrame) -> np.ndarray:
-        # Defensive Copy
+        # defensive copy
         df2 = df.copy()
 
-        # 1) Komma→Punkt & String-to-Number
+        # 1) comma-to-dot replacement and string-to-number conversion
         for col in self.feature_cols:
             df2[col] = (
                 df2[col]
@@ -47,6 +49,6 @@ class NumericTransformer(TransformerMixin, BaseEstimator):
                   .pipe(pd.to_numeric, errors='coerce')
             )
 
-        # 2) Feature-Matrix als NumPy
+        # 2) feature matrix as ``numpy`` array
         X = df2[self.feature_cols].to_numpy(dtype=float)
         return X

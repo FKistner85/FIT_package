@@ -1,7 +1,17 @@
 # dimensionality_reduction_wrapper.py
 
-Dieses Modul enthält die Klasse DimensionalityReducerTransformer. Sie kapselt eine Reduktion der Dimensionalität mittels Principal Component Analysis.
-Beim Initialisieren wählt man die gewünschte Zahl an Hauptkomponenten.
-Die fit-Methode passt diese Zahl an die maximal sinnvolle Größe an und trainiert anschließend die PCA.
-Mit transform wird die Projektion auf neue Daten angewandt.
-Über get_feature_names_out lassen sich die Namen der erzeugten Komponenten abrufen.
+Die Klasse `DimensionalityReducerTransformer` stellt mehrere Verfahren bereit:
+
+```python
+    Wrapper für Dimensionsreduktion:
+      - None: Identity
+      - PCA
+      - UMAP
+      - t-SNE
+      - LDA
+      - MDS
+      - Isomap
+```
+【F:src/FIT_python/pipeline_sex/dimensionality_reduction_wrapper.py†L12-L21】
+
+*PCA* liefert lineare Hauptachsen und ist leicht interpretierbar, *UMAP* und *t-SNE* bewahren nichtlineare Nachbarschaften für Visualisierung, während *LDA* auf Klasseninformation basiert. *MDS* und *Isomap* versuchen Distanzen zu erhalten, benötigen aber oft mehr Rechenzeit.

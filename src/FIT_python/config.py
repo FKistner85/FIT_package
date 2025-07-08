@@ -1,3 +1,5 @@
+"""Central configuration parameters and file paths used throughout the package."""
+
 from pathlib import Path
 
 # Project root directory (two levels up from this file)
