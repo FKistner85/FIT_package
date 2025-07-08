@@ -121,10 +121,8 @@ def get_pipeline_steps(
 
 
 class PipelineWrapper:
-    """
-    Wrapper zum einmaligen Prepare (Import, Split, Summary) und
-    zum Train/Evaluate aller Arten & Modelle.
-    """
+    """Wraps one-time preparation (import, split, summary) and
+    training/evaluation of all model variants."""
 
     def __init__(
         self,
@@ -153,7 +151,7 @@ class PipelineWrapper:
         self._best_dir.mkdir(parents=True, exist_ok=True)
 
     def prepare(self):
-        """Einmaliges Importieren, Splitten und Zusammenfassen."""
+        """Run data import, splitting and summary exactly once."""
         print("\n📥 Schritt 1: Datenimport & Cleaning")
         DataImportWrapper().clean_all()
         print("\n✂️ Schritt 2: Splitting & Fold-Zuordnung")
@@ -163,7 +161,8 @@ class PipelineWrapper:
         ensure_valid_splits()
 
     def train(self) -> pd.DataFrame:
-        """Trainiert alle Modelle und speichert raw_results.csv, alle Modelle und die besten Modelle."""
+        """Train all models, write ``raw_results.csv`` and store all
+        fitted pipelines as well as the best per species."""
         records: list[dict] = []
         best_acc_per_species: dict[str, float] = {}
 
@@ -298,7 +297,7 @@ class PipelineWrapper:
             final_pipe = Pipeline(steps)
             final_pipe.fit(X_t, y_t)
 
-            # 1) Alle Modelle mit Hyperparam-Filename
+            # 1) Save every model using a filename that encodes the hyperparameters
             fname_all = (
                 f"{species}__{mk}"
                 f"__fs-{row['fs_method'] or 'none'}-{row['fs_k']}"
@@ -310,7 +309,7 @@ class PipelineWrapper:
             )
             dump(final_pipe, self._model_dir / fname_all)
 
-            # 2) Bestes Modell pro Spezies
+            # 2) Best model per species
             best_path = self._best_dir / f"{species}.joblib"
             if row["test_balanced_accuracy"] >= best_acc_per_species[species]:
                 dump(final_pipe, best_path)

@@ -19,7 +19,7 @@ from tqdm_joblib import tqdm_joblib
 
 from FIT_python.config import RESULTS_DATA_DIR
 
-# Lokale Module
+# Local modules
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
 from FIT_python.pipeline_individual_id.feature_selection_wrapper import (
     FeatureSelectionTransformer,
@@ -82,18 +82,18 @@ def run_all_pairwise_projections_parallel(
 
         sex_clf = load(model_fp)
 
-    # --- 1) Basis-DF vorbereiten ---
+    # --- 1) prepare base DataFrame ---
     df2 = df.copy()
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
     df_base = df2.reset_index(drop=True)
 
-    # --- 2) predict_proba komplett vorberechnen ---
+    # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
         proba_all = sex_clf.predict_proba(df_base[feature_cols])
     else:
         proba_all = None
 
-    # --- 3) Parameter-Listen aufbauen ---
+    # --- 3) build parameter lists ---
     ks = k_features if isinstance(k_features, (list, tuple)) else [k_features]
     k_max = max(ks)
     ncs = n_components if isinstance(n_components, (list, tuple)) else [n_components]
@@ -166,10 +166,10 @@ def run_all_pairwise_projections_parallel(
                 df_b_fs = pipe.transform(df_b)
                 df_r_fs = pipe.transform(df_r)
 
-                # "Pipeline.transform" kann je nach scikit-learn Version ein
-                # ``np.ndarray`` zurueckgeben. Die spaeteren Schritte erwarten
-                # jedoch ein ``DataFrame`` mit Spaltennamen.  Falls also ein
-                # Array herauskommt, wandle es entsprechend um.
+                # ``Pipeline.transform`` may return an ``np.ndarray`` depending
+                # on the scikit-learn version. The following steps expect a
+                # ``DataFrame`` with column names, therefore convert the array
+                # back to a ``DataFrame`` if necessary.
                 if not isinstance(df_a_fs, pd.DataFrame):
                     feat_names = selector.get_feature_names_out()
                     df_a_fs = pd.DataFrame(
