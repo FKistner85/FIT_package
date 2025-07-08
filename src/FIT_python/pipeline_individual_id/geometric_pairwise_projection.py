@@ -195,39 +195,38 @@ def run_all_pairwise_projections_parallel(
 
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
-        try:
-            ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-            idx_a = np.asarray([index_map[x] for x in comp["samples_a"]], dtype=int)
-            idx_b = np.asarray([index_map[x] for x in comp["samples_b"]], dtype=int)
-            size_a, size_b = len(idx_a), len(idx_b)
+        ind_a, ind_b = comp["ind_a"], comp["ind_b"]
+        idx_a = np.asarray([index_map[x] for x in comp["samples_a"]], dtype=int)
+        idx_b = np.asarray([index_map[x] for x in comp["samples_b"]], dtype=int)
+        size_a, size_b = len(idx_a), len(idx_b)
 
-            trail_a_id = comp["trail_a_id"]
-            trail_b_id = comp["trail_b_id"]
+        trail_a_id = comp["trail_a_id"]
+        trail_b_id = comp["trail_b_id"]
 
-            # 1) Feature‐Matrices für A & B
-            df_a = df_base.iloc[idx_a][feature_cols]
-            df_b = df_base.iloc[idx_b][feature_cols]
+        # 1) Feature‐Matrices für A & B
+        df_a = df_base.iloc[idx_a][feature_cols]
+        df_b = df_base.iloc[idx_b][feature_cols]
 
-            # 2) Feature‐Selection mit k_max
-            X_ab = pd.concat([df_a, df_b], ignore_index=True)
-            y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
-            selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
-            selector.fit(X_ab, y_ab)
-            full_ranking = selector.feature_ranking_
+        # 2) Feature‐Selection mit k_max
+        X_ab = pd.concat([df_a, df_b], ignore_index=True)
+        y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
+        selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
+        selector.fit(X_ab, y_ab)
+        full_ranking = selector.feature_ranking_
 
-            # 3) RCV‐Set als Komplement
-            all_idx = np.arange(len(df_base))
-            rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
-            df_r = df_base.iloc[rcv_idx][feature_cols]
+        # 3) RCV‐Set als Komplement
+        all_idx = np.arange(len(df_base))
+        rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
+        df_r = df_base.iloc[rcv_idx][feature_cols]
 
-            # 4) Sex‐Probas pro Gruppe extrahieren & mitteln
-            if use_sexmodel_prediction:
-                pa = proba_all[idx_a]  # shape (size_a,2)
-                pb = proba_all[idx_b]  # shape (size_b,2)
-                pr = proba_all[rcv_idx]  # shape (len(rcv_idx),2)
-                avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
-                avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
-                avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
+        # 4) Sex‐Probas pro Gruppe extrahieren & mitteln
+        if use_sexmodel_prediction:
+            pa = proba_all[idx_a]  # shape (size_a,2)
+            pb = proba_all[idx_b]  # shape (size_b,2)
+            pr = proba_all[rcv_idx]  # shape (len(rcv_idx),2)
+            avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
+            avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
+            avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
 
             # 5) Projection & Distance
             for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
@@ -327,6 +326,8 @@ def run_all_pairwise_projections_parallel(
                             "coords_b_y": cb[:, 1].tolist() if cb.shape[1] > 1 else [],
                             "coords_r_x": cr[:, 0].tolist(),
                             "coords_r_y": cr[:, 1].tolist() if cr.shape[1] > 1 else [],
+                            "selected_features": sel_feats,
+                            "selected_scores": [score for _, score in full_ranking[:k]],
                         }
                         for m, v in dists.items():
                             res[f"dist_{m}"] = float(v)
@@ -334,11 +335,6 @@ def run_all_pairwise_projections_parallel(
                         out.append(res)
 
             return out
-
-        except Exception as e:
-            if debug:
-                print(f"[ERROR] pair {i} failed: {e}")
-            return []
 
     cached_pair = memory.cache(process_pair)
 

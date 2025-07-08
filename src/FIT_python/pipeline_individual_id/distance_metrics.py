@@ -18,10 +18,7 @@ def compute_distances(a, b, VI=None):
         "braycurtis": braycurtis(a, b),
     }
     if VI is not None:
-        try:
-            distances["mahalanobis"] = mahalanobis(a, b, VI)
-        except Exception:
-            distances["mahalanobis"] = np.nan
+        distances["mahalanobis"] = mahalanobis(a, b, VI)
     else:
         distances["mahalanobis"] = np.nan
     return distances
