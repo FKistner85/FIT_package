@@ -3,6 +3,7 @@
 ## Überblick
 Hilfsfunktionen zum Laden von CSV-/Excel-Dateien und zur Normalisierung der Spaltennamen.
 
+Die Funktionen unterstützen beim Vorverarbeiten heterogener Rohdaten. "clean_columns" vereinheitlicht Spaltennamen, "load_raw_files" liest ganze Ordner ein und fügt optional IDs hinzu. "coerce_numeric_columns" konvertiert Textspalten zu numerischen Werten, während "sanitize_labels" Beschriftungen bereinigt.
 ## Wichtige Bestandteile
 - clean_columns
 - load_raw_files
@@ -14,4 +15,4 @@ Hilfsfunktionen zum Laden von CSV-/Excel-Dateien und zur Normalisierung der Spal
 - https://scikit-learn.org/stable/modules/preprocessing.html
 
 ## Annahmen und Einschränkungen
-Assumes mostly numeric data with optional comma decimals.
+Geht von überwiegend numerischen Daten mit optionalen Kommazahlen aus.

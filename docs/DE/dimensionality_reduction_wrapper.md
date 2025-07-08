@@ -2,6 +2,7 @@
 
 ## Überblick
 Transformer, der PCA, UMAP, t-SNE, LDA, MDS und Isomap bereitstellt.
+Die Klasse ermöglicht einen einheitlichen Aufruf verschiedener Reduktionsverfahren. Sie wird eingesetzt, um hochdimensionale Merkmalsräume für Visualisierung oder Klassifikation vorzubereiten. Vorteilhaft ist die flexible Wahl des Verfahrens, während einige Methoden wie t-SNE rechenintensiv sein können.
 
 ## Wichtige Bestandteile
 - DimensionalityReducerTransformer
@@ -11,4 +12,4 @@ Transformer, der PCA, UMAP, t-SNE, LDA, MDS und Isomap bereitstellt.
 - https://umap-learn.readthedocs.io/en/latest/
 
 ## Annahmen und Einschränkungen
-Chooses method based on parameters; supervised mode for LDA/UMAP.
+Wählt die Methode anhand der Parameter; beaufsichtigter Modus nur bei LDA oder UMAP möglich.

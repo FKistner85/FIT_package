@@ -2,6 +2,7 @@
 
 ## Überblick
 Erzeugt Trail-Segmente und alle Paarvergleiche mit Metadaten.
+Das Modul dient dazu, Bewegungsabläufe in vergleichbare Abschnitte zu zerlegen und daraus Paarungen zu bilden. Dadurch lassen sich individuelle Muster miteinander kontrastieren. Bei großen Datensätzen können die Berechnungen jedoch zeitaufwändig werden.
 
 ## Wichtige Bestandteile
 - generate_pairwise_comparisons_from_df
@@ -10,4 +11,4 @@ Erzeugt Trail-Segmente und alle Paarvergleiche mit Metadaten.
 - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html
 
 ## Annahmen und Einschränkungen
-Uses random sampling of chunks; results include summary statistics.
+Verwendet zufällige Auswahl von Segmenten; die Ergebnisse enthalten Zusammenfassungsstatistiken.
