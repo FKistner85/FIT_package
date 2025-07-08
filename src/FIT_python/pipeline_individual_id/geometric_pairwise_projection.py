@@ -326,6 +326,8 @@ def run_all_pairwise_projections_parallel(
                             "coords_b_y": cb[:, 1].tolist() if cb.shape[1] > 1 else [],
                             "coords_r_x": cr[:, 0].tolist(),
                             "coords_r_y": cr[:, 1].tolist() if cr.shape[1] > 1 else [],
+                            "selected_features": sel_feats,
+                            "selected_scores": [score for _, score in full_ranking[:k]],
                         }
                         for m, v in dists.items():
                             res[f"dist_{m}"] = float(v)
