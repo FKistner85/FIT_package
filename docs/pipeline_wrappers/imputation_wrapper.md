@@ -15,4 +15,8 @@ Der `ImputationWrapper` nutzt einen `IterativeImputer` mit Random-Forest-Regress
 ```
 【F:src/FIT_python/pipeline_sex/imputation_wrapper.py†L17-L26】
 
-Der Ansatz kann komplexe Abhängigkeiten zwischen Features abbilden und produziert plausible Werte, erfordert aber mehr Rechenzeit als einfache Strategien wie Mittelwert-Imputation.
+Der Ansatz kann komplexe Abhängigkeiten zwischen Features abbilden und liefert dadurch oft realistischere Werte als simple Mittelwert- oder Medianfüllungen. Besonders bei stark korrelierten Variablen spielt der Random-Forest-Schätzer seine Stärken aus. Nachteilig sind der höhere Speicherbedarf und eine längere Laufzeit, weshalb sich die Methode vor allem für endgültige Analysen eignet.
+
+### Referenzen
+* Stekhoven, D. J., & Bühlmann, P. (2012). "MissForest—non-parametric missing value imputation for mixed-type data." *Bioinformatics*.
+* Die Implementierung basiert auf dem [IterativeImputer von scikit-learn](https://scikit-learn.org/stable/modules/impute.html#iterative-imputer).

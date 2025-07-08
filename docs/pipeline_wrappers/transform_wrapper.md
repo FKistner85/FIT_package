@@ -11,3 +11,8 @@ Der `NumericTransformer` bereitet die Rohdaten für das Modell vor. Die wichtigs
 【F:src/FIT_python/pipeline_sex/transform_wrapper.py†L12-L15】
 
 So bleiben Zielspalten unverändert und die Pipeline erhält eine konsistente numerische Matrix.
+
+Der Transformer eignet sich für Datensätze, die ursprünglich gemischte Typen enthalten, etwa durch Exporte aus Tabellenkalkulationen. Durch die strikte Umwandlung in Gleitkommazahlen werden Fehlwerte als ``NaN`` markiert und können anschließend imputiert werden. Ein Nachteil besteht darin, dass eventuelle Kategorieinformationen verloren gehen, falls sie nicht vorher kodiert wurden.
+
+### Referenzen
+* Weitere Hintergründe zum Umgang mit fehlenden und numerischen Daten finden sich in der [pandas Dokumentation](https://pandas.pydata.org/).
