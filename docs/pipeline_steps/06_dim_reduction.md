@@ -1,11 +1,12 @@
 # Step 6: Dimensionality Reduction
+## Overview
 
 `create_dim_reduction.py` performs principal component analysis (PCA)
 on the selected features.  The wrapper `reduce_all` in
 `dim_reduction_wrapper` also exposes t-SNE and UMAP if the respective
 libraries are available.
 
-**Selectable Methods**
+## Selectable Methods
 - `PCA` – a linear method that finds orthogonal axes capturing maximum
   variance.  Implemented via singular value decomposition.  Useful for
   noise reduction and exploratory analysis.
