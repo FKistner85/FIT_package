@@ -57,10 +57,10 @@ def compute_summary(
             "MeanTrailsPerIndividual", "SDTrailsPerIndividual"
         ])
 
-    # 1) Einheitliches Label
+    # 1) unified label
     ds_label = f"{dataset} {origin.capitalize()}"
 
-    # 2) Saubere Sex-Kategorien (Mapping an den Anfang ziehen)
+    # 2) clean sex categories (mapping happens first)
     df = df.copy()
     df["sex"] = (
         df["sex"]
@@ -117,9 +117,9 @@ def _lighten(color: str, amount: float) -> str:
 
 def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     """
-    1) “Summary All”-Plot: pro Art ein kleines gestapeltes Train/Test-Balkendiagramm
-    2) Einzelplots: Female & Male gestappelt (Train unten, Test oben)
-    Titelnamen sind die wissenschaftlichen Artnamen kursiv.
+    1) "Summary All" plot: one small stacked train/test bar chart per species.
+    2) Individual plots: female and male bars stacked (train below, test above).
+    Titles use italic scientific names.
     """
     import matplotlib.pyplot as plt
     import math
@@ -134,11 +134,11 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     }
 
     def make_italic(name_code: str) -> str:
-        # aus panthera_tigris_altaica → Panthera tigris altaica in Kursivschrift
+        # convert 'panthera_tigris_altaica' → 'Panthera tigris altaica' in italics
         parts = name_code.split('_')
         parts = [parts[0].capitalize()] + [p.lower() for p in parts[1:]]
         sci = ' '.join(parts)
-        # kursiv in Matplotlib via mathtext
+        # italics in Matplotlib via mathtext
         return rf"$\mathit{{{sci}}}$"
 
     # --- 1) Summary-All Plot ---
@@ -170,10 +170,10 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     #plt.show()
    # plt.close(fig)
 
-    # --- 2) Einzelplots pro Art ---
+    # --- 2) per-species plots ---
     for code in species_codes:
         sub = df_summary[df_summary["Dataset"].str.startswith(code+' ')]
-        # Gesamt-Individuen aus Train
+        # total individuals from the training split
         total_ind = {sex: int(
             sub[(sub['Sex']==sex)&sub['Dataset'].str.endswith('Train')]['UniqueIndividuals'].iloc[0]
         ) if not sub.empty else 0 for sex in sexes}
@@ -200,7 +200,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         ax.set_xticklabels([f'Female\n(n={total_ind["F"]})',
                             f'Male\n(n={total_ind["M"]})'])
         ax.set_ylabel('Number of Footprints')
-        # Titel mit kursivem wissenschaftlichem Namen
+        # title with scientific name in italics
         ax.set_title(make_italic(code))
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
