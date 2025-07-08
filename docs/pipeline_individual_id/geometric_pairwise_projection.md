@@ -17,3 +17,7 @@
 【F:src/FIT_python/pipeline_individual_id/geometric_pairwise_projection.py†L155-L164】
 
 The function iterates over reduction methods (LDA, PCA, UMAP) and different numbers of components. Distances are computed for each pair and aggregated alongside predicted sex probabilities when provided.
+
+At its core the routine sets up a series of comparisons between two trails (A and B) and a reference set (R). After optional precomputation of sex model probabilities, the base data are cleaned and the top features are selected only once using the maximum requested ``k``. For each combination of dimensionality reducer, number of components and value of ``k`` a projection is fitted on the cleaned data. Distances between the projected points of A and B are then measured with ``compute_distances`` and written to a result record that also contains the averaged probabilities for each subset.
+
+Because the comparisons are independent, the implementation offers parallel execution via ``joblib``. When ``batch_size`` is specified, the work is divided into chunks to avoid excessive memory consumption.

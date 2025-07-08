@@ -11,4 +11,11 @@
 ```
 【F:src/FIT_python/pipeline_individual_id/outlier_wrapper.py†L8-L14】
 
-Clipping is robust to anomalies but may discard genuine variation. Z-score limiting keeps the data shape but assumes normality of feature values.
+Clipping is a simple non-parametric technique that replaces extreme values by upper and lower quantiles. It is robust and easy to explain, yet it risks truncating genuinely informative observations if they naturally fall outside the chosen bounds.
+
+Z-score limiting (also called winsorising) scales values by their standard deviation and caps them at a multiple of the estimated spread. This retains the overall shape of the distribution but implicitly assumes approximate normality. If the feature distribution is strongly skewed, the resulting bounds may still be inappropriate.
+
+Both methods operate column-wise and the transformer preserves the input type (DataFrame or `ndarray`). Parameters allow custom quantile limits or z-score thresholds to tailor the cleaning to a specific dataset.
+
+**References**
+* Tukey, J. W. (1962). "The future of data analysis." *Annals of Mathematical Statistics*.
