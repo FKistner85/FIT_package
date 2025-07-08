@@ -13,4 +13,9 @@ Dieses Modul enthält Hilfsfunktionen zur Bewertung der Modellgüte auf Individu
 ```
 【F:src/FIT_python/pipeline_sex/grouped_metrics.py†L3-L8】
 
-Die Funktionen helfen dabei, Balance zwischen männlichen und weiblichen Individuen zu beurteilen.
+* ``individual_accuracies`` liefert getrennte Genauigkeiten für jedes Individuum sowie den balancierten Mittelwert für Weibchen und Männchen. Dies ist hilfreich, um Verzerrungen bei ungleich verteilten Gruppen früh zu erkennen. Der Nachteil ist der höhere Rechenaufwand, wenn sehr viele Tiere vorliegen.
+
+* ``individual_majority_stats`` zählt, bei wie vielen Individuen die Mehrzahl der Vorhersagen korrekt ist. Damit lässt sich nachvollziehen, ob einzelne Tiere systematisch falsch klassifiziert werden. Die Kennzahl ist grob, liefert aber einen schnellen Überblick.
+
+### Referenzen
+* Ausführliche Beispiele für gruppierte Metriken finden sich in der [scikit-learn Dokumentation zu aggregierten Scores](https://scikit-learn.org/stable/modules/model_evaluation.html).

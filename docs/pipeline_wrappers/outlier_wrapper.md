@@ -9,4 +9,9 @@
 ```
 【F:src/FIT_python/pipeline_sex/outlier_wrapper.py†L8-L14】
 
-Clipping ignoriert die Extremwerte jenseits der gewählten Quantile, während Z-Score-Winsorizing die vorhandene Streuung beibehält, aber Normalverteilung der Merkmale voraussetzt.
+* **Clippen** ersetzt Werte oberhalb bzw. unterhalb festgelegter Quantile durch die jeweiligen Grenzwerte. Das Vorgehen ist robust und unkompliziert, kann jedoch wirkliche Extremfälle verdecken.
+
+* **Z-Score-Winsorizing** setzt Werte außerhalb eines Vielfachen der Standardabweichung auf eben diese Grenze. Dadurch bleibt die Form der Verteilung erhalten, vorausgesetzt sie ist annähernd normalverteilt. Bei stark schiefen Merkmalen wählt man die Schwelle besser vorsichtig.
+
+### Referenzen
+* Tukey, J. W. (1962). "The future of data analysis." *Annals of Mathematical Statistics*.
