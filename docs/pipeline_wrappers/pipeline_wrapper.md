@@ -1,6 +1,6 @@
 # pipeline_wrapper.py
 
-Das Modul vereint zwei zentrale Bestandteile.
-Die Funktion get_pipeline_steps stellt abhängig von den gewählten Optionen eine Liste von Vorverarbeitungsschritten zusammen.
-Darauf baut die Klasse PipelineWrapper auf, die Trainingsläufe über verschiedene Daten und Modelle automatisiert.
-Ihre run-Methode sorgt für gültige Splits, führt Cross-Validation mit den Standard fünf Folds von scikit-learn aus und speichert sowohl Metriken als auch die besten Modelle.
+Dieses Modul enthält `get_pipeline_steps` und die Klasse `PipelineWrapper`.
+Ersteres baut abhängig von den gewählten Optionen eine Liste von Vorverarbeitungsschritten auf, letzterer organisiert Training und Evaluation.
+
+Eine ausführlichere Beschreibung der einzelnen Transformatoren befindet sich in den Dateien dieses Ordners sowie im Dokument `pipeline_sex_methodology.md`.
