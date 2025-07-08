@@ -5,17 +5,21 @@ import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 
 class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
-    """
-    Outlier-Bereinigung durch Clipping oder Z-Score-Begrenzung.
-    
-    Methoden:
-      - 'clip': alle Features auf [q_low, q_high] clippen (Percentile-Clipping)
-      - 'zscore': Werte außerhalb von ±z_thresh*σ auf ±z_thresh*σ setzten (Winsorizing)
-      
-    Parameter:
-      - method: 'clip' oder 'zscore'
-      - lower_quantile, upper_quantile: für 'clip' (z.B. 0.01, 0.99)
-      - z_thresh: für 'zscore' (z.B. 3.0)
+    """Clean numerical outliers using clipping or z-score limiting.
+
+    Methods
+    -------
+    - ``'clip'``: clip all features to ``[q_low, q_high]`` (percentile clipping)
+    - ``'zscore'``: set values outside ``±z_thresh*σ`` to the boundary (Winsorizing)
+
+    Parameters
+    ----------
+    method : str
+        ``'clip'`` or ``'zscore'``
+    lower_quantile, upper_quantile : float
+        Quantiles used for clipping mode, e.g. ``0.01`` and ``0.99``
+    z_thresh : float
+        Z-score threshold for ``'zscore'`` mode, e.g. ``3.0``
     """
     def __init__(
         self,
@@ -33,7 +37,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         self.bounds_ = {}
 
     def fit(self, X, y=None):
-        # X kann DataFrame oder ndarray sein
+        # X may be a DataFrame or ``ndarray``
         if isinstance(X, pd.DataFrame):
             arr = X.values
             cols = X.columns
@@ -42,12 +46,12 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
             cols = [f"f{i}" for i in range(arr.shape[1])]
 
         if self.method == "clip":
-            # Per-Spalte Quantile bestimmen
+            # determine quantiles per column
             lows = np.quantile(arr, self.lower_quantile, axis=0)
             highs = np.quantile(arr, self.upper_quantile, axis=0)
             self.bounds_ = {"low": lows, "high": highs, "cols": cols}
         else:
-            # Z-Score-Grenzen bestimmen
+            # determine z-score bounds
             means = np.mean(arr, axis=0)
             stds  = np.std(arr, axis=0)
             self.bounds_ = {"mean": means, "std": stds, "cols": cols}
@@ -55,7 +59,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        # in ndarray überführen
+        # convert to ndarray
         if isinstance(X, pd.DataFrame):
             arr = X.values.copy()
             cols = X.columns
@@ -75,7 +79,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
             upper = mean + zt * std
             arr = np.minimum(np.maximum(arr, lower), upper)
 
-        # Wenn DataFrame reinkam, gib DataFrame zurück
+        # return DataFrame if we received one
         if isinstance(X, pd.DataFrame):
             return pd.DataFrame(arr, index=X.index, columns=cols)
         return arr

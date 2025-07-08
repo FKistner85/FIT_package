@@ -52,24 +52,24 @@ def run_all_pairwise_projections_parallel(
     debug: bool = False,
     n_jobs: int = -1,
 ) -> List[Dict]:
-    """
-    Für jede Paarung:
-      0) Falls ``use_sexmodel_prediction`` aktiv ist, das Sex-Modell laden und
-         ``predict_proba`` vorberechnen. ``sexmodel_path`` muss dabei auf eine
-         gültige ``.joblib``-Datei zeigen.
-      1) Basis-DF bereinigen
-      2) Pipeline-Schritte: Outlier-Cleaning & Feature-Scaling
-      3) Feature-Selection (einmal mit ``k_max``)
-      4) RCV-Set als Komplement
-      5) Sex-probas extrahieren & mitteln
-      6) Für jede Kombi (``outlier``, ``scaler``, ``reducer``, ``n_components``,
-         ``k``):
-         - apply LDA/PCA/UMAP
-         - Abstände berechnen
-         - Result-Dict inkl. avg_proba_A/B/R 0/1
+    """Process all pairwise projections.
+
+    Steps
+    -----
+    0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
+       precompute ``predict_proba``. ``sexmodel_path`` must point to a valid ``.joblib`` file.
+    1. Clean the base DataFrame.
+    2. Apply pipeline steps: outlier cleaning and feature scaling.
+    3. Perform feature selection once with ``k_max``.
+    4. Use an RCV set as the complement.
+    5. Extract and average sex probabilities.
+    6. For each combination of ``outlier``, ``scaler``, ``reducer``, ``n_components`` and ``k``:
+       - apply the dimensionality reduction
+       - compute distances
+       - record results including average probabilities for A/B/R
     """
 
-    # --- 0) Sex-Modell laden, falls gewünscht ---
+    # --- 0) load sex model if requested ---
     if use_sexmodel_prediction:
         if not sexmodel_path:
             raise ValueError(
@@ -121,19 +121,19 @@ def run_all_pairwise_projections_parallel(
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
-        # Feature-Matrizen A & B
+        # feature matrices A & B
         df_a = df_base.loc[idx_a, feature_cols]
         df_b = df_base.loc[idx_b, feature_cols]
 
-        # RCV-Set als Komplement
+        # RCV set as the complement
         all_idx = np.arange(len(df_base))
         rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
         df_r = df_base.loc[rcv_idx, feature_cols]
 
-        # Labels für Selection
+        # labels for feature selection
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
 
-        # Sex-probas extrahieren, falls benötigt
+        # extract sex probabilities if required
         if use_sexmodel_prediction:
             pa = proba_all[idx_a]
             pb = proba_all[idx_b]
@@ -142,7 +142,7 @@ def run_all_pairwise_projections_parallel(
             avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
             avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
 
-        # 4) Schleifen über Outlier- und Scaler-Methoden
+        # 4) iterate over outlier and scaler methods
         for out_method in outs:
             for scaler_method in scalers:
                 steps = []
@@ -182,7 +182,7 @@ def run_all_pairwise_projections_parallel(
                         df_r_fs, columns=feat_names, index=df_r.index
                     )
 
-                # 5) Schleifen über Reducer, n_components & k_features
+                # 5) iterate over reducers, n_components and k_features
                 for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
                     supervised = reducer in ("lda", "umap")
                     for nc in tqdm(
@@ -197,13 +197,13 @@ def run_all_pairwise_projections_parallel(
                             db = df_b_fs[sel_feats].copy()
                             dr = df_r_fs[sel_feats].copy()
 
-                            # Sex-probas als Features anhängen
+                            # append sex probabilities as features
                             if use_sexmodel_prediction:
                                 da["proba_0"], da["proba_1"] = pa[:, 0], pa[:, 1]
                                 db["proba_0"], db["proba_1"] = pb[:, 0], pb[:, 1]
                                 dr["proba_0"], dr["proba_1"] = pr[:, 0], pr[:, 1]
 
-                            # Kombinieren + Labels
+                            # combine and create labels
                             arr = pd.concat([da, db, dr], ignore_index=True)
                             y_all = np.concatenate(
                                 [
@@ -213,7 +213,7 @@ def run_all_pairwise_projections_parallel(
                                 ]
                             )
 
-                            # Clamp für LDA
+                            # clamp for LDA
                             nc_eff = nc
                             if reducer == "lda":
                                 n_cls = len(np.unique(y_all))
@@ -321,7 +321,7 @@ def run_all_pairwise_projections_parallel(
                                     res[f"median_{m}_within_b"] = None
                                     continue
 
-                                # zusätzliche Kennzahlen: paarweise Distanzen zwischen A und B
+                                # additional metrics: pairwise distances between A and B
                                 A = da.to_numpy()
                                 B = db.to_numpy()
                                 metric_name = "cityblock" if m == "manhattan" else m
@@ -330,7 +330,7 @@ def run_all_pairwise_projections_parallel(
                                 res[f"mean_{m}_between"] = float(np.mean(flat_ab))
                                 res[f"median_{m}_between"] = float(np.median(flat_ab))
 
-                                # innerhalb A
+                                # within A
                                 if len(A) > 1:
                                     d_aa = cdist(A, A, metric=metric_name)
                                     iu = np.triu_indices(len(A), k=1)
@@ -343,7 +343,7 @@ def run_all_pairwise_projections_parallel(
                                     res[f"mean_{m}_within_a"] = None
                                     res[f"median_{m}_within_a"] = None
 
-                                # innerhalb B
+                                # within B
                                 if len(B) > 1:
                                     d_bb = cdist(B, B, metric=metric_name)
                                     iu = np.triu_indices(len(B), k=1)
@@ -360,11 +360,11 @@ def run_all_pairwise_projections_parallel(
 
         return out
 
-    # --- 6) Parallel-Ausführung ---
+    # --- 6) parallel execution ---
     with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(comparisons))):
         nested = Parallel(n_jobs=n_jobs)(
             delayed(process_pair)(i, comp) for i, comp in enumerate(comparisons)
         )
 
-    # Flatten und zurückgeben
+    # flatten nested list and return
     return [row for group in nested for row in group]

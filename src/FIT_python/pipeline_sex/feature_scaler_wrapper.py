@@ -7,11 +7,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler, RobustScaler
 
 class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
-    """
-    Scaler für numerische Features, mit zwei Modi:
-      - method='standard': StandardScaler (z-Transformation)
-      - method='robust':   RobustScaler (Median & IQR)
-    """
+    """Scale numerical features using either a standard or robust approach."""
 
     def __init__(self, method: str = "standard", **scaler_kwargs):
         if method not in ("standard", "robust"):
@@ -22,27 +18,27 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
         self.feature_names_in_: Sequence[str] = []
 
     def fit(self, X, y=None):
-        # Ermitteln, ob DataFrame oder ndarray
+        # determine whether input is DataFrame or ``ndarray``
         if isinstance(X, pd.DataFrame):
             arr = X.values
             self.feature_names_in_ = X.columns.to_list()
         else:
             arr = np.asarray(X, dtype=float)
-            # wenn ndarray, setzen wir Dummy-Spaltennamen f0, f1, ...
+            # assign dummy column names ``f0``, ``f1``, ... for ``ndarray`` input
             self.feature_names_in_ = [f"f{i}" for i in range(arr.shape[1])]
 
-        # Scaler initialisieren
+        # initialise the scaler
         if self.method == "standard":
             self.scaler = StandardScaler(**self.scaler_kwargs)
         else:
             self.scaler = RobustScaler(**self.scaler_kwargs)
 
-        # Fit auf alle Spalten
+        # fit on all columns
         self.scaler.fit(arr)
         return self
 
     def transform(self, X):
-        # Wandle einheitlich in ndarray um
+        # consistently convert to ``ndarray``
         if isinstance(X, pd.DataFrame):
             arr = X.values
         else:
@@ -50,8 +46,8 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
 
         arr_out = self.scaler.transform(arr)
 
-        # Falls DataFrame reinkam, gib DataFrame gleichen Labels zurück
+        # return DataFrame with original labels if that was the input
         if isinstance(X, pd.DataFrame):
             return pd.DataFrame(arr_out, index=X.index, columns=self.feature_names_in_)
-        # sonst reines ndarray
+        # otherwise return ``ndarray``
         return arr_out

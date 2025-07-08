@@ -60,10 +60,7 @@ def get_pipeline_steps(
     reduce_pre_method: Optional[str] = None,
     reduce_post_method: Optional[str] = None
 ) -> list[tuple[str, object]]:
-    """
-    Baut die Liste von (name, transformer)-Schritten für die Pipeline zusammen,
-    je nach gewählten Hyperparametern.
-    """
+    """Construct the list of ``(name, transformer)`` steps based on the chosen hyperparameters."""
     if fs_method not in _ALLOWED_FS:
         raise ValueError(f"fs_method must be one of {_ALLOWED_FS}, got {fs_method!r}")
     if impute_method not in _ALLOWED_IMPUTE:
@@ -170,7 +167,7 @@ class PipelineWrapper:
         records: list[dict] = []
         best_acc_per_species: dict[str, float] = {}
 
-        # loop über alle fs-Varianten
+        # iterate over all feature-selection variants
         fs_methods = [self.fs_method] if self.fs_method else [None]
         for fs_m in fs_methods:
             for species_dir in sorted(Path(SPLITS_DIR).iterdir()):
@@ -207,7 +204,7 @@ class PipelineWrapper:
                 else:
                     X_test = df_test
 
-                # loop über alle Modelle
+                # iterate over all models
                 for mk in self.model_keys:
                     model = MODELS[mk]
                     steps = get_pipeline_steps(

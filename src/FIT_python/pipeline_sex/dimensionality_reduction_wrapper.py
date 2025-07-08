@@ -9,27 +9,29 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap
 
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
-    """
-    Wrapper für Dimensionsreduktion:
-      - None: Identity
-      - PCA
-      - UMAP
-      - t-SNE
-      - LDA
-      - MDS
-      - Isomap
+    """Apply different dimensionality reduction techniques.
+
+    Supported methods
+    -----------------
+    - ``None``: identity transformation
+    - PCA
+    - UMAP
+    - t-SNE
+    - LDA
+    - MDS
+    - Isomap
     """
     def __init__(
         self,
         method: str | None = None,
         n_components: int = 2,
         supervised: bool = False,
-        n_neighbors: int = 15,    # nur für UMAP
-        min_dist: float = 0.1,    # nur für UMAP
-        whiten: bool = False,     # nur für PCA
+        n_neighbors: int = 15,    # UMAP only
+        min_dist: float = 0.1,    # UMAP only
+        whiten: bool = False,     # PCA only
         **kwargs,
     ):
-        # raw params für cloning
+        # raw parameters for cloning
         self.method       = method
         self.n_components = n_components
         self.supervised   = supervised
@@ -48,7 +50,7 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         self.feature_names_out_: list[str] = []
 
     def get_params(self, deep=True):
-        # geben genau die init-Parameter zurück, die RandomizedSearchCV setzt
+        # return exactly the init parameters expected by RandomizedSearchCV
         return {
             "method":       self.method,
             "n_components": self.n_components,

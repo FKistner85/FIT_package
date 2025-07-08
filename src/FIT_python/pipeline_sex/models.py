@@ -30,7 +30,7 @@ MODELS = {
     "svm_linear":   SVC(kernel="linear", C=1.0, probability=True),
     "svm_rbf":      SVC(kernel="rbf", C=1.0, gamma="scale", probability=True),
 
-    # ─── LDA (Standard für dein Problem) ────────────────────────────────────────
+    # ─── LDA (baseline) ─────────────────────────────────────────────────────────
     "lda":          LinearDiscriminantAnalysis(),
 
     # ─── XGBoost Variants ─────────────────────────────────────────────────────
