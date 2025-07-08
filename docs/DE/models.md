@@ -2,6 +2,7 @@
 
 ## Überblick
 Dictionary vordefinierter scikit-learn- und Gradient-Boosting-Klassifikatoren.
+Die Sammlung enthält gängige Klassifikatoren wie Random Forest, SVM und Gradient Boosting mit sinnvollen Voreinstellungen. Sie ermöglicht einen schnellen Einstieg in Experimente. Nachteil ist die geringere Flexibilität bei speziellen Parametern.
 
 ## Wichtige Bestandteile
 - MODELS
@@ -10,4 +11,4 @@ Dictionary vordefinierter scikit-learn- und Gradient-Boosting-Klassifikatoren.
 - https://scikit-learn.org/stable/
 
 ## Annahmen und Einschränkungen
-Hyperparameters are set for diverse model complexities.
+Hyperparameter sind für verschiedene Modellkomplexitäten voreingestellt.

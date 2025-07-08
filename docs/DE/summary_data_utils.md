@@ -2,6 +2,7 @@
 
 ## Überblick
 Funktionen zur Zusammenfassung der Split-Statistiken und zum Erzeugen von Balkendiagrammen.
+Mit diesen Werkzeugen lassen sich die Ergebnisse der Datenaufteilung übersichtlich darstellen. Sie erzeugen Tabellen und Abbildungen, die zur Qualitätssicherung herangezogen werden können. Voraussetzung ist eine konsistente Spaltenstruktur.
 
 ## Wichtige Bestandteile
 - compute_summary
@@ -12,4 +13,4 @@ Funktionen zur Zusammenfassung der Split-Statistiken und zum Erzeugen von Balken
 - https://matplotlib.org/
 
 ## Annahmen und Einschränkungen
-Expects columns like "sex" and "individual_id".
+Erwartet Spalten wie "sex" und "individual_id".

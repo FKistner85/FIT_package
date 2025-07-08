@@ -2,6 +2,7 @@
 
 ## Überblick
 Initialisiert das Sex-Klassifikationspaket.
+Dieses Modul enthält keine zusätzlichen Funktionen und dient lediglich dazu, Python auf das Paket aufmerksam zu machen. Damit wird die Importstruktur festgelegt.
 
 ## Wichtige Bestandteile
 
@@ -10,4 +11,4 @@ Initialisiert das Sex-Klassifikationspaket.
 
 
 ## Annahmen und Einschränkungen
-Empty module used to mark package.
+Leeres Modul, das nur zur Paketkennzeichnung dient.

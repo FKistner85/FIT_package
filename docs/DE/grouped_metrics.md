@@ -2,6 +2,7 @@
 
 ## Überblick
 Funktionen zur Berechnung individueller Genauigkeitswerte.
+Mit diesen Routinen lassen sich Vorhersagen pro Individuum zusammenfassen. Sie liefern Accuracy-Werte und Mehrheitsentscheide für Gruppen. Voraussetzung ist eine korrekte Zuordnung von Labels.
 
 ## Wichtige Bestandteile
 - individual_accuracies
@@ -11,4 +12,4 @@ Funktionen zur Berechnung individueller Genauigkeitswerte.
 - https://pandas.pydata.org/docs/
 
 ## Annahmen und Einschränkungen
-Group labels are provided alongside predictions.
+Gruppenlabels müssen zusammen mit den Vorhersagen vorliegen.
