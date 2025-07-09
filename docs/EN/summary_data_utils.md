@@ -2,6 +2,7 @@
 
 ## Overview
 Functions to summarise split statistics and generate bar plots.
+Plot styling is configured via `FIT_python.plot_style.apply_style()`.
 
 ## Key Components
 - compute_summary
