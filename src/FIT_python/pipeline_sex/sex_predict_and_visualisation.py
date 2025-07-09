@@ -45,17 +45,29 @@ MODELS = {
 
 # === CSV erzeugen (einmal laufen lassen) ===
 def predict_all(
-    species: str = DEFAULT_SPECIES, prefer_generic: bool = False
+    species: str = DEFAULT_SPECIES,
+    prefer_generic: bool = False,
+    include_inference: bool = True,
 ) -> pd.DataFrame:
-    """Load models for ``species`` and return dataframe with predictions.
+    """Return dataframe with model predictions for ``species``.
 
-    ``prefer_generic`` can be set to ``True`` to force loading models from the
-    shared ``random_search_standard_metrics`` directory. If that directory does
-    not exist, the species-specific one is used.
+    Parameters
+    ----------
+    species:
+        The species folder under ``data/splits``.
+    prefer_generic:
+        If ``True``, models are loaded from the shared
+        ``random_search_standard_metrics`` directory when present.
+    include_inference:
+        Include the ``inference`` split if the corresponding parquet exists.
     """
     splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
 
-    splits = {n: splits_dir / f"{n}.parquet" for n in ["train", "test", "inference"]}
+    split_names = ["train", "test"]
+    if include_inference and (splits_dir / "inference.parquet").exists():
+        split_names.append("inference")
+
+    splits = {n: splits_dir / f"{n}.parquet" for n in split_names}
     dfs = {name: pd.read_parquet(p) for name, p in splits.items()}
     # Säubere Spaltennamen
     for name, df in dfs.items():
@@ -93,43 +105,50 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 
 # === Plots für Confusion & Inference ===
-def plot_confusion_and_inference(df):
+def plot_confusion_and_inference(df: pd.DataFrame) -> None:
+    """Visualise predictions for train/test and inference splits."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
+    if not pred_cols:
+        raise KeyError("DataFrame contains no prediction columns")
+
+    # Only compute confusion matrices on train and test sets
+    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
     for col in pred_cols:
         model = col.split("_")[1]
-        prob_f = col.replace("_sex", "_proba_f")
-        prob_m = col.replace("_sex", "_proba_m")
-        for split in df["__split__"].unique():
+        for split in split_order:
             sub = df[df["__split__"] == split]
-            if split != "inference":
-                y_true = sub["sex"].map({"f": "F", "m": "M"})
-                y_pred = sub[col].map({0: "F", 1: "M"})
-                cm = confusion_matrix(y_true, y_pred, labels=["F", "M"])
-                acc = accuracy_score(y_true, y_pred)
-                plt.figure(figsize=(4, 4))
-                sns.heatmap(
-                    cm / cm.sum(axis=1, keepdims=True),
-                    annot=True,
-                    fmt=".2f",
-                    cmap="Blues",
-                )
-                plt.title(f"{model} — {split} (Acc {acc:.1%})")
-                plt.xlabel("Predicted")
-                plt.ylabel("True")
-                plt.show()
-            else:
-                pivot = (
-                    sub.pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
-                    .rename(columns={0: "F", 1: "M"})
-                )
-                pivot.plot.bar(stacked=True, figsize=(6,3), color=TEST_COLORS)
-                plt.title(f"{model} — inference")
-                plt.xlabel("Trail")
-                plt.ylabel("Count")
-                plt.legend(title="Predicted")
-                plt.tight_layout()
-                plt.show()
+            if sub.empty:
+                continue
+            y_true = sub["sex"].map({"f": "F", "m": "M"})
+            y_pred = sub[col].map({0: "F", 1: "M"})
+            cm = confusion_matrix(y_true, y_pred, labels=["F", "M"])
+            acc = accuracy_score(y_true, y_pred)
+            plt.figure(figsize=(4, 4))
+            sns.heatmap(
+                cm / cm.sum(axis=1, keepdims=True),
+                annot=True,
+                fmt=".2f",
+                cmap="Blues",
+            )
+            plt.title(f"{model} — {split} (Acc {acc:.1%})")
+            plt.xlabel("Predicted")
+            plt.ylabel("True")
+            plt.show()
+
+        # Bar plot for inference predictions if present
+        if "inference" in df["__split__"].unique():
+            sub = df[df["__split__"] == "inference"]
+            pivot = sub.pivot_table(
+                index="trail", columns=col, aggfunc="size", fill_value=0
+            ).rename(columns={0: "F", 1: "M"})
+            pivot.plot.bar(stacked=True, figsize=(6, 3), color=TEST_COLORS)
+            plt.title(f"{model} — inference")
+            plt.xlabel("Trail")
+            plt.ylabel("Count")
+            plt.legend(title="Predicted")
+            plt.tight_layout()
+            plt.show()
 
 
 # === Plots für Qualitäts-Heatmaps ===
@@ -150,10 +169,7 @@ def plot_quality(df):
     if not pred_label_cols:
         raise KeyError("No prediction label columns found in dataframe")
 
-    df["Correct"] = np.any([
-        df[c] == df["true_label"] for c in pred_label_cols
-    ], axis=0)
-
+    df["Correct"] = np.any([df[c] == df["true_label"] for c in pred_label_cols], axis=0)
 
     # Klassifizierung
     def classify(group):
