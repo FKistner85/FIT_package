@@ -278,6 +278,7 @@ def plot_split_proportions(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     from FIT_python.plot_style import apply_style
     import matplotlib.pyplot as plt
     import numpy as np
+    from FIT_python.caption_utils import save_caption
 
     apply_style()
     fig_dir.mkdir(parents=True, exist_ok=True)
