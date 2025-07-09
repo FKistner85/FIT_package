@@ -210,7 +210,6 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
                             f'n=({ind_n},{trl_n})',
                             ha='center', va='center', fontsize=8)
                 bottoms[sex] += cnt
-        ax.set_title(make_italic(code), pad=6)
         ax.set_xticks(sexes)
         ax.set_xticklabels(['Female','Male'])
     for ax in axes[n:]:
@@ -251,7 +250,6 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         ax.set_xticklabels(['Female', 'Male'])
         ax.set_ylabel('Number of Footprints')
         # title with scientific name in italics
-        ax.set_title(make_italic(code))
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 

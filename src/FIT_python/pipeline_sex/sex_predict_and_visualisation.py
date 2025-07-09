@@ -115,6 +115,7 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
         .sort_index(axis=1)
     )
 
+
     apply_style()
     plt.figure(figsize=(6, 4))
     sns.heatmap(pivot, annot=True, fmt=".3f", cmap="viridis", vmin=0, vmax=1)
@@ -169,7 +170,7 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
                 fmt=".2f",
                 cmap="Blues",
             )
-            plt.title(f"{model} — {split} (Acc {acc:.1%})")
+            # avoid plot titles so figures can be referenced consistently
             plt.xlabel("Predicted")
             plt.ylabel("True")
             plt.show()
@@ -180,8 +181,11 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
             pivot = sub.pivot_table(
                 index="trail", columns=col, aggfunc="size", fill_value=0
             ).rename(columns={0: "F", 1: "M"})
-            pivot.plot.bar(stacked=True, figsize=(6, 3), color=TEST_COLORS)
-            plt.title(f"{model} — inference")
+            pivot.plot.bar(
+                stacked=True,
+                figsize=(6, 3),
+                color=[SEX_COLORS.get(c, "#333333") for c in pivot.columns],
+            )
             plt.xlabel("Trail")
             plt.ylabel("Count")
             plt.legend(title="Predicted")
@@ -306,13 +310,12 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
         )
         plt.xlabel("Predicted probability male")
         plt.ylabel("Density")
-        plt.title(model)
         plt.tight_layout()
         plt.savefig(out_path / f"{model}_individual_probabilities.png")
         plt.close()
 
 
-def plot_quality_heatmaps(
+def _plot_quality_heatmaps_single(
     df_sub: pd.DataFrame,
     pred_col: str,
     proba_cols: list[str],
@@ -366,7 +369,7 @@ def plot_quality_heatmaps(
         ax=axes[0],
         cbar=True,
     )
-    axes[0].set(title="Correct Predictions", ylabel="True Label")
+    axes[0].set(ylabel="True Label")
     sns.heatmap(
         normed.xs(False, level="Correct"),
         annot=annot_incorr,
@@ -379,15 +382,62 @@ def plot_quality_heatmaps(
         ax=axes[1],
         cbar=True,
     )
-    axes[1].set(title="Incorrect Predictions")
+    axes[1].set()
     for ax in axes:
         ax.set_xlabel("Prediction Quality")
         ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
         ax.set_yticklabels(["F", "M"], rotation=0)
-    if title:
-        fig.suptitle(title)
+    # no super title so subfigures can be labelled externally
     plt.tight_layout()
     plt.show()
+
+
+def plot_quality_heatmaps(
+    df: pd.DataFrame,
+    pred_col: str | None = None,
+    proba_cols: list[str] | None = None,
+    title: str | None = None,
+) -> None:
+    """Plot quality heatmaps.
+
+    If ``pred_col`` and ``proba_cols`` are provided the heatmap for that
+    specific model/split is shown. If not, heatmaps for all models and the
+    ``train``/``test`` splits are generated automatically, similar to
+    :func:`plot_quality`.
+    """
+
+    apply_style()
+
+    if pred_col is not None and proba_cols is not None:
+        df_sub = df.copy()
+        df_sub["true_label"] = df_sub["sex"].map({"f": "F", "m": "M"})
+        _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title)
+        return
+
+    # Automatic generation for all models and splits
+    df = df.copy()
+    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+
+    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
+    if not pred_cols:
+        raise KeyError("DataFrame contains no prediction columns")
+
+    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
+    for split in split_order:
+        for col in pred_cols:
+            model = col[len("pred_") : -len("_sex")]
+            probs = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
+            df_sub = df[df["__split__"] == split].copy()
+            df_sub = df_sub[df_sub["sex"].isin(["f", "m"])]
+            df_sub = df_sub[df_sub[col].isin([0, 1])]
+            if df_sub.empty:
+                continue
+            _plot_quality_heatmaps_single(
+                df_sub,
+                col,
+                probs,
+                title=f"{model} — {split}",
+            )
 
 
 def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:

@@ -404,7 +404,6 @@ def plot_pipeline_timings(time_df: pd.DataFrame, out_dir: Path) -> None:
     ax.bar(order["step"], order["seconds"], color="#4C72B0", edgecolor="black")
     ax.set_xlabel("Step")
     ax.set_ylabel("Average Seconds")
-    ax.set_title("Pipeline Step Timing")
     plt.xticks(rotation=45, ha="right")
     fig.tight_layout()
 
