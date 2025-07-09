@@ -6,7 +6,7 @@ import ast
 from pathlib import Path
 from typing import List, Tuple
 
-PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "src" / "FIT_python"
+PACKAGE_ROOT = Path(__file__).parents[1] / "src" / "FIT_python"
 PACKAGE_NAME = "FIT_python"
 
 
