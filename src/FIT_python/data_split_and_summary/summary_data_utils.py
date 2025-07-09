@@ -12,9 +12,13 @@ def discover_splits(splits_dir: Path) -> Dict[str, Dict[str, Path]]:
     results: Dict[str, Dict[str, Path]] = {}
     for path in sorted(splits_dir.rglob("*.parquet")):
         if path.parent == splits_dir:
-            if "_" not in path.stem:
-                continue
-            dataset, origin = path.stem.rsplit("_", 1)
+            if "_" in path.stem:
+                dataset, origin = path.stem.rsplit("_", 1)
+            else:
+                # called on a specific dataset directory containing
+                # files like ``train.parquet`` or ``test.parquet``
+                dataset = splits_dir.name
+                origin = path.stem
         else:
             dataset = path.parent.name
             origin = path.stem
