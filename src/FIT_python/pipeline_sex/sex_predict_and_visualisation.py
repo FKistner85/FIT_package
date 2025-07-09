@@ -7,6 +7,7 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix, accuracy_score
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
+from FIT_python.plot_style import TEST_COLORS
 from FIT_python.plot_style import apply_style
 
 
@@ -110,10 +111,11 @@ def plot_confusion_and_inference(df):
                 plt.ylabel("True")
                 plt.show()
             else:
-                pivot = (sub
-                         .pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
-                         .rename(columns={0: "F", 1: "M"}))
-                pivot.plot.bar(stacked=True, figsize=(6,3), color={"F": "#C08080", "M": "#8080C0"})
+                pivot = (
+                    sub.pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
+                    .rename(columns={0: "F", 1: "M"})
+                )
+                pivot.plot.bar(stacked=True, figsize=(6,3), color=TEST_COLORS)
                 plt.title(f"{model} — inference")
                 plt.xlabel("Trail")
                 plt.ylabel("Count")
