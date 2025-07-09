@@ -31,3 +31,5 @@ given directory and complements the absolute counts from `plot_summary_table`.
 
 ## Assumptions and Limitations
 Expects columns like "sex" and "individual_id".
+All plotting functions write a caption next to each image using
+`FIT_python.caption_utils.save_caption`.
