@@ -8,10 +8,15 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
 
-# === Basis-Pfade ===
-SPLITS_DIR = DATA_DIR / "splits" / "eurasian_otter"
-MODELS_DIR = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
-CSV_PATH   = MODELS_DIR / "eurasian_otter_all_predictions.csv"
+
+DEFAULT_SPECIES = "eurasian_otter"
+
+def _base_paths(species: str = DEFAULT_SPECIES) -> tuple[Path, Path, Path]:
+    """Return split dir, model dir and output csv for a species."""
+    splits = DATA_DIR / "splits" / species
+    models = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
+    csv    = models / f"{species}_all_predictions.csv"
+    return splits, models, csv
 
 # === Modelle definieren ===
 MODELS = {
@@ -22,38 +27,45 @@ MODELS = {
 }
 
 # === CSV erzeugen (einmal laufen lassen) ===
-def predict_all():
-    # Splits laden
-    splits = {
-        n: SPLITS_DIR / f"{n}.parquet"
-        for n in ["train", "test", "inference"]
-    }
-    dfs = {
-        name: pd.read_parquet(path)
-        for name, path in splits.items()
-    }
+def predict_all(species: str = DEFAULT_SPECIES) -> pd.DataFrame:
+    """Load models for ``species`` and return dataframe with predictions."""
+    splits_dir, models_dir, csv_path = _base_paths(species)
+
+    splits = {n: splits_dir / f"{n}.parquet" for n in ["train", "test", "inference"]}
+    dfs = {name: pd.read_parquet(p) for name, p in splits.items()}
     # Säubere Spaltennamen
     for name, df in dfs.items():
         df.columns = (
-            df.columns
-              .str.replace(r"[.\-]", "_", regex=True)
-              .str.replace("T", "t")
+            df.columns.str.replace(r"[.\-]", "_", regex=True)
+                       .str.replace("T", "t")
         )
         df["__split__"] = name
 
     # Vorhersagen pro Modell
     for key, subdir in MODELS.items():
-        clf = load(MODELS_DIR / subdir / "eurasian_otter.joblib")
+        clf = load(models_dir / subdir / f"{species}.joblib")
         for df in dfs.values():
             X = df.select_dtypes(include=np.number)
-            df[f"pred_{key}_sex"]      = clf.predict(X)
+            df[f"pred_{key}_sex"] = clf.predict(X)
             proba = clf.predict_proba(X)
-            df[f"pred_{key}_proba_f"]  = proba[:, 0]
-            df[f"pred_{key}_proba_m"]  = proba[:, 1]
+            df[f"pred_{key}_proba_f"] = proba[:, 0]
+            df[f"pred_{key}_proba_m"] = proba[:, 1]
 
     # CSV speichern
     all_df = pd.concat(dfs.values(), ignore_index=True)
-    all_df.to_csv(CSV_PATH, index=False)
+    all_df.to_csv(csv_path, index=False)
+    return all_df
+
+
+def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
+    """Predict sex for all species and combine into a single CSV."""
+    if species_list is None:
+        species_list = [p.name for p in (DATA_DIR / "splits").iterdir() if p.is_dir()]
+
+    dfs = [predict_all(species) for species in species_list]
+    all_df = pd.concat(dfs, ignore_index=True)
+    out_csv = RESULTS_DATA_DIR / "all_species_all_predictions.csv"
+    all_df.to_csv(out_csv, index=False)
     return all_df
 
 # === Plots für Confusion & Inference ===
