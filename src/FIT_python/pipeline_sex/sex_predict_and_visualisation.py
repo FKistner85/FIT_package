@@ -493,3 +493,56 @@ def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
                 title=f"{model} — {split}",
             )
 
+
+def plot_feature_importance(model, feature_names, out_path: Path) -> None:
+    """Bar plot of feature importances or coefficients.
+
+    Parameters
+    ----------
+    model:
+        scikit-learn estimator providing ``feature_importances_`` or ``coef_``.
+    feature_names:
+        Iterable of feature names matching the number of model inputs.
+    out_path:
+        Base filepath for the output image. ``.png``/``.svg`` files and
+        captions are written next to this path.
+    """
+
+    apply_style()
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if hasattr(model, "feature_importances_"):
+        importances = np.asarray(model.feature_importances_)
+    elif hasattr(model, "coef_"):
+        coef = np.asarray(model.coef_)
+        importances = np.mean(np.abs(coef), axis=0)
+    else:
+        raise AttributeError(
+            "Model has neither 'feature_importances_' nor 'coef_' attributes"
+        )
+
+    if len(importances) != len(feature_names):
+        raise ValueError("feature_names length does not match importances")
+
+    order = np.argsort(importances)[::-1]
+    feats = np.array(feature_names)[order]
+    imp_sorted = importances[order]
+
+    fig, ax = plt.subplots(figsize=(6, max(3, len(feats) * 0.3)))
+    ax.barh(feats, imp_sorted, color=SEX_COLORS["M"])
+    ax.set_xlabel("Importance")
+    ax.set_ylabel("Feature")
+    ax.invert_yaxis()
+    fig.tight_layout()
+
+    from FIT_python.caption_utils import save_caption
+
+    caption = f"Feature importance for {type(model).__name__}"
+    for ext in ("png", "svg"):
+        file = out_path.with_suffix(f".{ext}")
+        fig.savefig(file)
+        save_caption(file, caption)
+    plt.close(fig)
+
