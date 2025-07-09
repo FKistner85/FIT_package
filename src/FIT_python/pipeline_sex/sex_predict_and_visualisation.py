@@ -143,17 +143,15 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 
 # === Plots für Confusion & Inference ===
-def plot_confusion_and_inference(df: pd.DataFrame) -> None:
-    """Visualise predictions for train/test and inference splits."""
+def plot_confusion(df: pd.DataFrame) -> None:
+    """Plot confusion matrices for all models on the train and test splits."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
         raise KeyError("DataFrame contains no prediction columns")
 
-    # Only compute confusion matrices on train and test sets
     split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
     for col in pred_cols:
-        model = col.split("_")[1]
         for split in split_order:
             sub = df[df["__split__"] == split]
             sub = sub[sub["sex"].isin(["f", "m"])]
@@ -162,7 +160,7 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
             y_true = sub["sex"].map({"f": "F", "m": "M"})
             y_pred = sub[col].map({0: "F", 1: "M"})
             cm = confusion_matrix(y_true, y_pred, labels=["F", "M"])
-            acc = accuracy_score(y_true, y_pred)
+
             plt.figure(figsize=(4, 4))
             sns.heatmap(
                 cm / cm.sum(axis=1, keepdims=True),
@@ -172,27 +170,39 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
                 xticklabels=["Female", "Male"],
                 yticklabels=["Female", "Male"],
             )
-            # avoid plot titles so figures can be referenced consistently
             plt.xlabel("Predicted")
             plt.ylabel("True")
             plt.show()
 
-        # Bar plot for inference predictions if present
-        if "inference" in df["__split__"].unique():
-            sub = df[df["__split__"] == "inference"]
-            pivot = sub.pivot_table(
-                index="trail", columns=col, aggfunc="size", fill_value=0
-            ).rename(columns={0: "F", 1: "M"})
-            ax = pivot.plot.bar(
-                stacked=True,
-                figsize=(6, 3),
-                color=[SEX_COLORS.get(c, "#333333") for c in pivot.columns],
-            )
-            plt.xlabel("Trail")
-            plt.ylabel("Count")
-            ax.legend(title="Predicted", labels=["Female", "Male"])
-            plt.tight_layout()
-            plt.show()
+
+def plot_inference(df: pd.DataFrame) -> None:
+    """Plot predicted sex counts for the inference split."""
+    apply_style()
+    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
+    if not pred_cols:
+        raise KeyError("DataFrame contains no prediction columns")
+    if "inference" not in df["__split__"].unique():
+        return
+
+    sub = df[df["__split__"] == "inference"]
+    for col in pred_cols:
+        pivot = (
+            sub.pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
+            .rename(columns={0: "F", 1: "M"})
+        )
+        colors = [SEX_COLORS.get(c, "#333333") for c in pivot.columns]
+        ax = pivot.plot.bar(stacked=True, figsize=(6, 3), color=colors)
+        plt.xlabel("Trail")
+        plt.ylabel("Count")
+        ax.legend(title="Predicted", labels=["Female", "Male"])
+        plt.tight_layout()
+        plt.show()
+
+
+def plot_confusion_and_inference(df: pd.DataFrame) -> None:
+    """Backward compatible wrapper calling :func:`plot_confusion` and :func:`plot_inference`."""
+    plot_confusion(df)
+    plot_inference(df)
 
 
 # === Plots für Qualitäts-Heatmaps ===
