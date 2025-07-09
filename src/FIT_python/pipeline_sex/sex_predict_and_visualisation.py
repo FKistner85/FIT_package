@@ -81,7 +81,9 @@ def predict_all(
     for key, subdir in MODELS.items():
         clf = load(models_dir / subdir / f"{species}.joblib")
         for df in dfs.values():
-            X = df.select_dtypes(include=np.number)
+            num_cols = df.select_dtypes(include=np.number).columns
+            feature_cols = [c for c in num_cols if not c.startswith("pred_") and c != "Fold"]
+            X = df[feature_cols]
             df[f"pred_{key}_sex"] = clf.predict(X)
             proba = clf.predict_proba(X)
             df[f"pred_{key}_proba_f"] = proba[:, 0]
@@ -148,24 +150,45 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 # === Plots für Confusion & Inference ===
 def plot_confusion(df: pd.DataFrame) -> None:
-    """Plot confusion matrices for all models on the train and test splits."""
+    """Plot CV vs. test confusion matrices for each model."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
         raise KeyError("DataFrame contains no prediction columns")
 
-    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
-    for col in pred_cols:
-        for split in split_order:
-            sub = df[df["__split__"] == split]
-            sub = sub[sub["sex"].isin(["f", "m"])]
-            if sub.empty:
-                continue
-            y_true = sub["sex"].map({"f": "F", "m": "M"})
-            y_pred = sub[col].map({0: "F", 1: "M"})
-            cm = confusion_matrix(y_true, y_pred, labels=["F", "M"])
+    models = {c[len("pred_"):-len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")}
+    for mk in sorted(models):
+        test_col = f"pred_{mk}_sex"
+        cv_col = f"pred_{mk}_cv_sex"
+        if test_col not in df.columns:
+            continue
 
-            plt.figure(figsize=(4, 4))
+        train = df[(df["__split__"] == "train") & df["sex"].isin(["f", "m"])]
+        test = df[(df["__split__"] == "test") & df["sex"].isin(["f", "m"])]
+        if train.empty or test.empty:
+            continue
+
+        y_true_train = train["sex"].map({"f": "F", "m": "M"})
+        y_true_test = test["sex"].map({"f": "F", "m": "M"})
+
+        y_pred_train = (
+            train[cv_col].map({0: "F", 1: "M"}) if cv_col in df.columns else None
+        )
+        y_pred_test = test[test_col].map({0: "F", 1: "M"})
+
+        cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
+        if y_pred_train is not None:
+            cm_train = confusion_matrix(
+                y_true_train, y_pred_train, labels=["F", "M"]
+            )
+            fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+            mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
+        else:
+            fig, axes = plt.subplots(1, 1, figsize=(4, 4))
+            axes = [axes]
+            mats = [(cm_test, "Test")]
+
+        for ax, (cm, title) in zip(axes, mats):
             sns.heatmap(
                 cm / cm.sum(axis=1, keepdims=True),
                 annot=True,
@@ -173,10 +196,18 @@ def plot_confusion(df: pd.DataFrame) -> None:
                 cmap="Blues",
                 xticklabels=["Female", "Male"],
                 yticklabels=["Female", "Male"],
+                ax=ax,
             )
-            plt.xlabel("Predicted")
-            plt.ylabel("True")
-            plt.show()
+            ax.set_title(title)
+            ax.set_xlabel("Predicted")
+            if ax is axes[0]:
+                ax.set_ylabel("True")
+            else:
+                ax.set_ylabel("")
+                ax.tick_params(axis="y", labelleft=False)
+
+        plt.tight_layout()
+        plt.show()
 
 
 def plot_inference(df: pd.DataFrame) -> None:

@@ -11,7 +11,7 @@ import seaborn as sns
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
     SPLITS_DIR,
@@ -232,14 +232,21 @@ class PipelineWrapper:
                 y_train = df_train["sex"].map({"f": 0, "m": 1})
                 y_test = df_test["sex"].map({"f": 0, "m": 1})
 
+                drop_pred_train = [c for c in df_train.columns if c.startswith("pred_")]
+                drop_pred_test = [c for c in df_test.columns if c.startswith("pred_")]
+
                 if "Fold" in df_train.columns:
-                    X_train = df_train.drop(columns=["Fold"])
+                    fold_ids = df_train["Fold"].astype(int).to_numpy()
+                    X_train = df_train.drop(columns=["Fold", *drop_pred_train])
+                    cv = PredefinedSplit(test_fold=fold_ids)
                 else:
-                    X_train = df_train
+                    X_train = df_train.drop(columns=drop_pred_train)
+                    cv = 5
+
                 if "Fold" in df_test.columns:
-                    X_test = df_test.drop(columns=["Fold"])
+                    X_test = df_test.drop(columns=["Fold", *drop_pred_test])
                 else:
-                    X_test = df_test
+                    X_test = df_test.drop(columns=drop_pred_test)
 
                 # iterate over all models
                 for mk in self.model_keys:
@@ -256,19 +263,29 @@ class PipelineWrapper:
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
 
-                    # cross-val using balanced accuracy
+                    # cross-val using balanced accuracy and out-of-fold predictions
                     try:
                         bal = cross_val_score(
                             pipe,
                             X_train,
                             y_train,
-                            cv=5,
+                            cv=cv,
                             scoring="balanced_accuracy",
+                            n_jobs=1,
+                        )
+                        y_pred_cv = cross_val_predict(
+                            pipe,
+                            X_train,
+                            y_train,
+                            cv=cv,
                             n_jobs=1,
                         )
                         cv_bal_mean = float(bal.mean())
                     except Exception:
                         cv_bal_mean = None
+                        y_pred_cv = np.full(len(y_train), np.nan)
+                    # store oof predictions
+                    df_train[f"pred_{mk}_cv_sex"] = y_pred_cv
 
                     # fit & predict
                     t_start = perf_counter()
@@ -318,6 +335,13 @@ class PipelineWrapper:
                         "time_total": perf_counter() - t_start,
                     }
                     records.append(rec)
+
+                # end for mk
+
+                # persist CV predictions for this species
+                df_train.to_parquet(train_fp, index=False)
+                df_train.to_csv(species_dir / "train.csv", index=False)
+                _DATA_CACHE[key]["train"] = df_train
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
