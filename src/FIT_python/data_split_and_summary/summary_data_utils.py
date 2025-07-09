@@ -7,6 +7,7 @@ from typing import Dict
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from FIT_python.plot_style import apply_style, TRAIN_COLORS, TEST_COLORS
 
 def discover_splits(splits_dir: Path) -> Dict[str, Dict[str, Path]]:
     results: Dict[str, Dict[str, Path]] = {}
@@ -150,19 +151,12 @@ def compute_summary(
     return result
 
 
-
-def _lighten(color: str, amount: float) -> str:
-    base = mcolors.to_rgb(color)
-    r, g, b = [1 - (1 - c) * amount for c in base]
-    return mcolors.to_hex((r, g, b))
-
 def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     """
     1) "Summary All" plot: one small stacked train/test bar chart per species.
     2) Individual plots: female and male bars stacked (train below, test above).
     Titles use italic scientific names.
     """
-    from FIT_python.plot_style import apply_style
     import matplotlib.pyplot as plt
     import math
 
@@ -173,8 +167,8 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     sexes = ['F', 'M']
     splits = ['Train', 'Test']
     colors = {
-        'Train': {'F': '#800000', 'M': '#000080'},
-        'Test':  {'F': '#cc6666', 'M': '#6666cc'},
+        'Train': TRAIN_COLORS,
+        'Test':  TEST_COLORS,
     }
 
     SPECIES_REMAP = {
