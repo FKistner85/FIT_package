@@ -8,6 +8,11 @@ Mit diesen Werkzeugen lassen sich die Ergebnisse der Datenaufteilung übersichtl
 ## Wichtige Bestandteile
 - compute_summary
 - plot_summary_table
+- plot_split_proportions
+
+### plot_split_proportions
+Zeigt den relativen Anteil der Footprints pro Split (Train, Test, Inference)
+je Art. Ergänzt damit die absoluten Zahlen aus `plot_summary_table`.
 
 ## Referenzen
 - https://pandas.pydata.org/docs/

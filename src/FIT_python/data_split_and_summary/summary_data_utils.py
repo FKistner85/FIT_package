@@ -266,3 +266,47 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
 
 
+
+def plot_split_proportions(df_summary: pd.DataFrame, fig_dir: Path) -> None:
+    """Plot fraction of footprints per split for each species."""
+    from FIT_python.plot_style import apply_style
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    apply_style()
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    df = df_summary.copy()
+    df['Split'] = df['Dataset'].str.split().str[-1].str.capitalize()
+    if 'Species' not in df.columns:
+        df['Species'] = df['Dataset'].str.split().str[0]
+    counts = (
+        df.groupby(['Species', 'Split'])['NumberOfFootprints']
+          .sum()
+          .unstack(fill_value=0)
+    )
+    split_order = ['Train', 'Test', 'Inference']
+    for col in split_order:
+        if col not in counts.columns:
+            counts[col] = 0
+    counts = counts[split_order]
+    proportions = counts.div(counts.sum(axis=1), axis=0)
+
+    species_codes = counts.index.tolist()
+    x = np.arange(len(species_codes))
+    width = 0.25
+    colors = {'Train': '#4e79a7', 'Test': '#f28e2b', 'Inference': '#999999'}
+
+    fig, ax = plt.subplots(figsize=(max(4, len(species_codes)*1.5), 4))
+    for i, split in enumerate(split_order):
+        ax.bar(x + (i-1)*width, proportions[split], width=width,
+               color=colors[split], edgecolor='black', label=split)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([s.replace('_', ' ').title() for s in species_codes], rotation=45, ha='right')
+    ax.set_ylabel('Fraction of Footprints')
+    ax.set_ylim(0, 1)
+    ax.legend(title='Split')
+    fig.tight_layout()
+    for ext in ('png', 'svg'):
+        fig.savefig(fig_dir / f'split_proportions.{ext}')
