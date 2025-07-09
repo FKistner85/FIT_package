@@ -1,0 +1,253 @@
+from __future__ import annotations
+from pathlib import Path
+import pandas as pd
+import numpy as np
+import warnings
+import joblib
+from functools import reduce
+import operator
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.pipeline import Pipeline
+from sklearn.base import clone
+from sklearn.model_selection import RandomizedSearchCV
+from tqdm.auto import tqdm
+from tqdm_joblib import tqdm_joblib
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
+
+from FIT_python.pipeline_sex.transform_wrapper import NumericTransformer
+from FIT_python.pipeline_sex.feature_selection_wrapper import FeatureSelectionTransformer
+from FIT_python.pipeline_sex.outlier_wrapper import OutlierCleanerTransformer
+from FIT_python.pipeline_sex.feature_scaler_wrapper import FeatureScalerTransformer
+from FIT_python.pipeline_sex.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+from FIT_python.pipeline_sex.models import MODELS
+from FIT_python.pipeline_sex.grouped_metrics import individual_accuracies, individual_majority_stats
+from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
+from FIT_python.data_split_and_summary.split_utils import create_train_test_split_otter, _make_folds
+from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
+from FIT_python.config import (
+    RAW_DIR,
+    SPLITS_DIR,
+    RESULTS_DATA_DIR,
+    DEFAULT_TARGETS,
+    GROUP_COL,
+    NUM_FOLDS,
+)
+
+MODEL_KEYS = [
+    "logreg_l2","logreg_l1",
+    "rf_small","rf_med","rf_large",
+    "knn_3","knn_5","knn_7",
+    "svm_linear","svm_rbf",
+    "xgb_std","xgb_hist",
+    "lgbm_std","lgbm_md10",
+    "lda",
+]
+
+PARAM_DISTRIBUTIONS = {
+    "select__method":          [None, "forward", "lasso", "variance", "random_forest"],
+    "select__k":               [1,2,3,4,5,6,10, 20, 50,100],
+    "outlier__method":         [None, "clip"],
+    "outlier__lower_quantile": [0.01, 0.05],
+    "outlier__upper_quantile": [0.90, 0.95],
+    "scale__method":           [None, "standard", "robust", "minmax"],
+    "reduce_pre__method":        [None, "pca", "umap"],
+    "reduce_pre__n_components":  [2, 10],
+    "reduce_pre__n_neighbors":   [5, 10, 15, 30, 50],
+    "reduce_pre__min_dist":      [0.1, 0.5],
+    "reduce_pre__whiten":        [False, True],
+    "reduce_post__method":       [None, "pca", "umap"],
+    "reduce_post__n_components": [2, 10],
+    "reduce_post__n_neighbors":  [5, 10, 15, 30, 50],
+    "reduce_post__min_dist":     [0.1, 0.5],
+    "reduce_post__whiten":       [False, True],
+    "clf": [MODELS[k] for k in MODEL_KEYS],
+}
+
+METRICS = [
+    "maj_test_pct",
+    "balanced_test_acc",
+    "accuracy_test",
+    "mean_test_neg_log_loss",
+]
+
+SCORING = {
+    "accuracy":          "accuracy",
+    "balanced_accuracy": "balanced_accuracy",
+    "neg_log_loss":      "neg_log_loss",
+}
+
+PIPELINE_ORDER = [
+    "outlier__method", "outlier__lower_quantile", "outlier__upper_quantile",
+    "scale__method", "select__method", "select__k",
+    "reduce_pre__method", "reduce_pre__n_components", "reduce_pre__n_neighbors",
+    "reduce_pre__min_dist", "reduce_pre__whiten",
+    "reduce_post__method", "reduce_post__n_components", "reduce_post__n_neighbors",
+    "reduce_post__min_dist", "reduce_post__whiten",
+    "clf"
+]
+
+
+def prepare_eurasian_otter() -> None:
+    """Prepare splits only for the Eurasian otter dataset."""
+    raw_file = RAW_DIR / "Eurasian Otter.csv"
+    if not raw_file.exists():
+        raise FileNotFoundError(raw_file)
+    importer = DataImporter(RAW_DIR, target_cols=DEFAULT_TARGETS)
+    dfs = importer.run()
+    key = next(k for k in dfs if "otter" in k.lower())
+    df = dfs[key]
+
+    train_df, test_df, inf_df = create_train_test_split_otter(df)
+    y_train = train_df["sex"].map({"f": 0, "m": 1})
+    folds, _ = _make_folds(train_df, y_train, n_splits=NUM_FOLDS, group_col=GROUP_COL)
+    train_df = train_df.assign(Fold=folds)
+
+    out_dir = SPLITS_DIR / "eurasian_otter"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    train_df.to_parquet(out_dir / "train.parquet", index=False)
+    test_df.to_parquet(out_dir / "test.parquet", index=False)
+    inf_df.to_parquet(out_dir / "inference.parquet", index=False)
+
+    run_summary(out_dir, RESULTS_DATA_DIR / "eurasian_otter_summary.csv", RESULTS_DATA_DIR / "eurasian_otter_fig")
+
+
+def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> None:
+    """Run RandomizedSearchCV for the Eurasian otter dataset."""
+    warnings.filterwarnings("once", category=ConvergenceWarning, message="Objective did not converge.*")
+    warnings.filterwarnings("once", category=UserWarning, message="X does not have valid feature names.*")
+
+    species = "eurasian_otter"
+    species_dir = SPLITS_DIR / species
+
+    df_train = (
+        pd.read_parquet(species_dir / "train.parquet")
+        .query("sex in ['f','m']")
+        .drop(columns=["Fold"], errors="ignore")
+    )
+    df_test = (
+        pd.read_parquet(species_dir / "test.parquet")
+        .query("sex in ['f','m']")
+        .drop(columns=["Fold"], errors="ignore")
+    )
+
+    feature_cols = [
+        c for c in df_train.columns
+        if c.startswith(("dist", "ang", "t")) and pd.api.types.is_numeric_dtype(df_train[c])
+    ]
+
+    X_tr, y_tr, ids_tr = (
+        df_train[feature_cols],
+        df_train["sex"].map({"f": 0, "m": 1}).values,
+        df_train["individual_id"].values,
+    )
+    X_te, y_te, ids_te = (
+        df_test[feature_cols],
+        df_test["sex"].map({"f": 0, "m": 1}).values,
+        df_test["individual_id"].values,
+    )
+
+    steps = [
+        ("transform", NumericTransformer()),
+        ("outlier", OutlierCleanerTransformer(method="clip")),
+        ("scale", FeatureScalerTransformer(method="standard")),
+        ("select", FeatureSelectionTransformer(method="forward", k=1)),
+        ("reduce_pre", DimensionalityReducerTransformer(method=None, n_components=1)),
+        ("reduce_post", DimensionalityReducerTransformer(method=None, n_components=1)),
+        ("clf", MODELS["rf_small"]),
+    ]
+    pipe = Pipeline(steps)
+
+    search = RandomizedSearchCV(
+        estimator=pipe,
+        param_distributions=PARAM_DISTRIBUTIONS,
+        n_iter=n_iter,
+        scoring=SCORING,
+        refit=False,
+        cv=cv,
+        n_jobs=-1,
+        random_state=random_state,
+        verbose=1,
+    )
+
+    folds = search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
+    total_fits = search.n_iter * folds
+    base_dir = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
+    base_dir.mkdir(parents=True, exist_ok=True)
+    for m in METRICS:
+        (base_dir / f"best_{m}").mkdir(exist_ok=True)
+
+    raw_records = []
+    best_records = []
+
+    with tqdm_joblib(tqdm(desc=f"{species} RS-CV", total=total_fits, leave=False)):
+        search.fit(X_tr, y_tr)
+
+    cv_res = search.cv_results_
+    for i, params in enumerate(cv_res["params"]):
+        record = {
+            "species": species,
+            "mean_test_accuracy": cv_res["mean_test_accuracy"][i],
+            "mean_test_balanced_accuracy": cv_res["mean_test_balanced_accuracy"][i],
+            "mean_test_neg_log_loss": cv_res["mean_test_neg_log_loss"][i],
+            **params,
+        }
+        mdl = clone(pipe).set_params(**params).fit(X_tr, y_tr)
+        y_tr_pred = mdl.predict(X_tr)
+        y_te_pred = mdl.predict(X_te)
+        y_all_true = np.concatenate([y_tr, y_te])
+        y_all_pred = np.concatenate([y_tr_pred, y_te_pred])
+        ids_all = np.concatenate([ids_tr, ids_te])
+
+        fem_tr, mal_tr, bal_tr = individual_accuracies(y_tr, y_tr_pred, ids_tr)
+        fem_te, mal_te, bal_te = individual_accuracies(y_te, y_te_pred, ids_te)
+        ct_tr, wr_tr, pct_tr = individual_majority_stats(y_tr, y_tr_pred, ids_tr)
+        ct_te, wr_te, pct_te = individual_majority_stats(y_te, y_te_pred, ids_te)
+        fem_all, mal_all, bal_all = individual_accuracies(y_all_true, y_all_pred, ids_all)
+        ct_all, wr_all, pct_all = individual_majority_stats(y_all_true, y_all_pred, ids_all)
+
+        acc_tr = accuracy_score(y_tr, y_tr_pred)
+        bal_tr = balanced_accuracy_score(y_tr, y_tr_pred)
+        acc_te = accuracy_score(y_te, y_te_pred)
+        bal_te = balanced_accuracy_score(y_te, y_te_pred)
+        acc_all = accuracy_score(y_all_true, y_all_pred)
+        bal_all = balanced_accuracy_score(y_all_true, y_all_pred)
+
+        record.update({
+            "female_train_acc": fem_tr, "male_train_acc": mal_tr, "balanced_train_acc": bal_tr, "accuracy_train": acc_tr,
+            "female_test_acc": fem_te, "male_test_acc": mal_te, "balanced_test_acc": bal_te, "accuracy_test": acc_te,
+            "female_full_acc": fem_all, "male_full_acc": mal_all, "balanced_full_acc": bal_all, "accuracy_full": acc_all,
+            "maj_train_count": ct_tr, "maj_train_wrong": wr_tr, "maj_train_pct": pct_tr,
+            "maj_test_count": ct_te, "maj_test_wrong": wr_te, "maj_test_pct": pct_te,
+            "maj_full_count": ct_all, "maj_full_wrong": wr_all, "maj_full_pct": pct_all,
+        })
+
+        pid_parts = []
+        for key in PIPELINE_ORDER:
+            val = params.get(key)
+            pid_parts.append(f"{key}={val if val is not None else 'None'}")
+        record["pipeline_id"] = ";".join(pid_parts)
+
+        for k, v in record.items():
+            if pd.isna(v):
+                record[k] = "None"
+        raw_records.append(record)
+
+    df_eval = pd.DataFrame([r for r in raw_records if r["species"] == species])
+    for metric in METRICS:
+        best_idx = df_eval[metric].idxmax()
+        best_params = cv_res["params"][best_idx]
+        best_record = df_eval.loc[best_idx].to_dict()
+        best_record["best_metric"] = metric
+
+        best_pipe = clone(pipe).set_params(**best_params).fit(X_tr, y_tr)
+        out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
+        joblib.dump(best_pipe, out_path)
+        print(f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}")
+        best_records.append(best_record)
+
+    all_csv = base_dir / "all_results.csv"
+    best_csv = base_dir / "best_models.csv"
+    df_all = pd.DataFrame(raw_records).fillna("None")
+    df_best = pd.DataFrame(best_records).fillna("None")
+    df_all.to_csv(all_csv, index=False)
+    df_best.to_csv(best_csv, index=False)
