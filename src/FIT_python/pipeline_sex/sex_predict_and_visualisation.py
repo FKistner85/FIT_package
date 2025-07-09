@@ -493,3 +493,92 @@ def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
                 title=f"{model} — {split}",
             )
 
+
+def _std_sex_label(label: str | int) -> str:
+    """Return ``"F"``/``"M"``/``"Unknown"`` for common label formats."""
+    s = str(label).lower()
+    if s in {"f", "female", "0"}:
+        return "F"
+    if s in {"m", "male", "1"}:
+        return "M"
+    return "Unknown"
+
+
+def plot_embedding(
+    X_embedded,
+    labels,
+    out_dir: str | Path,
+    *,
+    pred_labels=None,
+    annotate: bool = False,
+    prefix: str = "embedding",
+) -> None:
+    """Plot a 2-D embedding coloured by sex.
+
+    Parameters
+    ----------
+    X_embedded:
+        2-D array-like of shape ``(n_samples, 2)`` containing the coordinates
+        returned by a dimensionality reduction algorithm, e.g. UMAP.
+    labels:
+        True sex labels for each sample. Accepted forms are "f"/"m", ``0``/``1``
+        or full names.
+    out_dir:
+        Directory in which the plot will be saved as PNG and SVG.
+    pred_labels:
+        Optional predicted labels. If provided and ``annotate`` is ``True`` the
+        text "T→P" will be drawn for each sample indicating the true and
+        predicted sex.
+    annotate:
+        Annotate each point with true/predicted labels.
+    prefix:
+        Filename prefix for the saved figures.
+    """
+
+    apply_style()
+
+    arr = np.asarray(X_embedded)
+    if arr.ndim != 2 or arr.shape[1] != 2:
+        raise ValueError("X_embedded must be a 2-D array with two columns")
+    if len(labels) != arr.shape[0]:
+        raise ValueError("labels length does not match number of samples")
+
+    sex_labels = [_std_sex_label(l) for l in labels]
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    for sex in sorted(set(sex_labels)):
+        mask = [s == sex for s in sex_labels]
+        ax.scatter(
+            arr[mask, 0],
+            arr[mask, 1],
+            label={"F": "Female", "M": "Male", "Unknown": "Unknown"}[sex],
+            color=SEX_COLORS.get(sex, "#333333"),
+            s=20,
+            alpha=0.8,
+            edgecolors="none",
+        )
+
+    if annotate and pred_labels is not None:
+        pred_std = [_std_sex_label(p) for p in pred_labels]
+        if len(pred_std) != arr.shape[0]:
+            raise ValueError("pred_labels length does not match number of samples")
+        for x, y, t, p in zip(arr[:, 0], arr[:, 1], sex_labels, pred_std):
+            ax.text(x, y, f"{t}→{p}", fontsize=7, ha="center", va="center")
+
+    ax.set_xlabel("Component 1")
+    ax.set_ylabel("Component 2")
+    ax.legend(title="Sex")
+    fig.tight_layout()
+
+    from FIT_python.caption_utils import save_caption
+
+    caption = "2-D embedding coloured by sex"
+    for ext in ("png", "svg"):
+        file = out_path / f"{prefix}.{ext}"
+        fig.savefig(file)
+        save_caption(file, caption)
+    plt.close(fig)
+
