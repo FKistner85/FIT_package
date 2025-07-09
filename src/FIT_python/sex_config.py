@@ -281,3 +281,38 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
         }
     )
     plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
+
+
+def set_experiment_dir(name: str) -> Path:
+    """Configure :mod:`FIT_python.config` paths for a named experiment."""
+
+    from FIT_python import config as cfg
+
+    root = cfg.RESULTS_DIR / "experiments" / name
+    cfg.RESULTS_DIR = root
+    cfg.RESULTS_DATA_DIR = root / "data"
+    cfg.FIGURES_DIR = root / "figures"
+    cfg.SPLITS_DIR = root / "splits"
+
+    cfg.RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    cfg.FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    cfg.SPLITS_DIR.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def prepare_all_species() -> None:
+    """Clean and split the raw data for all available species."""
+
+    from FIT_python.data_split_and_summary.split_wrapper import SplitWrapper
+
+    SplitWrapper().split_all()
+
+
+def run_all_species_search(**kwargs) -> pd.DataFrame:
+    """Train models for all species using :class:`PipelineWrapper`."""
+
+    from FIT_python.pipeline_sex.pipeline_wrapper_sex import PipelineWrapper
+
+    wrapper = PipelineWrapper(**kwargs)
+    wrapper.prepare()
+    return wrapper.train()
