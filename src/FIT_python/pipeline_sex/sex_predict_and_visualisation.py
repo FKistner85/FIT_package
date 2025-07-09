@@ -91,6 +91,7 @@ def predict_all(
     all_df.to_csv(csv_path, index=False)
     return all_df
 
+
 def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
     """Plot a heatmap visualising mean CV accuracy across preprocessing options."""
     from FIT_python.plot_style import apply_style
@@ -114,7 +115,6 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
         .sort_index()
         .sort_index(axis=1)
     )
-
 
     apply_style()
     plt.figure(figsize=(6, 4))
@@ -189,10 +189,9 @@ def plot_inference(df: pd.DataFrame) -> None:
 
     sub = df[df["__split__"] == "inference"]
     for col in pred_cols:
-        pivot = (
-            sub.pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
-            .rename(columns={0: "F", 1: "M"})
-        )
+        pivot = sub.pivot_table(
+            index="trail", columns=col, aggfunc="size", fill_value=0
+        ).rename(columns={0: "F", 1: "M"})
         colors = [SEX_COLORS.get(c, "#333333") for c in pivot.columns]
         ax = pivot.plot.bar(stacked=True, figsize=(6, 3), color=colors)
         plt.xlabel("Trail")
@@ -240,12 +239,16 @@ def plot_quality(df):
             return "Low"
         return "Misclassified"
 
-    # Erstelle Heatmaps a) und b)
+    # Erstelle Heatmaps a) und b) nebeneinander
     cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
-    for tag, cols in [
-        ("a)", ["trail", "true_label"]),
-        ("b)", ["individual_id", "true_label"]),
-    ]:
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    for ax, (tag, cols) in zip(
+        axes,
+        [
+            ("a)", ["trail", "true_label"]),
+            ("b)", ["individual_id", "true_label"]),
+        ],
+    ):
         kvals = (
             df.groupby(cols, group_keys=False).apply(classify).reset_index(name="Class")
         )
@@ -267,7 +270,6 @@ def plot_quality(df):
                 v = counts.at[i, j]
                 annot.at[i, j] = f"{v}\n({v/total:.0%})" if v > 0 else ""
 
-        plt.figure(figsize=(4, 4))
         sns.heatmap(
             proportions,
             annot=annot,
@@ -277,15 +279,21 @@ def plot_quality(df):
             vmax=1,
             linewidths=0.5,
             linecolor="gray",
+            ax=ax,
         )
-        plt.title(tag, loc="left", fontweight="bold")
-        plt.xlabel("Quality")
-        plt.ylabel("True Sex")
-        # previously annotated as "(trail)" or "(animal)" on the right side of
-        # the plot. These labels caused visual artefacts in the heatmaps and have
-        # been removed.
-        plt.tight_layout()
-        plt.show()
+        ax.set_title(tag, loc="left", fontweight="bold")
+        ax.set_xlabel("Quality")
+        if ax is axes[0]:
+            ax.set_ylabel("True Sex")
+        else:
+            ax.set_ylabel("")
+            ax.tick_params(axis="y", labelleft=False)
+
+    # previously annotated as "(trail)" or "(animal)" on the right side of
+    # the plot. These labels caused visual artefacts in the heatmaps and have
+    # been removed.
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
@@ -301,9 +309,11 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     agg["sex"] = "first"
     grouped = df.groupby("individual_id").agg(agg).reset_index()
     grouped["sex_std"] = grouped["sex"].map(
-        lambda s: "Female" if str(s).lower().startswith("f")
-        else "Male" if str(s).lower().startswith("m")
-        else "Unknown"
+        lambda s: (
+            "Female"
+            if str(s).lower().startswith("f")
+            else "Male" if str(s).lower().startswith("m") else "Unknown"
+        )
     )
     palette = {
         "Female": SEX_COLORS["F"],
@@ -365,7 +375,11 @@ def _plot_quality_heatmaps_single(
     def make_annot(block: pd.DataFrame) -> pd.DataFrame:
         total = block.values.sum()
         return block.applymap(
-            lambda x: f"{int(x)}\n({int(round(x / total * 100))}%)" if total > 0 else "0\n(0%)"
+            lambda x: (
+                f"{int(x)}\n({int(round(x / total * 100))}%)"
+                if total > 0
+                else "0\n(0%)"
+            )
         )
 
     annot_corr = make_annot(counts.xs(True, level="Correct"))
@@ -486,4 +500,3 @@ def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
                 proba_cols,
                 title=f"{model} — {split}",
             )
-
