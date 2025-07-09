@@ -7,6 +7,8 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix, accuracy_score
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
+from FIT_python.plot_style import TEST_COLORS
+from FIT_python.plot_style import apply_style
 
 
 DEFAULT_SPECIES = "eurasian_otter"
@@ -92,6 +94,7 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 # === Plots für Confusion & Inference ===
 def plot_confusion_and_inference(df):
+    apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     for col in pred_cols:
         model = col.split("_")[1]
@@ -116,12 +119,11 @@ def plot_confusion_and_inference(df):
                 plt.ylabel("True")
                 plt.show()
             else:
-                pivot = sub.pivot_table(
-                    index="trail", columns=col, aggfunc="size", fill_value=0
-                ).rename(columns={0: "F", 1: "M"})
-                pivot.plot.bar(
-                    stacked=True, figsize=(6, 3), color={"F": "#C08080", "M": "#8080C0"}
+                pivot = (
+                    sub.pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
+                    .rename(columns={0: "F", 1: "M"})
                 )
+                pivot.plot.bar(stacked=True, figsize=(6,3), color=TEST_COLORS)
                 plt.title(f"{model} — inference")
                 plt.xlabel("Trail")
                 plt.ylabel("Count")
@@ -132,6 +134,7 @@ def plot_confusion_and_inference(df):
 
 # === Plots für Qualitäts-Heatmaps ===
 def plot_quality(df):
+    apply_style()
     # true_label
     df = df.copy()
     df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
@@ -140,10 +143,17 @@ def plot_quality(df):
     for col in pred_cols:
         key = col.split("_")[1]
         df[f"pred_label_{key}"] = df[col].map({0: "F", 1: "M"})
+
     # True wenn irgendein Modell richtig war
-    df["Correct"] = np.any(
-        [df[f"pred_label_{k}"] == df["true_label"] for k in MODELS], axis=0
-    )
+
+    pred_label_cols = [c for c in df if c.startswith("pred_label_")]
+    if not pred_label_cols:
+        raise KeyError("No prediction label columns found in dataframe")
+
+    df["Correct"] = np.any([
+        df[c] == df["true_label"] for c in pred_label_cols
+    ], axis=0)
+
 
     # Klassifizierung
     def classify(group):
