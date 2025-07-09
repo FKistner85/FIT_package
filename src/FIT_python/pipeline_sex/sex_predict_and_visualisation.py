@@ -13,8 +13,10 @@ from FIT_python.plot_style import apply_style
 
 DEFAULT_SPECIES = "eurasian_otter"
 
-def _base_paths(species: str = DEFAULT_SPECIES,
-                prefer_generic: bool = False) -> tuple[Path, Path, Path]:
+
+def _base_paths(
+    species: str = DEFAULT_SPECIES, prefer_generic: bool = False
+) -> tuple[Path, Path, Path]:
     """Return split dir, model dir and output csv for a species.
 
     If ``prefer_generic`` is ``True`` or a species specific directory does
@@ -35,14 +37,16 @@ def _base_paths(species: str = DEFAULT_SPECIES,
 # === Modelle definieren ===
 MODELS = {
     "balanced_acc": "best_balanced_test_acc",
-    "maj_pct":      "best_maj_test_pct",
+    "maj_pct": "best_maj_test_pct",
     "neg_log_loss": "best_mean_test_neg_log_loss",
-    "accuracy":     "best_accuracy_test",
+    "accuracy": "best_accuracy_test",
 }
 
+
 # === CSV erzeugen (einmal laufen lassen) ===
-def predict_all(species: str = DEFAULT_SPECIES,
-                prefer_generic: bool = False) -> pd.DataFrame:
+def predict_all(
+    species: str = DEFAULT_SPECIES, prefer_generic: bool = False
+) -> pd.DataFrame:
     """Load models for ``species`` and return dataframe with predictions.
 
     ``prefer_generic`` can be set to ``True`` to force loading models from the
@@ -55,9 +59,8 @@ def predict_all(species: str = DEFAULT_SPECIES,
     dfs = {name: pd.read_parquet(p) for name, p in splits.items()}
     # Säubere Spaltennamen
     for name, df in dfs.items():
-        df.columns = (
-            df.columns.str.replace(r"[.\-]", "_", regex=True)
-                       .str.replace("T", "t")
+        df.columns = df.columns.str.replace(r"[.\-]", "_", regex=True).str.replace(
+            "T", "t"
         )
         df["__split__"] = name
 
@@ -88,6 +91,7 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
     all_df.to_csv(out_csv, index=False)
     return all_df
 
+
 # === Plots für Confusion & Inference ===
 def plot_confusion_and_inference(df):
     apply_style()
@@ -103,9 +107,13 @@ def plot_confusion_and_inference(df):
                 y_pred = sub[col].map({0: "F", 1: "M"})
                 cm = confusion_matrix(y_true, y_pred, labels=["F", "M"])
                 acc = accuracy_score(y_true, y_pred)
-                plt.figure(figsize=(4,4))
-                sns.heatmap(cm / cm.sum(axis=1, keepdims=True),
-                            annot=True, fmt=".2f", cmap="Blues")
+                plt.figure(figsize=(4, 4))
+                sns.heatmap(
+                    cm / cm.sum(axis=1, keepdims=True),
+                    annot=True,
+                    fmt=".2f",
+                    cmap="Blues",
+                )
                 plt.title(f"{model} — {split} (Acc {acc:.1%})")
                 plt.xlabel("Predicted")
                 plt.ylabel("True")
@@ -123,6 +131,7 @@ def plot_confusion_and_inference(df):
                 plt.tight_layout()
                 plt.show()
 
+
 # === Plots für Qualitäts-Heatmaps ===
 def plot_quality(df):
     apply_style()
@@ -136,6 +145,7 @@ def plot_quality(df):
         df[f"pred_label_{key}"] = df[col].map({0: "F", 1: "M"})
 
     # True wenn irgendein Modell richtig war
+
     pred_label_cols = [c for c in df if c.startswith("pred_label_")]
     if not pred_label_cols:
         raise KeyError("No prediction label columns found in dataframe")
@@ -144,23 +154,34 @@ def plot_quality(df):
         df[c] == df["true_label"] for c in pred_label_cols
     ], axis=0)
 
+
     # Klassifizierung
     def classify(group):
         acc = group["Correct"].mean()
-        if acc >= 0.9:    return "High"
-        if acc >= 0.7:    return "Moderate"
-        if acc >= 0.5:    return "Low"
+        if acc >= 0.9:
+            return "High"
+        if acc >= 0.7:
+            return "Moderate"
+        if acc >= 0.5:
+            return "Low"
         return "Misclassified"
 
     # Erstelle Heatmaps a) und b)
     cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
-    for tag, cols in [("a)", ["trail","true_label"]), ("b)", ["individual_id","true_label"])]:
-        kvals = (df.groupby(cols, group_keys=False)
-                  .apply(classify)
-                  .reset_index(name="Class"))
-        pivot = (kvals
-                 .pivot_table(index="true_label", columns="Class", values=cols[0], aggfunc="count", fill_value=0)
-                 .reindex(columns=["High","Moderate","Low","Misclassified"], fill_value=0))
+    for tag, cols in [
+        ("a)", ["trail", "true_label"]),
+        ("b)", ["individual_id", "true_label"]),
+    ]:
+        kvals = (
+            df.groupby(cols, group_keys=False).apply(classify).reset_index(name="Class")
+        )
+        pivot = kvals.pivot_table(
+            index="true_label",
+            columns="Class",
+            values=cols[0],
+            aggfunc="count",
+            fill_value=0,
+        ).reindex(columns=["High", "Moderate", "Low", "Misclassified"], fill_value=0)
         proportions = pivot.div(pivot.sum(axis=1), axis=0).fillna(0)
         counts = pivot.astype(int)
         total = counts.values.sum()
@@ -169,17 +190,57 @@ def plot_quality(df):
         annot = counts.copy().astype(str)
         for i in counts.index:
             for j in counts.columns:
-                v = counts.at[i,j]
-                annot.at[i,j] = f"{v}\n({v/total:.0%})" if v>0 else ""
+                v = counts.at[i, j]
+                annot.at[i, j] = f"{v}\n({v/total:.0%})" if v > 0 else ""
 
-        plt.figure(figsize=(4,4))
-        sns.heatmap(proportions, annot=annot, fmt="", cmap=cmap, vmin=0, vmax=1,
-                    linewidths=0.5, linecolor="gray")
+        plt.figure(figsize=(4, 4))
+        sns.heatmap(
+            proportions,
+            annot=annot,
+            fmt="",
+            cmap=cmap,
+            vmin=0,
+            vmax=1,
+            linewidths=0.5,
+            linecolor="gray",
+        )
         plt.title(tag, loc="left", fontweight="bold")
         plt.xlabel("Quality")
         plt.ylabel("True Sex")
         # Kommentar rechts
-        plt.gca().text(1.02, 0.5, "(trail)" if tag=="a)" else "(animal)",
-                       transform=plt.gca().transAxes, va="center", color="gray")
+        plt.gca().text(
+            1.02,
+            0.5,
+            "(trail)" if tag == "a)" else "(animal)",
+            transform=plt.gca().transAxes,
+            va="center",
+            color="gray",
+        )
         plt.tight_layout()
         plt.show()
+
+
+def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
+    """Plot distribution of predicted sex probabilities for each individual."""
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+    proba_cols = [c for c in df if c.startswith("pred_") and c.endswith("_proba_m")]
+    if not proba_cols:
+        raise ValueError(
+            "DataFrame contains no probability columns ending with '_proba_m'."
+        )
+    agg = {c: "mean" for c in proba_cols}
+    agg["sex"] = "first"
+    grouped = df.groupby("individual_id").agg(agg).reset_index()
+    for col in proba_cols:
+        model = col.split("_")[1]
+        plt.figure(figsize=(5, 3))
+        sns.histplot(
+            grouped, x=col, hue="sex", element="step", stat="density", common_norm=False
+        )
+        plt.xlabel("Predicted probability male")
+        plt.ylabel("Density")
+        plt.title(model)
+        plt.tight_layout()
+        plt.savefig(out_path / f"{model}_individual_probabilities.png")
+        plt.close()
