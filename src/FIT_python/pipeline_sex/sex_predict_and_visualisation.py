@@ -11,12 +11,24 @@ from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
 
 DEFAULT_SPECIES = "eurasian_otter"
 
-def _base_paths(species: str = DEFAULT_SPECIES) -> tuple[Path, Path, Path]:
-    """Return split dir, model dir and output csv for a species."""
+def _base_paths(species: str = DEFAULT_SPECIES,
+                prefer_generic: bool = False) -> tuple[Path, Path, Path]:
+    """Return split dir, model dir and output csv for a species.
+
+    If ``prefer_generic`` is ``True`` or a species specific directory does
+    not exist, fall back to ``random_search_standard_metrics``. This enables
+    notebooks that work on a single species to load custom models while the
+    all-species notebook can still rely on the generic directory.
+    """
     splits = DATA_DIR / "splits" / species
-    models = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
-    csv    = models / f"{species}_all_predictions.csv"
+    specific = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
+    generic = RESULTS_DATA_DIR / "random_search_standard_metrics"
+    models = generic if prefer_generic else specific
+    if not models.exists():
+        models = specific if prefer_generic else generic
+    csv = models / f"{species}_all_predictions.csv"
     return splits, models, csv
+
 
 # === Modelle definieren ===
 MODELS = {
@@ -27,9 +39,15 @@ MODELS = {
 }
 
 # === CSV erzeugen (einmal laufen lassen) ===
-def predict_all(species: str = DEFAULT_SPECIES) -> pd.DataFrame:
-    """Load models for ``species`` and return dataframe with predictions."""
-    splits_dir, models_dir, csv_path = _base_paths(species)
+def predict_all(species: str = DEFAULT_SPECIES,
+                prefer_generic: bool = False) -> pd.DataFrame:
+    """Load models for ``species`` and return dataframe with predictions.
+
+    ``prefer_generic`` can be set to ``True`` to force loading models from the
+    shared ``random_search_standard_metrics`` directory. If that directory does
+    not exist, the species-specific one is used.
+    """
+    splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
 
     splits = {n: splits_dir / f"{n}.parquet" for n in ["train", "test", "inference"]}
     dfs = {name: pd.read_parquet(p) for name, p in splits.items()}
@@ -62,7 +80,7 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
     if species_list is None:
         species_list = [p.name for p in (DATA_DIR / "splits").iterdir() if p.is_dir()]
 
-    dfs = [predict_all(species) for species in species_list]
+    dfs = [predict_all(species, prefer_generic=True) for species in species_list]
     all_df = pd.concat(dfs, ignore_index=True)
     out_csv = RESULTS_DATA_DIR / "all_species_all_predictions.csv"
     all_df.to_csv(out_csv, index=False)
