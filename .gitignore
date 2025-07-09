@@ -19,3 +19,6 @@ Thumbs.db
 
 results/**/*.parquet
 results/**/*.joblib
+
+results/**/split_proportions.png
+results/**/split_proportions.svg
