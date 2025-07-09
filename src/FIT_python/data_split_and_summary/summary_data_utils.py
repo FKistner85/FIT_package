@@ -7,6 +7,8 @@ from typing import Dict
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import numpy as np
+from FIT_python.caption_utils import save_caption
 
 def discover_splits(splits_dir: Path) -> Dict[str, Dict[str, Path]]:
     results: Dict[str, Dict[str, Path]] = {}
@@ -214,5 +216,38 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
 
 
+
+
+
+def plot_split_proportions(df_summary: pd.DataFrame, fig_dir: Path) -> None:
+    """Plot the relative proportion of each sex per train/test split."""
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    df = df_summary.copy()
+    df[["species", "split"]] = df["Dataset"].str.rsplit(" ", 1, expand=True)
+    sexes = sorted(df["Sex"].unique())
+    species_codes = sorted(df["species"].unique())
+    splits = sorted(df["split"].unique())
+    colors = {"F": "#cc6666", "M": "#6666cc", "Unknown": "#999999"}
+
+    for species in species_codes:
+        sub = df[df["species"] == species]
+        totals = [sub[sub["split"] == s]["NumberOfFootprints"].sum() for s in splits]
+        fig, ax = plt.subplots(figsize=(6, 4))
+        bottom = np.zeros(len(splits))
+        for sex in sexes:
+            counts = [sub[(sub["split"] == s) & (sub["Sex"] == sex)]["NumberOfFootprints"].sum() for s in splits]
+            props = [c / t if t else 0 for c, t in zip(counts, totals)]
+            ax.bar(splits, props, bottom=bottom, label=sex, color=colors.get(sex))
+            bottom += np.array(props)
+        ax.set_ylim(0, 1)
+        ax.set_ylabel("Proportion of Footprints")
+        ax.set_title(species.replace("_", " ").title())
+        ax.legend(title="Sex")
+        fig.tight_layout()
+        caption = f"Sex proportions in train/test splits for {species.replace('_', ' ').title()}"
+        for ext in ("png", "svg"):
+            file = fig_dir / f"{species}_split_proportions.{ext}"
+            fig.savefig(file)
+            save_caption(file, caption)
 
 
