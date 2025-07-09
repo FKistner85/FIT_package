@@ -7,6 +7,7 @@ import joblib
 from functools import reduce
 import operator
 from sklearn.exceptions import ConvergenceWarning
+from collections import Counter
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
 from sklearn.model_selection import RandomizedSearchCV
@@ -20,7 +21,11 @@ from FIT_python.pipeline_sex.outlier_wrapper import OutlierCleanerTransformer
 from FIT_python.pipeline_sex.feature_scaler_wrapper import FeatureScalerTransformer
 from FIT_python.pipeline_sex.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
 from FIT_python.pipeline_sex.models import MODELS
-from FIT_python.pipeline_sex.grouped_metrics import individual_accuracies, individual_majority_stats
+from FIT_python.pipeline_sex.grouped_metrics import (
+    individual_accuracies,
+    individual_majority_stats,
+)
+from FIT_python.pipeline_sex.sex_predict_and_visualisation import plot_hyperparam_heatmap
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.split_utils import create_train_test_split_otter, _make_folds
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
@@ -113,8 +118,6 @@ def prepare_eurasian_otter() -> None:
 
 def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> None:
     """Run RandomizedSearchCV for the Eurasian otter dataset."""
-    warnings.filterwarnings("once", category=ConvergenceWarning, message="Objective did not converge.*")
-    warnings.filterwarnings("once", category=UserWarning, message="X does not have valid feature names.*")
 
     species = "eurasian_otter"
     species_dir = SPLITS_DIR / species
@@ -180,7 +183,20 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
     best_records = []
 
     with tqdm_joblib(tqdm(desc=f"{species} RS-CV", total=total_fits, leave=False)):
-        search.fit(X_tr, y_tr)
+        with warnings.catch_warnings(record=True) as warn_list:
+            warnings.simplefilter("always", ConvergenceWarning)
+            warnings.filterwarnings(
+                "ignore",
+                category=UserWarning,
+                message="X does not have valid feature names.*",
+            )
+            search.fit(X_tr, y_tr)
+
+    conv_msgs = [
+        str(w.message)
+        for w in warn_list
+        if issubclass(w.category, ConvergenceWarning)
+    ]
 
     cv_res = search.cv_results_
     for i, params in enumerate(cv_res["params"]):
@@ -251,3 +267,17 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
     df_best = pd.DataFrame(best_records).fillna("None")
     df_all.to_csv(all_csv, index=False)
     df_best.to_csv(best_csv, index=False)
+
+    if conv_msgs:
+        counts = Counter(conv_msgs)
+        for msg, cnt in counts.items():
+            print(f"⚠️ {msg} (occurred {cnt} times)")
+
+    df_heat = df_all.rename(
+        columns={
+            "select__method": "fs_method",
+            "reduce_pre__method": "reduce_pre_method",
+            "mean_test_balanced_accuracy": "cv_balanced_accuracy",
+        }
+    )
+    plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")

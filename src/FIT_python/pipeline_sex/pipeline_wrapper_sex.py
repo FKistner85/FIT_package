@@ -42,6 +42,9 @@ from FIT_python.pipeline_sex.dimensionality_reduction_wrapper import (
     DimensionalityReducerTransformer,
 )
 from FIT_python.pipeline_sex.models import MODELS
+from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
+    plot_hyperparam_heatmap,
+)
 
 # Cache for sklearn Pipelines
 _cache_dir = Path(RESULTS_DATA_DIR) / "pipeline_cache"
@@ -338,6 +341,11 @@ class PipelineWrapper:
                 values="cv_balanced_accuracy",
                 aggfunc="mean",
             )
+        )
+
+        # Visualise the hyperparameter search results
+        plot_hyperparam_heatmap(
+            df_new, Path(FIGURES_DIR) / "hyperparam_search"
         )
 
         # finale pipelines fit & dump
