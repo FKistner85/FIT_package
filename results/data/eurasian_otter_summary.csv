@@ -1,0 +1,10 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual
+eurasian_otter Inference,F,0,0,0,0.0,0.0,0.0,0.0
+eurasian_otter Inference,M,0,0,0,0.0,0.0,0.0,0.0
+eurasian_otter Inference,Unknown,81,1,8,81.0,0.0,8.0,0.0
+eurasian_otter Test,F,86,7,12,12.29,5.34,2.29,0.7
+eurasian_otter Test,M,66,7,8,9.43,5.55,1.29,0.45
+eurasian_otter Test,Unknown,0,0,0,0.0,0.0,0.0,0.0
+eurasian_otter Train,F,220,13,29,16.92,7.33,2.85,1.1
+eurasian_otter Train,M,175,14,26,12.5,5.26,2.0,0.85
+eurasian_otter Train,Unknown,0,0,0,0.0,0.0,0.0,0.0

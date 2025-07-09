@@ -45,11 +45,15 @@ def compute_summary(
     dataset: str,
     origin: str,
 ) -> pd.DataFrame:
-    """Return summary per Split (dataset+origin) and Sex."""
-    print(f"\n[DEBUG] compute_summary called for {dataset}/{origin}, df shape = {df.shape}")
-
+    """Return summary per Split (dataset+origin) and Sex:
+       - NumberOfFootprints
+       - UniqueIndividuals
+       - UniqueTrails
+       - Mean & SD footprints per individual
+       - Mean & SD trails per individual
+       Skips empty splits.
+    """
     if df.empty:
-        print("[DEBUG] df is empty, returning empty summary")
         return pd.DataFrame(columns=[
             "Dataset", "Sex", "NumberOfFootprints",
             "UniqueIndividuals", "UniqueTrails",
@@ -60,38 +64,21 @@ def compute_summary(
 
     # 1) unified label
     ds_label = f"{dataset} {origin.capitalize()}"
-    print(f"[DEBUG] ds_label = {ds_label}")
 
-    # 1b) extract species code
-    col1 = df.get("species")
-    col2 = df.get("Species")
-    print(f"[DEBUG] species column raw: species exists? {col1 is not None}, Species exists? {col2 is not None}")
-
-    if col1 is not None:
-        species_col = col1
-        print("[DEBUG] using 'species' column")
-    elif col2 is not None:
-        species_col = col2
-        print("[DEBUG] using 'Species' column")
-    else:
-        species_col = None
-        print("[DEBUG] no species column found")
-
+    # 1b) extract species code (assume single species per dataset)
+    species_col = df.get("species") or df.get("Species")
     if species_col is not None:
         species_vals = (
             species_col.astype(str)
-                         .str.strip()
-                         .str.lower()
-                         .unique()
+            .str.strip()
+            .str.lower()
+            .unique()
         )
-        print(f"[DEBUG] species_vals = {species_vals}")
-        raw_code = species_vals[0] if len(species_vals) else "unknown"
-        species_code = raw_code.replace("_", " ")
+        species_code = species_vals[0] if len(species_vals) else "unknown"
     else:
         species_code = "unknown"
-    print(f"[DEBUG] species_code = {species_code}")
 
-    # 2) clean sex categories
+    # 2) clean sex categories (mapping happens first)
     df = df.copy()
     df["sex"] = (
         df["sex"]
@@ -103,19 +90,15 @@ def compute_summary(
                      else "M" if s.startswith("m")
                      else "Unknown")
     )
-    print(f"[DEBUG] sex value counts:\n{df['sex'].value_counts(dropna=False)}")
 
     rows = []
     for sex in ["F", "M", "Unknown"]:
         sub = df[df["sex"] == sex]
-        print(f"[DEBUG] sex = {sex}, subset shape = {sub.shape}")
-
         # Footprints count
         n_fp = len(sub)
         # Unique counts
         n_ind = sub["individual_id"].nunique() if "individual_id" in sub.columns else 0
         n_tr  = sub["trail"].nunique()          if "trail" in sub.columns         else 0
-        print(f"[DEBUG]  n_fp={n_fp}, n_ind={n_ind}, n_tr={n_tr}")
 
         # Per-individual stats
         if n_ind > 0:
@@ -126,11 +109,8 @@ def compute_summary(
             tr_per_ind = sub.groupby("individual_id")["trail"].nunique()
             mean_tr = tr_per_ind.mean()
             sd_tr   = tr_per_ind.std(ddof=0)
-            print(f"[DEBUG]   fp_per_ind summary: mean={mean_fp}, sd={sd_fp}")
-            print(f"[DEBUG]   tr_per_ind summary: mean={mean_tr}, sd={sd_tr}")
         else:
             mean_fp = sd_fp = mean_tr = sd_tr = 0.0
-            print(f"[DEBUG]   no individuals, setting means and sds to 0")
 
         rows.append({
             "Dataset": ds_label,
@@ -145,9 +125,7 @@ def compute_summary(
             "Species": species_code,
         })
 
-    result = pd.DataFrame(rows)
-    print(f"[DEBUG] Returning summary DataFrame with shape {result.shape}")
-    return result
+    return pd.DataFrame(rows)
 
 
 
@@ -183,13 +161,12 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     }
 
     def make_italic(name_code: str) -> str:
-        # map non‐standard und ensure spaces
+        # map non-standard codes and convert to italic scientific name
         name_code = SPECIES_REMAP.get(name_code.lower(), name_code)
-        name_code = name_code.replace("_", " ")
-        parts = name_code.split()
-        # capitalise genus only, rest lower‐case
+        parts = name_code.split('_')
         parts = [parts[0].capitalize()] + [p.lower() for p in parts[1:]]
-        sci   = " ".join(parts)
+        sci = ' '.join(parts)
+        # italics in Matplotlib via mathtext
         return rf"$\mathit{{{sci}}}$"
 
     # --- 1) Summary-All Plot ---

@@ -87,7 +87,7 @@ def compute_summary(
         print(f"[DEBUG] species_vals = {species_vals}")
         raw_code = species_vals[0] if len(species_vals) else "unknown"
         species_code = raw_code.replace("_", " ")
-    else:
+            else:
         species_code = "unknown"
     print(f"[DEBUG] species_code = {species_code}")
 
@@ -183,13 +183,12 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     }
 
     def make_italic(name_code: str) -> str:
-        # map non‐standard und ensure spaces
+        # map non-standard codes and convert to italic scientific name
         name_code = SPECIES_REMAP.get(name_code.lower(), name_code)
-        name_code = name_code.replace("_", " ")
-        parts = name_code.split()
-        # capitalise genus only, rest lower‐case
+        parts = name_code.split('_')
         parts = [parts[0].capitalize()] + [p.lower() for p in parts[1:]]
-        sci   = " ".join(parts)
+        sci = ' '.join(parts)
+        # italics in Matplotlib via mathtext
         return rf"$\mathit{{{sci}}}$"
 
     # --- 1) Summary-All Plot ---
