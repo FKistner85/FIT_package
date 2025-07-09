@@ -3,11 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from joblib import load
+import warnings
 from pathlib import Path
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
-from FIT_python.plot_style import TEST_COLORS, SEX_COLORS
+from FIT_python.plot_style import SEX_COLORS
 from FIT_python.plot_style import apply_style
 
 
@@ -430,12 +431,12 @@ def plot_quality_heatmaps(
     proba_cols: list[str] | None = None,
     title: str | None = None,
 ) -> None:
-    """Plot quality heatmaps.
+    """Plot prediction-quality heatmaps.
 
-    If ``pred_col`` and ``proba_cols`` are provided the heatmap for that
-    specific model/split is shown. If not, heatmaps for all models and the
-    ``train``/``test`` splits are generated automatically, similar to
-    :func:`plot_quality`.
+    Parameters ``pred_col`` and ``proba_cols`` can be used to display the
+    heatmap for a specific model and split.  When they are omitted, the
+    function behaves like the other plotting helpers and iterates over all
+    available models and the ``train``/``test`` splits automatically.
     """
 
     apply_style()
@@ -473,30 +474,17 @@ def plot_quality_heatmaps(
 
 
 def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
-    """Plot prediction-quality heatmaps for each best model and split."""
+    """Deprecated wrapper for :func:`plot_quality_heatmaps`.
 
-    apply_style()
+    This function now simply calls :func:`plot_quality_heatmaps` without
+    additional parameters so that all available models are plotted.  It will
+    be removed in a future version.
+    """
 
-    df = df.copy()
-    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+    warnings.warn(
+        "plot_model_quality_heatmaps is deprecated; use plot_quality_heatmaps",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
-    if not pred_cols:
-        raise KeyError("DataFrame contains no prediction columns")
-
-    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
-    for split in split_order:
-        for pred_col in pred_cols:
-            model = pred_col[len("pred_") : -len("_sex")]
-            proba_cols = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
-            df_sub = df[df["__split__"] == split].copy()
-            df_sub = df_sub[df_sub["sex"].isin(["f", "m"])]
-            df_sub = df_sub[df_sub[pred_col].isin([0, 1])]
-            if df_sub.empty:
-                continue
-            plot_quality_heatmaps(
-                df_sub,
-                pred_col,
-                proba_cols,
-                title=f"{model} — {split}",
-            )
+    plot_quality_heatmaps(df)
