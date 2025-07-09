@@ -43,5 +43,7 @@ STRATIFY_COL = "sex"
 GLOBAL_RANDOM_SEED = 123
 TEST_SIZE = 0.2
 NUM_FOLDS = 3
-
-#
+# Global debug switch controlling fail-fast behaviour.
+# True  -> raise FileNotFoundError on missing files (development)
+# False -> merely log and continue (production)
+DEBUG_MODE = False
