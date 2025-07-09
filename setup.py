@@ -30,6 +30,7 @@ setup(
         "scipy",
         "umap-learn",
         "pyarrow",
+        "tqdm",
         "tqdm-joblib",
         "joblib",
     ],
