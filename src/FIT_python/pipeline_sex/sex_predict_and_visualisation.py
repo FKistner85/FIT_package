@@ -95,13 +95,26 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
     """Plot a heatmap visualising mean CV accuracy across preprocessing options."""
     from FIT_python.plot_style import apply_style
 
+    if df.empty:
+        raise ValueError("DataFrame for heatmap is empty")
+
+    required = {"fs_method", "reduce_pre_method", "cv_balanced_accuracy"}
+    missing = required - set(df.columns)
+    if missing:
+        raise KeyError(f"Missing columns for heatmap: {sorted(missing)}")
+
     # Pivot dynamically so the heatmap adapts to available hyperparameter values
-    pivot = df.pivot_table(
-        index="fs_method",
-        columns="reduce_pre_method",
-        values="cv_balanced_accuracy",
-        aggfunc="mean",
-    ).sort_index().sort_index(axis=1)
+    pivot = (
+        df.pivot_table(
+            index="fs_method",
+            columns="reduce_pre_method",
+            values="cv_balanced_accuracy",
+            aggfunc="mean",
+        )
+        .sort_index()
+        .sort_index(axis=1)
+    )
+
 
     apply_style()
     plt.figure(figsize=(6, 4))
