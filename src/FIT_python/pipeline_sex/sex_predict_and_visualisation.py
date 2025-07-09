@@ -275,7 +275,7 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
         plt.close()
 
 
-def plot_quality_heatmaps(
+def _plot_quality_heatmaps_single(
     df_sub: pd.DataFrame,
     pred_col: str,
     proba_cols: list[str],
@@ -351,6 +351,54 @@ def plot_quality_heatmaps(
         fig.suptitle(title)
     plt.tight_layout()
     plt.show()
+
+
+def plot_quality_heatmaps(
+    df: pd.DataFrame,
+    pred_col: str | None = None,
+    proba_cols: list[str] | None = None,
+    title: str | None = None,
+) -> None:
+    """Plot quality heatmaps.
+
+    If ``pred_col`` and ``proba_cols`` are provided the heatmap for that
+    specific model/split is shown. If not, heatmaps for all models and the
+    ``train``/``test`` splits are generated automatically, similar to
+    :func:`plot_quality`.
+    """
+
+    apply_style()
+
+    if pred_col is not None and proba_cols is not None:
+        df_sub = df.copy()
+        df_sub["true_label"] = df_sub["sex"].map({"f": "F", "m": "M"})
+        _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title)
+        return
+
+    # Automatic generation for all models and splits
+    df = df.copy()
+    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+
+    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
+    if not pred_cols:
+        raise KeyError("DataFrame contains no prediction columns")
+
+    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
+    for split in split_order:
+        for col in pred_cols:
+            model = col[len("pred_") : -len("_sex")]
+            probs = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
+            df_sub = df[df["__split__"] == split].copy()
+            df_sub = df_sub[df_sub["sex"].isin(["f", "m"])]
+            df_sub = df_sub[df_sub[col].isin([0, 1])]
+            if df_sub.empty:
+                continue
+            _plot_quality_heatmaps_single(
+                df_sub,
+                col,
+                probs,
+                title=f"{model} — {split}",
+            )
 
 
 def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
