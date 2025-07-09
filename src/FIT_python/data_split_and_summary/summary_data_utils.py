@@ -58,11 +58,25 @@ def compute_summary(
             "Dataset", "Sex", "NumberOfFootprints",
             "UniqueIndividuals", "UniqueTrails",
             "MeanFootprintsPerIndividual", "SDFootprintsPerIndividual",
-            "MeanTrailsPerIndividual", "SDTrailsPerIndividual"
+            "MeanTrailsPerIndividual", "SDTrailsPerIndividual",
+            "Species",
         ])
 
     # 1) unified label
     ds_label = f"{dataset} {origin.capitalize()}"
+
+    # 1b) extract species code (assume single species per dataset)
+    species_col = df.get("species") or df.get("Species")
+    if species_col is not None:
+        species_vals = (
+            species_col.astype(str)
+            .str.strip()
+            .str.lower()
+            .unique()
+        )
+        species_code = species_vals[0] if len(species_vals) else "unknown"
+    else:
+        species_code = "unknown"
 
     # 2) clean sex categories (mapping happens first)
     df = df.copy()
@@ -108,6 +122,7 @@ def compute_summary(
             "SDFootprintsPerIndividual": round(sd_fp, 2),
             "MeanTrailsPerIndividual": round(mean_tr, 2),
             "SDTrailsPerIndividual": round(sd_tr, 2),
+            "Species": species_code,
         })
 
     return pd.DataFrame(rows)
@@ -140,8 +155,14 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         'Test':  {'F': '#cc6666', 'M': '#6666cc'},
     }
 
+    SPECIES_REMAP = {
+        "a_j_soemmeringii": "acinonyx_jubatus_soemmeringii",
+        "a_j_jubatus": "acinonyx_jubatus_jubatus",
+    }
+
     def make_italic(name_code: str) -> str:
-        # convert 'panthera_tigris_altaica' → 'Panthera tigris altaica' in italics
+        # map non-standard codes and convert to italic scientific name
+        name_code = SPECIES_REMAP.get(name_code.lower(), name_code)
         parts = name_code.split('_')
         parts = [parts[0].capitalize()] + [p.lower() for p in parts[1:]]
         sci = ' '.join(parts)
@@ -149,7 +170,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         return rf"$\mathit{{{sci}}}$"
 
     # --- 1) Summary-All Plot ---
-    species_codes = sorted({label.rsplit(' ',1)[0] for label in df_summary["Dataset"].unique()})
+    species_codes = sorted(df_summary["Species"].dropna().unique())
     n = len(species_codes)
     cols = 3
     rows = math.ceil(n/cols)
@@ -157,14 +178,20 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     axes = axes.flatten()
 
     for ax, code in zip(axes, species_codes):
-        sub = df_summary[df_summary["Dataset"].str.startswith(code+' ')]
+        sub = df_summary[df_summary["Species"] == code]
         bottoms = {'F':0,'M':0}
         for split in splits:
             for sex in sexes:
                 row = sub[(sub['Sex']==sex)&sub['Dataset'].str.endswith(split)]
                 cnt = int(row['NumberOfFootprints'].iloc[0]) if not row.empty else 0
+                ind_n = int(row['UniqueIndividuals'].iloc[0]) if not row.empty else 0
+                trl_n = int(row['UniqueTrails'].iloc[0])      if not row.empty else 0
                 ax.bar(sex, cnt, bottom=bottoms[sex],
                        color=colors[split][sex], edgecolor='black', width=0.6)
+                if cnt:
+                    ax.text(sex, bottoms[sex]+cnt/2,
+                            f'n=({ind_n},{trl_n})',
+                            ha='center', va='center', fontsize=8)
                 bottoms[sex] += cnt
         ax.set_title(make_italic(code), pad=6)
         ax.set_xticks(sexes)
@@ -179,8 +206,8 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
     # --- 2) per-species plots ---
     for code in species_codes:
-        sub = df_summary[df_summary["Dataset"].str.startswith(code+' ')]
-        # total individuals from the training split
+        sub = df_summary[df_summary["Species"] == code]
+        # total individuals from the training split (not displayed but may be useful)
         total_ind = {sex: int(
             sub[(sub['Sex']==sex)&sub['Dataset'].str.endswith('Train')]['UniqueIndividuals'].iloc[0]
         ) if not sub.empty else 0 for sex in sexes}
@@ -204,8 +231,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
                 bottoms[sex] += cnt
 
         ax.set_xticks(sexes)
-        ax.set_xticklabels([f'Female\n(n={total_ind["F"]})',
-                            f'Male\n(n={total_ind["M"]})'])
+        ax.set_xticklabels(['Female', 'Male'])
         ax.set_ylabel('Number of Footprints')
         # title with scientific name in italics
         ax.set_title(make_italic(code))
