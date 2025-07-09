@@ -15,3 +15,10 @@ Diese Funktionen erleichtern reproduzierbare Daten-Splits, bei denen Individuen 
 
 ## Annahmen und Einschränkungen
 Erfordert Gruppen- und Stratifizierungsspalten und sorgt für ausgewogene Folds.
+
+### stratified_individual_split
+Teilt ein DataFrame nach Individuum auf und erhält dabei das Verhältnis der
+Geschlechter in ``stratify_col`` zwischen Train und Test. Bei gesetztem
+``add_folds=True`` enthält der Train-Split zusätzlich eine ``Fold``-Spalte aus
+``StratifiedGroupKFold``. Dadurch landen alle Spuren eines Tieres im selben Fold
+und das Geschlechterverhältnis bleibt stabil.

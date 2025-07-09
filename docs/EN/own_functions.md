@@ -63,6 +63,8 @@ Return ``True`` if at least one valid train/test pair exists.
 Split ``df`` by ``group_col`` while stratifying by ``stratify_col``.
 - All rows for one individual are kept together in train or test
 - Invalid or missing groups are placed into ``inference_df``
+- Optionally adds a ``Fold`` column when ``add_folds=True`` using
+  stratified group k-fold.
 
 ## FIT_python.data_split_and_summary.split_utils.train_test_group_split
 Simple group-based train/test split.
