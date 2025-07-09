@@ -281,15 +281,9 @@ def plot_quality(df):
         plt.title(tag, loc="left", fontweight="bold")
         plt.xlabel("Quality")
         plt.ylabel("True Sex")
-        # Kommentar rechts
-        plt.gca().text(
-            1.02,
-            0.5,
-            "(trail)" if tag == "a)" else "(animal)",
-            transform=plt.gca().transAxes,
-            va="center",
-            color="gray",
-        )
+        # previously annotated as "(trail)" or "(animal)" on the right side of
+        # the plot. These labels caused visual artefacts in the heatmaps and have
+        # been removed.
         plt.tight_layout()
         plt.show()
 
