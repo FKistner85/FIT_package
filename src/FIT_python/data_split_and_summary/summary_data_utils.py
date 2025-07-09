@@ -66,7 +66,13 @@ def compute_summary(
     ds_label = f"{dataset} {origin.capitalize()}"
 
     # 1b) extract species code (assume single species per dataset)
-    species_col = df.get("species") or df.get("Species")
+    if "species" in df.columns:
+        species_col = df["species"]
+    elif "Species" in df.columns:
+        species_col = df["Species"]
+    else:
+        raise KeyError("species column not found")
+
     if species_col is not None:
         species_vals = (
             species_col.astype(str)

@@ -65,7 +65,12 @@ class SplitWrapper:
             dataset = name.lower().replace("_cleaned", "")
 
             # 2a) OTTER special case: fixed split
-            species_col = df.get("Species") or df.get("species")
+            if "Species" in df.columns:
+                species_col = df["Species"]
+            elif "species" in df.columns:
+                species_col = df["species"]
+            else:
+                raise KeyError("species column not found")
             is_otter = (
                 species_col.astype(str)
                 .str.strip()
