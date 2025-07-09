@@ -132,9 +132,14 @@ def plot_quality(df):
     for col in pred_cols:
         key = col.split("_")[1]
         df[f"pred_label_{key}"] = df[col].map({0: "F", 1: "M"})
+
     # True wenn irgendein Modell richtig war
+    pred_label_cols = [c for c in df if c.startswith("pred_label_")]
+    if not pred_label_cols:
+        raise KeyError("No prediction label columns found in dataframe")
+
     df["Correct"] = np.any([
-        df[f"pred_label_{k}"] == df["true_label"] for k in MODELS
+        df[c] == df["true_label"] for c in pred_label_cols
     ], axis=0)
 
     # Klassifizierung
