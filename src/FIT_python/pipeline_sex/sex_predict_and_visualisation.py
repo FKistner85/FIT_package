@@ -4,7 +4,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from joblib import load
 from pathlib import Path
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import (
+    confusion_matrix,
+    accuracy_score,
+    roc_curve,
+    precision_recall_curve,
+    auc,
+)
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
 from FIT_python.plot_style import TEST_COLORS
@@ -260,3 +266,53 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
         plt.tight_layout()
         plt.savefig(out_path / f"{model}_individual_probabilities.png")
         plt.close()
+
+
+def plot_roc_pr_curves(df: pd.DataFrame) -> None:
+    """Plot ROC and precision-recall curves for each stored probability column.
+
+    Parameters
+    ----------
+    df:
+        DataFrame containing columns ``sex`` with true labels and prediction
+        probabilities named like ``pred_<model>_proba_m``.
+    """
+
+    apply_style()
+
+    proba_cols = [c for c in df if c.startswith("pred_") and c.endswith("_proba_m")]
+    if not proba_cols:
+        raise ValueError(
+            "DataFrame contains no probability columns ending with '_proba_m'."
+        )
+
+    y_true = df["sex"].map({"f": 0, "m": 1})
+
+    for col in proba_cols:
+        model = col.split("_")[1]
+        scores = df[col]
+
+        fpr, tpr, _ = roc_curve(y_true, scores)
+        roc_auc = auc(fpr, tpr)
+
+        precision, recall, _ = precision_recall_curve(y_true, scores)
+        pr_auc = auc(recall, precision)
+
+        plt.figure(figsize=(5, 4))
+        plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
+        plt.plot([0, 1], [0, 1], "--", color="gray")
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.title(f"{model} ROC")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+        plt.figure(figsize=(5, 4))
+        plt.plot(recall, precision, label=f"AUC = {pr_auc:.2f}")
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.title(f"{model} Precision–Recall")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
