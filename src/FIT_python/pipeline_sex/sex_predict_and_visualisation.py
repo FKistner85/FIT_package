@@ -271,3 +271,111 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
         plt.tight_layout()
         plt.savefig(out_path / f"{model}_individual_probabilities.png")
         plt.close()
+
+
+def plot_quality_heatmaps(
+    df_sub: pd.DataFrame,
+    pred_col: str,
+    proba_cols: list[str],
+    title: str | None = None,
+) -> None:
+    """Plot prediction quality heatmaps for a single model and split."""
+
+    df = df_sub.copy()
+    df["pred_label"] = df[pred_col].map({0: "F", 1: "M"})
+    df["Correct"] = df["pred_label"] == df["true_label"]
+    df["Max_Prob"] = df[proba_cols].max(axis=1)
+    df["Quality"] = df["Max_Prob"].apply(
+        lambda p: "High" if p > 0.9 else ("Moderate" if p > 0.7 else "Low")
+    )
+
+    idx = pd.MultiIndex.from_product(
+        [["F", "M"], [True, False]], names=["true_label", "Correct"]
+    )
+    counts = (
+        df.groupby(["true_label", "Correct", "Quality"]).size().unstack(fill_value=0)
+    ).reindex(index=idx, columns=["High", "Moderate", "Low"], fill_value=0)
+
+    if counts.values.sum() == 0:
+        print("    → No data to plot")
+        return
+
+    normed = counts.div(counts.sum(axis=1), axis=0).fillna(0)
+
+    def make_annot(block: pd.DataFrame) -> pd.DataFrame:
+        total = block.values.sum()
+        return block.applymap(
+            lambda x: f"{int(x)}\n({int(round(x / total * 100))}%)" if total > 0 else "0\n(0%)"
+        )
+
+    annot_corr = make_annot(counts.xs(True, level="Correct"))
+    annot_incorr = make_annot(counts.xs(False, level="Correct"))
+
+    green_cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
+    red_cmap = LinearSegmentedColormap.from_list("red", ["white", "crimson"])
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+    sns.heatmap(
+        normed.xs(True, level="Correct"),
+        annot=annot_corr,
+        fmt="",
+        cmap=green_cmap,
+        vmin=0,
+        vmax=1,
+        linewidths=0.5,
+        linecolor="gray",
+        ax=axes[0],
+        cbar=True,
+    )
+    axes[0].set(title="Correct Predictions", ylabel="True Label")
+    sns.heatmap(
+        normed.xs(False, level="Correct"),
+        annot=annot_incorr,
+        fmt="",
+        cmap=red_cmap,
+        vmin=0,
+        vmax=1,
+        linewidths=0.5,
+        linecolor="gray",
+        ax=axes[1],
+        cbar=True,
+    )
+    axes[1].set(title="Incorrect Predictions")
+    for ax in axes:
+        ax.set_xlabel("Prediction Quality")
+        ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
+        ax.set_yticklabels(["F", "M"], rotation=0)
+    if title:
+        fig.suptitle(title)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
+    """Plot prediction-quality heatmaps for each best model and split."""
+
+    apply_style()
+
+    df = df.copy()
+    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+
+    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
+    if not pred_cols:
+        raise KeyError("DataFrame contains no prediction columns")
+
+    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
+    for split in split_order:
+        for pred_col in pred_cols:
+            model = pred_col[len("pred_") : -len("_sex")]
+            proba_cols = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
+            df_sub = df[df["__split__"] == split].copy()
+            df_sub = df_sub[df_sub[pred_col].isin([0, 1])]
+            if df_sub.empty:
+                continue
+            plot_quality_heatmaps(
+                df_sub,
+                pred_col,
+                proba_cols,
+                title=f"{model} — {split}",
+            )
+
