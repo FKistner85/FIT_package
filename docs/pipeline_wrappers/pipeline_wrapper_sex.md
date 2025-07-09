@@ -7,5 +7,15 @@ Nach Abschluss des Trainings werden alle Pipelines auf Platte gespeichert und pr
 
 Details zur Methodik stehen in `pipeline_sex_methodology.md`.
 
+## Cross-Validation Predictions
+
+Ab Version 1.1 werden während `PipelineWrapper.train()` zusätzlich
+Out-of-Fold-Vorhersagen pro Modell berechnet. Diese werden als Spalten
+`pred_<modell>_cv_sex` in den Trainingsdaten gespeichert und landen
+somit auch in den von `predict_all()` erzeugten CSV-Dateien. Die
+Funktion `plot_confusion()` nutzt diese Spalten, um eine zweigeteilte
+Matrix auszugeben: links die zusammengefassten CV-Ergebnisse der
+Trainingsdaten, rechts die Vorhersagen auf dem Testsatz.
+
 ### Referenzen
 * Siehe auch die Dokumentation zu `PipelineWrapper` für generelle Hinweise zum Aufbau.
