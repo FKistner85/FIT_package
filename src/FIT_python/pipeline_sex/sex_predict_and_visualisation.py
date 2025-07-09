@@ -8,6 +8,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
 from FIT_python.plot_style import TEST_COLORS
+from FIT_python.plot_style import apply_style
 
 
 DEFAULT_SPECIES = "eurasian_otter"
@@ -89,6 +90,7 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 # === Plots für Confusion & Inference ===
 def plot_confusion_and_inference(df):
+    apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     for col in pred_cols:
         model = col.split("_")[1]
@@ -123,6 +125,7 @@ def plot_confusion_and_inference(df):
 
 # === Plots für Qualitäts-Heatmaps ===
 def plot_quality(df):
+    apply_style()
     # true_label
     df = df.copy()
     df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
