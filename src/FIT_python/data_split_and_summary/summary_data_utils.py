@@ -167,8 +167,14 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     for ax in axes[n:]:
         ax.axis('off')
     fig.tight_layout()
+    caption_all = (
+        "Overview of footprint counts per species. Female (F) and male (M) "
+        "bars are stacked by train (dark) and test (light) splits."
+    )
     for ext in ('png','svg'):
-        fig.savefig(fig_dir/f"summary_all.{ext}")
+        file = fig_dir/f"summary_all.{ext}"
+        fig.savefig(file)
+        save_caption(file, caption_all)
     #plt.show()
    # plt.close(fig)
 
@@ -208,8 +214,27 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         ax.spines['right'].set_visible(False)
 
         fig.tight_layout()
+
+        caption_parts = []
+        for split in splits:
+            for sex in sexes:
+                row = sub[(sub['Sex'] == sex) & sub['Dataset'].str.endswith(split)]
+                cnt = int(row['NumberOfFootprints'].iloc[0]) if not row.empty else 0
+                ind_n = int(row['UniqueIndividuals'].iloc[0]) if not row.empty else 0
+                trl_n = int(row['UniqueTrails'].iloc[0]) if not row.empty else 0
+                caption_parts.append(
+                    f"{split} {sex}: {cnt} footprints"
+                    f" (ind={ind_n}, trails={trl_n})"
+                )
+        caption = (
+            f"Footprint summary for {code.replace('_', ' ').title()}. "
+            + "; ".join(caption_parts)
+        )
+
         for ext in ('png','svg'):
-            fig.savefig(fig_dir/f"{code}_summary.{ext}")
+            file = fig_dir/f"{code}_summary.{ext}"
+            fig.savefig(file)
+            save_caption(file, caption)
        # plt.show()
        # plt.close(fig)
 
@@ -244,7 +269,22 @@ def plot_split_proportions(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         ax.set_title(species.replace("_", " ").title())
         ax.legend(title="Sex")
         fig.tight_layout()
-        caption = f"Sex proportions in train/test splits for {species.replace('_', ' ').title()}"
+
+        caption_lines = []
+        for split, total in zip(splits, totals):
+            if total == 0:
+                continue
+            sex_info = []
+            for sex in sexes:
+                count = sub[(sub["split"] == split) & (sub["Sex"] == sex)]["NumberOfFootprints"].sum()
+                prop = count / total if total else 0
+                sex_info.append(f"{sex}: {prop:.0%} (n={count})")
+            caption_lines.append(f"{split}: " + ", ".join(sex_info))
+        caption = (
+            f"Sex proportions for {species.replace('_', ' ').title()}. "
+            + "; ".join(caption_lines)
+        )
+
         for ext in ("png", "svg"):
             file = fig_dir / f"{species}_split_proportions.{ext}"
             fig.savefig(file)
