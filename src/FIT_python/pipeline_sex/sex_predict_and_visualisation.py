@@ -133,6 +133,84 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
     return out_file
 
 
+def plot_cv_results(df: pd.DataFrame, metric: str) -> list[Path]:
+    """Visualise ``metric`` across hyperparameter choices.
+
+    Parameters
+    ----------
+    df:
+        DataFrame generated from ``RandomizedSearchCV.cv_results_`` or a
+        combined results CSV.
+    metric:
+        Name of the column containing the metric to plot, e.g.
+        ``"mean_test_accuracy"``.
+    Returns
+    -------
+    list[Path]
+        Paths of the created figures.
+    """
+
+    apply_style()
+
+    # normalise column names from ``cv_results_`` (param_ prefix)
+    rename_map = {c: c[len("param_") :] for c in df.columns if c.startswith("param_")}
+    df = df.rename(columns=rename_map)
+
+    if metric not in df.columns:
+        raise KeyError(f"Metric '{metric}' not found in dataframe")
+
+    out_dir = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    fig_paths: list[Path] = []
+
+    # choose a small set of prominent hyperparameters when present
+    params = [
+        "select__method",
+        "scale__method",
+        "reduce_pre__method",
+        "reduce_post__method",
+        "clf",
+    ]
+
+    for param in params:
+        if param not in df.columns:
+            continue
+        pivot = df.pivot_table(index=param, values=metric, aggfunc="mean")
+        if pivot.empty:
+            continue
+        plt.figure(figsize=(6, 4))
+        sns.lineplot(x=pivot.index.astype(str), y=pivot[metric], marker="o")
+        plt.xlabel(param)
+        plt.ylabel(metric)
+        plt.xticks(rotation=45, ha="right")
+        plt.tight_layout()
+        file = out_dir / f"{metric}_{param}.png"
+        plt.savefig(file)
+        plt.close()
+        fig_paths.append(file)
+
+    if {"select__method", "reduce_pre__method"}.issubset(df.columns):
+        pivot = df.pivot_table(
+            index="select__method",
+            columns="reduce_pre__method",
+            values=metric,
+            aggfunc="mean",
+        )
+        if not pivot.empty:
+            plt.figure(figsize=(6, 4))
+            sns.heatmap(pivot, annot=True, fmt=".3f", cmap="viridis")
+            plt.xlabel("reduce_pre__method")
+            plt.ylabel("select__method")
+            plt.tight_layout()
+            file = out_dir / f"{metric}_heatmap.png"
+            plt.savefig(file)
+            plt.close()
+            fig_paths.append(file)
+
+    return fig_paths
+
+
 def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
     """Predict sex for all species and combine into a single CSV."""
     if species_list is None:
