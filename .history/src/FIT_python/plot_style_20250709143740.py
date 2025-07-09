@@ -4,8 +4,7 @@ import matplotlib as mpl
 import seaborn as sns
 
 # Base colours used for all sex-specific plots
-SEX_COLORS = {"F": "#800000", "M": "#000080", "Unknown": "#FFA500" # orange
-}
+SEX_COLORS = {"F": "#800000", "M": "#000080"}
 
 
 def _lighten(color: str, amount: float) -> str:
