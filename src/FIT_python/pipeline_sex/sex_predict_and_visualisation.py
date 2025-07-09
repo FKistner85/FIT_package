@@ -118,6 +118,7 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
         model = col.split("_")[1]
         for split in split_order:
             sub = df[df["__split__"] == split]
+            sub = sub[sub["sex"].isin(["f", "m"])]
             if sub.empty:
                 continue
             y_true = sub["sex"].map({"f": "F", "m": "M"})
@@ -156,6 +157,7 @@ def plot_quality(df):
     apply_style()
     # true_label
     df = df.copy()
+    df = df[df["sex"].isin(["f", "m"])]
     df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
     # pred_label & Correct pro Modell
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
@@ -369,6 +371,7 @@ def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
             model = pred_col[len("pred_") : -len("_sex")]
             proba_cols = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
             df_sub = df[df["__split__"] == split].copy()
+            df_sub = df_sub[df_sub["sex"].isin(["f", "m"])]
             df_sub = df_sub[df_sub[pred_col].isin([0, 1])]
             if df_sub.empty:
                 continue
