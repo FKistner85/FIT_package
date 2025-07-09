@@ -7,7 +7,7 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix, accuracy_score
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
-from FIT_python.plot_style import TEST_COLORS
+from FIT_python.plot_style import TEST_COLORS, SEX_COLORS
 from FIT_python.plot_style import apply_style
 
 
@@ -248,11 +248,22 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     agg = {c: "mean" for c in proba_cols}
     agg["sex"] = "first"
     grouped = df.groupby("individual_id").agg(agg).reset_index()
+    grouped["sex_std"] = grouped["sex"].map(
+        lambda s: "F" if str(s).lower().startswith("f")
+        else "M" if str(s).lower().startswith("m")
+        else "Unknown"
+    )
     for col in proba_cols:
         model = col.split("_")[1]
         plt.figure(figsize=(5, 3))
         sns.histplot(
-            grouped, x=col, hue="sex", element="step", stat="density", common_norm=False
+            grouped,
+            x=col,
+            hue="sex_std",
+            element="step",
+            stat="density",
+            common_norm=False,
+            palette=SEX_COLORS,
         )
         plt.xlabel("Predicted probability male")
         plt.ylabel("Density")
