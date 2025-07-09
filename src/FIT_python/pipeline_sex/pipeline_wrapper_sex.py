@@ -407,8 +407,13 @@ def plot_pipeline_timings(time_df: pd.DataFrame, out_dir: Path) -> None:
     plt.xticks(rotation=45, ha="right")
     fig.tight_layout()
 
+    from FIT_python.caption_utils import save_caption
+
+    caption = "Average seconds per preprocessing step"
     for ext in ("png", "svg"):
-        fig.savefig(out_dir / f"pipeline_timings.{ext}")
+        out_file = out_dir / f"pipeline_timings.{ext}"
+        fig.savefig(out_file)
+        save_caption(out_file, caption)
     plt.close(fig)
 
 

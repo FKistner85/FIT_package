@@ -215,8 +215,13 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     for ax in axes[n:]:
         ax.axis('off')
     fig.tight_layout()
+    from FIT_python.caption_utils import save_caption
+
+    caption_all = "Summary counts for all species"
     for ext in ('png','svg'):
-        fig.savefig(fig_dir/f"summary_all.{ext}")
+        file = fig_dir / f"summary_all.{ext}"
+        fig.savefig(file)
+        save_caption(file, caption_all)
     #plt.show()
    # plt.close(fig)
 
@@ -254,8 +259,11 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         ax.spines['right'].set_visible(False)
 
         fig.tight_layout()
+        caption = f"Counts for {code.replace('_', ' ')}"
         for ext in ('png','svg'):
-            fig.savefig(fig_dir/f"{code}_summary.{ext}")
+            file = fig_dir / f"{code}_summary.{ext}"
+            fig.savefig(file)
+            save_caption(file, caption)
        # plt.show()
        # plt.close(fig)
 
@@ -306,5 +314,8 @@ def plot_split_proportions(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     ax.set_ylim(0, 1)
     ax.legend(title='Split')
     fig.tight_layout()
+    caption = 'Fraction of footprints per split'
     for ext in ('png', 'svg'):
-        fig.savefig(fig_dir / f'split_proportions.{ext}')
+        file = fig_dir / f'split_proportions.{ext}'
+        fig.savefig(file)
+        save_caption(file, caption)

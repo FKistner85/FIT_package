@@ -122,7 +122,12 @@ def plot_feature_distributions(
             df_after[col].dropna(), bins=30, color="steelblue", edgecolor="black"
         )
         axes[1].set_xlabel(col)
+        from FIT_python.caption_utils import save_caption
+
         fig.tight_layout()
+        caption = f"Distribution of {col} before and after cleaning"
         for ext in ("png", "svg"):
-            fig.savefig(out_path / f"{col}.{ext}")
+            file = out_path / f"{col}.{ext}"
+            fig.savefig(file)
+            save_caption(file, caption)
         plt.close(fig)

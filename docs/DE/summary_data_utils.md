@@ -20,3 +20,5 @@ je Art. Ergänzt damit die absoluten Zahlen aus `plot_summary_table`.
 
 ## Annahmen und Einschränkungen
 Erwartet Spalten wie "sex" und "individual_id".
+Alle Plotfunktionen legen zudem eine Bildunterschrift als `.txt`-Datei
+neben der Grafik ab (`FIT_python.caption_utils.save_caption`).

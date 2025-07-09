@@ -124,8 +124,11 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / "hyperparam_heatmap.png"
+    from FIT_python.caption_utils import save_caption
+
     plt.tight_layout()
     plt.savefig(out_file)
+    save_caption(out_file, "Mean CV accuracy by selector and reducer")
     plt.close()
     return out_file
 
@@ -327,8 +330,12 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
         )
         plt.xlabel("Predicted probability male")
         plt.ylabel("Density")
+        from FIT_python.caption_utils import save_caption
+
         plt.tight_layout()
-        plt.savefig(out_path / f"{model}_individual_probabilities.png")
+        file = out_path / f"{model}_individual_probabilities.png"
+        plt.savefig(file)
+        save_caption(file, f"Predicted male probability for {model}")
         plt.close()
 
 
