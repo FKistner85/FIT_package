@@ -157,7 +157,7 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
                 fmt=".2f",
                 cmap="Blues",
             )
-            plt.title(f"{model} — {split} (Acc {acc:.1%})")
+            # avoid plot titles so figures can be referenced consistently
             plt.xlabel("Predicted")
             plt.ylabel("True")
             plt.show()
@@ -168,8 +168,11 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
             pivot = sub.pivot_table(
                 index="trail", columns=col, aggfunc="size", fill_value=0
             ).rename(columns={0: "F", 1: "M"})
-            pivot.plot.bar(stacked=True, figsize=(6, 3), color=TEST_COLORS)
-            plt.title(f"{model} — inference")
+            pivot.plot.bar(
+                stacked=True,
+                figsize=(6, 3),
+                color=[SEX_COLORS.get(c, "#333333") for c in pivot.columns],
+            )
             plt.xlabel("Trail")
             plt.ylabel("Count")
             plt.legend(title="Predicted")
@@ -294,7 +297,6 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
         )
         plt.xlabel("Predicted probability male")
         plt.ylabel("Density")
-        plt.title(model)
         plt.tight_layout()
         plt.savefig(out_path / f"{model}_individual_probabilities.png")
         plt.close()
@@ -354,7 +356,7 @@ def _plot_quality_heatmaps_single(
         ax=axes[0],
         cbar=True,
     )
-    axes[0].set(title="Correct Predictions", ylabel="True Label")
+    axes[0].set(ylabel="True Label")
     sns.heatmap(
         normed.xs(False, level="Correct"),
         annot=annot_incorr,
@@ -367,13 +369,12 @@ def _plot_quality_heatmaps_single(
         ax=axes[1],
         cbar=True,
     )
-    axes[1].set(title="Incorrect Predictions")
+    axes[1].set()
     for ax in axes:
         ax.set_xlabel("Prediction Quality")
         ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
         ax.set_yticklabels(["F", "M"], rotation=0)
-    if title:
-        fig.suptitle(title)
+    # no super title so subfigures can be labelled externally
     plt.tight_layout()
     plt.show()
 

@@ -117,12 +117,10 @@ def plot_feature_distributions(
     for col in num_cols:
         fig, axes = plt.subplots(1, 2, figsize=(8, 3))
         axes[0].hist(df_before[col].dropna(), bins=30, color="grey", edgecolor="black")
-        axes[0].set_title(f"{col} (raw)")
         axes[0].set_xlabel(col)
         axes[1].hist(
             df_after[col].dropna(), bins=30, color="steelblue", edgecolor="black"
         )
-        axes[1].set_title(f"{col} (cleaned)")
         axes[1].set_xlabel(col)
         fig.tight_layout()
         for ext in ("png", "svg"):
