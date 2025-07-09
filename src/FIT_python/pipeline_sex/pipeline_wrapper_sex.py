@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional, Union, List
 from joblib import Memory, dump
 from time import perf_counter
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
@@ -328,6 +330,16 @@ class PipelineWrapper:
             time_df["step"] = time_df["step"].str.replace("time_", "", regex=False)
             plot_pipeline_timings(time_df, Path(FIGURES_DIR) / "pipeline_timings")
 
+        # summarise cross-validation scores by preprocessing options
+        self.pivot_cv = (
+            df_new.pivot_table(
+                index="fs_method",
+                columns="reduce_pre_method",
+                values="cv_balanced_accuracy",
+                aggfunc="mean",
+            )
+        )
+
         # finale pipelines fit & dump
         for _, row in df_new.iterrows():
             species = row["species"]
@@ -369,6 +381,7 @@ class PipelineWrapper:
         return df_new
 
 
+
 def plot_pipeline_timings(time_df: pd.DataFrame, out_dir: Path) -> None:
     """Create a bar chart of average seconds per preprocessing step."""
     from FIT_python.plot_style import apply_style
@@ -390,3 +403,31 @@ def plot_pipeline_timings(time_df: pd.DataFrame, out_dir: Path) -> None:
     for ext in ("png", "svg"):
         fig.savefig(out_dir / f"pipeline_timings.{ext}")
     plt.close(fig)
+=======
+def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
+    """Plot a heatmap of cross-validation accuracy for preprocessing options."""
+    from FIT_python.plot_style import apply_style
+
+    pivot = (
+        df.pivot_table(
+            index="fs_method",
+            columns="reduce_pre_method",
+            values="cv_balanced_accuracy",
+            aggfunc="mean",
+        )
+        .reindex(index=_ALLOWED_FS, columns=_ALLOWED_REDS)
+    )
+
+    apply_style()
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(pivot, annot=True, fmt=".3f", cmap="viridis", vmin=0, vmax=1)
+    plt.xlabel("Pre-dimensionality reducer")
+    plt.ylabel("Feature selector")
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / "hyperparam_heatmap.png"
+    plt.tight_layout()
+    plt.savefig(out_file)
+    plt.close()
+    return out_file
+

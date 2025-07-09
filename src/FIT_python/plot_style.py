@@ -3,6 +3,27 @@ from __future__ import annotations
 import matplotlib as mpl
 import seaborn as sns
 
+# Base colours used for all sex-specific plots
+SEX_COLORS = {"F": "#800000", "M": "#000080"}
+
+
+def _lighten(color: str, amount: float) -> str:
+    """Return a lighter shade of ``color``.
+
+    ``amount`` specifies the blend ratio with white where ``0`` returns the
+    original colour and ``1`` returns white.
+    """
+    r, g, b = mpl.colors.to_rgb(color)
+    return mpl.colors.to_hex([
+        r + (1 - r) * amount,
+        g + (1 - g) * amount,
+        b + (1 - b) * amount,
+    ])
+
+
+TRAIN_COLORS = SEX_COLORS
+TEST_COLORS = {k: _lighten(v, 0.5) for k, v in SEX_COLORS.items()}
+
 
 def apply_style() -> None:
     """Apply consistent plot styling across notebooks and modules."""
