@@ -169,6 +169,8 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
                 annot=True,
                 fmt=".2f",
                 cmap="Blues",
+                xticklabels=["Female", "Male"],
+                yticklabels=["Female", "Male"],
             )
             # avoid plot titles so figures can be referenced consistently
             plt.xlabel("Predicted")
@@ -181,14 +183,14 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
             pivot = sub.pivot_table(
                 index="trail", columns=col, aggfunc="size", fill_value=0
             ).rename(columns={0: "F", 1: "M"})
-            pivot.plot.bar(
+            ax = pivot.plot.bar(
                 stacked=True,
                 figsize=(6, 3),
                 color=[SEX_COLORS.get(c, "#333333") for c in pivot.columns],
             )
             plt.xlabel("Trail")
             plt.ylabel("Count")
-            plt.legend(title="Predicted")
+            ax.legend(title="Predicted", labels=["Female", "Male"])
             plt.tight_layout()
             plt.show()
 
@@ -292,10 +294,15 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     agg["sex"] = "first"
     grouped = df.groupby("individual_id").agg(agg).reset_index()
     grouped["sex_std"] = grouped["sex"].map(
-        lambda s: "F" if str(s).lower().startswith("f")
-        else "M" if str(s).lower().startswith("m")
+        lambda s: "Female" if str(s).lower().startswith("f")
+        else "Male" if str(s).lower().startswith("m")
         else "Unknown"
     )
+    palette = {
+        "Female": SEX_COLORS["F"],
+        "Male": SEX_COLORS["M"],
+        "Unknown": SEX_COLORS.get("Unknown", "#333333"),
+    }
     for col in proba_cols:
         model = col.split("_")[1]
         plt.figure(figsize=(5, 3))
@@ -306,7 +313,7 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
             element="step",
             stat="density",
             common_norm=False,
-            palette=SEX_COLORS,
+            palette=palette,
         )
         plt.xlabel("Predicted probability male")
         plt.ylabel("Density")
@@ -386,7 +393,7 @@ def _plot_quality_heatmaps_single(
     for ax in axes:
         ax.set_xlabel("Prediction Quality")
         ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
-        ax.set_yticklabels(["F", "M"], rotation=0)
+        ax.set_yticklabels(["Female", "Male"], rotation=0)
     # no super title so subfigures can be labelled externally
     plt.tight_layout()
     plt.show()
