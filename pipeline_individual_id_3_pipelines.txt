@@ -1,0 +1,432 @@
+
+##############################################################################################################
+#Dataloading and prparation
+
+##############################################################################################################
+#ziel alles als sklearn oder ähnlich pipeline aufbauen. wichtig modularität und parralelisierbarkeit
+#step 1 data loading (all 3 pipelines)
+#use same train test split as sexmodels ; therefore use split wraper
+#test set is only for later evaluation
+
+#use create_train_test_split_otter if df[Spezies] from raw df  is "Lutra lutra" / oder  create train test split for all other species
+#call compute_summary to sumaryse and verify splits
+
+#step two define X features Morphometrics X_Morph do this for train test and inference set
+
+morph_feature_cols_single_print = [
+        c for .columns
+        if c.startswith(("dist", "ang", "t" , "v")) and is not "trail" pd.api.types.is_numeric_dtype(df_train df_test[c])
+
+print feature colums
+
+fit scaler on train set and apply  scaler to all other sets 
+
+make feature correlation plot for all features cor plot and if you think its a food idea also heatmap
+
+#use consitent plotting stils in line with other skript 
+
+#step 3 infer with sex models and extract predictions (function)
+
+define what model or what models to use for predion
+for all datasets train test inference of all species fit with predict_all from pipline sex folder
+
+sex_features_single_print={model 1 :pred class, model 1 pred Female model 1 pred Male , model 2 pred class....} 
+#later there will bie also options for grouped sex prediction but this si further down the pipeline
+
+#start training
+#load training set
+#make a list of all unique values in train set for individual id
+#either use all train set (default) or use only subset of number of random sampled unique individuals default 10
+
+#define itteration per seciontial holout (default 1 for start but later to be ~10)
+#define function for sequential holdouts for validation sets --> aim generate differen sets of train val with differnet ratios of unique individuals in train und val set. a unique individual can only be in one set with all its raw data rows
+define sequenze of number_of_ animals_val list [2,4,6,8]
+random sample mit zurücklegen values from list of all unique individuals from train set if number of val is = or bigger than number uniqe animals in train set only sample till value that is smaller so that every sample step actually creates val splits only until next value that is  smaller than number of animals make sure to always have at least two animal in val set 
+make diktionary for each val and train id for each sequential step [again for each unique individual id it can only be either val or train per seqentz and per itteration ]
+
+#from now on for each train and val splits train validate three diffenret pipelines each pipeline must be modular and individualy be hyperparametertunable
+#pipeline 1
+step: change all values in colum "individual_id" and trail of df_train in rcv
+
+print number of rows in rcv set
+# no further steps for  pipeline 1 distance based requires no traing on test set, continued at validation
+
+#default number fatures to select pipe 1 = 16
+
+#pipe 2 and 3 100
+
+#pipline 2 supervised umap
+y_train = train_set["individual_id"]
+step: outlierremoval with outlier wraper
+step: feature selection with feature selection wraper for morphometric features
+step: add sex features to featurres space (True false)
+step:feature selection on sex features with feature selection wrapper
+step: superwised dim red with dimred wraper (only superwised default umap) y return feature emmbedings return distances euclidian distances for each point pair (if computational not to heavy) note wether distance is from same individual or from different individual #@ gtp up to you to decide what distances and how many are resonable and usefull for further analyses
+step: feature selection for distances returnd from previous step for y = same or differnet individual
+step: train classifier to predict whetehr pair is same or differnet individual
+
+#pipline 3 
+y_train = train_set["individual_id"]
+step: outlierremoval with outlier wraper
+step: feature selection with feature selection wraper for morphometric features
+step: add sex features to featurres space (True false) #if false skip to dim red step
+step:feature selection on sex features with feature selection wrapper
+step:train siamese network with triplet loss function #goal find feature emmbeddig that best minimizes distance between prints of same individual and maximise
+step:feature selection on feature embeding #@gtp only is this normal procedure othewise skip step 
+step:step: train classifier to predict whetehr pair is same or differnet individual
+
+############################################################################################################################################################################################################################
+#validation on val set preparation:
+
+#split validation set in Trails:
+load_val_set
+define: trail_size = default 10
+
+
+assign trails for each unique indivual in val set by smapeling by splitting in total number of samples of individuals / trail size
+trailid = f(individual name)_f(trail_size)_a#b#c#d....
+
+if a individual has less samples than trail size remove indivdual from val set 
+print warning that trail size is to large of "individual_id" consider reducinging trail size or try difernet sample seed
+check number of trails originating for each unique
+
+for pipeline 1
+continue: if val set has at least 2 valid unique trail values
+if not continue with next dataset
+
+for pipeline 2 and 3
+continue if val set has at least 2 valid unique trail values and both classes (same individual diffenrent individual) are present in remaining val set
+if not continue with next dataset
+
+print average number of trails per indiviudal in val set
+
+#after all sets print sum of validation steps skiped per pipeline 
+
+generate random subsamples of smaller size list[7,5,3,2] for each unique trail
+trail 
+
+trailid = f(individual name)_f(trail_size)_a_subf(subsamples)
+
+
+build  all pairs for all trails and all subsamples of trails as a pair list
+for all subsamples drop all pairs that originate from the same trail to avoid data leackage
+
+print number of trailtrailpairs created for validation
+print number of all pairs (trails und valid subsamples) in validation set
+
+add metainfo to all comparisons:
+                       {
+                            "ind_a": a, #individual_id a
+                            "ind_b": b, #individual_id b
+                            "trail_a_id": trailid,
+                            "trail_b_id": trailid,
+                            "same_individual": same_ind = a=b True,
+                            "same_sex": same_sex df[sex] a = df[sex] True else false b; if either df[sex] a or b is na or unknown then "unknwon" 
+                            "samples_a": ta, #unique df[id] datapoints as list
+                            "samples_b": tb, #unique df[id] datapoints as list
+                            "trail_size_a": size, #number of prints in trail
+                            "trail_size_b": size, #number of prints in trail
+                            "trailsize_difference": 0,  betrag length  trail a - length trail b
+                        }
+                    ) return comparisons
+
+#pipeline 1 
+for all pairs
+
+def process_pair(i: int, comp: Dict) -> List[Dict]:
+        out = []
+        ind_a, ind_b = comp["ind_a"], comp["ind_b"]
+        idx_a, idx_b = comp["samples_a"], comp["samples_b"]
+        size_a, size_b = len(idx_a), len(idx_b)
+
+        trail_a_id = comp["trail_a_id"]
+        trail_b_id = comp["trail_b_id"]
+
+
+
+        # RCV set as the complement fom train set pipeline is
+    
+        df_r = df_train # complete after names in Trail coulm and Indvidual ID coulum were changed to rcv
+
+        # labels for feature selection
+        y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
+
+
+        # 4) iterate over outlier methids (scaler is previsously done so remove if any scaling artefacts are left)
+        for out_method in outs:
+            
+                steps = []
+                if out_method: is defined 
+                    steps.append(
+                        ("outlier", OutlierCleanerTransformer(method=out_method)) otherwise skip step (default)
+                    )
+                
+                selector = FeatureSelectionTransformer(method=selection_method, k=k_max) #default forward
+                steps.append(("select", selector))
+                pipe = Pipeline(steps)
+
+                X_ab_raw = pd.concat([df_a, df_b], ignore_index=True)
+                pipe.fit(X_ab_raw, y_ab)
+                full_ranking = selector.feature_ranking_
+
+                df_a_fs = pipe.transform(df_a)
+                df_b_fs = pipe.transform(df_b)
+                df_r_fs = pipe.transform(df_r)
+
+                # ``Pipeline.transform`` may return an ``np.ndarray`` depending
+                # on the scikit-learn version. The following steps expect a
+                # ``DataFrame`` with column names, therefore convert the array
+                # back to a ``DataFrame`` if necessary.
+                if not isinstance(df_a_fs, pd.DataFrame):
+                    feat_names = selector.get_feature_names_out()
+                    df_a_fs = pd.DataFrame(
+                        df_a_fs, columns=feat_names, index=df_a.index
+                    )
+                    df_b_fs = pd.DataFrame(
+                        df_b_fs, columns=feat_names, index=df_b.index
+                    )
+                    df_r_fs = pd.DataFrame(
+                        df_r_fs, columns=feat_names, index=df_r.index
+                    )
+
+
+                # if use sexmodel is previously set true ad
+                add sex features to feature space before dim red
+
+                # 5) iterate over reducers, n_components and k_features for morphometric mach in pipeline 1 nud lda comp 2 als reducer
+                for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
+                    supervised = reducer in ("lda", )
+                    for nc in tqdm(
+                        ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False
+                    ):
+                        for k in tqdm(
+                            ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False
+                        ):
+                            sel_feats = [feat for feat, _ in full_ranking[:k]]
+
+                            da = df_a_fs[sel_feats].copy()
+                            db = df_b_fs[sel_feats].copy()
+                            dr = df_r_fs[sel_feats].copy()
+
+                            # append sex probabilities as features
+                            if use_sexmodel_prediction:
+                                add sex model features to features prior to 
+
+                            # combine and create labels
+                            arr = pd.concat([da, db, dr], ignore_index=True)
+                            y_all = np.concatenate(
+                                [
+                                    np.zeros(len(da), int),
+                                    np.ones(len(db), int),
+                                    np.full(len(dr), 2, int),
+                                ]
+                            )
+
+                            # clamp for LDA
+                            nc_eff = nc
+                            if reducer == "lda":
+                                n_cls = len(np.unique(y_all))
+                                nc_eff = min(nc, arr.shape[1], n_cls - 1)
+                                if nc_eff < 1:
+                                    if debug:
+                                        print(
+                                            f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}"
+                                        )
+                                    continue
+
+                            # Fit & Transform
+                            dr_model = DimensionalityReducerTransformer(
+                                method=reducer,
+                                n_components=nc_eff,
+                                supervised=supervised,
+                            )
+                            dr_model.fit(arr, y_all if supervised else None)
+                            coords = dr_model.transform(arr)
+
+                            ca = coords[: len(da)]
+                            cb = coords[len(da) : len(da) + len(db)]
+                            cr = coords[len(da) + len(db) :]
+
+                            cA, cB, cR = (
+                                ca.mean(axis=0),
+                                cb.mean(axis=0),
+                                cr.mean(axis=0),
+                            )
+                            dists = compute_distances(cA, cB)
+
+                            # Result-Dict
+                            pipeline_name = (
+                                f"{selection_method}"
+                                f"_{out_method or 'no_out'}"
+                                f"_{scaler_method or 'no_scale'}"
+                                f"_k{k}_{reducer}_nc{nc_eff}"
+                                f"_{'sex_on' if use_sexmodel_prediction else 'sex_off'}"
+                            )
+                            res = {
+                                "trail_a_id": comp["trail_a_id"],
+                                "trail_b_id": comp["trail_b_id"],
+                                "samples_a": idx_a,
+                                "samples_b": idx_b,
+                                "ind_a": ind_a,
+                                "ind_b": ind_b,
+                                # store as string to avoid mixed bool/object dtype
+                                "same_individual": str(comp["same_individual"]),
+                                "fold": comp["fold"],
+                                "pipeline": pipeline_name,
+                                "selection_method": selection_method,
+                                "reducer": reducer,
+                                "outlier_method": out_method,
+                                "scaler_method": scaler_method,
+                                "k_features": k,
+                                "n_components": nc_eff,
+                                "comparison_id": i,
+                                "min_observations": min(size_a, size_b),
+                                "max_observations": max(size_a, size_b),
+                                "use_sexmodel_prediction": use_sexmodel_prediction,
+                                **(
+                                    {
+                                        "avg_proba_A_0": avg_A_0,
+                                        "avg_proba_A_1": avg_A_1,
+                                        "avg_proba_B_0": avg_B_0,
+                                        "avg_proba_B_1": avg_B_1,
+                                        "avg_proba_R_0": avg_R_0,
+                                        "avg_proba_R_1": avg_R_1,
+                                    }
+                                    if use_sexmodel_prediction
+                                    else {}
+                                ),
+                                "center_a_x": float(cA[0]) if cA.size > 0 else None,
+                                "center_a_y": float(cA[1]) if cA.size > 1 else None,
+                                "center_b_x": float(cB[0]) if cB.size > 0 else None,
+                                "center_b_y": float(cB[1]) if cB.size > 1 else None,
+                                "center_r_x": float(cR[0]) if cR.size > 0 else None,
+                                "center_r_y": float(cR[1]) if cR.size > 1 else None,
+                                "coords_a_x": ca[:, 0].tolist(),
+                                "coords_a_y": (
+                                    ca[:, 1].tolist() if ca.shape[1] > 1 else []
+                                ),
+                                "coords_b_x": cb[:, 0].tolist(),
+                                "coords_b_y": (
+                                    cb[:, 1].tolist() if cb.shape[1] > 1 else []
+                                ),
+                                "coords_r_x": cr[:, 0].tolist(),
+                                "coords_r_y": (
+                                    cr[:, 1].tolist() if cr.shape[1] > 1 else []
+                                ),
+                                "selected_features": sel_feats,
+                                "selected_scores": [
+                                    score for _, score in full_ranking[:k]
+                                ],
+                            }
+                            for m, v in dists.items():
+                                res[f"dist_{m}"] = float(v)
+
+                                # if distance could not be computed (e.g. Mahalanobis without covariance)
+                                if np.isnan(v):
+                                    res[f"mean_{m}_between"] = None
+                                    res[f"median_{m}_between"] = None
+                                    res[f"mean_{m}_within_a"] = None
+                                    res[f"median_{m}_within_a"] = None
+                                    res[f"mean_{m}_within_b"] = None
+                                    res[f"median_{m}_within_b"] = None
+                                    continue
+
+                                # additional metrics: pairwise distances between A and B
+                                A = da.to_numpy()
+                                B = db.to_numpy()
+                                metric_name = "cityblock" if m == "manhattan" else m
+                                d_ab = cdist(A, B, metric=metric_name)
+                                flat_ab = d_ab.ravel()
+                                res[f"mean_{m}_between"] = float(np.mean(flat_ab))
+                                res[f"median_{m}_between"] = float(np.median(flat_ab))
+
+                                # within A
+                                if len(A) > 1:
+                                    d_aa = cdist(A, A, metric=metric_name)
+                                    iu = np.triu_indices(len(A), k=1)
+                                    flat_aa = d_aa[iu]
+                                    res[f"mean_{m}_within_a"] = float(np.mean(flat_aa))
+                                    res[f"median_{m}_within_a"] = float(
+                                        np.median(flat_aa)
+                                    )
+                                else:
+                                    res[f"mean_{m}_within_a"] = None
+                                    res[f"median_{m}_within_a"] = None
+
+                                # within B
+                                if len(B) > 1:
+                                    d_bb = cdist(B, B, metric=metric_name)
+                                    iu = np.triu_indices(len(B), k=1)
+                                    flat_bb = d_bb[iu]
+                                    res[f"mean_{m}_within_b"] = float(np.mean(flat_bb))
+                                    res[f"median_{m}_within_b"] = float(
+                                        np.median(flat_bb)
+                                    )
+                                else:
+                                    res[f"mean_{m}_within_b"] = None
+                                    res[f"median_{m}_within_b"] = None
+
+                            out.append(res)
+
+        return out
+
+
+
+def compute_overlap_jsl_style(row, p=0.5):
+    """
+    Berechnet die Überlappung analog zur JSL-Funktion:
+      - Radius A = chi_val * std(distances A zum Zentrum)
+      - Radius B = chi_val * std(distances B zum Zentrum)
+      - Überlappung, wenn Abstand Zentren <= RadiusA + RadiusB
+    """
+    # 1) Punkte einlesen
+    xa = parse_list(row['coords_a_x'])
+    ya = parse_list(row['coords_a_y'])
+    xb = parse_list(row['coords_b_x'])
+    yb = parse_list(row['coords_b_y'])
+    # 2) Validität prüfen
+    if len(xa) < 2 or len(xb) < 2 or len(xa)!=len(ya) or len(xb)!=len(yb):
+        return False
+    pts_a = np.column_stack([xa, ya])
+    pts_b = np.column_stack([xb, yb])
+    # 3) Zentren berechnen
+    mu_a = pts_a.mean(axis=0)
+    mu_b = pts_b.mean(axis=0)
+    # 4) Abstände der Punkte zu ihrem Zentrum
+    dist_a = np.linalg.norm(pts_a - mu_a, axis=1)
+    dist_b = np.linalg.norm(pts_b - mu_b, axis=1)
+    # 5) Standardabweichungen dieser Abstände (entspricht stdMat in JSL)
+    std_a = dist_a.std(ddof=1)
+    std_b = dist_b.std(ddof=1)
+    # 6) Chi-Quadrat-Faktor
+    chi_val = np.sqrt(chi2.ppf(p, df=2))
+    # 7) Radien
+    r1 = chi_val * std_a
+    r2 = chi_val * std_b
+    # 8) Abstand der Zentren
+    center_dist = np.linalg.norm(mu_a - mu_b)
+    # 9) Überlappungstest
+    return center_dist <= (r1 + r2)
+
+if rue prediction same individual if false difernet individual
+
+print confusion matrix val
+
+
+#pipline 2
+fit pipe2 train for all pairs of Valset and return similar results metrics and metadata as pipeline 1 to be comaprable
+    
+print confusion matrix pipeline 2
+
+#pipline 3
+fit pipe3 train for all pairs of Valset and return similar results metrics and metadata as pipeline 1 to be comaprable
+    
+print confusion matrix pipeline 3.
+
+
+
+
+
+
+
+
