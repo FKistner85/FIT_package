@@ -16,18 +16,27 @@ from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 from FIT_python.pipeline_sex.transform_wrapper import NumericTransformer
-from FIT_python.pipeline_sex.feature_selection_wrapper import FeatureSelectionTransformer
+from FIT_python.pipeline_sex.feature_selection_wrapper import (
+    FeatureSelectionTransformer,
+)
 from FIT_python.pipeline_sex.outlier_wrapper import OutlierCleanerTransformer
 from FIT_python.pipeline_sex.feature_scaler_wrapper import FeatureScalerTransformer
-from FIT_python.pipeline_sex.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+from FIT_python.pipeline_sex.dimensionality_reduction_wrapper import (
+    DimensionalityReducerTransformer,
+)
 from FIT_python.pipeline_sex.models import MODELS
 from FIT_python.pipeline_sex.grouped_metrics import (
     individual_accuracies,
     individual_majority_stats,
 )
-from FIT_python.pipeline_sex.sex_predict_and_visualisation import plot_hyperparam_heatmap
+from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
+    plot_hyperparam_heatmap,
+)
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
-from FIT_python.data_split_and_summary.split_utils import create_train_test_split_otter, _make_folds
+from FIT_python.data_split_and_summary.split_utils import (
+    create_train_test_split_otter,
+    _make_folds,
+)
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 from FIT_python.config import (
     RAW_DIR,
@@ -39,32 +48,40 @@ from FIT_python.config import (
 )
 
 MODEL_KEYS = [
-    "logreg_l2","logreg_l1",
-    "rf_small","rf_med","rf_large",
-    "knn_3","knn_5","knn_7",
-    "svm_linear","svm_rbf",
-    "xgb_std","xgb_hist",
-    "lgbm_std","lgbm_md10",
+    "logreg_l2",
+    "logreg_l1",
+    "rf_small",
+    "rf_med",
+    "rf_large",
+    "knn_3",
+    "knn_5",
+    "knn_7",
+    "svm_linear",
+    "svm_rbf",
+    "xgb_std",
+    "xgb_hist",
+    "lgbm_std",
+    "lgbm_md10",
     "lda",
 ]
 
 PARAM_DISTRIBUTIONS = {
-    "select__method":          [None, "forward", "lasso", "variance", "random_forest"],
-    "select__k":               [1,2,3,4,5,6,10, 20, 50,100],
-    "outlier__method":         [None, "clip"],
+    "select__method": [None, "forward", "lasso", "variance", "random_forest"],
+    "select__k": [1, 2, 3, 4, 5, 6, 10, 20, 50, 100],
+    "outlier__method": [None, "clip"],
     "outlier__lower_quantile": [0.01, 0.05],
     "outlier__upper_quantile": [0.90, 0.95],
-    "scale__method":           [None, "standard", "robust", "minmax"],
-    "reduce_pre__method":        [None, "pca", "umap"],
-    "reduce_pre__n_components":  [2, 10],
-    "reduce_pre__n_neighbors":   [5, 10, 15, 30, 50],
-    "reduce_pre__min_dist":      [0.1, 0.5],
-    "reduce_pre__whiten":        [False, True],
-    "reduce_post__method":       [None, "pca", "umap"],
+    "scale__method": [None, "standard", "robust", "minmax"],
+    "reduce_pre__method": [None, "pca", "umap"],
+    "reduce_pre__n_components": [2, 10],
+    "reduce_pre__n_neighbors": [5, 10, 15, 30, 50],
+    "reduce_pre__min_dist": [0.1, 0.5],
+    "reduce_pre__whiten": [False, True],
+    "reduce_post__method": [None, "pca", "umap"],
     "reduce_post__n_components": [2, 10],
-    "reduce_post__n_neighbors":  [5, 10, 15, 30, 50],
-    "reduce_post__min_dist":     [0.1, 0.5],
-    "reduce_post__whiten":       [False, True],
+    "reduce_post__n_neighbors": [5, 10, 15, 30, 50],
+    "reduce_post__min_dist": [0.1, 0.5],
+    "reduce_post__whiten": [False, True],
     "clf": [MODELS[k] for k in MODEL_KEYS],
 }
 
@@ -76,19 +93,29 @@ METRICS = [
 ]
 
 SCORING = {
-    "accuracy":          "accuracy",
+    "accuracy": "accuracy",
     "balanced_accuracy": "balanced_accuracy",
-    "neg_log_loss":      "neg_log_loss",
+    "neg_log_loss": "neg_log_loss",
 }
 
 PIPELINE_ORDER = [
-    "outlier__method", "outlier__lower_quantile", "outlier__upper_quantile",
-    "scale__method", "select__method", "select__k",
-    "reduce_pre__method", "reduce_pre__n_components", "reduce_pre__n_neighbors",
-    "reduce_pre__min_dist", "reduce_pre__whiten",
-    "reduce_post__method", "reduce_post__n_components", "reduce_post__n_neighbors",
-    "reduce_post__min_dist", "reduce_post__whiten",
-    "clf"
+    "outlier__method",
+    "outlier__lower_quantile",
+    "outlier__upper_quantile",
+    "scale__method",
+    "select__method",
+    "select__k",
+    "reduce_pre__method",
+    "reduce_pre__n_components",
+    "reduce_pre__n_neighbors",
+    "reduce_pre__min_dist",
+    "reduce_pre__whiten",
+    "reduce_post__method",
+    "reduce_post__n_components",
+    "reduce_post__n_neighbors",
+    "reduce_post__min_dist",
+    "reduce_post__whiten",
+    "clf",
 ]
 
 
@@ -113,14 +140,35 @@ def prepare_eurasian_otter() -> None:
     test_df.to_parquet(out_dir / "test.parquet", index=False)
     inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
-    run_summary(out_dir, RESULTS_DATA_DIR / "eurasian_otter_summary.csv", RESULTS_DATA_DIR / "eurasian_otter_fig")
+    run_summary(
+        out_dir,
+        RESULTS_DATA_DIR / "eurasian_otter_summary.csv",
+        RESULTS_DATA_DIR / "eurasian_otter_fig",
+    )
 
 
-def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> None:
+from datetime import datetime
+
+
+def run_otter_search(
+    n_iter: int = 2,
+    cv: int = 2,
+    random_state: int = 42,
+    experiment_dir: str | Path | None = None,
+) -> None:
     """Run RandomizedSearchCV for the Eurasian otter dataset."""
 
     species = "eurasian_otter"
     species_dir = SPLITS_DIR / species
+
+    if experiment_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        experiment_dir = RESULTS_DATA_DIR / f"experiment_{timestamp}"
+    experiment_dir = Path(experiment_dir)
+    data_out_dir = experiment_dir / "data"
+    fig_out_dir = experiment_dir / "figures"
+    data_out_dir.mkdir(parents=True, exist_ok=True)
+    fig_out_dir.mkdir(parents=True, exist_ok=True)
 
     df_train = (
         pd.read_parquet(species_dir / "train.parquet")
@@ -134,8 +182,10 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
     )
 
     feature_cols = [
-        c for c in df_train.columns
-        if c.startswith(("dist", "ang", "t")) and pd.api.types.is_numeric_dtype(df_train[c])
+        c
+        for c in df_train.columns
+        if c.startswith(("dist", "ang", "t"))
+        and pd.api.types.is_numeric_dtype(df_train[c])
     ]
 
     X_tr, y_tr, ids_tr = (
@@ -172,9 +222,13 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
         verbose=1,
     )
 
-    folds = search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
+    folds = (
+        search.cv
+        if isinstance(search.cv, int)
+        else getattr(search.cv, "n_splits", len(list(search.cv)))
+    )
     total_fits = search.n_iter * folds
-    base_dir = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
+    base_dir = data_out_dir / "eurasian_otter_random_search_standard_metrics"
     base_dir.mkdir(parents=True, exist_ok=True)
     for m in METRICS:
         (base_dir / f"best_{m}").mkdir(exist_ok=True)
@@ -193,9 +247,7 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
             search.fit(X_tr, y_tr)
 
     conv_msgs = [
-        str(w.message)
-        for w in warn_list
-        if issubclass(w.category, ConvergenceWarning)
+        str(w.message) for w in warn_list if issubclass(w.category, ConvergenceWarning)
     ]
 
     cv_res = search.cv_results_
@@ -218,8 +270,12 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
         fem_te, mal_te, bal_te = individual_accuracies(y_te, y_te_pred, ids_te)
         ct_tr, wr_tr, pct_tr = individual_majority_stats(y_tr, y_tr_pred, ids_tr)
         ct_te, wr_te, pct_te = individual_majority_stats(y_te, y_te_pred, ids_te)
-        fem_all, mal_all, bal_all = individual_accuracies(y_all_true, y_all_pred, ids_all)
-        ct_all, wr_all, pct_all = individual_majority_stats(y_all_true, y_all_pred, ids_all)
+        fem_all, mal_all, bal_all = individual_accuracies(
+            y_all_true, y_all_pred, ids_all
+        )
+        ct_all, wr_all, pct_all = individual_majority_stats(
+            y_all_true, y_all_pred, ids_all
+        )
 
         acc_tr = accuracy_score(y_tr, y_tr_pred)
         bal_tr = balanced_accuracy_score(y_tr, y_tr_pred)
@@ -228,14 +284,31 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
         acc_all = accuracy_score(y_all_true, y_all_pred)
         bal_all = balanced_accuracy_score(y_all_true, y_all_pred)
 
-        record.update({
-            "female_train_acc": fem_tr, "male_train_acc": mal_tr, "balanced_train_acc": bal_tr, "accuracy_train": acc_tr,
-            "female_test_acc": fem_te, "male_test_acc": mal_te, "balanced_test_acc": bal_te, "accuracy_test": acc_te,
-            "female_full_acc": fem_all, "male_full_acc": mal_all, "balanced_full_acc": bal_all, "accuracy_full": acc_all,
-            "maj_train_count": ct_tr, "maj_train_wrong": wr_tr, "maj_train_pct": pct_tr,
-            "maj_test_count": ct_te, "maj_test_wrong": wr_te, "maj_test_pct": pct_te,
-            "maj_full_count": ct_all, "maj_full_wrong": wr_all, "maj_full_pct": pct_all,
-        })
+        record.update(
+            {
+                "female_train_acc": fem_tr,
+                "male_train_acc": mal_tr,
+                "balanced_train_acc": bal_tr,
+                "accuracy_train": acc_tr,
+                "female_test_acc": fem_te,
+                "male_test_acc": mal_te,
+                "balanced_test_acc": bal_te,
+                "accuracy_test": acc_te,
+                "female_full_acc": fem_all,
+                "male_full_acc": mal_all,
+                "balanced_full_acc": bal_all,
+                "accuracy_full": acc_all,
+                "maj_train_count": ct_tr,
+                "maj_train_wrong": wr_tr,
+                "maj_train_pct": pct_tr,
+                "maj_test_count": ct_te,
+                "maj_test_wrong": wr_te,
+                "maj_test_pct": pct_te,
+                "maj_full_count": ct_all,
+                "maj_full_wrong": wr_all,
+                "maj_full_pct": pct_all,
+            }
+        )
 
         pid_parts = []
         for key in PIPELINE_ORDER:
@@ -258,7 +331,9 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
         best_pipe = clone(pipe).set_params(**best_params).fit(X_tr, y_tr)
         out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
-        print(f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}")
+        print(
+            f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}"
+        )
         best_records.append(best_record)
 
     all_csv = base_dir / "all_results.csv"
@@ -280,4 +355,31 @@ def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> No
             "mean_test_balanced_accuracy": "cv_balanced_accuracy",
         }
     )
-    plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
+    plot_hyperparam_heatmap(df_heat, fig_out_dir / "hyperparam_search")
+
+    from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
+        predict_all,
+        plot_confusion,
+        plot_quality_heatmaps,
+    )
+
+    for metric in METRICS:
+        models_dir = base_dir / f"best_{metric}"
+        csv_file = data_out_dir / f"{species}_{metric}_predictions.csv"
+        df_pred = predict_all(
+            species,
+            prefer_generic=False,
+            models_dir=models_dir,
+            csv_path=csv_file,
+        )
+        print(f"📄 Predictions for '{metric}' saved to {csv_file}")
+        conf_file = fig_out_dir / f"{metric}_confusion.png"
+        plot_confusion(df_pred, metric=metric, out_file=conf_file)
+        heat_file = fig_out_dir / f"{metric}_quality_heatmap.png"
+        plot_quality_heatmaps(
+            df_pred[df_pred["__split__"] == "test"],
+            pred_col=f"pred_{metric}_sex",
+            proba_cols=[f"pred_{metric}_proba_f", f"pred_{metric}_proba_m"],
+            title=metric,
+            out_file=heat_file,
+        )

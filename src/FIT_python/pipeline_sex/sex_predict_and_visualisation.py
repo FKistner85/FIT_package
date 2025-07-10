@@ -49,6 +49,8 @@ def predict_all(
     species: str = DEFAULT_SPECIES,
     prefer_generic: bool = False,
     include_inference: bool = True,
+    models_dir: Path | None = None,
+    csv_path: Path | None = None,
 ) -> pd.DataFrame:
     """Return dataframe with model predictions for ``species``.
 
@@ -62,7 +64,9 @@ def predict_all(
     include_inference:
         Include the ``inference`` split if the corresponding parquet exists.
     """
-    splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
+    splits_dir, models_def, csv_def = _base_paths(species, prefer_generic)
+    models_dir = models_dir or models_def
+    csv_path = csv_path or csv_def
 
     split_names = ["train", "test"]
     if include_inference and (splits_dir / "inference.parquet").exists():
@@ -82,7 +86,9 @@ def predict_all(
         clf = load(models_dir / subdir / f"{species}.joblib")
         for df in dfs.values():
             num_cols = df.select_dtypes(include=np.number).columns
-            feature_cols = [c for c in num_cols if not c.startswith("pred_") and c != "Fold"]
+            feature_cols = [
+                c for c in num_cols if not c.startswith("pred_") and c != "Fold"
+            ]
             X = df[feature_cols]
             df[f"pred_{key}_sex"] = clf.predict(X)
             proba = clf.predict_proba(X)
@@ -149,14 +155,23 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 
 # === Plots für Confusion & Inference ===
-def plot_confusion(df: pd.DataFrame) -> None:
+def plot_confusion(
+    df: pd.DataFrame,
+    metric: str | None = None,
+    out_file: str | Path | None = None,
+    caption: str | None = None,
+) -> None:
     """Plot CV vs. test confusion matrices for each model."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
         raise KeyError("DataFrame contains no prediction columns")
 
-    models = {c[len("pred_"):-len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")}
+    models = {
+        c[len("pred_") : -len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")
+    }
+    if metric is not None:
+        models = [metric]
     for mk in sorted(models):
         test_col = f"pred_{mk}_sex"
         cv_col = f"pred_{mk}_cv_sex"
@@ -178,9 +193,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
 
         cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
         if y_pred_train is not None:
-            cm_train = confusion_matrix(
-                y_true_train, y_pred_train, labels=["F", "M"]
-            )
+            cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
             fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
             mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
         else:
@@ -206,8 +219,23 @@ def plot_confusion(df: pd.DataFrame) -> None:
                 ax.set_ylabel("")
                 ax.tick_params(axis="y", labelleft=False)
 
+        from FIT_python.caption_utils import save_caption
+        from sklearn.metrics import accuracy_score
+
+        acc = accuracy_score(
+            test["sex"].map({"f": 0, "m": 1}),
+            y_pred_test,
+        )
         plt.tight_layout()
-        plt.show()
+        if out_file:
+            out_file = Path(out_file)
+            out_file.parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(out_file)
+            caption = caption or f"{mk} accuracy {acc:.1%}"
+            save_caption(out_file, caption)
+            plt.close(fig)
+        else:
+            plt.show()
 
 
 def plot_inference(df: pd.DataFrame) -> None:
@@ -380,6 +408,8 @@ def _plot_quality_heatmaps_single(
     pred_col: str,
     proba_cols: list[str],
     title: str | None = None,
+    out_file: str | Path | None = None,
+    caption: str | None = None,
 ) -> None:
     """Plot prediction quality heatmaps for a single model and split."""
 
@@ -452,8 +482,17 @@ def _plot_quality_heatmaps_single(
         ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
         ax.set_yticklabels(["Female", "Male"], rotation=0)
     # no super title so subfigures can be labelled externally
+    from FIT_python.caption_utils import save_caption
+
     plt.tight_layout()
-    plt.show()
+    if out_file:
+        out_file = Path(out_file)
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_file)
+        save_caption(out_file, caption or (title or "Quality heatmap"))
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 def plot_quality_heatmaps(
@@ -461,6 +500,7 @@ def plot_quality_heatmaps(
     pred_col: str | None = None,
     proba_cols: list[str] | None = None,
     title: str | None = None,
+    out_file: str | Path | None = None,
 ) -> None:
     """Plot prediction-quality heatmaps.
 
@@ -475,7 +515,14 @@ def plot_quality_heatmaps(
     if pred_col is not None and proba_cols is not None:
         df_sub = df.copy()
         df_sub["true_label"] = df_sub["sex"].map({"f": "F", "m": "M"})
-        _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title)
+        _plot_quality_heatmaps_single(
+            df_sub,
+            pred_col,
+            proba_cols,
+            title,
+            out_file=out_file,
+            caption=title,
+        )
         return
 
     # Automatic generation for all models and splits
