@@ -15,7 +15,7 @@ def sample_trails(
     n_windows: int,
     random_state: int,
 ) -> Dict[str, Dict[int, List[List[int]]]]:
-"""Sample diverse index subsets for each individual.
+    """Sample diverse index subsets for each individual.
 
     Parameters
     ----------

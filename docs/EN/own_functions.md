@@ -218,6 +218,20 @@ pd.DataFrame
     Subset of ``full_df`` excluding ``exclude_indices`` and with
     ``'individual_id'`` and ``'Trail'`` set to ``"RCV"``.
 
+## FIT_python.pipeline_individual_id.sequential_cv.sequential_cv_test_pairs
+Sequential cross-validation for pairwise comparisons with a local RCV complement.
+
+Steps
+-----
+1. Permute the list of animals for each repeat.
+2. Define sequential test groups of size 3, 6, 9 and 12 animals.
+3. Generate global pairings once and split them into train and test pairs per fold.
+4. For every test pair build an outlier→scale→select→reduce pipeline on
+   ``A ∪ B ∪ RCV`` where the RCV set excludes all training samples.
+5. Train a logistic regression on the distances of the training pairs and
+   evaluate accuracy, ROC‑AUC and histogram overlap on the test pairs.
+6. Aggregate mean and standard deviation of the metrics for each test size.
+
 ## FIT_python.pipeline_sex.dimensionality_reduction_wrapper.DimensionalityReducerTransformer
 Apply different dimensionality reduction techniques.
 
