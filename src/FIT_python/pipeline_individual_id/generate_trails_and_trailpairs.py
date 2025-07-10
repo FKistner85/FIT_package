@@ -9,49 +9,64 @@ from sklearn.model_selection import StratifiedKFold
 def sample_trails(
     df: pd.DataFrame,
     group_col: str,
-    mode: Literal["predefined", "window"],
-    *,
-    trails_per_animal: Optional[Dict] = None,
-    window_lengths: Optional[List[int]] = None,
-    n_windows_per_length: int = 5,
-    random_state: int = 0,
-) -> Dict[str, Dict[int, List[Tuple[int, List[int]]]]]:
-    """Return ``trails_per_animal`` for downstream pairing.
+    window_lengths: List[int],
+    N_pool: int,
+    n_windows: int,
+    random_state: int,
+) -> Dict[str, Dict[int, List[List[int]]]]:
+    """Sample diverse windows for each individual.
 
-    ``predefined`` simply returns the provided ``trails_per_animal`` structure.
-    ``window`` generates all contiguous windows of ``window_lengths`` per
-    ``group_col`` and randomly selects ``n_windows_per_length`` windows.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input data containing one row per footprint.
+    group_col : str
+        Column to group by (usually the prepared ``_group_id``).
+    window_lengths : list of int
+        Window sizes to generate.
+    N_pool : int
+        Number of windows to draw with replacement per individual and length.
+    n_windows : int
+        Number of final windows to return per individual and length.
+    random_state : int
+        Seed for the random number generator.
     """
 
     rng = np.random.default_rng(random_state)
 
-    if mode == "predefined":
-        if trails_per_animal is None:
-            raise ValueError("trails_per_animal must be provided for mode='predefined'")
-        return trails_per_animal
-
-    if mode != "window":
-        raise ValueError("mode must be 'predefined' or 'window'")
-
-    if window_lengths is None:
-        raise ValueError("window_lengths must be provided for mode='window'")
-
-    pools: Dict[str, Dict[int, List[Tuple[int, List[int]]]]] = {}
+    pools: Dict[str, Dict[int, List[List[int]]]] = {}
     for gid, grp in df.groupby(group_col):
         idxs = sorted(grp.index.tolist())
         gid = str(gid)
-        pools[gid] = {L: [] for L in window_lengths}
+        pools[gid] = {}
         for L in window_lengths:
-            windows = [idxs[i : i + L] for i in range(0, len(idxs) - L + 1)]
-            if not windows:
+            all_windows = [idxs[i : i + L] for i in range(0, len(idxs) - L + 1)]
+            if not all_windows:
+                pools[gid][L] = []
                 continue
-            choices = rng.choice(
-                len(windows),
-                size=min(n_windows_per_length, len(windows)),
-                replace=False,
-            )
-            for ci in np.asarray(choices, dtype=int):
-                pools[gid][L].append((int(ci), windows[ci]))
+            # initial pool with replacement
+            pool_idx = rng.choice(len(all_windows), size=N_pool, replace=True)
+            pool_windows = [all_windows[i] for i in pool_idx]
+
+            # precompute sets for jaccard
+            sets = [set(w) for w in pool_windows]
+            n = len(sets)
+            if n == 1:
+                diversity = np.array([0.0])
+            else:
+                diversity = np.zeros(n)
+                for i in range(n):
+                    acc = 0.0
+                    for j in range(n):
+                        if i == j:
+                            continue
+                        inter = len(sets[i] & sets[j])
+                        union = len(sets[i] | sets[j])
+                        acc += inter / union if union else 1.0
+                    diversity[i] = acc / (n - 1)
+
+            select_idx = np.argsort(diversity)[: n_windows]
+            pools[gid][L] = [pool_windows[i] for i in select_idx]
 
     return pools
 
@@ -204,7 +219,8 @@ def generate_pairwise_comparisons_from_df(
     sampling_mode: Literal["predefined", "window"] = "predefined",
     trails_per_animal: Optional[Dict] = None,
     window_lengths: Optional[List[int]] = None,
-    n_windows_per_length: int = 5,
+    N_pool: int = 500,
+    n_windows: int = 5,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Generate trail pairs with metadata.
 
@@ -240,23 +256,41 @@ def generate_pairwise_comparisons_from_df(
         for gid, orig in zip(df["_group_id"], df[id_col])
     }
 
+    rng = np.random.default_rng(random_state)
+    all_ids = list(df["_group_id"].unique())
+    if num_individuals is not None:
+        if len(all_ids) < num_individuals:
+            if strict_individuals:
+                raise ValueError(
+                    f"Dataset has only {len(all_ids)} individuals, "
+                    f"but num_individuals={num_individuals}"
+                )
+            n_pick = len(all_ids)
+        else:
+            n_pick = num_individuals
+        selected = rng.choice(all_ids, size=n_pick, replace=False)
+        df = df[df["_group_id"].isin(selected)]
+
 
     if sampling_mode == "predefined":
-        trails_per_animal = sample_trails(
-            df,
-            group_col="_group_id",
-            mode="predefined",
-            trails_per_animal=trails_per_animal,
-        )
+        if trails_per_animal is None:
+            raise ValueError("trails_per_animal must be provided for sampling_mode='predefined'")
     else:
-        trails_per_animal = sample_trails(
+        sampled = sample_trails(
             df,
             group_col="_group_id",
-            mode="window",
-            window_lengths=window_lengths,
-            n_windows_per_length=n_windows_per_length,
+            window_lengths=window_lengths or [],
+            N_pool=N_pool,
+            n_windows=n_windows,
             random_state=random_state,
         )
+        trails_per_animal = {
+            gid: {
+                L: [(i, w) for i, w in enumerate(wins)]
+                for L, wins in by_len.items()
+            }
+            for gid, by_len in sampled.items()
+        }
 
     comparisons, summary_df = build_pairwise_comparisons(
         trails_per_animal,
