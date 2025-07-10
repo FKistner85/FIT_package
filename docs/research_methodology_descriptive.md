@@ -35,7 +35,7 @@ Die Reproduzierbarkeit wird durch Caching von Zwischenergebnissen, das Speichern
 
 Abschließend lassen sich sämtliche Resultate in Tabellenform exportieren und mit früheren Untersuchungen vergleichen. So wird sichtbar, welche Schritte besonders zum Erfolg beitragen und welche Ansätze weniger robust sind.
 ## Pairwise Individual Identification Pipeline (English)
-This pipeline evaluates whether two movement trails originate from the same individual. Trails may be supplied directly or generated as sliding windows for each animal. Pairs are formed both within and across individuals, labelled accordingly and assigned to a fold based on the size of the first trail. Parameters such as the chosen window lengths determine how many pairs are generated.
+This pipeline evaluates whether two movement trails originate from the same individual. Trails may be supplied directly or generated as diverse random subsets for each animal. Pairs are formed both within and across individuals, labelled accordingly and assigned to a fold based on the size of the first trail. Parameters such as the chosen window lengths determine how many pairs are generated.
 
 Prior to pairing, each trail is normalised to account for differences in sampling rate and spatial resolution. Segments that contain too few points or that show irregular behaviour are discarded to avoid skewing the distance metrics.
 Multiple distance measures are calculated for every pair, including Euclidean, Manhattan, cosine, Chebyshev, Canberra and Bray–Curtis distances. Optionally the Mahalanobis distance can also be computed if an inverse covariance matrix is provided. These metrics capture different aspects of similarity between the trails.

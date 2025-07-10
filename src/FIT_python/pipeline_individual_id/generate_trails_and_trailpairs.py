@@ -1,5 +1,6 @@
 from itertools import combinations
 from typing import Dict, List, Optional, Tuple, Literal
+import math
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ def sample_trails(
     n_windows: int,
     random_state: int,
 ) -> Dict[str, Dict[int, List[List[int]]]]:
-    """Sample diverse windows for each individual.
+"""Sample diverse index subsets for each individual.
 
     Parameters
     ----------
@@ -23,13 +24,19 @@ def sample_trails(
     group_col : str
         Column to group by (usually the prepared ``_group_id``).
     window_lengths : list of int
-        Window sizes to generate.
+        Desired trail lengths.
     N_pool : int
-        Number of windows to draw with replacement per individual and length.
+        Number of random subsets to draw **without replacement** per
+        individual and length.
     n_windows : int
-        Number of final windows to return per individual and length.
+        Number of final subsets to return per individual and length.
     random_state : int
         Seed for the random number generator.
+
+    The function draws a pool of subsets for every ``group_col`` and
+    ``window_length``. The average Jaccard dissimilarity to all other
+    subsets in the pool is computed and the ``n_windows`` most diverse
+    subsets are returned.
     """
 
     rng = np.random.default_rng(random_state)
@@ -40,13 +47,22 @@ def sample_trails(
         gid = str(gid)
         pools[gid] = {}
         for L in window_lengths:
-            all_windows = [idxs[i : i + L] for i in range(0, len(idxs) - L + 1)]
-            if not all_windows:
+            if len(idxs) < L:
                 pools[gid][L] = []
                 continue
-            # initial pool with replacement
-            pool_idx = rng.choice(len(all_windows), size=N_pool, replace=True)
-            pool_windows = [all_windows[i] for i in pool_idx]
+
+            max_pool = math.comb(len(idxs), L)
+            if max_pool <= N_pool:
+                pool_windows = [list(c) for c in combinations(idxs, L)]
+            else:
+                seen = set()
+                pool_windows = []
+                while len(pool_windows) < N_pool:
+                    cand = tuple(sorted(rng.choice(idxs, size=L, replace=False)))
+                    if cand in seen:
+                        continue
+                    seen.add(cand)
+                    pool_windows.append(list(cand))
 
             # precompute sets for jaccard
             sets = [set(w) for w in pool_windows]
@@ -62,10 +78,11 @@ def sample_trails(
                             continue
                         inter = len(sets[i] & sets[j])
                         union = len(sets[i] | sets[j])
-                        acc += inter / union if union else 1.0
+                        sim = inter / union if union else 1.0
+                        acc += 1.0 - sim
                     diversity[i] = acc / (n - 1)
 
-            select_idx = np.argsort(diversity)[: n_windows]
+            select_idx = np.argsort(-diversity)[:n_windows]
             pools[gid][L] = [pool_windows[i] for i in select_idx]
 
     return pools
@@ -231,7 +248,7 @@ def generate_pairwise_comparisons_from_df(
     -----
     1. Create ``group_id`` from ``id_col`` or ``fallback_col``.
     2. Obtain ``trails_per_animal`` either from predefined pools or via
-       sliding-window sampling (default).
+       diverse subset sampling based on Jaccard dissimilarity (default).
     3. Build cross- and within-individual pairings.
     4. Mark ``same_individual`` and ``same_sex`` as boolean or ``"unknown"``.
     5. Apply ``StratifiedKFold`` on ``trail_size_a``.
