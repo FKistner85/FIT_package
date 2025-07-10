@@ -133,7 +133,7 @@ Steps
 -----
 1. Build ``group_id`` from ``id_col`` or ``fallback_col`` when the former is missing.
 2. Obtain ``trails_per_animal`` either from predefined pools or by sampling
-   sliding windows of given lengths.
+   diverse index subsets based on Jaccard dissimilarity.
 3. Construct all cross-individual pairs and all within-individual pairs using different windows.
 4. ``same_individual`` and ``same_sex`` mark equality or ``"unknown"``.
 5. Perform ``StratifiedKFold`` by ``trail_size_a``.

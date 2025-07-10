@@ -133,7 +133,7 @@ Steps
 -----
 1. ``group_id`` wird aus ``id_col`` oder ``fallback_col`` gebildet, wenn ersteres fehlt.
 2. ``trails_per_animal`` stammt entweder aus vorgegebenen Pools oder wird
-   per Sliding-Window-Sampling erzeugt.
+   über vielfältige Zufallsteilsets mit Jaccard-Distanz ausgewählt.
 3. Erstelle alle Cross- und Within-Individual-Paare aus unterschiedlichen Fenstern.
 4. ``same_individual`` und ``same_sex`` kennzeichnen Gleichheit oder ``"unknown"``.
 5. ``StratifiedKFold`` erfolgt nach ``trail_size_a``.
