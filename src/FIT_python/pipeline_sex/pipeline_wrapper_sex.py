@@ -11,6 +11,7 @@ import seaborn as sns
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
+from FIT_python.pipeline_sex import grouped_metrics
 from sklearn.model_selection import cross_val_score, cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
@@ -196,6 +197,7 @@ class PipelineWrapper:
         fitted pipelines as well as the best per species."""
         records: list[dict] = []
         best_acc_per_species: dict[str, float] = {}
+        summary_msgs: list[str] = []
 
         # iterate over all feature-selection variants
         fs_methods = [self.fs_method] if self.fs_method else [None]
@@ -262,6 +264,7 @@ class PipelineWrapper:
                     )
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
+                    print(f"Training {key} – {mk}")
 
                     # cross-val using balanced accuracy and out-of-fold predictions
                     try:
@@ -314,6 +317,37 @@ class PipelineWrapper:
                     fs_trans = pipe.named_steps.get("select")
                     selected = getattr(fs_trans, "selected_features_", None)
                     ranking = getattr(fs_trans, "feature_ranking_", None)
+
+                    head_msg = (
+                        f"* {key} – {mk}: "
+                        f"CV BA={cv_bal_mean:.3f if cv_bal_mean is not None else 'NA'}, "
+                        f"Test BA={test_bal_acc:.3f}, "
+                        f"n_feat={len(selected) if selected is not None else 'NA'}"
+                    )
+                    print(head_msg)
+                    summary_msgs.append(head_msg)
+                    for lbl in ("0", "1"):
+                        line = (
+                            f"  - {lbl}: p={report[lbl]['precision']:.2f}, "
+                            f"r={report[lbl]['recall']:.2f}, "
+                            f"f1={report[lbl]['f1-score']:.2f}"
+                        )
+                        print(line)
+                        summary_msgs.append(line)
+                    if "individual_id" in df_test.columns:
+                        fem_i, mal_i, bal_i = grouped_metrics.individual_accuracies(
+                            y_test.to_numpy(), y_pred, df_test["individual_id"]
+                        )
+                        id_line = (
+                            f"  - per-id BA: F={fem_i:.3f}, M={mal_i:.3f}, B={bal_i:.3f}"
+                        )
+                        print(id_line)
+                        summary_msgs.append(id_line)
+                    time_line = "  - " + ", ".join(
+                        f"{k.replace('time_', '')}={v:.2f}s" for k, v in times.items()
+                    )
+                    print(time_line)
+                    summary_msgs.append(time_line)
 
                     # record
                     rec = {
@@ -371,6 +405,10 @@ class PipelineWrapper:
         plot_hyperparam_heatmap(
             df_new, Path(FIGURES_DIR) / "hyperparam_search"
         )
+
+        print("\nSummary of runs:")
+        for msg in summary_msgs:
+            print(msg)
 
         # finale pipelines fit & dump
         for _, row in df_new.iterrows():
