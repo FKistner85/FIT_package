@@ -3,11 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from joblib import load
+import warnings
 from pathlib import Path
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
-from FIT_python.plot_style import TEST_COLORS, SEX_COLORS
+from FIT_python.plot_style import SEX_COLORS
 from FIT_python.plot_style import apply_style
 
 
@@ -80,7 +81,9 @@ def predict_all(
     for key, subdir in MODELS.items():
         clf = load(models_dir / subdir / f"{species}.joblib")
         for df in dfs.values():
-            X = df.select_dtypes(include=np.number)
+            num_cols = df.select_dtypes(include=np.number).columns
+            feature_cols = [c for c in num_cols if not c.startswith("pred_") and c != "Fold"]
+            X = df[feature_cols]
             df[f"pred_{key}_sex"] = clf.predict(X)
             proba = clf.predict_proba(X)
             df[f"pred_{key}_proba_f"] = proba[:, 0]
@@ -90,6 +93,7 @@ def predict_all(
     all_df = pd.concat(dfs.values(), ignore_index=True)
     all_df.to_csv(csv_path, index=False)
     return all_df
+
 
 def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
     """Plot a heatmap visualising mean CV accuracy across preprocessing options."""
@@ -114,7 +118,6 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
         .sort_index()
         .sort_index(axis=1)
     )
-
 
     apply_style()
     plt.figure(figsize=(6, 4))
@@ -147,24 +150,45 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 # === Plots für Confusion & Inference ===
 def plot_confusion(df: pd.DataFrame) -> None:
-    """Plot confusion matrices for all models on the train and test splits."""
+    """Plot CV vs. test confusion matrices for each model."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
         raise KeyError("DataFrame contains no prediction columns")
 
-    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
-    for col in pred_cols:
-        for split in split_order:
-            sub = df[df["__split__"] == split]
-            sub = sub[sub["sex"].isin(["f", "m"])]
-            if sub.empty:
-                continue
-            y_true = sub["sex"].map({"f": "F", "m": "M"})
-            y_pred = sub[col].map({0: "F", 1: "M"})
-            cm = confusion_matrix(y_true, y_pred, labels=["F", "M"])
+    models = {c[len("pred_"):-len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")}
+    for mk in sorted(models):
+        test_col = f"pred_{mk}_sex"
+        cv_col = f"pred_{mk}_cv_sex"
+        if test_col not in df.columns:
+            continue
 
-            plt.figure(figsize=(4, 4))
+        train = df[(df["__split__"] == "train") & df["sex"].isin(["f", "m"])]
+        test = df[(df["__split__"] == "test") & df["sex"].isin(["f", "m"])]
+        if train.empty or test.empty:
+            continue
+
+        y_true_train = train["sex"].map({"f": "F", "m": "M"})
+        y_true_test = test["sex"].map({"f": "F", "m": "M"})
+
+        y_pred_train = (
+            train[cv_col].map({0: "F", 1: "M"}) if cv_col in df.columns else None
+        )
+        y_pred_test = test[test_col].map({0: "F", 1: "M"})
+
+        cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
+        if y_pred_train is not None:
+            cm_train = confusion_matrix(
+                y_true_train, y_pred_train, labels=["F", "M"]
+            )
+            fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+            mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
+        else:
+            fig, axes = plt.subplots(1, 1, figsize=(4, 4))
+            axes = [axes]
+            mats = [(cm_test, "Test")]
+
+        for ax, (cm, title) in zip(axes, mats):
             sns.heatmap(
                 cm / cm.sum(axis=1, keepdims=True),
                 annot=True,
@@ -172,10 +196,18 @@ def plot_confusion(df: pd.DataFrame) -> None:
                 cmap="Blues",
                 xticklabels=["Female", "Male"],
                 yticklabels=["Female", "Male"],
+                ax=ax,
             )
-            plt.xlabel("Predicted")
-            plt.ylabel("True")
-            plt.show()
+            ax.set_title(title)
+            ax.set_xlabel("Predicted")
+            if ax is axes[0]:
+                ax.set_ylabel("True")
+            else:
+                ax.set_ylabel("")
+                ax.tick_params(axis="y", labelleft=False)
+
+        plt.tight_layout()
+        plt.show()
 
 
 def plot_inference(df: pd.DataFrame) -> None:
@@ -189,10 +221,9 @@ def plot_inference(df: pd.DataFrame) -> None:
 
     sub = df[df["__split__"] == "inference"]
     for col in pred_cols:
-        pivot = (
-            sub.pivot_table(index="trail", columns=col, aggfunc="size", fill_value=0)
-            .rename(columns={0: "F", 1: "M"})
-        )
+        pivot = sub.pivot_table(
+            index="trail", columns=col, aggfunc="size", fill_value=0
+        ).rename(columns={0: "F", 1: "M"})
         colors = [SEX_COLORS.get(c, "#333333") for c in pivot.columns]
         ax = pivot.plot.bar(stacked=True, figsize=(6, 3), color=colors)
         plt.xlabel("Trail")
@@ -240,12 +271,16 @@ def plot_quality(df):
             return "Low"
         return "Misclassified"
 
-    # Erstelle Heatmaps a) und b)
+    # Erstelle Heatmaps a) und b) nebeneinander
     cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
-    for tag, cols in [
-        ("a)", ["trail", "true_label"]),
-        ("b)", ["individual_id", "true_label"]),
-    ]:
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    for ax, (tag, cols) in zip(
+        axes,
+        [
+            ("a)", ["trail", "true_label"]),
+            ("b)", ["individual_id", "true_label"]),
+        ],
+    ):
         kvals = (
             df.groupby(cols, group_keys=False).apply(classify).reset_index(name="Class")
         )
@@ -267,7 +302,6 @@ def plot_quality(df):
                 v = counts.at[i, j]
                 annot.at[i, j] = f"{v}\n({v/total:.0%})" if v > 0 else ""
 
-        plt.figure(figsize=(4, 4))
         sns.heatmap(
             proportions,
             annot=annot,
@@ -277,15 +311,21 @@ def plot_quality(df):
             vmax=1,
             linewidths=0.5,
             linecolor="gray",
+            ax=ax,
         )
-        plt.title(tag, loc="left", fontweight="bold")
-        plt.xlabel("Quality")
-        plt.ylabel("True Sex")
-        # previously annotated as "(trail)" or "(animal)" on the right side of
-        # the plot. These labels caused visual artefacts in the heatmaps and have
-        # been removed.
-        plt.tight_layout()
-        plt.show()
+        ax.set_title(tag, loc="left", fontweight="bold")
+        ax.set_xlabel("Quality")
+        if ax is axes[0]:
+            ax.set_ylabel("True Sex")
+        else:
+            ax.set_ylabel("")
+            ax.tick_params(axis="y", labelleft=False)
+
+    # previously annotated as "(trail)" or "(animal)" on the right side of
+    # the plot. These labels caused visual artefacts in the heatmaps and have
+    # been removed.
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
@@ -301,9 +341,11 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     agg["sex"] = "first"
     grouped = df.groupby("individual_id").agg(agg).reset_index()
     grouped["sex_std"] = grouped["sex"].map(
-        lambda s: "Female" if str(s).lower().startswith("f")
-        else "Male" if str(s).lower().startswith("m")
-        else "Unknown"
+        lambda s: (
+            "Female"
+            if str(s).lower().startswith("f")
+            else "Male" if str(s).lower().startswith("m") else "Unknown"
+        )
     )
     palette = {
         "Female": SEX_COLORS["F"],
@@ -365,7 +407,11 @@ def _plot_quality_heatmaps_single(
     def make_annot(block: pd.DataFrame) -> pd.DataFrame:
         total = block.values.sum()
         return block.applymap(
-            lambda x: f"{int(x)}\n({int(round(x / total * 100))}%)" if total > 0 else "0\n(0%)"
+            lambda x: (
+                f"{int(x)}\n({int(round(x / total * 100))}%)"
+                if total > 0
+                else "0\n(0%)"
+            )
         )
 
     annot_corr = make_annot(counts.xs(True, level="Correct"))
@@ -416,12 +462,12 @@ def plot_quality_heatmaps(
     proba_cols: list[str] | None = None,
     title: str | None = None,
 ) -> None:
-    """Plot quality heatmaps.
+    """Plot prediction-quality heatmaps.
 
-    If ``pred_col`` and ``proba_cols`` are provided the heatmap for that
-    specific model/split is shown. If not, heatmaps for all models and the
-    ``train``/``test`` splits are generated automatically, similar to
-    :func:`plot_quality`.
+    Parameters ``pred_col`` and ``proba_cols`` can be used to display the
+    heatmap for a specific model and split.  When they are omitted, the
+    function behaves like the other plotting helpers and iterates over all
+    available models and the ``train``/``test`` splits automatically.
     """
 
     apply_style()
@@ -459,31 +505,17 @@ def plot_quality_heatmaps(
 
 
 def plot_model_quality_heatmaps(df: pd.DataFrame) -> None:
-    """Plot prediction-quality heatmaps for each best model and split."""
+    """Deprecated wrapper for :func:`plot_quality_heatmaps`.
 
-    apply_style()
+    This function now simply calls :func:`plot_quality_heatmaps` without
+    additional parameters so that all available models are plotted.  It will
+    be removed in a future version.
+    """
 
-    df = df.copy()
-    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+    warnings.warn(
+        "plot_model_quality_heatmaps is deprecated; use plot_quality_heatmaps",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
-    if not pred_cols:
-        raise KeyError("DataFrame contains no prediction columns")
-
-    split_order = [s for s in ["train", "test"] if s in df["__split__"].unique()]
-    for split in split_order:
-        for pred_col in pred_cols:
-            model = pred_col[len("pred_") : -len("_sex")]
-            proba_cols = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
-            df_sub = df[df["__split__"] == split].copy()
-            df_sub = df_sub[df_sub["sex"].isin(["f", "m"])]
-            df_sub = df_sub[df_sub[pred_col].isin([0, 1])]
-            if df_sub.empty:
-                continue
-            plot_quality_heatmaps(
-                df_sub,
-                pred_col,
-                proba_cols,
-                title=f"{model} — {split}",
-            )
-
+    plot_quality_heatmaps(df)

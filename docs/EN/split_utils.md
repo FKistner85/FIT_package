@@ -12,8 +12,10 @@ Utility functions for stratified and group-based train/test splits.
 ### stratified_individual_split
 Splits a DataFrame by individual while keeping the class distribution of the
 `stratify_col` (typically `sex`) balanced between train and test. Rows without a
-valid group or label are placed in an inference set. This approach is ideal when
-observations belong to subjects but requires enough individuals per class.
+valid group or label are placed in an inference set. If ``add_folds=True`` the
+returned training set also contains a ``Fold`` column generated via
+``StratifiedGroupKFold`` so that each individual occurs in a single fold and the
+sex ratio is preserved. This requires enough individuals per class.
 
 ### train_test_group_split
 Randomly assigns entire groups to either the training or test set without

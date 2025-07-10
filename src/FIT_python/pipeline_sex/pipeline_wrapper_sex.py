@@ -11,7 +11,8 @@ import seaborn as sns
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
-from sklearn.model_selection import cross_val_score
+from FIT_python.pipeline_sex import grouped_metrics
+from sklearn.model_selection import cross_val_score, cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
     SPLITS_DIR,
@@ -196,6 +197,7 @@ class PipelineWrapper:
         fitted pipelines as well as the best per species."""
         records: list[dict] = []
         best_acc_per_species: dict[str, float] = {}
+        summary_msgs: list[str] = []
 
         # iterate over all feature-selection variants
         fs_methods = [self.fs_method] if self.fs_method else [None]
@@ -232,14 +234,21 @@ class PipelineWrapper:
                 y_train = df_train["sex"].map({"f": 0, "m": 1})
                 y_test = df_test["sex"].map({"f": 0, "m": 1})
 
+                drop_pred_train = [c for c in df_train.columns if c.startswith("pred_")]
+                drop_pred_test = [c for c in df_test.columns if c.startswith("pred_")]
+
                 if "Fold" in df_train.columns:
-                    X_train = df_train.drop(columns=["Fold"])
+                    fold_ids = df_train["Fold"].astype(int).to_numpy()
+                    X_train = df_train.drop(columns=["Fold", *drop_pred_train])
+                    cv = PredefinedSplit(test_fold=fold_ids)
                 else:
-                    X_train = df_train
+                    X_train = df_train.drop(columns=drop_pred_train)
+                    cv = 5
+
                 if "Fold" in df_test.columns:
-                    X_test = df_test.drop(columns=["Fold"])
+                    X_test = df_test.drop(columns=["Fold", *drop_pred_test])
                 else:
-                    X_test = df_test
+                    X_test = df_test.drop(columns=drop_pred_test)
 
                 # iterate over all models
                 for mk in self.model_keys:
@@ -255,20 +264,31 @@ class PipelineWrapper:
                     )
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
+                    print(f"Training {key} – {mk}")
 
-                    # cross-val using balanced accuracy
+                    # cross-val using balanced accuracy and out-of-fold predictions
                     try:
                         bal = cross_val_score(
                             pipe,
                             X_train,
                             y_train,
-                            cv=5,
+                            cv=cv,
                             scoring="balanced_accuracy",
+                            n_jobs=1,
+                        )
+                        y_pred_cv = cross_val_predict(
+                            pipe,
+                            X_train,
+                            y_train,
+                            cv=cv,
                             n_jobs=1,
                         )
                         cv_bal_mean = float(bal.mean())
                     except Exception:
                         cv_bal_mean = None
+                        y_pred_cv = np.full(len(y_train), np.nan)
+                    # store oof predictions
+                    df_train[f"pred_{mk}_cv_sex"] = y_pred_cv
 
                     # fit & predict
                     t_start = perf_counter()
@@ -298,6 +318,37 @@ class PipelineWrapper:
                     selected = getattr(fs_trans, "selected_features_", None)
                     ranking = getattr(fs_trans, "feature_ranking_", None)
 
+                    head_msg = (
+                        f"* {key} – {mk}: "
+                        f"CV BA={cv_bal_mean:.3f if cv_bal_mean is not None else 'NA'}, "
+                        f"Test BA={test_bal_acc:.3f}, "
+                        f"n_feat={len(selected) if selected is not None else 'NA'}"
+                    )
+                    print(head_msg)
+                    summary_msgs.append(head_msg)
+                    for lbl in ("0", "1"):
+                        line = (
+                            f"  - {lbl}: p={report[lbl]['precision']:.2f}, "
+                            f"r={report[lbl]['recall']:.2f}, "
+                            f"f1={report[lbl]['f1-score']:.2f}"
+                        )
+                        print(line)
+                        summary_msgs.append(line)
+                    if "individual_id" in df_test.columns:
+                        fem_i, mal_i, bal_i = grouped_metrics.individual_accuracies(
+                            y_test.to_numpy(), y_pred, df_test["individual_id"]
+                        )
+                        id_line = (
+                            f"  - per-id BA: F={fem_i:.3f}, M={mal_i:.3f}, B={bal_i:.3f}"
+                        )
+                        print(id_line)
+                        summary_msgs.append(id_line)
+                    time_line = "  - " + ", ".join(
+                        f"{k.replace('time_', '')}={v:.2f}s" for k, v in times.items()
+                    )
+                    print(time_line)
+                    summary_msgs.append(time_line)
+
                     # record
                     rec = {
                         "species": key,
@@ -318,6 +369,13 @@ class PipelineWrapper:
                         "time_total": perf_counter() - t_start,
                     }
                     records.append(rec)
+
+                # end for mk
+
+                # persist CV predictions for this species
+                df_train.to_parquet(train_fp, index=False)
+                df_train.to_csv(species_dir / "train.csv", index=False)
+                _DATA_CACHE[key]["train"] = df_train
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
@@ -347,6 +405,10 @@ class PipelineWrapper:
         plot_hyperparam_heatmap(
             df_new, Path(FIGURES_DIR) / "hyperparam_search"
         )
+
+        print("\nSummary of runs:")
+        for msg in summary_msgs:
+            print(msg)
 
         # finale pipelines fit & dump
         for _, row in df_new.iterrows():

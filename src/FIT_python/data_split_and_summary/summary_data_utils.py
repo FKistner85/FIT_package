@@ -276,6 +276,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 def plot_split_proportions(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     """Plot fraction of footprints per split for each species."""
     from FIT_python.plot_style import apply_style
+    from FIT_python.caption_utils import save_caption
     import matplotlib.pyplot as plt
     import numpy as np
 

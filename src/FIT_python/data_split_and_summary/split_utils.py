@@ -29,11 +29,15 @@ def stratified_individual_split(
     random_state: int = 42,
     group_col: str = "individual_id",
     stratify_col: str = "sex",
+    add_folds: bool = False,
+    n_folds: int = NUM_FOLDS,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Split ``df`` by ``group_col`` while stratifying by ``stratify_col``.
     - All rows for one individual are kept together in train or test
     - Invalid or missing groups are placed into ``inference_df``
+    - Optionally assign a ``Fold`` column to ``train_df`` using
+      stratified group k-fold.
     """
     # 1) Validate arguments
     if group_col not in df.columns:
@@ -65,6 +69,13 @@ def stratified_individual_split(
     train_df     = df[df[group_col].isin(train_ids)].reset_index(drop=True)
     test_df      = df[df[group_col].isin(test_ids)].reset_index(drop=True)
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
+
+    if add_folds:
+        y_ser = train_df[stratify_col].map({"f": 0, "m": 1})
+        fold_ids, _ = _make_folds(
+            train_df, y_ser, n_splits=n_folds, group_col=group_col
+        )
+        train_df = train_df.assign(Fold=fold_ids)
 
     return train_df, test_df, inference_df
 
