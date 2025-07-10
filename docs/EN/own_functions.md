@@ -143,7 +143,7 @@ Steps
 Create trail pair comparisons with metadata:
 - ``samples_a``/``samples_b``: lists of original indices
 - ``trail_a_id``/``trail_b_id``: unique identifiers
-- ``same_individual``: boolean flag
+- ``same_individual``: stored as "True", "False" or "unknown"
 - ``fold``: stratified k-fold based on ``same_individual``
 
 ## FIT_python.pipeline_individual_id.geometric_pairwise_projection.run_all_pairwise_projections_parallel

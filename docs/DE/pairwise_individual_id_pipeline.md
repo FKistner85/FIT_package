@@ -6,6 +6,11 @@ Die Pipeline kombiniert Feature-Selektionsmethoden, Dimensionsreduktion und Dist
 
 ## Wichtige Bestandteile
 - run_all_pairwise_projections_parallel
+- run_embedding_once_pipeline
+
+### run_embedding_once_pipeline
+Berechnet die Trainings-Trails nur einmal und transformiert danach je Vergleich
+nur die Test-Spur. Hilfreich, wenn die Referenz öfter wiederverwendet wird.
 
 ## Referenzen
 - https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html
