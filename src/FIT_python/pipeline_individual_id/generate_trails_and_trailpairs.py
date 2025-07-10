@@ -1,91 +1,59 @@
 from itertools import combinations
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Literal
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 
-def sample_trails_per_animal(
+def sample_trails(
     df: pd.DataFrame,
-    id_col: str,
-    artificial_trail_size: int,
-    trail_size_list: Optional[List[int]],
-    num_individuals: Optional[int],
-    strict_individuals: bool,
-    max_trails_per_animal: Optional[int],
-    n_samples_per_trail: int,
-    random_state: int,
-    fallback_col: str,
-    use_default_trails: bool,
-) -> Tuple[Dict[str, Dict[int, List[Tuple[int, List[int]]]]], List[str]]:
-    """Sample sub-trails for every individual."""
+    group_col: str,
+    mode: Literal["predefined", "window"],
+    *,
+    trails_per_animal: Optional[Dict] = None,
+    window_lengths: Optional[List[int]] = None,
+    n_windows_per_length: int = 5,
+    random_state: int = 0,
+) -> Dict[str, Dict[int, List[Tuple[int, List[int]]]]]:
+    """Return ``trails_per_animal`` for downstream pairing.
+
+    ``predefined`` simply returns the provided ``trails_per_animal`` structure.
+    ``window`` generates all contiguous windows of ``window_lengths`` per
+    ``group_col`` and randomly selects ``n_windows_per_length`` windows.
+    """
 
     rng = np.random.default_rng(random_state)
 
-    if fallback_col not in df.columns:
-        raise ValueError(f"fallback column '{fallback_col}' not found")
+    if mode == "predefined":
+        if trails_per_animal is None:
+            raise ValueError("trails_per_animal must be provided for mode='predefined'")
+        return trails_per_animal
 
-    df = df.copy()
-    df["_group_id"] = (
-        df[id_col]
-        .where(df[id_col].notna() & (df[id_col] != "unknown"), df[fallback_col])
-        .astype(str)
-    )
+    if mode != "window":
+        raise ValueError("mode must be 'predefined' or 'window'")
 
-    all_ids = list(df["_group_id"].unique())
-    if num_individuals is not None:
-        if strict_individuals and len(all_ids) < num_individuals:
-            raise ValueError(
-                f"{len(all_ids)} Individuen vorhanden, aber num_individuals={num_individuals} verlangt."
+    if window_lengths is None:
+        raise ValueError("window_lengths must be provided for mode='window'")
+
+    pools: Dict[str, Dict[int, List[Tuple[int, List[int]]]]] = {}
+    for gid, grp in df.groupby(group_col):
+        idxs = sorted(grp.index.tolist())
+        gid = str(gid)
+        pools[gid] = {L: [] for L in window_lengths}
+        for L in window_lengths:
+            windows = [idxs[i : i + L] for i in range(0, len(idxs) - L + 1)]
+            if not windows:
+                continue
+            choices = rng.choice(
+                len(windows),
+                size=min(n_windows_per_length, len(windows)),
+                replace=False,
             )
-        n_pick = min(len(all_ids), num_individuals)
-        if n_pick < len(all_ids):
-            all_ids = rng.choice(all_ids, size=n_pick, replace=False).tolist()
+            for ci in np.asarray(choices, dtype=int):
+                pools[gid][L].append((int(ci), windows[ci]))
 
-    if use_default_trails:
-        trail_indices = {
-            (ind, tname): grp.index.tolist()
-            for (ind, tname), grp in df.groupby(["_group_id", fallback_col])
-            if ind in all_ids
-        }
-        if trail_size_list is None:
-            trail_size_list = sorted({len(idxs) for idxs in trail_indices.values()})
-    else:
-        if trail_size_list is None:
-            raise ValueError(
-                "trail_size_list darf nur None sein, wenn use_default_trails=True"
-            )
-
-    trails_per_animal: Dict[str, Dict[int, List[Tuple[int, List[int]]]]] = {
-        ind: {size: [] for size in trail_size_list} for ind in all_ids
-    }
-
-    if use_default_trails:
-        for (ind, _), idxs in trail_indices.items():
-            L = len(idxs)
-            for size in trail_size_list:
-                if size <= L:
-                    pool = trails_per_animal[ind][size]
-                    for rep in range(n_samples_per_trail):
-                        if max_trails_per_animal is None or len(pool) < max_trails_per_animal:
-                            sub = rng.choice(idxs, size=size, replace=False).tolist()
-                            pool.append((rep, sub))
-    else:
-        for ind in all_ids:
-            idxs = df.index[df["_group_id"] == ind].tolist()
-            rng.shuffle(idxs)
-            chunks = [idxs[i:i + artificial_trail_size] for i in range(0, len(idxs), artificial_trail_size)]
-            for chunk_idx, chunk in enumerate(chunks):
-                for size in trail_size_list:
-                    if len(chunk) >= size:
-                        pool = trails_per_animal[ind][size]
-                        for rep in range(n_samples_per_trail):
-                            if max_trails_per_animal is None or len(pool) < max_trails_per_animal:
-                                sub = rng.choice(chunk, size=size, replace=False).tolist()
-                                pool.append((chunk_idx, sub))
-
-    return trails_per_animal, all_ids
+    return pools
 
 
 def build_pairwise_comparisons(
@@ -231,20 +199,24 @@ def generate_pairwise_comparisons_from_df(
     n_folds: int = 3,
     random_state: int = 0,
     fallback_col: str = "trail",
-    use_default_trails: bool = False
+    use_default_trails: bool = False,
+    *,
+    sampling_mode: Literal["predefined", "window"] = "predefined",
+    trails_per_animal: Optional[Dict] = None,
+    window_lengths: Optional[List[int]] = None,
+    n_windows_per_length: int = 5,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Generate trail pairs with metadata.
 
-    1) Erzeuge group_id = individual_id, bzw. wenn NaN/unknown dann fallback trail.
-    2) Sample pro group_id nicht-überlappende Chunks der Länge chunk_size,
-       daraus bis zu max_trails_per_animal Trails jeder Länge in trail_size_list.
-    3) Baue alle Cross-Individual-Paare UND alle Within-Individual, cross-chunk Paare.
-    4) same_individual = True/False, oder "unknown" wenn eine Seite fallback benutzt.
-    5) same_sex = True/False/"unknown" analog.
-    6) StratifiedKFold nach trail_size_a.
-    7) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
+    1) Erzeuge ``group_id`` aus ``id_col`` bzw. ``fallback_col``.
+    2) Erzeuge ``trails_per_animal`` entweder aus vorgegebenen Pools oder per
+       Sliding-Window-Sampling.
+    3) Baue alle Cross- und Within-Individual-Paare.
+    4) ``same_individual`` und ``same_sex`` markieren Gleichheit oder
+       "unknown".
+    5) ``StratifiedKFold`` nach ``trail_size_a``.
+    6) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
     """
-    rng = np.random.default_rng(random_state)
     df = df.copy()
 
     # --- 0) group_id + sex_map + fallback_map ---
@@ -269,19 +241,22 @@ def generate_pairwise_comparisons_from_df(
     }
 
 
-    trails_per_animal, all_ids = sample_trails_per_animal(
-        df,
-        id_col,
-        artificial_trail_size,
-        trail_size_list,
-        num_individuals,
-        strict_individuals,
-        max_trails_per_animal,
-        n_samples_per_trail,
-        random_state,
-        fallback_col,
-        use_default_trails,
-    )
+    if sampling_mode == "predefined":
+        trails_per_animal = sample_trails(
+            df,
+            group_col="_group_id",
+            mode="predefined",
+            trails_per_animal=trails_per_animal,
+        )
+    else:
+        trails_per_animal = sample_trails(
+            df,
+            group_col="_group_id",
+            mode="window",
+            window_lengths=window_lengths,
+            n_windows_per_length=n_windows_per_length,
+            random_state=random_state,
+        )
 
     comparisons, summary_df = build_pairwise_comparisons(
         trails_per_animal,

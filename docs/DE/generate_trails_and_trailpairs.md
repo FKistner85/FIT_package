@@ -11,4 +11,4 @@ Das Modul dient dazu, Bewegungsabläufe in vergleichbare Abschnitte zu zerlegen 
 - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html
 
 ## Annahmen und Einschränkungen
-Verwendet zufällige Auswahl von Segmenten; die Ergebnisse enthalten Zusammenfassungsstatistiken.
+Trails können direkt vorgegeben oder per Sliding-Window zufällig ausgewählt werden; die Ergebnisse enthalten Zusammenfassungsstatistiken.
