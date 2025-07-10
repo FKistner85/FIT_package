@@ -260,7 +260,8 @@ def run_all_pairwise_projections_parallel(
                                 "samples_b": idx_b,
                                 "ind_a": ind_a,
                                 "ind_b": ind_b,
-                                "same_individual": comp["same_individual"],
+                                # store as string to avoid mixed bool/object dtype
+                                "same_individual": str(comp["same_individual"]),
                                 "fold": comp["fold"],
                                 "pipeline": pipeline_name,
                                 "selection_method": selection_method,
@@ -474,7 +475,8 @@ def run_embedding_once_pipeline(
             "trail_b_id": tid_b,
             "ind_a": comp["ind_a"],
             "ind_b": comp["ind_b"],
-            "same_individual": comp.get("same_individual"),
+            # ensure consistent dtype across comparisons
+            "same_individual": str(comp.get("same_individual")),
         }
         for m, v in dists.items():
             res[f"dist_{m}"] = float(v)

@@ -123,8 +123,10 @@ def build_pairwise_comparisons(
                     )
 
     for ind in all_ids:
-        same_ind = True
-        same_sex = True
+        # use string values to ensure consistent dtype across the column
+        # (cross-individual comparisons use "True"/"False" strings)
+        same_ind = "True"
+        same_sex = "True"
 
         all_trails = [
             (size, ci, tr)
@@ -190,7 +192,12 @@ def build_pairwise_comparisons(
     sd_same = float(np.std(same_counts, ddof=1)) if len(same_counts) > 1 else 0.0
     avg_diff = float(np.mean(diff_counts))
     sd_diff = float(np.std(diff_counts, ddof=1)) if len(diff_counts) > 1 else 0.0
-    ratio = float(comp_df.same_individual.eq(True).sum() / max(1, comp_df.same_individual.eq(False).sum()))
+    # ``same_individual`` is stored as the strings "True", "False" or "unknown".
+    # Count the occurrences accordingly for the summary statistics.
+    ratio = float(
+        (comp_df.same_individual == "True").sum() /
+        max(1, (comp_df.same_individual == "False").sum())
+    )
 
     summary_df.loc[summary_df.sub_size == "Total", [
         "avg_comp_per_ind_same",
