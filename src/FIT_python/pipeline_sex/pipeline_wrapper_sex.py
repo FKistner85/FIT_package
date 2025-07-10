@@ -206,6 +206,7 @@ class PipelineWrapper:
                 # iterate over all models
                 for mk in self.model_keys:
                     model = MODELS[mk]
+                    print(f"Training {key} – {mk}...")
                     steps = get_pipeline_steps(
                         fs_method=fs_m, fs_k=self.fs_k,
                         impute_method=self.impute_method,
@@ -251,6 +252,36 @@ class PipelineWrapper:
                     selected     = getattr(fs_trans, "selected_features_", None)
                     ranking      = getattr(fs_trans, "feature_ranking_", None)
 
+                    # concise printout for Markdown reports
+                    cv_str = f"{cv_bal_mean:.3f}" if cv_bal_mean is not None else "NA"
+                    n_feat = len(selected) if isinstance(selected, list) else "NA"
+                    print(f"* {key} – {mk}: CV BA={cv_str}, Test BA={test_bal_acc:.3f}, n_feat={n_feat}")
+                    for lbl in ["0", "1", "accuracy", "macro avg", "weighted avg"]:
+                        if lbl not in report:
+                            continue
+                        if lbl == "accuracy":
+                            print(f"  - {lbl}: {report[lbl]:.3f}")
+                        else:
+                            d = report[lbl]
+                            print(
+                                "  - {}: p={:.3f}, r={:.3f}, f1={:.3f}".format(
+                                    lbl, d["precision"], d["recall"], d["f1-score"]
+                                )
+                            )
+                    if "individual_id" in df_test.columns:
+                        from . import grouped_metrics
+
+                        fem, mal, bal = grouped_metrics.individual_accuracies(
+                            y_test.values, y_pred, df_test["individual_id"].values
+                        )
+                        print(
+                            f"  - indiv: f={fem:.3f}, m={mal:.3f}, bal={bal:.3f}"
+                        )
+                    times_line = ", ".join(
+                        f"{k}={v:.2f}s" for k, v in times.items()
+                    )
+                    print(f"  - {times_line}")
+
                     # record
                     rec = {
                         "species":              key,
@@ -276,6 +307,19 @@ class PipelineWrapper:
         df_new  = pd.DataFrame(records)
         raw_out = Path(RESULTS_DATA_DIR) / "raw_results.csv"
         df_new.to_csv(raw_out, mode='a', header=not raw_out.exists(), index=False)
+
+        # final summary printout
+        for _, row in df_new.iterrows():
+            sel = row["selected_features"]
+            n_feat = len(sel) if isinstance(sel, list) else "NA"
+            cv_val = (
+                f"{row['cv_balanced_accuracy']:.3f}"
+                if row["cv_balanced_accuracy"] is not None
+                else "NA"
+            )
+            print(
+                f"* {row['species']} – {row['model']}: CV BA={cv_val}, Test BA={row['test_balanced_accuracy']:.3f}, n_feat={n_feat}"
+            )
 
         # finale pipelines fit & dump
         for _, row in df_new.iterrows():
