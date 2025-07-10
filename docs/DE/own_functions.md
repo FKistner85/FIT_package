@@ -131,14 +131,13 @@ Generate all pairwise trail comparisons.
 
 Steps
 -----
-1. Build ``group_id`` equal to ``individual_id`` or ``fallback_col`` if the former is missing.
-2. For each ``group_id`` sample non-overlapping chunks of length ``chunk_size``
-   and create trails of lengths given in ``trail_size_list``.
-3. Construct all cross-individual pairs and all within-individual cross-chunk pairs.
-4. ``same_individual`` is ``True``/``False`` or ``"unknown"`` when a fallback id is used.
-5. ``same_sex`` behaves analogously.
-6. Perform ``StratifiedKFold`` by ``trail_size_a``.
-7. Produce a summary table including average and standard deviation of pair counts.
+1. ``group_id`` wird aus ``id_col`` oder ``fallback_col`` gebildet, wenn ersteres fehlt.
+2. ``trails_per_animal`` stammt entweder aus vorgegebenen Pools oder wird
+   per Sliding-Window-Sampling erzeugt.
+3. Erstelle alle Cross- und Within-Individual-Paare aus unterschiedlichen Fenstern.
+4. ``same_individual`` und ``same_sex`` kennzeichnen Gleichheit oder ``"unknown"``.
+5. ``StratifiedKFold`` erfolgt nach ``trail_size_a``.
+6. Eine Summary-Tabelle zeigt Mittelwert und Standardabweichung der Pair-Anzahl.
 
 ## FIT_python.pipeline_individual_id.geometric_pairwise_projection.generate_pairwise_comparisons_from_df
 Create trail pair comparisons with metadata:

@@ -7,16 +7,15 @@ This document summarises the code found in `src/FIT_python/pipeline_individual_i
 The function `generate_pairwise_comparisons_from_df` in `generate_trails_and_trailpairs.py` creates all necessary pairings.  Its docstring outlines the steps:
 
 ```
-1) Erzeuge group_id = individual_id, bzw. wenn NaN/unknown dann fallback trail.
-2) Sample pro group_id nicht-überlappende Chunks der Länge chunk_size,
-   daraus bis zu max_trails_per_animal Trails jeder Länge in trail_size_list.
-3) Baue alle Cross-Individual-Paare UND alle Within-Individual, cross-chunk Paare.
-4) same_individual = True/False, oder "unknown" wenn eine Seite fallback benutzt.
-5) same_sex = True/False/"unknown" analog.
-6) StratifiedKFold nach trail_size_a.
-7) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
+1) Erzeuge `group_id` aus `id_col` bzw. `fallback_col`.
+2) Erzeuge `trails_per_animal` entweder aus vorgegebenen Pools oder per
+   Sliding‑Window-Sampling.
+3) Baue alle Cross- und Within-Individual-Paare.
+4) `same_individual` und `same_sex` markieren Gleichheit oder "unknown".
+5) `StratifiedKFold` nach `trail_size_a`.
+6) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
 ```
-【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L23-L42】
+【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L209-L218】
 
 Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual`, `same_sex`, trail sizes and the assigned fold.  A summary table records the number of animals and trails per length. The folds are assigned using `StratifiedKFold` over the first trail size, as shown around lines 153‑161.【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L153-L161】
 
