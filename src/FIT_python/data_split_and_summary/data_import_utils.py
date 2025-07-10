@@ -97,3 +97,37 @@ def sanitize_labels(
         df_clean[col] = df_clean[col].str.replace(r"\W+", '_', regex=True)
         df_clean[col] = df_clean[col].map(mapping).fillna(df_clean[col])
     return df_clean
+
+def load_and_prep_df_individual(species: str, splits_dir: Path) -> pd.DataFrame:
+    """
+    Lädt das Train-Parquet für eine Spezies, filtert nur Männchen/Weibchen
+    und entfernt die Fold-Spalte, falls vorhanden.
+    """
+    fp = splits_dir / species / "train.parquet"
+    df = pd.read_parquet(fp)
+    df = df.drop(columns=["Fold"], errors="ignore")
+    return df
+
+def get_feature_cols(df: pd.DataFrame) -> list[str]:
+    """
+    Wählt automatisch die numerischen Feature-Spalten:
+    - Wenn Spalten mit Prefix 'dist', 'ang' oder 't' vorhanden sind,
+      werden nur diese numerischen Spalten genommen.
+    - Sonst alle numerischen Spalten ab dem 6. Column-Index.
+    """
+    # Check: gibt es spezialisierte Prefix-Spalten?
+    prefixes = ("dist", "ang", "t")
+    has_prefix_cols = any(col.startswith(prefixes) for col in df.columns)
+    
+    if has_prefix_cols:
+        # Spezialfall: nimm nur Prefix-Spalten
+        return [
+            c for c in df.columns
+            if c.startswith(prefixes) and pd.api.types.is_numeric_dtype(df[c])
+        ]
+    else:
+        # Standardfall: alle numerischen ab Index 5
+        return [
+            c for c in df.columns[5:]
+            if pd.api.types.is_numeric_dtype(df[c])
+        ]
