@@ -205,18 +205,14 @@ def build_pairwise_comparisons(
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
     id_col: str = "individual_id",
-    artificial_trail_size: int = 10,
     trail_size_list: Optional[List[int]] = None,
     num_individuals: Optional[int] = None,
     strict_individuals: bool = False,
-    max_trails_per_animal: Optional[int] = None,
-    n_samples_per_trail: int = 1,
     n_folds: int = 3,
     random_state: int = 0,
     fallback_col: str = "trail",
-    use_default_trails: bool = False,
     *,
-    sampling_mode: Literal["predefined", "window"] = "predefined",
+    sampling_mode: Literal["predefined", "window"] = "window",
     trails_per_animal: Optional[Dict] = None,
     window_lengths: Optional[List[int]] = None,
     N_pool: int = 500,
@@ -224,14 +220,15 @@ def generate_pairwise_comparisons_from_df(
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Generate trail pairs with metadata.
 
-    1) Erzeuge ``group_id`` aus ``id_col`` bzw. ``fallback_col``.
-    2) Erzeuge ``trails_per_animal`` entweder aus vorgegebenen Pools oder per
-       Sliding-Window-Sampling.
-    3) Baue alle Cross- und Within-Individual-Paare.
-    4) ``same_individual`` und ``same_sex`` markieren Gleichheit oder
-       "unknown".
-    5) ``StratifiedKFold`` nach ``trail_size_a``.
-    6) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
+    Steps
+    -----
+    1. Create ``group_id`` from ``id_col`` or ``fallback_col``.
+    2. Obtain ``trails_per_animal`` either from predefined pools or via
+       sliding-window sampling (default).
+    3. Build cross- and within-individual pairings.
+    4. Mark ``same_individual`` and ``same_sex`` as boolean or ``"unknown"``.
+    5. Apply ``StratifiedKFold`` on ``trail_size_a``.
+    6. Return a summary table with per-length and total statistics.
     """
     df = df.copy()
 
@@ -272,14 +269,14 @@ def generate_pairwise_comparisons_from_df(
         df = df[df["_group_id"].isin(selected)]
 
 
-    if sampling_mode == "predefined":
-        if trails_per_animal is None:
-            raise ValueError("trails_per_animal must be provided for sampling_mode='predefined'")
-    else:
+    if sampling_mode == "predefined" and trails_per_animal is None:
+        sampling_mode = "window"
+
+    if sampling_mode == "window":
         sampled = sample_trails(
             df,
             group_col="_group_id",
-            window_lengths=window_lengths or [],
+            window_lengths=window_lengths or [10],
             N_pool=N_pool,
             n_windows=n_windows,
             random_state=random_state,
