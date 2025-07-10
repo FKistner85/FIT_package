@@ -60,7 +60,7 @@ def run_all_pairwise_projections_parallel(
        precompute ``predict_proba``. ``sexmodel_path`` must point to a valid ``.joblib`` file.
     1. Clean the base DataFrame.
     2. Apply pipeline steps: outlier cleaning and feature scaling.
-    3. Perform feature selection once with ``k_max``.
+    3. Perform feature selection once with ``k_max`` on the **scaled** data.
     4. Use an RCV set as the complement.
     5. Extract and average sex probabilities.
     6. For each combination of ``outlier``, ``scaler``, ``reducer``, ``n_components`` and ``k``:
@@ -368,3 +368,117 @@ def run_all_pairwise_projections_parallel(
 
     # flatten nested list and return
     return [row for group in nested for row in group]
+
+
+def _build_embedding_pipeline(
+    df_train: pd.DataFrame,
+    feature_cols: List[str],
+    *,
+    scaler_method: Optional[str] = None,
+    selection_method: str = "forward",
+    reducer: str = "lda",
+    n_components: int = 2,
+    k_features: int = 15,
+    outlier_method: Optional[str] = None,
+    random_state: int = 0,
+) -> Pipeline:
+    """Fit a scaler→selector→reducer pipeline on the training data."""
+
+    df_train = df_train.copy()
+    df_train[feature_cols] = df_train[feature_cols].apply(pd.to_numeric, errors="coerce")
+    X = df_train[feature_cols]
+    y = df_train.get("individual_id")
+
+    steps = []
+    if outlier_method:
+        steps.append(("outlier", OutlierCleanerTransformer(method=outlier_method)))
+    if scaler_method:
+        steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
+
+    selector = FeatureSelectionTransformer(method=selection_method, k=k_features, random_state=random_state)
+    steps.append(("select", selector))
+
+    supervised = reducer in ("lda", "umap")
+    steps.append(
+        (
+            "reduce",
+            DimensionalityReducerTransformer(
+                method=reducer, n_components=n_components, supervised=supervised
+            ),
+        )
+    )
+
+    pipe = Pipeline(steps)
+    pipe.fit(X, y if selection_method or supervised else None)
+    return pipe
+
+
+def run_embedding_once_pipeline(
+    comparisons: List[Dict],
+    df: pd.DataFrame,
+    feature_cols: List[str],
+    *,
+    k_features: int = 15,
+    reducer: str = "lda",
+    selection_method: str = "forward",
+    n_components: int = 2,
+    outlier_method: Optional[str] = None,
+    scaler_method: Optional[str] = None,
+    debug: bool = False,
+) -> List[Dict]:
+    """Embed all training trails once and compare to each test trail."""
+
+    # collect sample indices per trail
+    def _collect(comps: List[Dict], key_id: str, key_samples: str) -> dict[str, List[int]]:
+        mapping: dict[str, set[int]] = {}
+        for c in comps:
+            tid = c[key_id]
+            mapping.setdefault(tid, set()).update(c[key_samples])
+        return {tid: sorted(idxs) for tid, idxs in mapping.items()}
+
+    train_map = _collect(comparisons, "trail_b_id", "samples_b")
+    test_map = _collect(comparisons, "trail_a_id", "samples_a")
+
+    train_idx = sorted({i for idxs in train_map.values() for i in idxs})
+    df_base = df.copy()
+    df_base[feature_cols] = df_base[feature_cols].apply(pd.to_numeric, errors="coerce")
+
+    pipe = _build_embedding_pipeline(
+        df_base.loc[train_idx],
+        feature_cols,
+        scaler_method=scaler_method,
+        selection_method=selection_method,
+        reducer=reducer,
+        n_components=n_components,
+        k_features=k_features,
+        outlier_method=outlier_method,
+    )
+
+    # compute embeddings for training trails
+    E_train: dict[str, np.ndarray] = {}
+    for tid, idxs in train_map.items():
+        emb = pipe.transform(df_base.loc[idxs, feature_cols])
+        E_train[tid] = emb.mean(axis=0)
+
+    results: List[Dict] = []
+    for comp in comparisons:
+        tid_a = comp["trail_a_id"]
+        tid_b = comp["trail_b_id"]
+        da = df_base.loc[test_map[tid_a], feature_cols]
+        ea = pipe.transform(da).mean(axis=0)
+        eb = E_train[tid_b]
+        dists = compute_distances(ea, eb)
+
+        res = {
+            "trail_a_id": tid_a,
+            "trail_b_id": tid_b,
+            "ind_a": comp["ind_a"],
+            "ind_b": comp["ind_b"],
+            "same_individual": comp.get("same_individual"),
+        }
+        for m, v in dists.items():
+            res[f"dist_{m}"] = float(v)
+        results.append(res)
+
+    return results
+
