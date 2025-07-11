@@ -53,7 +53,7 @@ def prepare_all_splits(csv_fp: Path) -> None:
     # 4) Fold-Spalte ergänzen, falls fehlt
     if "fold" not in train_df.columns:
         # stratifiziert nach sex
-        y_train = train_df["sex"].map({"F": 0, "M": 1})
+        y_train = train_df["sex"].map({"f": 0, "m": 1})
         folds, _ = _make_folds(
             train_df,
             y_train,

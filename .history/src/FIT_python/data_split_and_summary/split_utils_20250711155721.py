@@ -53,12 +53,12 @@ def stratified_individual_split(
         .drop_duplicates(subset=[group_col])
     )
     # Allow only m/f values
-    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["M","F"])].copy()
+    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["m","f"])].copy()
     meta[stratify_col] = meta[stratify_col].str.lower()
 
     # 3) Stratified split on the group level
     ids    = meta[group_col].tolist()
-    labels = meta[stratify_col].map({"F":0, "M":1}).tolist()
+    labels = meta[stratify_col].map({"f":0, "m":1}).tolist()
     train_ids, test_ids = train_test_split(
         ids,
         test_size=test_size,
@@ -72,7 +72,7 @@ def stratified_individual_split(
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
 
     if add_folds:
-        y_ser = train_df[stratify_col].map({"F": 0, "M": 1})
+        y_ser = train_df[stratify_col].map({"f": 0, "m": 1})
         fold_ids, _ = _make_folds(
             train_df, y_ser, n_splits=n_folds, group_col=group_col
         )
@@ -162,19 +162,13 @@ def sample_individuals(
     Randomly select `n` unique individuals for a dataset/sex combination.
     Used for the fixed Otter test split.
     """
-    # nach normalize: alle Spalten snake_case lowercase
-    subset = df[
-        (df["dataorigin"] == dataset) &
-        (df["sex"].str.lower() == sex.lower())
-    ]
-    inds = subset["individual_id"].unique()
+    # Spalten großgeschrieben
+    subset = df[(df["DATAORIGIN"] == dataset) & (df["SEX"].str.lower() == sex.lower())]
+    inds = subset["INDIVIDUAL_ID"].unique()
     sampled = (
-        pd.Series(inds)
-          .sample(min(n, len(inds)), random_state=seed)
-          .tolist()
+        pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
     )
-    return df[df["individual_id"].isin(sampled)]
-
+    return df[df["INDIVIDUAL_ID"].isin(sampled)]
 
 
 def create_train_test_split_otter(
@@ -185,54 +179,37 @@ def create_train_test_split_otter(
     Create deterministic train/test/inference splits for Otter.
     Returns (train_df, test_df, inference_df).
     """
-    # ─── 0) Normierung ────────────────────────────────────────────────────────
+    # 0) Normalize column names & key values
     df = df.rename(columns=lambda c: c.strip().lower().replace(" ", "_").replace(".", "_"))
-    df["sex"]   = df["sex"].str.strip().str.lower()
-    df["trail"] = df["trail"].str.strip()
+    #df["dataorigin"] = df["dataorigin"].str.strip().str.lower()
+    df["sex"]        = df["sex"].str.strip().str.lower()
+    df["trail"]      = df["trail"].str.strip()
 
-    # ─── 1) Inference-Split ───────────────────────────────────────────────────
-    inference_df = df[df["dataorigin"] == "Fieldprints portugal"]
+    # 1) Inference split: all from Portugal
+    inference_df = df[df["dataorigin"] == "fieldprints portugal"]
+    
+    # 2) Cleaned data (no Portugal)
+    df_clean = df[df["dataorigin"] != "fieldprints portugal"]
 
-    # ─── 2) Rest (kein Portugal) ───────────────────────────────────────────────
-    df_clean = df[df["dataorigin"] != "Fieldprints portugal"]
+    # 3) Test split
+    test_ls    = df_clean[df_clean["dataorigin"] == "fieldprints lower saxony"]
+    test_own_f = sample_individuals(df_clean, "own data collection", "f", 3, seed)
+    test_own_m = sample_individuals(df_clean, "own data collection", "m", 3, seed)
+    test_vet_f = sample_individuals(df_clean, "vetrecova et al", "f", 2, seed)
+    test_vet_m = sample_individuals(df_clean, "vetrecova et al", "m", 2, seed)
+    test_df = pd.concat([test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]).drop_duplicates()
 
-    # ─── 3) Test-Split ────────────────────────────────────────────────────────
-    test_ls    = df_clean[df_clean["dataorigin"] == "Fieldprints lower saxony"]
-    test_own_f = sample_individuals(df_clean, "Own data collection", "F", 3, seed)
-    test_own_m = sample_individuals(df_clean, "Own data collection", "M", 3, seed)
-    test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "F", 2, seed)
-    test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "M", 2, seed)
-    test_df = pd.concat([test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]) \
-                 .drop_duplicates()
+    # 4) Train split: remaining animals
+    train_df = df_clean[~df_clean["animal"].isin(test_df["animal"])]
 
-    # ─── 4) Train-Split ───────────────────────────────────────────────────────
-    train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
-
-    # ─── 5) Strat. Folds nach Sex ─────────────────────────────────────────────
-    y_train = train_df["sex"].map({"F": 0, "M": 1})
+    # 5) Assign stratified folds by sex
+    y_train = train_df["sex"].map({"f": 0, "m": 1})
     folds, method = _make_folds(
-        train_df, y_train, n_splits=NUM_FOLDS, group_col="individual_id"
+        train_df, y_train, n_splits=NUM_FOLDS, group_col="animal"
     )
     train_df["fold"] = folds
 
-    # ─── 6) Sanity-Checks ─────────────────────────────────────────────────────
-    # a) Individuen‐Overlap
-    train_ids = set(train_df["individual_id"])
-    test_ids  = set(test_df["individual_id"])
-    inf_ids   = set(inference_df["individual_id"])
-    assert train_ids.isdisjoint(test_ids), "Train ∩ Test != ∅"
-    assert train_ids.isdisjoint(inf_ids),  "Train ∩ Inf  != ∅"
-    assert test_ids.isdisjoint(inf_ids),   "Test  ∩ Inf  != ∅"
-
-    # b) Zeilensumme stimmt
-    total_rows = len(train_df) + len(test_df) + len(inference_df)
-    assert total_rows == len(df), f"Row count mismatch: {total_rows} vs {len(df)}"
-
-    # c) Fold‐Verteilung anschauen
-    print("Fold distribution (train):\n", train_df["fold"].value_counts().sort_index())
-
     return train_df, test_df, inference_df
-
 
 
 

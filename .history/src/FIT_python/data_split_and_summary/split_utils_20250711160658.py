@@ -53,12 +53,12 @@ def stratified_individual_split(
         .drop_duplicates(subset=[group_col])
     )
     # Allow only m/f values
-    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["M","F"])].copy()
+    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["m","f"])].copy()
     meta[stratify_col] = meta[stratify_col].str.lower()
 
     # 3) Stratified split on the group level
     ids    = meta[group_col].tolist()
-    labels = meta[stratify_col].map({"F":0, "M":1}).tolist()
+    labels = meta[stratify_col].map({"f":0, "m":1}).tolist()
     train_ids, test_ids = train_test_split(
         ids,
         test_size=test_size,
@@ -72,7 +72,7 @@ def stratified_individual_split(
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
 
     if add_folds:
-        y_ser = train_df[stratify_col].map({"F": 0, "M": 1})
+        y_ser = train_df[stratify_col].map({"f": 0, "m": 1})
         fold_ids, _ = _make_folds(
             train_df, y_ser, n_splits=n_folds, group_col=group_col
         )

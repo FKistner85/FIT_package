@@ -30,16 +30,22 @@ def prepare_all_splits(csv_fp: Path) -> None:
         raise RuntimeError("Data import failed")
 
     # 2) Pick the right sheet by partial match on species
-    # normalize file stem to snake_case
-    sp_key = species.strip().lower().replace(" ", "_")
-    matches = [k for k in dfs.keys() if sp_key in k.lower()]
-    if matches:
-        key = matches[0]
-    else:
-        key = next(iter(dfs))
+    matches = [k for k in dfs.keys() if species.lower() in k.lower()]
+    key = matches[0] if matches else next(iter(dfs))
+    if not matches:
         print(f"⚠️ Keine exakte Übereinstimmung für '{species}', verwende Key {key!r}")
     df = dfs[key]
 
+    # ──────────────── 🔧 normalize all column names ────────────────
+    # strip whitespace, lowercase, replace spaces and dots with underscores
+    df = df.rename(
+        columns=lambda c: (
+            c.strip()
+             .lower()
+             .replace(" ", "_")
+             .replace(".", "_")
+        )
+    )
     # jetzt ist jede Spalte in snake_case lowercase
 
     # 3) Splits erzeugen
@@ -53,7 +59,7 @@ def prepare_all_splits(csv_fp: Path) -> None:
     # 4) Fold-Spalte ergänzen, falls fehlt
     if "fold" not in train_df.columns:
         # stratifiziert nach sex
-        y_train = train_df["sex"].map({"F": 0, "M": 1})
+        y_train = train_df["sex"].map({"f": 0, "m": 1})
         folds, _ = _make_folds(
             train_df,
             y_train,

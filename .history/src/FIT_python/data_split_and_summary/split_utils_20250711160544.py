@@ -53,12 +53,12 @@ def stratified_individual_split(
         .drop_duplicates(subset=[group_col])
     )
     # Allow only m/f values
-    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["M","F"])].copy()
+    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["m","f"])].copy()
     meta[stratify_col] = meta[stratify_col].str.lower()
 
     # 3) Stratified split on the group level
     ids    = meta[group_col].tolist()
-    labels = meta[stratify_col].map({"F":0, "M":1}).tolist()
+    labels = meta[stratify_col].map({"f":0, "m":1}).tolist()
     train_ids, test_ids = train_test_split(
         ids,
         test_size=test_size,
@@ -72,7 +72,7 @@ def stratified_individual_split(
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
 
     if add_folds:
-        y_ser = train_df[stratify_col].map({"F": 0, "M": 1})
+        y_ser = train_df[stratify_col].map({"f": 0, "m": 1})
         fold_ids, _ = _make_folds(
             train_df, y_ser, n_splits=n_folds, group_col=group_col
         )
@@ -198,10 +198,10 @@ def create_train_test_split_otter(
 
     # ─── 3) Test-Split ────────────────────────────────────────────────────────
     test_ls    = df_clean[df_clean["dataorigin"] == "Fieldprints lower saxony"]
-    test_own_f = sample_individuals(df_clean, "Own data collection", "F", 3, seed)
-    test_own_m = sample_individuals(df_clean, "Own data collection", "M", 3, seed)
-    test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "F", 2, seed)
-    test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "M", 2, seed)
+    test_own_f = sample_individuals(df_clean, "Own data collection", "f", 3, seed)
+    test_own_m = sample_individuals(df_clean, "Own data collection", "m", 3, seed)
+    test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "f", 2, seed)
+    test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "m", 2, seed)
     test_df = pd.concat([test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]) \
                  .drop_duplicates()
 
@@ -209,7 +209,7 @@ def create_train_test_split_otter(
     train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
 
     # ─── 5) Strat. Folds nach Sex ─────────────────────────────────────────────
-    y_train = train_df["sex"].map({"F": 0, "M": 1})
+    y_train = train_df["sex"].map({"f": 0, "m": 1})
     folds, method = _make_folds(
         train_df, y_train, n_splits=NUM_FOLDS, group_col="individual_id"
     )
