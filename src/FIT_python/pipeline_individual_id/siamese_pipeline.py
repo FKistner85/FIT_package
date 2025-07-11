@@ -19,6 +19,8 @@ class TripletDataset(Dataset):
         feature_cols: List[str],
         id_col: str = "individual_id",
     ) -> None:
+        df = df.copy()
+        df["id"] = df["id"].astype(str)
         self.df = df.set_index("id")
         self.row_ids = list(self.df.index)
         self.features = feature_cols
