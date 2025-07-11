@@ -13,7 +13,9 @@ from .distance_metrics import compute_distances
 class TripletDataset(Dataset):
     """Randomly generate triplets from a dataframe."""
 
-    def __init__(self, df: pd.DataFrame, feature_cols: List[str], id_col: str = "individual_id") -> None:
+    def __init__(
+        self, df: pd.DataFrame, feature_cols: List[str], id_col: str = "individual_id"
+    ) -> None:
         self.df = df.reset_index(drop=True)
         self.features = feature_cols
         self.id_col = id_col
@@ -42,7 +44,9 @@ class TripletDataset(Dataset):
         return anchor, positive, negative
 
 
-def build_dataloader(df: pd.DataFrame, feature_cols: List[str], batch_size: int) -> DataLoader:
+def build_dataloader(
+    df: pd.DataFrame, feature_cols: List[str], batch_size: int
+) -> DataLoader:
     ds = TripletDataset(df, feature_cols)
     return DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
 
@@ -62,7 +66,9 @@ class SiameseNet(nn.Module):
         return self.model(x)
 
     def transform(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
-        arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=np.float32)
+        arr = (
+            X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=np.float32)
+        )
         with torch.no_grad():
             t = torch.as_tensor(arr, dtype=torch.float32, device=self.device)
             emb = self.model(t)
@@ -157,9 +163,11 @@ def run(
         dists = compute_distances(emb_a, emb_b)
         X_feat = np.array([list(dists.values())])
         proba = clf.predict_proba(X_feat)[0, 1]
-        results.append({
-            "trail_a_id": comp["trail_a_id"],
-            "trail_b_id": comp["trail_b_id"],
-            "pred_same": float(proba),
-        })
+        results.append(
+            {
+                "trail_a_id": comp["trail_a_id"],
+                "trail_b_id": comp["trail_b_id"],
+                "pred_same": float(proba),
+            }
+        )
     return results

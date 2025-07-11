@@ -14,6 +14,7 @@ from FIT_python.data_split_and_summary.summary_data_utils import (
 )
 import FIT_python.config as config
 
+
 def run_summary(
     splits_dir: Path,
     output_table: Path,
@@ -48,6 +49,7 @@ def run_summary(
     if plot:
         plot_summary_table(df_summary, fig_dir)
         plot_split_proportions(df_summary, fig_dir)
+
 
 class SummaryWrapper:
     def summarize_all(

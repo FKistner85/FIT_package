@@ -26,12 +26,22 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        method: str | None = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["method"],
-        n_components: int = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["n_components"],
+        method: str | None = SOFT_CONFIG["general_pipeline_steps"][
+            "dim_reducer_defaults"
+        ]["method"],
+        n_components: int = SOFT_CONFIG["general_pipeline_steps"][
+            "dim_reducer_defaults"
+        ]["n_components"],
         supervised: bool = False,
-        n_neighbors: int = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["n_neighbors"],
-        min_dist: float = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["min_dist"],
-        whiten: bool = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["whiten"],
+        n_neighbors: int = SOFT_CONFIG["general_pipeline_steps"][
+            "dim_reducer_defaults"
+        ]["n_neighbors"],
+        min_dist: float = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"][
+            "min_dist"
+        ],
+        whiten: bool = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"][
+            "whiten"
+        ],
         **kwargs,
     ):
         # raw parameters for cloning

@@ -1,8 +1,14 @@
 import numpy as np
 from scipy.spatial.distance import (
-    euclidean, cityblock, cosine, mahalanobis,
-    chebyshev, canberra, braycurtis
+    euclidean,
+    cityblock,
+    cosine,
+    mahalanobis,
+    chebyshev,
+    canberra,
+    braycurtis,
 )
+
 
 def compute_distances(a, b, VI=None):
     """Return several distance metrics between vectors ``a`` and ``b``.
@@ -24,4 +30,3 @@ def compute_distances(a, b, VI=None):
     }
 
     return distances
-    

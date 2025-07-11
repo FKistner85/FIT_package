@@ -4,8 +4,7 @@ import matplotlib as mpl
 import seaborn as sns
 
 # Base colours used for all sex-specific plots
-SEX_COLORS = {"F": "#800000", "M": "#000080", "Unknown": "#FFA500" # orange
-}
+SEX_COLORS = {"F": "#800000", "M": "#000080", "Unknown": "#FFA500"}  # orange
 
 
 def _lighten(color: str, amount: float) -> str:
@@ -15,11 +14,13 @@ def _lighten(color: str, amount: float) -> str:
     original colour and ``1`` returns white.
     """
     r, g, b = mpl.colors.to_rgb(color)
-    return mpl.colors.to_hex([
-        r + (1 - r) * amount,
-        g + (1 - g) * amount,
-        b + (1 - b) * amount,
-    ])
+    return mpl.colors.to_hex(
+        [
+            r + (1 - r) * amount,
+            g + (1 - g) * amount,
+            b + (1 - b) * amount,
+        ]
+    )
 
 
 TRAIN_COLORS = SEX_COLORS
@@ -30,13 +31,14 @@ def apply_style() -> None:
     """Apply consistent plot styling across notebooks and modules."""
     sns.set_theme(style="whitegrid", palette="colorblind")
 
-    mpl.rcParams.update({
-        "figure.dpi": 100,
-        "font.size": 12,
-        "axes.titlesize": 14,
-        "axes.labelsize": 12,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 10,
-    })
-
+    mpl.rcParams.update(
+        {
+            "figure.dpi": 100,
+            "font.size": 12,
+            "axes.titlesize": 14,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 10,
+            "ytick.labelsize": 10,
+            "legend.fontsize": 10,
+        }
+    )

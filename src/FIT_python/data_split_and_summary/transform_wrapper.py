@@ -7,6 +7,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 
+
 class NumericTransformer(TransformerMixin, BaseEstimator):
     """Convert feature columns to numeric ``numpy`` arrays.
 
@@ -28,11 +29,10 @@ class NumericTransformer(TransformerMixin, BaseEstimator):
         if all(col in df.columns for col in OTTER_META_COLS):
             meta = OTTER_META_COLS
         else:
-            meta = ['id']
+            meta = ["id"]
         # treat all ``DEFAULT_TARGETS`` (e.g. ``['sex']``) as targets; the rest are features
         self.feature_cols = [
-            col for col in df.columns
-            if col not in meta + DEFAULT_TARGETS
+            col for col in df.columns if col not in meta + DEFAULT_TARGETS
         ]
         return self
 
@@ -44,9 +44,9 @@ class NumericTransformer(TransformerMixin, BaseEstimator):
         for col in self.feature_cols:
             df2[col] = (
                 df2[col]
-                  .astype(str)
-                  .str.replace(',', '.', regex=False)
-                  .pipe(pd.to_numeric, errors='coerce')
+                .astype(str)
+                .str.replace(",", ".", regex=False)
+                .pipe(pd.to_numeric, errors="coerce")
             )
 
         # 2) feature matrix as ``numpy`` array

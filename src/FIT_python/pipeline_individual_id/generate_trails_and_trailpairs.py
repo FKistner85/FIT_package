@@ -99,8 +99,11 @@ def build_pairwise_comparisons(
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Create cross- and within-individual comparisons and summary."""
 
-    trail_size_list = sorted(
-        next(iter(trails_per_animal.values())).keys()) if trails_per_animal else []
+    trail_size_list = (
+        sorted(next(iter(trails_per_animal.values())).keys())
+        if trails_per_animal
+        else []
+    )
     all_ids = list(trails_per_animal.keys())
 
     comparisons: List[Dict] = []
@@ -109,7 +112,12 @@ def build_pairwise_comparisons(
         ids_a = df.loc[df["_group_id"] == a, id_col].dropna().unique()
         ids_b = df.loc[df["_group_id"] == b, id_col].dropna().unique()
 
-        if not ids_a.size or ids_a[0] == "unknown" or not ids_b.size or ids_b[0] == "unknown":
+        if (
+            not ids_a.size
+            or ids_a[0] == "unknown"
+            or not ids_b.size
+            or ids_b[0] == "unknown"
+        ):
             same_ind = "unknown"
         else:
             same_ind = str(ids_a[0] == ids_b[0])
@@ -174,8 +182,7 @@ def build_pairwise_comparisons(
             )
 
     labels = [c["trail_size_a"] for c in comparisons]
-    skf = StratifiedKFold(n_splits=n_folds, shuffle=True,
-                          random_state=random_state)
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
     fold_map: Dict[int, int] = {}
     for fold, (_, val_idx) in enumerate(skf.split(comparisons, labels)):
         for vi in val_idx:
@@ -187,8 +194,7 @@ def build_pairwise_comparisons(
     summary_rows = []
     for size in trail_size_list:
         mask = comp_df["trail_size_a"] == size
-        animals = pd.unique(
-            comp_df.loc[mask, ["ind_a", "ind_b"]].values.ravel())
+        animals = pd.unique(comp_df.loc[mask, ["ind_a", "ind_b"]].values.ravel())
         summary_rows.append(
             {
                 "sub_size": size,
@@ -197,13 +203,13 @@ def build_pairwise_comparisons(
             }
         )
     summary_rows.append(
-        {"sub_size": "Total", "n_animals": len(all_ids), "n_trails": len(comp_df)})
+        {"sub_size": "Total", "n_animals": len(all_ids), "n_trails": len(comp_df)}
+    )
     summary_df = pd.DataFrame(summary_rows)
 
     same_counts, diff_counts = [], []
     for ind in all_ids:
-        same = comp_df[(comp_df.ind_a == ind) & (
-            comp_df.ind_b == ind)].shape[0]
+        same = comp_df[(comp_df.ind_a == ind) & (comp_df.ind_b == ind)].shape[0]
         diff = comp_df[
             ((comp_df.ind_a == ind) & (comp_df.ind_b != ind))
             | ((comp_df.ind_b == ind) & (comp_df.ind_a != ind))
@@ -211,25 +217,26 @@ def build_pairwise_comparisons(
         same_counts.append(same)
         diff_counts.append(diff)
     avg_same = float(np.mean(same_counts))
-    sd_same = float(np.std(same_counts, ddof=1)) if len(
-        same_counts) > 1 else 0.0
+    sd_same = float(np.std(same_counts, ddof=1)) if len(same_counts) > 1 else 0.0
     avg_diff = float(np.mean(diff_counts))
-    sd_diff = float(np.std(diff_counts, ddof=1)) if len(
-        diff_counts) > 1 else 0.0
+    sd_diff = float(np.std(diff_counts, ddof=1)) if len(diff_counts) > 1 else 0.0
     # ``same_individual`` is stored as the strings "True", "False" or "unknown".
     # Count the occurrences accordingly for the summary statistics.
     ratio = float(
-        (comp_df.same_individual == "True").sum() /
-        max(1, (comp_df.same_individual == "False").sum())
+        (comp_df.same_individual == "True").sum()
+        / max(1, (comp_df.same_individual == "False").sum())
     )
 
-    summary_df.loc[summary_df.sub_size == "Total", [
-        "avg_comp_per_ind_same",
-        "sd_comp_per_ind_same",
-        "avg_comp_per_ind_diff",
-        "sd_comp_per_ind_diff",
-        "ratio_same_to_diff",
-    ]] = [avg_same, sd_same, avg_diff, sd_diff, ratio]
+    summary_df.loc[
+        summary_df.sub_size == "Total",
+        [
+            "avg_comp_per_ind_same",
+            "sd_comp_per_ind_same",
+            "avg_comp_per_ind_diff",
+            "sd_comp_per_ind_diff",
+            "ratio_same_to_diff",
+        ],
+    ] = [avg_same, sd_same, avg_diff, sd_diff, ratio]
 
     return comparisons, summary_df
 
@@ -275,9 +282,9 @@ def generate_pairwise_comparisons_from_df(
     # sex_map: per group_id
     sex_map = (
         df.set_index("_group_id")["sex"]
-          .fillna("unknown")
-          .replace("", "unknown")
-          .to_dict()
+        .fillna("unknown")
+        .replace("", "unknown")
+        .to_dict()
     )
     # fallback_map: True, wenn original id fehlte
     fallback_map = {
@@ -313,10 +320,7 @@ def generate_pairwise_comparisons_from_df(
             random_state=random_state,
         )
         trails_per_animal = {
-            gid: {
-                L: [(i, w) for i, w in enumerate(wins)]
-                for L, wins in by_len.items()
-            }
+            gid: {L: [(i, w) for i, w in enumerate(wins)] for L, wins in by_len.items()}
             for gid, by_len in sampled.items()
         }
 

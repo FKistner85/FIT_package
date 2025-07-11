@@ -16,19 +16,30 @@ from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 from FIT_python.data_split_and_summary.transform_wrapper import NumericTransformer
-from FIT_python.general_pipeline_steps.feature_selection_wrapper import FeatureSelectionTransformer
+from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
+    FeatureSelectionTransformer,
+)
 from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTransformer
-from FIT_python.general_pipeline_steps.feature_scaler_wrapper import FeatureScalerTransformer
-from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import DimensionalityReducerTransformer
+from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
+    FeatureScalerTransformer,
+)
+from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import (
+    DimensionalityReducerTransformer,
+)
 from FIT_python.pipeline_sex.models import MODELS
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.pipeline_sex.grouped_metrics import (
     individual_accuracies,
     individual_majority_stats,
 )
-from FIT_python.pipeline_sex.sex_predict_and_visualisation import plot_hyperparam_heatmap
+from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
+    plot_hyperparam_heatmap,
+)
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
-from FIT_python.data_split_and_summary.split_utils import create_train_test_split_otter, _make_folds
+from FIT_python.data_split_and_summary.split_utils import (
+    create_train_test_split_otter,
+    _make_folds,
+)
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 from FIT_python.config import (
     RAW_DIR,
@@ -74,7 +85,11 @@ def prepare_eurasian_otter() -> None:
     test_df.to_parquet(out_dir / "test.parquet", index=False)
     inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
-    run_summary(out_dir, RESULTS_DATA_DIR / "eurasian_otter_summary.csv", RESULTS_DATA_DIR / "eurasian_otter_fig")
+    run_summary(
+        out_dir,
+        RESULTS_DATA_DIR / "eurasian_otter_summary.csv",
+        RESULTS_DATA_DIR / "eurasian_otter_fig",
+    )
 
 
 def run_otter_search(
@@ -97,7 +112,6 @@ def run_otter_search(
         .query("sex in ['f','m']")
         .drop(columns=["Fold"], errors="ignore")
     )
-
 
     X_tr, y_tr, ids_tr = (
         df_train[feature_cols],
@@ -133,7 +147,11 @@ def run_otter_search(
         verbose=1,
     )
 
-    folds = search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
+    folds = (
+        search.cv
+        if isinstance(search.cv, int)
+        else getattr(search.cv, "n_splits", len(list(search.cv)))
+    )
     total_fits = search.n_iter * folds
     base_dir = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
     base_dir.mkdir(parents=True, exist_ok=True)
@@ -154,9 +172,7 @@ def run_otter_search(
             search.fit(X_tr, y_tr)
 
     conv_msgs = [
-        str(w.message)
-        for w in warn_list
-        if issubclass(w.category, ConvergenceWarning)
+        str(w.message) for w in warn_list if issubclass(w.category, ConvergenceWarning)
     ]
 
     cv_res = search.cv_results_
@@ -179,8 +195,12 @@ def run_otter_search(
         fem_te, mal_te, bal_te = individual_accuracies(y_te, y_te_pred, ids_te)
         ct_tr, wr_tr, pct_tr = individual_majority_stats(y_tr, y_tr_pred, ids_tr)
         ct_te, wr_te, pct_te = individual_majority_stats(y_te, y_te_pred, ids_te)
-        fem_all, mal_all, bal_all = individual_accuracies(y_all_true, y_all_pred, ids_all)
-        ct_all, wr_all, pct_all = individual_majority_stats(y_all_true, y_all_pred, ids_all)
+        fem_all, mal_all, bal_all = individual_accuracies(
+            y_all_true, y_all_pred, ids_all
+        )
+        ct_all, wr_all, pct_all = individual_majority_stats(
+            y_all_true, y_all_pred, ids_all
+        )
 
         acc_tr = accuracy_score(y_tr, y_tr_pred)
         bal_tr = balanced_accuracy_score(y_tr, y_tr_pred)
@@ -189,14 +209,31 @@ def run_otter_search(
         acc_all = accuracy_score(y_all_true, y_all_pred)
         bal_all = balanced_accuracy_score(y_all_true, y_all_pred)
 
-        record.update({
-            "female_train_acc": fem_tr, "male_train_acc": mal_tr, "balanced_train_acc": bal_tr, "accuracy_train": acc_tr,
-            "female_test_acc": fem_te, "male_test_acc": mal_te, "balanced_test_acc": bal_te, "accuracy_test": acc_te,
-            "female_full_acc": fem_all, "male_full_acc": mal_all, "balanced_full_acc": bal_all, "accuracy_full": acc_all,
-            "maj_train_count": ct_tr, "maj_train_wrong": wr_tr, "maj_train_pct": pct_tr,
-            "maj_test_count": ct_te, "maj_test_wrong": wr_te, "maj_test_pct": pct_te,
-            "maj_full_count": ct_all, "maj_full_wrong": wr_all, "maj_full_pct": pct_all,
-        })
+        record.update(
+            {
+                "female_train_acc": fem_tr,
+                "male_train_acc": mal_tr,
+                "balanced_train_acc": bal_tr,
+                "accuracy_train": acc_tr,
+                "female_test_acc": fem_te,
+                "male_test_acc": mal_te,
+                "balanced_test_acc": bal_te,
+                "accuracy_test": acc_te,
+                "female_full_acc": fem_all,
+                "male_full_acc": mal_all,
+                "balanced_full_acc": bal_all,
+                "accuracy_full": acc_all,
+                "maj_train_count": ct_tr,
+                "maj_train_wrong": wr_tr,
+                "maj_train_pct": pct_tr,
+                "maj_test_count": ct_te,
+                "maj_test_wrong": wr_te,
+                "maj_test_pct": pct_te,
+                "maj_full_count": ct_all,
+                "maj_full_wrong": wr_all,
+                "maj_full_pct": pct_all,
+            }
+        )
 
         pid_parts = []
         for key in PIPELINE_ORDER:
@@ -219,7 +256,9 @@ def run_otter_search(
         best_pipe = clone(pipe).set_params(**best_params).fit(X_tr, y_tr)
         out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
-        print(f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}")
+        print(
+            f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}"
+        )
         best_records.append(best_record)
 
     all_csv = base_dir / "all_results.csv"

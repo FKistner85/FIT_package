@@ -1,8 +1,10 @@
 """Utility functions for data import and cleaning."""
+
 import re
 from pathlib import Path
 import pandas as pd
 from typing import List, Dict, Optional, Union
+
 
 def clean_columns(columns: Union[List[str], pd.Index]) -> List[str]:
     """
@@ -11,22 +13,23 @@ def clean_columns(columns: Union[List[str], pd.Index]) -> List[str]:
     cleaned = []
     for col in columns:
         col_clean = col.strip().lower()
-        col_clean = re.sub(r'\W+', '_', col_clean)
+        col_clean = re.sub(r"\W+", "_", col_clean)
         cleaned.append(col_clean)
     return cleaned
+
 
 def load_csv(path: Path) -> pd.DataFrame:
     """Load a CSV file into a DataFrame."""
     return pd.read_csv(path)
 
+
 def load_excel(path: Path) -> pd.DataFrame:
     """Load an Excel file into a DataFrame."""
     return pd.read_excel(path)
 
+
 def load_raw_files(
-    folder: Path,
-    add_id: bool = True,
-    id_prefix: Optional[str] = None
+    folder: Path, add_id: bool = True, id_prefix: Optional[str] = None
 ) -> Dict[str, pd.DataFrame]:
     """
     Load all CSV and Excel files from 'folder', clean columns, optionally add 'id' column.
@@ -34,9 +37,9 @@ def load_raw_files(
     """
     data_frames = {}
     for file in folder.iterdir():
-        if file.suffix.lower() == '.csv':
+        if file.suffix.lower() == ".csv":
             df = load_csv(file)
-        elif file.suffix.lower() in ['.xlsx', '.xls']:
+        elif file.suffix.lower() in [".xlsx", ".xls"]:
             df = load_excel(file)
         else:
             continue
@@ -45,38 +48,39 @@ def load_raw_files(
         df.columns = clean_columns(df.columns)
 
         # Normalize individual identifier column
-        if 'animal' in df.columns:
-            df.rename(columns={'animal': 'individual_id'}, inplace=True)
-        elif 'individual' in df.columns:
-            df.rename(columns={'individual': 'individual_id'}, inplace=True)
+        if "animal" in df.columns:
+            df.rename(columns={"animal": "individual_id"}, inplace=True)
+        elif "individual" in df.columns:
+            df.rename(columns={"individual": "individual_id"}, inplace=True)
 
         # Add id column if requested
         if add_id:
-            stem = id_prefix if id_prefix else file.stem.replace(' ', '_')
-            df.insert(0, 'id', [f"{stem}_{i}" for i in range(1, len(df) + 1)])
+            stem = id_prefix if id_prefix else file.stem.replace(" ", "_")
+            df.insert(0, "id", [f"{stem}_{i}" for i in range(1, len(df) + 1)])
 
         # Attempt to coerce comma decimal strings to float
         df = coerce_numeric_columns(df)
 
-        data_frames[file.stem.replace(' ', '_')] = df
+        data_frames[file.stem.replace(" ", "_")] = df
     return data_frames
 
 
 def coerce_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Convert numeric-looking object columns with comma decimal separator."""
     for col in df.select_dtypes(include="object").columns:
-        series = df[col].astype(str).str.replace(',', '.', regex=False)
+        series = df[col].astype(str).str.replace(",", ".", regex=False)
         numeric = pd.to_numeric(series, errors="coerce")
         # Convert if majority of non-null values are numeric
         if numeric.notna().sum() >= len(df) * 0.8 and numeric.notna().sum() > 0:
             df[col] = numeric.astype(float)
     return df
 
+
 def sanitize_labels(
     df: pd.DataFrame,
     target_cols: List[str],
     skip_fillna: Optional[List[str]] = None,
-    mapping: Optional[Dict[str, str]] = None
+    mapping: Optional[Dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Clean string labels in target_cols:
@@ -92,11 +96,12 @@ def sanitize_labels(
 
     for col in target_cols:
         if col not in skip_fillna:
-            df_clean[col] = df_clean[col].fillna('unknown')
+            df_clean[col] = df_clean[col].fillna("unknown")
         df_clean[col] = df_clean[col].astype(str).str.strip().str.lower()
-        df_clean[col] = df_clean[col].str.replace(r"\W+", '_', regex=True)
+        df_clean[col] = df_clean[col].str.replace(r"\W+", "_", regex=True)
         df_clean[col] = df_clean[col].map(mapping).fillna(df_clean[col])
     return df_clean
+
 
 def load_and_prep_df_individual(species: str, splits_dir: Path) -> pd.DataFrame:
     """
@@ -108,6 +113,7 @@ def load_and_prep_df_individual(species: str, splits_dir: Path) -> pd.DataFrame:
     df = df.drop(columns=["Fold"], errors="ignore")
     return df
 
+
 def get_feature_cols(df: pd.DataFrame) -> list[str]:
     """
     Wählt automatisch die numerischen Feature-Spalten:
@@ -118,19 +124,18 @@ def get_feature_cols(df: pd.DataFrame) -> list[str]:
     # Check: gibt es spezialisierte Prefix-Spalten?
     prefixes = ("dist", "ang", "t")
     has_prefix_cols = any(col.startswith(prefixes) for col in df.columns)
-    
+
     if has_prefix_cols:
         # Spezialfall: nimm nur Prefix-Spalten
         return [
-            c for c in df.columns
+            c
+            for c in df.columns
             if c.startswith(prefixes) and pd.api.types.is_numeric_dtype(df[c])
         ]
     else:
         # Standardfall: alle numerischen ab Index 5
-        return [
-            c for c in df.columns[5:]
-            if pd.api.types.is_numeric_dtype(df[c])
-        ]
+        return [c for c in df.columns[5:] if pd.api.types.is_numeric_dtype(df[c])]
+
 
 import pandas as pd
 import numpy as np
@@ -138,10 +143,8 @@ from pathlib import Path
 import json
 from typing import Tuple, Dict, List
 
-def convert_numeric(
-    df: pd.DataFrame,
-    feature_cols: List[str]
-) -> pd.DataFrame:
+
+def convert_numeric(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
     """Convert feature columns to float, replacing comma decimal separators.
 
     Non-convertible values are coerced to NaN so that mixed columns do not
@@ -151,14 +154,14 @@ def convert_numeric(
         df[col] = (
             df[col]
             .astype(str)
-            .str.replace(',', '.', regex=False)
+            .str.replace(",", ".", regex=False)
             .pipe(pd.to_numeric, errors="coerce")
         )
     return df
 
+
 def one_hot_encode_targets(
-    df: pd.DataFrame,
-    target_cols: List[str]
+    df: pd.DataFrame, target_cols: List[str]
 ) -> Tuple[np.ndarray, Dict[str, List[str]]]:
     """
     One-hot encode target columns.
@@ -175,11 +178,9 @@ def one_hot_encode_targets(
     y_df = pd.concat(y_frames, axis=1)
     return y_df.to_numpy(), mappings
 
-def save_target_mapping(
-    mapping: Dict[str, List[str]],
-    path: Path
-) -> None:
+
+def save_target_mapping(mapping: Dict[str, List[str]], path: Path) -> None:
     """Save target mapping dict to JSON."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(mapping, f, indent=2)
