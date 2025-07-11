@@ -179,39 +179,57 @@ def create_train_test_split_otter(
     Create deterministic train/test/inference splits for Otter.
     Returns (train_df, test_df, inference_df).
     """
-    # 0) Normalize column names & key values
+
+    # 0) Spaltennamen vereinheitlichen
     df = df.rename(columns=lambda c: c.strip().lower().replace(" ", "_").replace(".", "_"))
-    df["dataorigin"] = df["dataorigin"].str.strip().str.lower()
-    df["sex"]        = df["sex"].str.strip().str.lower()
-    df["animal"]     = df["animal"].str.strip()
-    df["trail"]      = df["trail"].str.strip()
+    print("Spalten nach Rename:", df.columns.tolist())
 
-    # 1) Inference split: all from Portugal
+    print("Starting Otter splitting...")
+
+    # 1) Inference: alle aus Portugal
+    #    (Spalte ist jetzt 'dataorigin')
     inference_df = df[df["dataorigin"] == "fieldprints portugal"]
-    
-    # 2) Cleaned data (no Portugal)
+    print(f"Inference split rows: {len(inference_df)}")
+    print("Inference dataorigin unique:", inference_df["dataorigin"].unique())
+    print("Inference sex unique:", inference_df["sex"].unique())
+
+    # 2) Restliche Daten (ohne Portugal)
     df_clean = df[df["dataorigin"] != "fieldprints portugal"]
+    print(f"Clean dataset rows (ohne Portugal): {len(df_clean)}")
+    print("dataorigin values:", df_clean["dataorigin"].unique())
+    print("sex values:", df_clean["sex"].unique())
+    print("unique individual_id:", df_clean["individual_id"].nunique())
 
-    # 3) Test split
+    # 3) Test-Split
     test_ls    = df_clean[df_clean["dataorigin"] == "fieldprints lower saxony"]
-    test_own_f = sample_individuals(df_clean, "own data collection", "f", 3, seed)
-    test_own_m = sample_individuals(df_clean, "own data collection", "m", 3, seed)
-    test_vet_f = sample_individuals(df_clean, "vetrecova et al", "f", 2, seed)
-    test_vet_m = sample_individuals(df_clean, "vetrecova et al", "m", 2, seed)
+    test_own_f = sample_individuals(df_clean, "Own Data Collection", "f", 3, seed)
+    test_own_m = sample_individuals(df_clean, "Own Data Collection", "m", 3, seed)
+    test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "f", 2, seed)
+    test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "m", 2, seed)
+
     test_df = pd.concat([test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]).drop_duplicates()
+    print(f"Test split rows: {len(test_df)}")
+    print("Test unique individual_id:", test_df["individual_id"].nunique())
+    print("Test dataorigin counts:\n", test_df["dataorigin"].value_counts())
+    print("Test sex counts:\n", test_df["sex"].value_counts())
 
-    # 4) Train split: remaining animals
-    train_df = df_clean[~df_clean["animal"].isin(test_df["animal"])]
+    # 4) Train-Split: alle übrigen
+    train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
+    print(f"Train split rows: {len(train_df)}")
+    print("Train unique individual_id:", train_df["individual_id"].nunique())
+    print("Train dataorigin counts:\n", train_df["dataorigin"].value_counts())
+    print("Train sex counts:\n", train_df["sex"].value_counts())
 
-    # 5) Assign stratified folds by sex
+    # 5) Stratified Folds nach sex
     y_train = train_df["sex"].map({"f": 0, "m": 1})
-    folds, method = _make_folds(
-        train_df, y_train, n_splits=NUM_FOLDS, group_col="animal"
+    fold_ids, method = _make_folds(
+        train_df, y_train, n_splits=NUM_FOLDS, group_col=GROUP_COL
     )
-    train_df["fold"] = folds
+    train_df["fold"] = fold_ids
+    print("Fold assignment method:", method)
+    print("Fold distribution:\n", train_df["fold"].value_counts().sort_index())
 
     return train_df, test_df, inference_df
-
 
 
 

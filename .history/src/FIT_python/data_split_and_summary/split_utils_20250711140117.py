@@ -162,14 +162,12 @@ def sample_individuals(
     Randomly select `n` unique individuals for a dataset/sex combination.
     Used for the fixed Otter test split.
     """
-    # Spalten großgeschrieben
-    subset = df[(df["DATAORIGIN"] == dataset) & (df["SEX"].str.lower() == sex.lower())]
-    inds = subset["INDIVIDUAL_ID"].unique()
+    subset = df[(df["dataorigin"] == dataset) & (df["sex"].str.lower() == sex.lower())]
+    inds = subset["individual_id"].unique()
     sampled = (
         pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
     )
-    return df[df["INDIVIDUAL_ID"].isin(sampled)]
-
+    return df[df["individual_id"].isin(sampled)]
 
 def create_train_test_split_otter(
     df: pd.DataFrame,
@@ -179,41 +177,58 @@ def create_train_test_split_otter(
     Create deterministic train/test/inference splits for Otter.
     Returns (train_df, test_df, inference_df).
     """
-    # 0) Normalize column names & key values
-    df = df.rename(columns=lambda c: c.strip().lower().replace(" ", "_").replace(".", "_"))
-    df["dataorigin"] = df["dataorigin"].str.strip().str.lower()
-    df["sex"]        = df["sex"].str.strip().str.lower()
-    df["animal"]     = df["animal"].str.strip()
-    df["trail"]      = df["trail"].str.strip()
+    print("\n🔄 Starte Otter-Splitting...")
 
-    # 1) Inference split: all from Portugal
-    inference_df = df[df["dataorigin"] == "fieldprints portugal"]
-    
-    # 2) Cleaned data (no Portugal)
-    df_clean = df[df["dataorigin"] != "fieldprints portugal"]
+    # 1) Inference: alle aus Portugal
+    inference_df = df[df["dataorigin"] == "Fieldprints Portugal"]
+    print(f"🛰️ Inference-Split – {len(inference_df)} Zeilen")
+    print("↪️ Inference 'dataorigin':", inference_df["dataorigin"].unique())
+    print("↪️ Inference 'sex' unique:", inference_df['sex'].unique())
 
-    # 3) Test split
-    test_ls    = df_clean[df_clean["dataorigin"] == "fieldprints lower saxony"]
-    test_own_f = sample_individuals(df_clean, "own data collection", "f", 3, seed)
-    test_own_m = sample_individuals(df_clean, "own data collection", "m", 3, seed)
-    test_vet_f = sample_individuals(df_clean, "vetrecova et al", "f", 2, seed)
-    test_vet_m = sample_individuals(df_clean, "vetrecova et al", "m", 2, seed)
-    test_df = pd.concat([test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]).drop_duplicates()
+    # 2) Alle restlichen Daten
+    df_clean = df[df["dataorigin"] != "Fieldprints Portugal"]
+    print(f"\n🧹 df_clean – {len(df_clean)} Zeilen (ohne Portugal)")
+    print("🧾 dataorigin:", df_clean["dataorigin"].unique())
+    print("🧬 sex:", df_clean["sex"].unique())
+    print("🆔 individual_id:", df_clean["individual_id"].nunique())
 
-    # 4) Train split: remaining animals
-    train_df = df_clean[~df_clean["animal"].isin(test_df["animal"])]
+    # 3) Test-Split (bestimmte Individuals)
+    print("\n🔬 Erzeuge Test-Split...")
+    test_ls = df_clean[df_clean["dataorigin"] == "Fieldprints Lower Saxony"]
+    test_own_f = sample_individuals(df_clean, "Own Data Collection", "f", 3, seed)
+    test_own_m = sample_individuals(df_clean, "Own Data Collection", "m", 3, seed)
+    test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "f", 2, seed)
+    test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "m", 2, seed)
 
-    # 5) Assign stratified folds by sex
+    test_df = pd.concat([
+        test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m
+    ]).drop_duplicates()
+
+    print(f"✅ Test-Split fertig – {len(test_df)} Zeilen")
+    print("👤 Test-Individuals:", test_df["individual_id"].nunique())
+    print("📊 Test 'dataorigin':", test_df["dataorigin"].value_counts().to_string())
+    print("🧬 Test 'sex':", test_df["sex"].value_counts().to_string())
+
+    # 4) Train split with the remaining data
+    train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
+    print(f"\n🧠 Train-Split – {len(train_df)} Zeilen")
+    print("👤 Train-Individual IDs:", train_df["individual_id"].nunique())
+    print("📊 Train 'dataorigin':", train_df["dataorigin"].value_counts().to_string())
+    print("🧬 Train 'sex':", train_df["sex"].value_counts().to_string())
+
+    # 5) Assign folds
+    print("\n🎲 Berechne Fold-Zuordnung...")
     y_train = train_df["sex"].map({"f": 0, "m": 1})
-    folds, method = _make_folds(
-        train_df, y_train, n_splits=NUM_FOLDS, group_col="animal"
+    fold_ids, method = _make_folds(
+        train_df, y_train, n_splits=NUM_FOLDS, group_col=GROUP_COL
     )
-    train_df["fold"] = folds
+    train_df["Fold"] = fold_ids
+
+    print(f"\n✅ Fold method used: {method}")
+    print("📊 Fold-Verteilung:")
+    print(train_df["Fold"].value_counts().sort_index())
 
     return train_df, test_df, inference_df
-
-
-
 
 
 
@@ -326,3 +341,66 @@ def _make_folds(
         fold_ids[val_idx] = fold
     return fold_ids, "kfold"
 
+def prepare_all_splits(
+    species_filter: Optional[List[str]] = None
+) -> None:
+    """
+    Lädt alle CSVs in RAW_DIR und erstellt für jede Art Splits:
+
+    - Wenn `species_filter` angegeben ist, nur für diese Arten.
+    - Für 'Eurasian Otter.csv' wird `create_train_test_split_otter` verwendet.
+    - Für alle anderen Arten `stratified_individual_split`.
+    """
+
+    for csv_fp in RAW_DIR.glob("*.csv"):
+        species = csv_fp.stem  # z.B. "Eurasian Otter"
+        # Filter?
+        if species_filter and species not in species_filter:
+            continue
+
+        # 1) Import
+        importer = DataImporter(RAW_DIR, target_cols=DEFAULT_TARGETS)
+        dfs = importer.run()
+        # Schlüssel finden, der zur aktuellen Datei passt
+        # (DataImporter kann mehrere Tabs/Sheets liefern)
+        key = next(k for k in dfs if species.lower() in k.lower())
+        df = dfs[key]
+
+        # 2) Splits erstellen
+        if species.lower() == "eurasian otter":
+            train_df, test_df, inf_df = create_train_test_split_otter(df)
+        else:
+            # generischer Stratified split nach individual_id (oder GROUP_COL)
+            train_df, test_df, inf_df = stratified_individual_split(
+                df,
+                id_col=GROUP_COL,
+                n_splits=NUM_FOLDS,
+                random_state=0
+            )
+
+        # 3) Folds ins train_df schreiben, falls nicht schon geschehen
+        if "Fold" not in train_df.columns:
+            y_train = train_df["sex"].map({"f": 0, "m": 1}) \
+                      if species.lower()=="eurasian otter" else \
+                      train_df[GROUP_COL]
+            folds, _ = _make_folds(
+                train_df,
+                y_train,
+                n_splits=NUM_FOLDS,
+                group_col=GROUP_COL
+            )
+            train_df = train_df.assign(Fold=folds)
+
+        # 4) Abspeichern
+        out_dir = SPLITS_DIR / species.replace(" ", "_").lower()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        train_df.to_parquet(out_dir / "train.parquet", index=False)
+        test_df.to_parquet (out_dir / "test.parquet",  index=False)
+        inf_df.to_parquet  (out_dir / "inference.parquet", index=False)
+
+        # 5) Optional: Zusammenfassung & Plots
+        run_summary(
+            out_dir,
+            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_summary.csv",
+            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig"
+        )
