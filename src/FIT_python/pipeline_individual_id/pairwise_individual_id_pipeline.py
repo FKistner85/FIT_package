@@ -85,6 +85,7 @@ def run_all_pairwise_projections_parallel(
     # --- 1) prepare base DataFrame ---
     df2 = df.copy()
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
+    index_map = {orig_idx: pos for pos, orig_idx in enumerate(df2.index)}
     df_base = df2.reset_index(drop=True)
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
@@ -115,20 +116,21 @@ def run_all_pairwise_projections_parallel(
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-        idx_a, idx_b = comp["samples_a"], comp["samples_b"]
+        idx_a = np.asarray([index_map[x] for x in comp["samples_a"]], dtype=int)
+        idx_b = np.asarray([index_map[x] for x in comp["samples_b"]], dtype=int)
         size_a, size_b = len(idx_a), len(idx_b)
 
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
         # feature matrices A & B
-        df_a = df_base.loc[idx_a, feature_cols]
-        df_b = df_base.loc[idx_b, feature_cols]
+        df_a = df_base.iloc[idx_a][feature_cols]
+        df_b = df_base.iloc[idx_b][feature_cols]
 
         # RCV set as the complement
         all_idx = np.arange(len(df_base))
         rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
-        df_r = df_base.loc[rcv_idx, feature_cols]
+        df_r = df_base.iloc[rcv_idx][feature_cols]
 
         # labels for feature selection
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
