@@ -32,4 +32,5 @@ dependencies:
     - flake8
     - mypy
     - missingpy
-    - tqdm-joblib    - joblib
+    - tqdm-joblib
+    - joblib
