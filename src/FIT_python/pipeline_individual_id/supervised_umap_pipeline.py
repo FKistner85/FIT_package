@@ -10,9 +10,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from ..general_pipeline_steps.outlier_wrapper import OutlierCleanerTransformer
-from ..general_pipeline_steps.feature_selection_wrapper import FeatureSelectionTransformer
+from ..general_pipeline_steps.feature_selection_wrapper import (
+    FeatureSelectionTransformer,
+)
 from ..general_pipeline_steps.feature_scaler_wrapper import FeatureScalerTransformer
-from ..general_pipeline_steps.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+from ..general_pipeline_steps.dimensionality_reduction_wrapper import (
+    DimensionalityReducerTransformer,
+)
 from .distance_metrics import compute_distances
 
 

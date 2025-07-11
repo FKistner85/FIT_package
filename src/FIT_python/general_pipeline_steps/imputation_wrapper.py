@@ -8,28 +8,35 @@ from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
 from FIT_python.soft_config import SOFT_CONFIG
 
+
 class ImputationWrapper(TransformerMixin, BaseEstimator):
     def __init__(
         self,
-        n_estimators: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"]["n_estimators"],
-        max_iter: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"]["max_iter"],
-        random_state: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"]["random_state"],
+        n_estimators: int = SOFT_CONFIG["general_pipeline_steps"][
+            "imputation_defaults"
+        ]["n_estimators"],
+        max_iter: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"][
+            "max_iter"
+        ],
+        random_state: int = SOFT_CONFIG["general_pipeline_steps"][
+            "imputation_defaults"
+        ]["random_state"],
     ):
         # 1) Signatur-Parameter als Attribute setzen
         self.n_estimators = n_estimators
-        self.max_iter     = max_iter
+        self.max_iter = max_iter
         self.random_state = random_state
 
         # 2) Den eigentlichen Imputer bauen
         self.imputer = IterativeImputer(
             estimator=RandomForestRegressor(
-                n_estimators=n_estimators,
-                random_state=random_state
+                n_estimators=n_estimators, random_state=random_state
             ),
             max_iter=max_iter,
-            initial_strategy='median',
-            random_state=random_state
+            initial_strategy="median",
+            random_state=random_state,
         )
+
     def fit(self, X, y=None):
         # Unterscheide DataFrame vs. np.ndarray
         if isinstance(X, pd.DataFrame):

@@ -5,7 +5,14 @@ import numpy as np
 import logging
 from typing import Tuple
 from sklearn.model_selection import StratifiedGroupKFold
-from FIT_python.config import GLOBAL_RANDOM_SEED, TEST_SIZE, NUM_FOLDS, GROUP_COL, SPLITS_DIR, RESULTS_DATA_DIR
+from FIT_python.config import (
+    GLOBAL_RANDOM_SEED,
+    TEST_SIZE,
+    NUM_FOLDS,
+    GROUP_COL,
+    SPLITS_DIR,
+    RESULTS_DATA_DIR,
+)
 from sklearn.model_selection import (
     StratifiedGroupKFold,
     GroupKFold,
@@ -22,6 +29,7 @@ import pandas as pd
 
 
 from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL
+
 
 def stratified_individual_split(
     df: pd.DataFrame,
@@ -52,22 +60,19 @@ def stratified_individual_split(
         .drop_duplicates(subset=[group_col])
     )
     # Allow only m/f values
-    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["m","f"])].copy()
+    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["m", "f"])].copy()
     meta[stratify_col] = meta[stratify_col].str.lower()
 
     # 3) Stratified split on the group level
-    ids    = meta[group_col].tolist()
-    labels = meta[stratify_col].map({"f":0, "m":1}).tolist()
+    ids = meta[group_col].tolist()
+    labels = meta[stratify_col].map({"f": 0, "m": 1}).tolist()
     train_ids, test_ids = train_test_split(
-        ids,
-        test_size=test_size,
-        random_state=random_state,
-        stratify=labels
+        ids, test_size=test_size, random_state=random_state, stratify=labels
     )
 
     # 4) DataFrame splits
-    train_df     = df[df[group_col].isin(train_ids)].reset_index(drop=True)
-    test_df      = df[df[group_col].isin(test_ids)].reset_index(drop=True)
+    train_df = df[df[group_col].isin(train_ids)].reset_index(drop=True)
+    test_df = df[df[group_col].isin(test_ids)].reset_index(drop=True)
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
 
     if add_folds:
@@ -78,6 +83,7 @@ def stratified_individual_split(
         train_df = train_df.assign(Fold=fold_ids)
 
     return train_df, test_df, inference_df
+
 
 def train_test_group_split(
     df: pd.DataFrame,
@@ -100,12 +106,13 @@ def train_test_group_split(
     test_df = df[df[group_col].isin(test_groups)].reset_index(drop=True)
     return train_df, test_df
 
+
 def group_stratified_kfold(
     df: pd.DataFrame,
     n_splits: int = NUM_FOLDS,
     random_state: int = GLOBAL_RANDOM_SEED,
     group_col: str = GROUP_COL,
-    stratify_col: str = "sex"
+    stratify_col: str = "sex",
 ) -> pd.DataFrame:
     """
     Assigns a 'Fold' column via StratifiedGroupKFold on groups,
@@ -118,7 +125,9 @@ def group_stratified_kfold(
 
     class_counts = individuals[stratify_col].value_counts()
     n_splits = min(n_splits, class_counts.min())
-    logger.debug("Initial n_splits=%s based on class counts %s", n_splits, class_counts.to_dict())
+    logger.debug(
+        "Initial n_splits=%s based on class counts %s", n_splits, class_counts.to_dict()
+    )
 
     if n_splits < 2:
         raise ValueError("Not enough groups in one class for stratification")
@@ -130,11 +139,15 @@ def group_stratified_kfold(
         fold_series = pd.Series(-1, index=df.index, name="Fold")
 
         for fold, (_, val_idx) in enumerate(
-            sgkf.split(individuals, individuals[stratify_col], groups=individuals[group_col])
+            sgkf.split(
+                individuals, individuals[stratify_col], groups=individuals[group_col]
+            )
         ):
             fold_groups = individuals.iloc[val_idx][group_col]
             fold_series.loc[df[group_col].isin(fold_groups)] = fold
-            classes = df[df[group_col].isin(fold_groups)][stratify_col].dropna().unique()
+            classes = (
+                df[df[group_col].isin(fold_groups)][stratify_col].dropna().unique()
+            )
             logger.debug("seed=%s fold=%s classes=%s", seed, fold, classes)
 
         valid = True
@@ -150,6 +163,7 @@ def group_stratified_kfold(
 
     raise RuntimeError("Could not determine a balanced stratification")
 
+
 def sample_individuals(
     df: pd.DataFrame,
     dataset: str,
@@ -163,10 +177,9 @@ def sample_individuals(
     """
     subset = df[(df["dataorigin"] == dataset) & (df["sex"].str.lower() == sex.lower())]
     inds = subset["individual_id"].unique()
-    sampled = (
-        pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
-    )
+    sampled = pd.Series(inds).sample(min(n, len(inds)), random_state=seed).tolist()
     return df[df["individual_id"].isin(sampled)]
+
 
 def create_train_test_split_otter(
     df: pd.DataFrame,
@@ -182,7 +195,7 @@ def create_train_test_split_otter(
     inference_df = df[df["dataorigin"] == "Fieldprints Portugal"]
     print(f"🛰️ Inference-Split – {len(inference_df)} Zeilen")
     print("↪️ Inference 'dataorigin':", inference_df["dataorigin"].unique())
-    print("↪️ Inference 'sex' unique:", inference_df['sex'].unique())
+    print("↪️ Inference 'sex' unique:", inference_df["sex"].unique())
 
     # 2) Alle restlichen Daten
     df_clean = df[df["dataorigin"] != "Fieldprints Portugal"]
@@ -199,9 +212,9 @@ def create_train_test_split_otter(
     test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "f", 2, seed)
     test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "m", 2, seed)
 
-    test_df = pd.concat([
-        test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m
-    ]).drop_duplicates()
+    test_df = pd.concat(
+        [test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]
+    ).drop_duplicates()
 
     print(f"✅ Test-Split fertig – {len(test_df)} Zeilen")
     print("👤 Test-Individuals:", test_df["individual_id"].nunique())
@@ -230,8 +243,6 @@ def create_train_test_split_otter(
     return train_df, test_df, inference_df
 
 
-
-
 def splits_available() -> bool:
     """Return ``True`` if at least one valid train/test pair exists."""
     if not Path(SPLITS_DIR).exists():
@@ -251,7 +262,6 @@ def _check_valid(fold_ids: np.ndarray, y: pd.Series, n_splits: int) -> bool:
         if classes != {0, 1}:
             return False
     return True
-
 
 
 def ensure_valid_splits() -> None:
@@ -291,16 +301,13 @@ def ensure_valid_splits() -> None:
 
 
 def _make_folds(
-    df: pd.DataFrame,
-    y: pd.Series,
-    n_splits: int,
-    group_col: str
+    df: pd.DataFrame, y: pd.Series, n_splits: int, group_col: str
 ) -> Tuple[np.ndarray, str]:
     """Return ``(fold_ids, method_name)`` using the following strategy:
-      1) existing ``Fold`` column (predefined)
-      2) ``StratifiedGroupKFold`` via :func:`group_stratified_kfold`
-      3) ``GroupKFold``
-      4) ``KFold``
+    1) existing ``Fold`` column (predefined)
+    2) ``StratifiedGroupKFold`` via :func:`group_stratified_kfold`
+    3) ``GroupKFold``
+    4) ``KFold``
     """
     # 1) vorhandene Fold-Spalte?
     if "Fold" in df.columns:
@@ -326,9 +333,7 @@ def _make_folds(
     for attempt in range(3):
         gkf = GroupKFold(n_splits=n_splits)
         fold_ids = np.empty(len(df), dtype=int)
-        for fold, (_, val_idx) in enumerate(
-            gkf.split(df, groups=df[group_col])
-        ):
+        for fold, (_, val_idx) in enumerate(gkf.split(df, groups=df[group_col])):
             fold_ids[val_idx] = fold
         if _check_valid(fold_ids, y, n_splits):
             return fold_ids, "group"
@@ -340,9 +345,8 @@ def _make_folds(
         fold_ids[val_idx] = fold
     return fold_ids, "kfold"
 
-def prepare_all_splits(
-    species_filter: Optional[List[str]] = None
-) -> None:
+
+def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
     """
     Lädt alle CSVs in RAW_DIR und erstellt für jede Art Splits:
 
@@ -371,22 +375,18 @@ def prepare_all_splits(
         else:
             # generischer Stratified split nach individual_id (oder GROUP_COL)
             train_df, test_df, inf_df = stratified_individual_split(
-                df,
-                id_col=GROUP_COL,
-                n_splits=NUM_FOLDS,
-                random_state=0
+                df, id_col=GROUP_COL, n_splits=NUM_FOLDS, random_state=0
             )
 
         # 3) Folds ins train_df schreiben, falls nicht schon geschehen
         if "Fold" not in train_df.columns:
-            y_train = train_df["sex"].map({"f": 0, "m": 1}) \
-                      if species.lower()=="eurasian otter" else \
-                      train_df[GROUP_COL]
+            y_train = (
+                train_df["sex"].map({"f": 0, "m": 1})
+                if species.lower() == "eurasian otter"
+                else train_df[GROUP_COL]
+            )
             folds, _ = _make_folds(
-                train_df,
-                y_train,
-                n_splits=NUM_FOLDS,
-                group_col=GROUP_COL
+                train_df, y_train, n_splits=NUM_FOLDS, group_col=GROUP_COL
             )
             train_df = train_df.assign(Fold=folds)
 
@@ -394,12 +394,12 @@ def prepare_all_splits(
         out_dir = SPLITS_DIR / species.replace(" ", "_").lower()
         out_dir.mkdir(parents=True, exist_ok=True)
         train_df.to_parquet(out_dir / "train.parquet", index=False)
-        test_df.to_parquet (out_dir / "test.parquet",  index=False)
-        inf_df.to_parquet  (out_dir / "inference.parquet", index=False)
+        test_df.to_parquet(out_dir / "test.parquet", index=False)
+        inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
         # 5) Optional: Zusammenfassung & Plots
         run_summary(
             out_dir,
             RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_summary.csv",
-            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig"
+            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig",
         )

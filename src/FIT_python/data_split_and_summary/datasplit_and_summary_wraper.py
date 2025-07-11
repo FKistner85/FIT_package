@@ -5,20 +5,19 @@ import pandas as pd
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.split_utils import (
     create_train_test_split_otter,
-    stratified_individual_split
+    stratified_individual_split,
 )
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 
-RAW_DIR    = Path("data/raw")
+RAW_DIR = Path("data/raw")
 SPLITS_DIR = Path("data/splits")
 RESULTS_DATA_DIR = Path("results/data")
-DEFAULT_TARGETS = [...]      # wie gehabt
+DEFAULT_TARGETS = [...]  # wie gehabt
 NUM_FOLDS = 5
 GROUP_COL = "individual_id"
 
-def prepare_all_splits(
-    species_filter: Optional[List[str]] = None
-) -> None:
+
+def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
     """
     Lädt alle CSVs in RAW_DIR und erstellt für jede Art Splits:
 
@@ -49,22 +48,18 @@ def prepare_all_splits(
         else:
             # generischer Stratified split nach individual_id (oder GROUP_COL)
             train_df, test_df, inf_df = stratified_individual_split(
-                df,
-                id_col=GROUP_COL,
-                n_splits=NUM_FOLDS,
-                random_state=0
+                df, id_col=GROUP_COL, n_splits=NUM_FOLDS, random_state=0
             )
 
         # 3) Folds ins train_df schreiben, falls nicht schon geschehen
         if "Fold" not in train_df.columns:
-            y_train = train_df["sex"].map({"f": 0, "m": 1}) \
-                      if species.lower()=="eurasian otter" else \
-                      train_df[GROUP_COL]
+            y_train = (
+                train_df["sex"].map({"f": 0, "m": 1})
+                if species.lower() == "eurasian otter"
+                else train_df[GROUP_COL]
+            )
             folds, _ = _make_folds(
-                train_df,
-                y_train,
-                n_splits=NUM_FOLDS,
-                group_col=GROUP_COL
+                train_df, y_train, n_splits=NUM_FOLDS, group_col=GROUP_COL
             )
             train_df = train_df.assign(Fold=folds)
 
@@ -72,12 +67,12 @@ def prepare_all_splits(
         out_dir = SPLITS_DIR / species.replace(" ", "_").lower()
         out_dir.mkdir(parents=True, exist_ok=True)
         train_df.to_parquet(out_dir / "train.parquet", index=False)
-        test_df.to_parquet (out_dir / "test.parquet",  index=False)
-        inf_df.to_parquet  (out_dir / "inference.parquet", index=False)
+        test_df.to_parquet(out_dir / "test.parquet", index=False)
+        inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
         # 5) Optional: Zusammenfassung & Plots
         run_summary(
             out_dir,
             RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_summary.csv",
-            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig"
+            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig",
         )

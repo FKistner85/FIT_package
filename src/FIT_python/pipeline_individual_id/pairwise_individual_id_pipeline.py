@@ -42,10 +42,18 @@ def run_all_pairwise_projections_parallel(
     comparisons: List[Dict],
     df: pd.DataFrame,
     feature_cols: List[str],
-    k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
-    reducers: List[str] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"],
-    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["selection_method"],
-    n_components: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
+    k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["k_features"],
+    reducers: List[str] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "reducers"
+    ],
+    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "selection_method"
+    ],
+    n_components: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["n_components"],
     outlier_methods: Union[str, List[str], None] = None,
     scaler_methods: Union[str, List[str], None] = None,
     use_sexmodel_prediction: bool = False,
@@ -377,10 +385,18 @@ def run_embedding_once_pipeline(
     df: pd.DataFrame,
     *,
     feature_cols: List[str],
-    k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
-    reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
-    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["selection_method"],
-    n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
+    k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "k_features"
+    ],
+    reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "reducers"
+    ][0],
+    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "selection_method"
+    ],
+    n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "n_components"
+    ],
     outlier_method: str | None = None,
     scaler_method: str | None = None,
     use_sexmodel_prediction: bool = False,
@@ -404,5 +420,3 @@ def run_embedding_once_pipeline(
         debug=debug,
         n_jobs=1,
     )
-
-

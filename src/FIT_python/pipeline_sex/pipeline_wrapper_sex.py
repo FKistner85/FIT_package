@@ -36,7 +36,9 @@ from FIT_python.data_split_and_summary.summary_data_wrapper import SummaryWrappe
 from FIT_python.general_pipeline_steps.transform_wrapper import NumericTransformer
 from FIT_python.general_pipeline_steps.imputation_wrapper import ImputationWrapper
 from FIT_python.general_pipeline_steps.outlier_wrapper2 import OutlierCleanerTransformer
-from FIT_python.general_pipeline_steps.feature_scaler_wrapper2 import FeatureScalerTransformer
+from FIT_python.general_pipeline_steps.feature_scaler_wrapper2 import (
+    FeatureScalerTransformer,
+)
 from FIT_python.general_pipeline_steps.feature_selection_wrapper2 import (
     FeatureSelectionTransformer,
 )
@@ -206,7 +208,9 @@ class PipelineWrapper:
             species_dirs = [d for d in sorted(Path(SPLITS_DIR).iterdir()) if d.is_dir()]
             total_species = len(species_dirs)
             total_models = len(self.model_keys)
-            for s_idx, species_dir in enumerate(tqdm(species_dirs, desc="Species"), start=1):
+            for s_idx, species_dir in enumerate(
+                tqdm(species_dirs, desc="Species"), start=1
+            ):
                 if not species_dir.is_dir():
                     continue
 
@@ -255,7 +259,9 @@ class PipelineWrapper:
                     X_test = df_test.drop(columns=drop_pred_test)
 
                 # iterate over all models
-                for m_idx, mk in enumerate(tqdm(self.model_keys, desc=f"{key} models", leave=False), start=1):
+                for m_idx, mk in enumerate(
+                    tqdm(self.model_keys, desc=f"{key} models", leave=False), start=1
+                ):
                     model = MODELS[mk]
                     steps = get_pipeline_steps(
                         fs_method=fs_m,
@@ -345,9 +351,7 @@ class PipelineWrapper:
                         fem_i, mal_i, bal_i = grouped_metrics.individual_accuracies(
                             y_test.to_numpy(), y_pred, df_test["individual_id"]
                         )
-                        id_line = (
-                            f"  - per-id BA: F={fem_i:.3f}, M={mal_i:.3f}, B={bal_i:.3f}"
-                        )
+                        id_line = f"  - per-id BA: F={fem_i:.3f}, M={mal_i:.3f}, B={bal_i:.3f}"
                         print(id_line)
                         summary_msgs.append(id_line)
                     time_line = "  - " + ", ".join(
@@ -399,19 +403,15 @@ class PipelineWrapper:
             plot_pipeline_timings(time_df, Path(FIGURES_DIR) / "pipeline_timings")
 
         # summarise cross-validation scores by preprocessing options
-        self.pivot_cv = (
-            df_new.pivot_table(
-                index="fs_method",
-                columns="reduce_pre_method",
-                values="cv_balanced_accuracy",
-                aggfunc="mean",
-            )
+        self.pivot_cv = df_new.pivot_table(
+            index="fs_method",
+            columns="reduce_pre_method",
+            values="cv_balanced_accuracy",
+            aggfunc="mean",
         )
 
         # Visualise the hyperparameter search results
-        plot_hyperparam_heatmap(
-            df_new, Path(FIGURES_DIR) / "hyperparam_search"
-        )
+        plot_hyperparam_heatmap(df_new, Path(FIGURES_DIR) / "hyperparam_search")
 
         print("\nSummary of runs:")
         for msg in summary_msgs:
@@ -462,7 +462,6 @@ class PipelineWrapper:
         return df_new
 
 
-
 def plot_pipeline_timings(time_df: pd.DataFrame, out_dir: Path) -> None:
     """Create a bar chart of average seconds per preprocessing step."""
     from FIT_python.plot_style import apply_style
@@ -488,5 +487,3 @@ def plot_pipeline_timings(time_df: pd.DataFrame, out_dir: Path) -> None:
         fig.savefig(out_file)
         save_caption(out_file, caption)
     plt.close(fig)
-
-

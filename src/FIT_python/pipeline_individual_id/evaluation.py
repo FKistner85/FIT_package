@@ -9,7 +9,12 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix
 
 
-def compute_confusion(results_df: pd.DataFrame, *, true_col: str = "same_individual", pred_col: str = "pred") -> pd.DataFrame:
+def compute_confusion(
+    results_df: pd.DataFrame,
+    *,
+    true_col: str = "same_individual",
+    pred_col: str = "pred",
+) -> pd.DataFrame:
     """Return a confusion matrix for ``results_df``.
 
     Parameters
@@ -32,7 +37,9 @@ def compute_confusion(results_df: pd.DataFrame, *, true_col: str = "same_individ
     y_pred = results_df[pred_col].map(mapping).astype(int)
 
     cm = confusion_matrix(y_true, y_pred, labels=[1, 0])
-    return pd.DataFrame(cm, index=["true_same", "true_diff"], columns=["pred_same", "pred_diff"])
+    return pd.DataFrame(
+        cm, index=["true_same", "true_diff"], columns=["pred_same", "pred_diff"]
+    )
 
 
 def report_skipped(skipped_counts: Mapping[str, int]) -> str:

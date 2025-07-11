@@ -26,10 +26,18 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        method: str = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["method"],
-        lower_quantile: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["lower_quantile"],
-        upper_quantile: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["upper_quantile"],
-        z_thresh: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["z_thresh"],
+        method: str = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"][
+            "method"
+        ],
+        lower_quantile: float = SOFT_CONFIG["general_pipeline_steps"][
+            "outlier_defaults"
+        ]["lower_quantile"],
+        upper_quantile: float = SOFT_CONFIG["general_pipeline_steps"][
+            "outlier_defaults"
+        ]["upper_quantile"],
+        z_thresh: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"][
+            "z_thresh"
+        ],
     ):
         if method not in ("clip", "zscore"):
             raise ValueError("method must be 'clip' or 'zscore'")

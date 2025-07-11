@@ -35,10 +35,10 @@ def generate_pairwise_comparisons_from_df(
     show_progress: bool = False,
 ) -> List[Dict]:
     """Create trail pair comparisons with metadata:
-      - ``samples_a``/``samples_b``: lists of original indices
-      - ``trail_a_id``/``trail_b_id``: unique identifiers
-      - ``same_individual``: boolean flag
-      - ``fold``: stratified k-fold based on ``same_individual``
+    - ``samples_a``/``samples_b``: lists of original indices
+    - ``trail_a_id``/``trail_b_id``: unique identifiers
+    - ``same_individual``: boolean flag
+    - ``fold``: stratified k-fold based on ``same_individual``
     """
     # 1) Alle Roh-Paare sammeln
     individuals = defaultdict(list)

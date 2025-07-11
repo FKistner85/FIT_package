@@ -53,7 +53,9 @@ def compute_overlap_jsl_style(row, p: float = 0.5) -> bool:
 
 def sequential_holdout_ids(
     unique_ids: Iterable[str],
-    val_sizes: Iterable[int] = tuple(SOFT_CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]),
+    val_sizes: Iterable[int] = tuple(
+        SOFT_CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
+    ),
     n_iter: int = 1,
     random_state: int | None = None,
 ) -> List[Dict[str, List[str]]]:

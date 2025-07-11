@@ -82,7 +82,9 @@ def predict_all(
         clf = load(models_dir / subdir / f"{species}.joblib")
         for df in dfs.values():
             num_cols = df.select_dtypes(include=np.number).columns
-            feature_cols = [c for c in num_cols if not c.startswith("pred_") and c != "Fold"]
+            feature_cols = [
+                c for c in num_cols if not c.startswith("pred_") and c != "Fold"
+            ]
             X = df[feature_cols]
             df[f"pred_{key}_sex"] = clf.predict(X)
             proba = clf.predict_proba(X)
@@ -156,7 +158,9 @@ def plot_confusion(df: pd.DataFrame) -> None:
     if not pred_cols:
         raise KeyError("DataFrame contains no prediction columns")
 
-    models = {c[len("pred_"):-len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")}
+    models = {
+        c[len("pred_") : -len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")
+    }
     for mk in sorted(models):
         test_col = f"pred_{mk}_sex"
         cv_col = f"pred_{mk}_cv_sex"
@@ -178,9 +182,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
 
         cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
         if y_pred_train is not None:
-            cm_train = confusion_matrix(
-                y_true_train, y_pred_train, labels=["F", "M"]
-            )
+            cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
             fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
             mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
         else:

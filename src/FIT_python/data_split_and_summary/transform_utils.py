@@ -6,10 +6,8 @@ from pathlib import Path
 import json
 from typing import Tuple, Dict, List
 
-def convert_numeric(
-    df: pd.DataFrame,
-    feature_cols: List[str]
-) -> pd.DataFrame:
+
+def convert_numeric(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
     """Convert feature columns to float, replacing comma decimal separators.
 
     Non-convertible values are coerced to NaN so that mixed columns do not
@@ -19,14 +17,14 @@ def convert_numeric(
         df[col] = (
             df[col]
             .astype(str)
-            .str.replace(',', '.', regex=False)
+            .str.replace(",", ".", regex=False)
             .pipe(pd.to_numeric, errors="coerce")
         )
     return df
 
+
 def one_hot_encode_targets(
-    df: pd.DataFrame,
-    target_cols: List[str]
+    df: pd.DataFrame, target_cols: List[str]
 ) -> Tuple[np.ndarray, Dict[str, List[str]]]:
     """
     One-hot encode target columns.
@@ -43,11 +41,9 @@ def one_hot_encode_targets(
     y_df = pd.concat(y_frames, axis=1)
     return y_df.to_numpy(), mappings
 
-def save_target_mapping(
-    mapping: Dict[str, List[str]],
-    path: Path
-) -> None:
+
+def save_target_mapping(mapping: Dict[str, List[str]], path: Path) -> None:
     """Save target mapping dict to JSON."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(mapping, f, indent=2)
