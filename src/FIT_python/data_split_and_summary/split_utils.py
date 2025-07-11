@@ -29,7 +29,7 @@ def stratified_individual_split(
     random_state: int = 42,
     group_col: str = "individual_id",
     stratify_col: str = "sex",
-    add_folds: bool = False,
+    add_folds: bool = True,
     n_folds: int = NUM_FOLDS,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
