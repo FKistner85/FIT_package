@@ -104,3 +104,33 @@ radius estimate.
 3. After processing all iterations, report the average number of trails per individual and the total number of trail pairs evaluated.
 
 This structured pseudocode should serve as a starting point for implementing the actual code in a modular fashion.
+
+## Running the training script
+
+The helper script `train_individual_id_pipelines.py` executes this workflow from
+the command line. It assumes that cleaned data and the train/test splits created
+for the sex models are present in the locations configured in
+`src/FIT_python/config.py`. For each sequential holdout definition the script
+trains all three pipelines and stores the evaluation results.
+
+### Required inputs
+
+1. Cleaned footprint tables in `data/cleaned/`.
+2. Train and test partitions under `data/splits/`.
+
+### Command-line arguments
+
+```
+python train_individual_id_pipelines.py [options]
+```
+
+- `--iterations N` &ndash; number of sequential holdout repetitions (default: `1`).
+- `--include-sex` / `--no-include-sex` &ndash; whether to append predicted sex
+  probabilities as extra features (default: enabled).
+- `--debug` &ndash; print verbose progress information and stop on missing files.
+
+### Output
+
+All artefacts are placed in `results/data/individual_id`. Each iteration gets its
+own subdirectory with the trained models and CSV summaries. Figures such as
+confusion matrices are written to `results/figures/individual_id`.
