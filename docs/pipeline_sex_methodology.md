@@ -4,7 +4,7 @@ This document summarises the workflow implemented in the notebook `pipeline_sex_
 
 ## Condensed (1–2 pages)
 
-1. **Data Loading** – CSV files in `data/raw` are imported through `DataImportWrapper`, which normalises column names and converts numeric fields using `transform_utils.convert_numeric()`.
+1. **Data Loading** – CSV files in `data/raw` are imported through `DataImportWrapper`, which normalises column names and converts numeric fields using `transform_utils.convert_numeric()`. Purely textual features are one-hot encoded during this step.
 2. **Splitting** – `SplitWrapper.split_all()` creates species-specific directories with `train.parquet` and `test.parquet`. Footprints from the same individual are grouped together in a single split. Stratification on sex keeps male/female ratios balanced.
 3. **Cross‑Validation (optional)** – If enabled, `group_stratified_kfold` assigns fold numbers that preserve sex distribution and prevent individuals from appearing in multiple folds.
 4. **Pipeline Assembly** – `get_pipeline_steps()` builds a scikit‑learn pipeline with optional imputation, outlier cleaning, scaling, dimensionality reduction, feature selection and a classifier from `models.py`.
@@ -15,7 +15,7 @@ This document summarises the workflow implemented in the notebook `pipeline_sex_
 
 ### 1. Data Acquisition and Cleaning
 - **Import** – Raw CSVs are stored in `data/raw`. `DataImportWrapper` iterates over these files, loads them into pandas DataFrames and harmonises column names. Metadata such as individual ID, sampling location and substrate type are preserved.
-- **Numeric Conversion** – `convert_numeric()` from `transform_utils.py` replaces comma decimal separators with dots, coercing invalid values to `NaN`. Duplicate rows are dropped, while missing values remain for imputation.
+- **Numeric Conversion** – `convert_numeric()` from `transform_utils.py` replaces comma decimal separators with dots, converts available numbers and one-hot encodes columns that contain only strings. Duplicate rows are dropped, while missing values remain for imputation.
 
 ### 2. Train/Test/Inference Splitting
 - **Core Logic** – `SplitWrapper.split_all()` reads the cleaned tables and writes per‑species folders under `data/splits`. For most datasets, `stratified_individual_split` ensures all footprints of an individual occur either entirely in the training or testing set, stratified by sex.

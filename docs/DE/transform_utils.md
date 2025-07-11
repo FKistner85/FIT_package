@@ -2,7 +2,7 @@
 
 ## Überblick
 Hilfsfunktionen zum Konvertieren von Feature-Spalten und Kodieren der Zielvariablen.
-Die Funktionen vereinfachen die Datenvorbereitung: "convert_numeric" erkennt Kommazahlen, "one_hot_encode_targets" erzeugt Dummy-Variablen und "save_target_mapping" speichert die Zuordnung als JSON. Sie sind besonders in der Vorverarbeitung für Machine-Learning-Pipelines nützlich.
+"convert_numeric" wandelt Spalten in numerische Werte um und führt bei rein textuellen Merkmalen automatisch ein One-Hot-Encoding durch. "one_hot_encode_targets" erzeugt Dummy-Variablen für Zielgrößen und "save_target_mapping" speichert die Zuordnung als JSON. Sie sind besonders in der Vorverarbeitung für Machine-Learning-Pipelines nützlich.
 
 ## Wichtige Bestandteile
 - convert_numeric

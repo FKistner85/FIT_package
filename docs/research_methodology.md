@@ -3,7 +3,7 @@
 This document gives a research-style description of the two main analysis pipelines. It draws on the detailed markdown documentation in this repository. Each section is first presented in English and then in German.
 
 ## Sex Classification Pipeline (English)
-The sex classification workflow begins with `DataImportWrapper.clean_all()` which loads raw CSV tables from `data/raw`, harmonises column names, and converts numeric fields via `transform_utils.convert_numeric`. The cleaned tables are written to `data/cleaned`.
+The sex classification workflow begins with `DataImportWrapper.clean_all()` which loads raw CSV tables from `data/raw`, harmonises column names, and converts numeric fields via `transform_utils.convert_numeric`. This function also one‑hot encodes purely categorical columns so that the cleaned tables in `data/cleaned` contain only numeric values.
 
 `SplitWrapper.split_all(as_csv=True)` then groups footprints from the same individual and generates `train`, `test`, and optional `inference` sets per species. Within `split_utils` the function `stratified_individual_split` ensures that all footprints of one individual remain in a single split while keeping the male/female ratio balanced. If folds are required, `_make_folds` draws `NUM_FOLDS` stratified groups so that each fold maintains comparable sex proportions.
 
@@ -14,7 +14,7 @@ Model preparation is handled by `pipeline_wrapper_sex.get_pipeline_steps` which 
 Reproducibility is promoted by caching intermediate results via `joblib.Memory`, saving split files as Parquet and reusing a global random seed from `config.py`.【F:docs/pipeline_sex_methodology.md†L52-L55】 The recorded metrics can be compared to prior literature on sex classification using gait characteristics, e.g. Hotelling (1933) for PCA and Tibshirani (1996) for LASSO.
 
 ## Methodik: Sex-Klassifikations-Pipeline (Deutsch)
-Der Ablauf startet mit `DataImportWrapper.clean_all()`, das die Rohdaten aus `data/raw` einliest, Spaltennamen vereinheitlicht und numerische Felder über `transform_utils.convert_numeric` aufbereitet. Die bereinigten Tabellen landen in `data/cleaned`.
+Der Ablauf startet mit `DataImportWrapper.clean_all()`, das die Rohdaten aus `data/raw` einliest, Spaltennamen vereinheitlicht und numerische Felder über `transform_utils.convert_numeric` aufbereitet. Dabei werden rein textuelle Spalten automatisch als Dummies kodiert, sodass in `data/cleaned` nur noch numerische Werte stehen.
 
 Im nächsten Schritt erzeugt `SplitWrapper.split_all(as_csv=True)` pro Tierart Ordner mit den Dateien `train`, `test` und optional `inference`. `stratified_individual_split` achtet darauf, dass alle Spuren eines Individuums in demselben Split bleiben, während die Geschlechterverteilung stabil bleibt. Werden Folds benötigt, erstellt `_make_folds` gruppierte Folds gemäß `NUM_FOLDS`.
 

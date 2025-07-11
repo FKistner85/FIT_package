@@ -9,10 +9,11 @@ Utility functions to convert feature columns and encode targets.
 - save_target_mapping
 
 ### convert_numeric
-Replaces comma decimal separators and coerces selected columns to `float`. Use
-this after reading raw CSV or Excel files when numeric values may have been
-parsed as strings. Columns that cannot be converted become `NaN`, so subsequent
-imputation or filtering may be required.
+Replaces comma decimal separators and tries to convert each feature to a
+floating point number. If an entire column cannot be parsed as numeric it is
+treated as categorical and expanded via one‑hot encoding. The resulting DataFrame
+therefore contains only numeric columns and can directly feed machine learning
+pipelines.
 
 ### one_hot_encode_targets
 Performs one‑hot encoding of categorical target columns. Returns both the numpy

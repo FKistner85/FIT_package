@@ -10,18 +10,34 @@ def convert_numeric(
     df: pd.DataFrame,
     feature_cols: List[str]
 ) -> pd.DataFrame:
-    """Convert feature columns to float, replacing comma decimal separators.
+    """Convert feature columns to numeric and encode categorical strings.
 
-    Non-convertible values are coerced to NaN so that mixed columns do not
-    raise errors during conversion.
+    Steps
+    -----
+    1. Replace comma decimal separators with dots.
+    2. Attempt numeric conversion via ``pd.to_numeric``.
+    3. Columns that contain only non-numeric values are one-hot encoded and the
+       original column dropped.
+
+    Returns the modified ``DataFrame`` containing only numeric columns.
     """
+
+    categorical_cols: list[str] = []
     for col in feature_cols:
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.replace(',', '.', regex=False)
-            .pipe(pd.to_numeric, errors="coerce")
-        )
+        ser = df[col].astype(str).str.replace(',', '.', regex=False)
+        numeric = pd.to_numeric(ser, errors="coerce")
+
+        # if all values are NaN after conversion, treat as categorical
+        if numeric.notna().sum() == 0:
+            df[col] = ser
+            categorical_cols.append(col)
+        else:
+            df[col] = numeric
+
+    if categorical_cols:
+        dummies = pd.get_dummies(df[categorical_cols], prefix=categorical_cols)
+        df = pd.concat([df.drop(columns=categorical_cols), dummies], axis=1)
+
     return df
 
 def one_hot_encode_targets(
