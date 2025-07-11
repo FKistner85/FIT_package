@@ -63,7 +63,7 @@ The projection of each pair is handled by `process_pair`, and the top-level func
 
 ## 5. Output Structure
 
-Each result dictionary returned by `run_all_pairwise_projections_parallel` contains the trail IDs, original indices, individual identifiers, fold number and whether the trails belong to the same individual.  It also includes the chosen preprocessing options (`pipeline`), the selected features with their scores, the computed distances and—if a sex classifier is used—the average predicted probabilities for each group.  Coordinates for each trail and the RCV set are stored under `coords_*` fields, along with their centroids.
+Each result dictionary returned by `run_all_pairwise_projections_parallel` contains the trail IDs, lists of `id` values for both trails, individual identifiers, fold number and whether the trails belong to the same individual.  It also includes the chosen preprocessing options (`pipeline`), the selected features with their scores, the computed distances and—if a sex classifier is used—the average predicted probabilities for each group.  Coordinates for each trail and the RCV set are stored under `coords_*` fields, along with their centroids.
 
 The collected results can later be written to a CSV file for statistical analysis or model training.
 

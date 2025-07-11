@@ -14,14 +14,18 @@ class TripletDataset(Dataset):
     """Randomly generate triplets from a dataframe."""
 
     def __init__(
-        self, df: pd.DataFrame, feature_cols: List[str], id_col: str = "individual_id"
+        self,
+        df: pd.DataFrame,
+        feature_cols: List[str],
+        id_col: str = "individual_id",
     ) -> None:
-        self.df = df.reset_index(drop=True)
+        self.df = df.set_index("id")
+        self.row_ids = list(self.df.index)
         self.features = feature_cols
         self.id_col = id_col
-        self.by_id: Dict[str, List[int]] = {}
-        for idx, ind in enumerate(self.df[id_col]):
-            self.by_id.setdefault(str(ind), []).append(idx)
+        self.by_id: Dict[str, List[str]] = {}
+        for rid, ind in zip(self.df.index, self.df[id_col]):
+            self.by_id.setdefault(str(ind), []).append(rid)
         self.ids = list(self.by_id.keys())
 
     def __len__(self) -> int:  # number of anchors
@@ -29,18 +33,19 @@ class TripletDataset(Dataset):
 
     def __getitem__(self, idx: int):
         rng = np.random.default_rng()
-        anchor = self.df.loc[idx, self.features].values.astype(np.float32)
-        anchor_id = str(self.df.loc[idx, self.id_col])
+        row_id = self.row_ids[idx]
+        anchor = self.df.loc[row_id, self.features].to_numpy(dtype=np.float32)
+        anchor_id = str(self.df.loc[row_id, self.id_col])
 
-        pos_choices = [i for i in self.by_id[anchor_id] if i != idx]
+        pos_choices = [i for i in self.by_id[anchor_id] if i != row_id]
         if not pos_choices:
-            pos_choices = [idx]
-        pos_idx = rng.choice(pos_choices)
-        positive = self.df.loc[pos_idx, self.features].values.astype(np.float32)
+            pos_choices = [row_id]
+        pos_id = rng.choice(pos_choices)
+        positive = self.df.loc[pos_id, self.features].to_numpy(dtype=np.float32)
 
-        neg_id = rng.choice([i for i in self.ids if i != anchor_id])
-        neg_idx = rng.choice(self.by_id[neg_id])
-        negative = self.df.loc[neg_idx, self.features].values.astype(np.float32)
+        neg_ind = rng.choice([i for i in self.ids if i != anchor_id])
+        neg_id = rng.choice(self.by_id[neg_ind])
+        negative = self.df.loc[neg_id, self.features].to_numpy(dtype=np.float32)
         return anchor, positive, negative
 
 

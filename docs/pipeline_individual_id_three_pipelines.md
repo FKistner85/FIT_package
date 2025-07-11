@@ -70,9 +70,10 @@ For each generated train/validation split run the following pipelines. All compo
 The following pseudocode outlines the common steps used to process a single pair during validation.
 
 ```python
+df_base = df.set_index('id')
 for each comparison in comparisons:
-    df_a = df.loc[comparison['samples_a']]
-    df_b = df.loc[comparison['samples_b']]
+    df_a = df_base.loc[comparison['samples_a']]
+    df_b = df_base.loc[comparison['samples_b']]
     df_r = df_train_rcv
     y_ab = [0] * len(df_a) + [1] * len(df_b)
     for out_method in outs:

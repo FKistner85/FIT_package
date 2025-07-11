@@ -94,11 +94,14 @@ def run_all_pairwise_projections_parallel(
     # --- 1) prepare base DataFrame ---
     df2 = df.copy()
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df_base = df2.reset_index(drop=True)
+    df_base = df2.set_index("id")
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
-        proba_all = sex_clf.predict_proba(df_base[feature_cols])
+        proba_all = pd.DataFrame(
+            sex_clf.predict_proba(df_base[feature_cols]),
+            index=df_base.index,
+        )
     else:
         proba_all = None
 
@@ -135,8 +138,8 @@ def run_all_pairwise_projections_parallel(
         df_b = df_base.loc[idx_b, feature_cols]
 
         # RCV set as the complement
-        all_idx = np.arange(len(df_base))
-        rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
+        all_ids = set(df_base.index)
+        rcv_idx = list(all_ids - set(idx_a) - set(idx_b))
         df_r = df_base.loc[rcv_idx, feature_cols]
 
         # labels for feature selection
@@ -144,9 +147,9 @@ def run_all_pairwise_projections_parallel(
 
         # extract sex probabilities if required
         if use_sexmodel_prediction:
-            pa = proba_all[idx_a]
-            pb = proba_all[idx_b]
-            pr = proba_all[rcv_idx]
+            pa = proba_all.loc[idx_a].to_numpy()
+            pb = proba_all.loc[idx_b].to_numpy()
+            pr = proba_all.loc[rcv_idx].to_numpy()
             avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
             avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
             avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())

@@ -14,8 +14,10 @@ def sample_trails(
     N_pool: int,
     n_windows: int,
     random_state: int,
-) -> Dict[str, Dict[int, List[List[int]]]]:
-    """Sample diverse index subsets for each individual.
+    *,
+    id_col: str = "id",
+) -> Dict[str, Dict[int, List[List[str]]]]:
+    """Sample diverse ``id`` subsets for each individual.
 
     Parameters
     ----------
@@ -32,18 +34,21 @@ def sample_trails(
         Number of final subsets to return per individual and length.
     random_state : int
         Seed for the random number generator.
+    id_col : str, optional
+        Column containing unique IDs for each footprint. Defaults to ``"id"``.
 
     The function draws a pool of subsets for every ``group_col`` and
     ``window_length``. The average Jaccard dissimilarity to all other
     subsets in the pool is computed and the ``n_windows`` most diverse
-    subsets are returned.
+    subsets are returned.  Windows are returned as lists of ``id`` values
+    so the original row order can be restored later.
     """
 
     rng = np.random.default_rng(random_state)
 
-    pools: Dict[str, Dict[int, List[List[int]]]] = {}
+    pools: Dict[str, Dict[int, List[List[str]]]] = {}
     for gid, grp in df.groupby(group_col):
-        idxs = sorted(grp.index.tolist())
+        idxs = sorted(grp[id_col].astype(str).tolist())
         gid = str(gid)
         pools[gid] = {}
         for L in window_lengths:
@@ -89,7 +94,7 @@ def sample_trails(
 
 
 def build_pairwise_comparisons(
-    trails_per_animal: Dict[str, Dict[int, List[Tuple[int, List[int]]]]],
+    trails_per_animal: Dict[str, Dict[int, List[Tuple[int, List[str]]]]],
     df: pd.DataFrame,
     id_col: str,
     sex_map: Dict[str, str],
@@ -97,7 +102,11 @@ def build_pairwise_comparisons(
     n_folds: int,
     random_state: int,
 ) -> Tuple[List[Dict], pd.DataFrame]:
-    """Create cross- and within-individual comparisons and summary."""
+    """Create cross- and within-individual comparisons and summary.
+
+    ``samples_a`` and ``samples_b`` contain lists of ``id`` values
+    corresponding to the original rows of ``df``.
+    """
 
     trail_size_list = (
         sorted(next(iter(trails_per_animal.values())).keys())
@@ -318,6 +327,7 @@ def generate_pairwise_comparisons_from_df(
             N_pool=N_pool,
             n_windows=n_windows,
             random_state=random_state,
+            id_col="id",
         )
         trails_per_animal = {
             gid: {L: [(i, w) for i, w in enumerate(wins)] for L, wins in by_len.items()}

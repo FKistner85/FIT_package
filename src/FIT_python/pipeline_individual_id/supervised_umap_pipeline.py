@@ -83,7 +83,11 @@ def _compute_pair_features(
     embeddings: pd.DataFrame,
     comparisons: Sequence[dict],
 ) -> pd.DataFrame:
-    """Compute distance features for each comparison."""
+    """Compute distance features for each comparison.
+
+    The ``embeddings`` DataFrame is indexed by ``id`` so ``samples_a`` and
+    ``samples_b`` can be looked up directly via ``loc``.
+    """
 
     records: list[DistanceRecord] = []
     for comp in comparisons:
@@ -126,8 +130,8 @@ def run(
     train_df : pd.DataFrame
         Training footprints with ``individual_id`` and feature columns.
     val_comparisons : sequence of dict
-        Pair specifications containing ``samples_a``/``samples_b`` index lists
-        and ``same_individual`` label.
+        Pair specifications containing ``samples_a``/``samples_b`` lists of
+        ``id`` values and ``same_individual`` label.
     feature_cols : sequence of str
         Columns used as numeric input features.
     sex_features : sequence of str, optional
@@ -161,7 +165,7 @@ def run(
     embeddings = reducer.fit_transform(X_prep, labels)
     emb_df = pd.DataFrame(
         embeddings,
-        index=train_df.index,
+        index=train_df["id"],
         columns=reducer.get_feature_names_out(),
     )
 
