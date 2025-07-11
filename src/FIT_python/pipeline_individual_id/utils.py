@@ -56,7 +56,13 @@ def sequential_holdout_ids(
     n_iter: int = 1,
     random_state: int | None = None,
 ) -> List[Dict[str, List[str]]]:
-    """Generate sequential train/validation splits based on unique IDs."""
+    """Generate sequential train/validation splits based on unique IDs.
+
+    For each iteration the validation set grows according to ``val_sizes``.
+    The IDs selected for a smaller ``val_size`` remain part of all subsequent
+    validation sets within the same iteration.
+    """
+
     ids = list(unique_ids)
     if len(ids) < 3:
         raise ValueError("Need at least three unique IDs for holdouts")
@@ -64,9 +70,14 @@ def sequential_holdout_ids(
     rng = np.random.default_rng(random_state)
     results = []
     for it in range(n_iter):
+        val_ids: list[str] = []
         for n_val in val_sizes:
             n_val_eff = max(2, min(n_val, len(ids) - 1))
-            val_ids = rng.choice(ids, size=n_val_eff, replace=False)
+            add_count = n_val_eff - len(val_ids)
+            if add_count > 0:
+                remaining = [i for i in ids if i not in val_ids]
+                new_ids = rng.choice(remaining, size=add_count, replace=False)
+                val_ids.extend(list(new_ids))
             train_ids = [i for i in ids if i not in val_ids]
             results.append(
                 {
