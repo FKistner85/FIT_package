@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, MDS, Isomap
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap
+from FIT_python.soft_config import SOFT_CONFIG
 
 
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
@@ -25,12 +26,12 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        method: str | None = None,
-        n_components: int = 2,
+        method: str | None = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["method"],
+        n_components: int = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["n_components"],
         supervised: bool = False,
-        n_neighbors: int = 15,  # UMAP only
-        min_dist: float = 0.1,  # UMAP only
-        whiten: bool = False,  # PCA only
+        n_neighbors: int = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["n_neighbors"],
+        min_dist: float = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["min_dist"],
+        whiten: bool = SOFT_CONFIG["general_pipeline_steps"]["dim_reducer_defaults"]["whiten"],
         **kwargs,
     ):
         # raw parameters for cloning

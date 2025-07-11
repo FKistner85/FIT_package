@@ -5,12 +5,17 @@ import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler, RobustScaler
+from FIT_python.soft_config import SOFT_CONFIG
 
 
 class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
     """Scale numerical features using either a standard or robust approach."""
 
-    def __init__(self, method: str = "standard", **scaler_kwargs):
+    def __init__(
+        self,
+        method: str = SOFT_CONFIG["general_pipeline_steps"]["scaler_default"]["method"],
+        **scaler_kwargs,
+    ):
         if method not in ("standard", "robust"):
             raise ValueError("method must be 'standard' or 'robust'")
         self.method = method

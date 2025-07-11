@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from FIT_python.plot_style import apply_style, TRAIN_COLORS, TEST_COLORS
+from FIT_python.soft_config import SOFT_CONFIG
 
 def discover_splits(splits_dir: Path) -> Dict[str, Dict[str, Path]]:
     results: Dict[str, Dict[str, Path]] = {}
@@ -164,17 +165,15 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    sexes = ['F', 'M']
-    splits = ['Train', 'Test']
+    cfg = SOFT_CONFIG['data_split_and_summary']
+    sexes = cfg['sex_categories']
+    splits = cfg['split_labels']
     colors = {
         'Train': TRAIN_COLORS,
         'Test':  TEST_COLORS,
     }
 
-    SPECIES_REMAP = {
-        "a_j_soemmeringii": "acinonyx_jubatus_soemmeringii",
-        "a_j_jubatus": "acinonyx_jubatus_jubatus",
-    }
+    SPECIES_REMAP = cfg['species_remap']
 
     def make_italic(name_code: str) -> str:
         # map non‐standard und ensure spaces

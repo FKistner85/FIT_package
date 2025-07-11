@@ -21,6 +21,7 @@ from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTran
 from FIT_python.general_pipeline_steps.feature_scaler_wrapper import FeatureScalerTransformer
 from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import DimensionalityReducerTransformer
 from FIT_python.pipeline_sex.models import MODELS
+from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.pipeline_sex.grouped_metrics import (
     individual_accuracies,
     individual_majority_stats,
@@ -38,58 +39,18 @@ from FIT_python.config import (
     NUM_FOLDS,
 )
 
-MODEL_KEYS = [
-    "logreg_l2","logreg_l1",
-    "rf_small","rf_med","rf_large",
-    "knn_3","knn_5","knn_7",
-    "svm_linear","svm_rbf",
-    "xgb_std","xgb_hist",
-    "lgbm_std","lgbm_md10",
-    "lda",
-]
+PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
 
-PARAM_DISTRIBUTIONS = {
-    "select__method":          [None, "forward", "lasso", "variance", "random_forest"],
-    "select__k":               [1,2,3,4,5,6,10, 20, 50,100],
-    "outlier__method":         [None, "clip"],
-    "outlier__lower_quantile": [0.01, 0.05],
-    "outlier__upper_quantile": [0.90, 0.95],
-    "scale__method":           [None, "standard", "robust", "minmax"],
-    "reduce_pre__method":        [None, "pca", "umap"],
-    "reduce_pre__n_components":  [2, 10],
-    "reduce_pre__n_neighbors":   [5, 10, 15, 30, 50],
-    "reduce_pre__min_dist":      [0.1, 0.5],
-    "reduce_pre__whiten":        [False, True],
-    "reduce_post__method":       [None, "pca", "umap"],
-    "reduce_post__n_components": [2, 10],
-    "reduce_post__n_neighbors":  [5, 10, 15, 30, 50],
-    "reduce_post__min_dist":     [0.1, 0.5],
-    "reduce_post__whiten":       [False, True],
-    "clf": [MODELS[k] for k in MODEL_KEYS],
-}
+MODEL_KEYS = PIPE_CFG["model_keys"]
 
-METRICS = [
-    "maj_test_pct",
-    "balanced_test_acc",
-    "accuracy_test",
-    "mean_test_neg_log_loss",
-]
+PARAM_DISTRIBUTIONS = PIPE_CFG["param_distributions"].copy()
+PARAM_DISTRIBUTIONS["clf"] = [MODELS[k] for k in MODEL_KEYS]
 
-SCORING = {
-    "accuracy":          "accuracy",
-    "balanced_accuracy": "balanced_accuracy",
-    "neg_log_loss":      "neg_log_loss",
-}
+METRICS = PIPE_CFG["metrics"]
 
-PIPELINE_ORDER = [
-    "outlier__method", "outlier__lower_quantile", "outlier__upper_quantile",
-    "scale__method", "select__method", "select__k",
-    "reduce_pre__method", "reduce_pre__n_components", "reduce_pre__n_neighbors",
-    "reduce_pre__min_dist", "reduce_pre__whiten",
-    "reduce_post__method", "reduce_post__n_components", "reduce_post__n_neighbors",
-    "reduce_post__min_dist", "reduce_post__whiten",
-    "clf"
-]
+SCORING = PIPE_CFG["scoring"]
+
+PIPELINE_ORDER = PIPE_CFG["pipeline_order"]
 
 
 def prepare_eurasian_otter() -> None:
@@ -116,7 +77,11 @@ def prepare_eurasian_otter() -> None:
     run_summary(out_dir, RESULTS_DATA_DIR / "eurasian_otter_summary.csv", RESULTS_DATA_DIR / "eurasian_otter_fig")
 
 
-def run_otter_search(n_iter: int = 2, cv: int = 2, random_state: int = 42) -> None:
+def run_otter_search(
+    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
+) -> None:
     """Run RandomizedSearchCV for the Eurasian otter dataset."""
 
     species = "eurasian_otter"

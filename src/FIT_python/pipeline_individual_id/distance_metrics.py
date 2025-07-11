@@ -22,4 +22,6 @@ def compute_distances(a, b, VI=None):
         "canberra": canberra(a, b),
         "braycurtis": braycurtis(a, b),
     }
+
+    return distances
     

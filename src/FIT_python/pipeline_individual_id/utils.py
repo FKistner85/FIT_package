@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ast import literal_eval
 from typing import Iterable, List, Dict
+from FIT_python.soft_config import SOFT_CONFIG
 
 import numpy as np
 from scipy.stats import chi2
@@ -52,7 +53,7 @@ def compute_overlap_jsl_style(row, p: float = 0.5) -> bool:
 
 def sequential_holdout_ids(
     unique_ids: Iterable[str],
-    val_sizes: Iterable[int] = (2, 4, 6, 8),
+    val_sizes: Iterable[int] = tuple(SOFT_CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]),
     n_iter: int = 1,
     random_state: int | None = None,
 ) -> List[Dict[str, List[str]]]:

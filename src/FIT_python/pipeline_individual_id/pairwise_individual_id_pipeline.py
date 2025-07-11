@@ -18,6 +18,7 @@ from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 
 from FIT_python.config import RESULTS_DATA_DIR
+from FIT_python.soft_config import SOFT_CONFIG
 
 # Local modules
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
@@ -41,10 +42,10 @@ def run_all_pairwise_projections_parallel(
     comparisons: List[Dict],
     df: pd.DataFrame,
     feature_cols: List[str],
-    k_features: Union[int, List[int]] = 15,
-    reducers: List[str] = ["lda"],
-    selection_method: str = "forward",
-    n_components: Union[int, List[int]] = 2,
+    k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
+    reducers: List[str] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"],
+    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["selection_method"],
+    n_components: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
     outlier_methods: Union[str, List[str], None] = None,
     scaler_methods: Union[str, List[str], None] = None,
     use_sexmodel_prediction: bool = False,
@@ -369,5 +370,39 @@ def run_all_pairwise_projections_parallel(
 
     # flatten nested list and return
     return [row for group in nested for row in group]
+
+
+def run_embedding_once_pipeline(
+    comparisons: List[Dict],
+    df: pd.DataFrame,
+    *,
+    feature_cols: List[str],
+    k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
+    reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
+    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["selection_method"],
+    n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
+    outlier_method: str | None = None,
+    scaler_method: str | None = None,
+    use_sexmodel_prediction: bool = False,
+    sexmodel_path: str | None = None,
+    debug: bool = False,
+) -> List[Dict]:
+    """Convenience wrapper that processes comparisons sequentially."""
+
+    return run_all_pairwise_projections_parallel(
+        comparisons,
+        df,
+        feature_cols=feature_cols,
+        k_features=k_features,
+        reducers=[reducer],
+        selection_method=selection_method,
+        n_components=n_components,
+        outlier_methods=outlier_method,
+        scaler_methods=scaler_method,
+        use_sexmodel_prediction=use_sexmodel_prediction,
+        sexmodel_path=sexmodel_path,
+        debug=debug,
+        n_jobs=1,
+    )
 
 

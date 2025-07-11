@@ -6,9 +6,15 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
+from FIT_python.soft_config import SOFT_CONFIG
 
 class ImputationWrapper(TransformerMixin, BaseEstimator):
-    def __init__(self, n_estimators=10, max_iter=10, random_state=42):
+    def __init__(
+        self,
+        n_estimators: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"]["n_estimators"],
+        max_iter: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"]["max_iter"],
+        random_state: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"]["random_state"],
+    ):
         # 1) Signatur-Parameter als Attribute setzen
         self.n_estimators = n_estimators
         self.max_iter     = max_iter
