@@ -13,7 +13,7 @@
         if method not in allowed_methods:
             raise ValueError(f"method must be one of {allowed_methods}")
 ```
-【F:src/FIT_python/pipeline_individual_id/feature_selection_wrapper.py†L61-L69】
+【F:src/FIT_python/pipeline_general/feature_selection_wrapper.py†L60-L71】
 
 * **Forward selection** greedily adds features that maximise an F‑statistic conditioned on previously chosen variables. It is conceptually simple and dates back to classical regression modelling (*Draper & Smith, 1966*), but the sequential nature can lead to sub‑optimal global solutions.
 

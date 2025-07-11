@@ -16,10 +16,12 @@ from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 from FIT_python.pipeline_sex.transform_wrapper import NumericTransformer
-from FIT_python.pipeline_sex.feature_selection_wrapper import FeatureSelectionTransformer
-from FIT_python.pipeline_sex.outlier_wrapper import OutlierCleanerTransformer
-from FIT_python.pipeline_sex.feature_scaler_wrapper import FeatureScalerTransformer
-from FIT_python.pipeline_sex.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+from FIT_python.pipeline_general import (
+    FeatureSelectionTransformer,
+    OutlierCleanerTransformer,
+    FeatureScalerTransformer,
+    DimensionalityReducerTransformer,
+)
 from FIT_python.pipeline_sex.models import MODELS
 from FIT_python.pipeline_sex.grouped_metrics import (
     individual_accuracies,

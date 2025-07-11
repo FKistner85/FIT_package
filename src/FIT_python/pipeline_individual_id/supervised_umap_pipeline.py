@@ -9,10 +9,12 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from .outlier_wrapper import OutlierCleanerTransformer
-from .feature_selection_wrapper import FeatureSelectionTransformer
-from .feature_scaler_wrapper import FeatureScalerTransformer
-from .dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+from FIT_python.pipeline_general import (
+    OutlierCleanerTransformer,
+    FeatureSelectionTransformer,
+    FeatureScalerTransformer,
+    DimensionalityReducerTransformer,
+)
 from .distance_metrics import compute_distances
 
 

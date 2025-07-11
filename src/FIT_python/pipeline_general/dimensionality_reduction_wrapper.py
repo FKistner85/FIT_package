@@ -83,6 +83,11 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         n_samples, n_features = arr.shape
         n_used = min(self.requested_n, n_samples, n_features)
 
+        if self._method_norm in ("umap", "lda") and self.supervised and y is None:
+            raise ValueError(
+                f"Supervised {self._method_norm.upper()} requires target labels `y`."
+            )
+
         if self._method_norm == "pca":
             reducer = PCA(n_components=n_used, whiten=self.whiten, **self.kwargs).fit(
                 arr
@@ -103,7 +108,8 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
                 reducer = umap.UMAP(**umap_params).fit(arr)
 
         elif self._method_norm == "tsne":
-            reducer = TSNE(n_components=n_used, **self.kwargs)
+            algo = "barnes_hut" if n_used <= 3 else "exact"
+            reducer = TSNE(n_components=n_used, method=algo, **self.kwargs)
 
         elif self._method_norm == "lda":
             reducer = LinearDiscriminantAnalysis(

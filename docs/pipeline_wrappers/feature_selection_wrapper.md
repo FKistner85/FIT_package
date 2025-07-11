@@ -11,7 +11,7 @@
     ):
         allowed_methods = [None, 'forward', 'random_forest', 'variance', 'univariate', 'lasso']
 ```
-【F:src/FIT_python/pipeline_sex/feature_selection_wrapper.py†L61-L68】
+【F:src/FIT_python/pipeline_general/feature_selection_wrapper.py†L60-L71】
 
 * **Forward Selection** erweitert das Modell schrittweise um diejenigen Features, die den größten Zugewinn an Erklärungsstärke liefern. Das Verfahren ist leicht verständlich, kann aber zu suboptimalen Kombinationen führen, da früh getroffene Entscheidungen nicht revidiert werden.
 

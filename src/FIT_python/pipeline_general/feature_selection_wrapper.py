@@ -89,7 +89,7 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         k_max = self.k or arr.shape[1]
 
         if self.method is None:
-            self.selected_features_ = feat_names  # use all features
+            self.selected_features_ = feat_names  # ALLE Features verwenden
             self.feature_ranking_ = [(f, 1.0) for f in feat_names]
 
         elif self.method == "forward":
@@ -125,7 +125,7 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
             self.feature_ranking_ = ranked[:k_max]
 
         elif self.method == "lasso":
-            lasso = LassoCV(cv=3, random_state=self.random_state).fit(arr, y)
+            lasso = LassoCV(cv=5, random_state=self.random_state).fit(arr, y)
             imp = np.abs(lasso.coef_)
             ranked = sorted(zip(feat_names, imp), key=lambda x: x[1], reverse=True)
             self.feature_ranking_ = ranked[:k_max]
@@ -144,7 +144,6 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         selected_indices = [all_feat_names.index(f) for f in self.selected_features_]
         return arr[:, selected_indices]
 
-    # Provide sklearn style API for feature names
     def get_feature_names_out(self, input_features=None) -> List[str]:
         return self.selected_features_
 

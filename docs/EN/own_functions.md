@@ -119,12 +119,12 @@ a, b : array-like
 VI : array-like, optional
     Inverse covariance matrix for Mahalanobis distance.
 
-## FIT_python.pipeline_individual_id.feature_scaler_wrapper.FeatureScalerTransformer
+## FIT_python.pipeline_general.feature_scaler_wrapper.FeatureScalerTransformer
 Scale numerical features using either a standard or robust approach.
 
-## FIT_python.pipeline_individual_id.feature_selection_wrapper.FeatureSelectionTransformer
+## FIT_python.pipeline_general.feature_selection_wrapper.FeatureSelectionTransformer
 
-## FIT_python.pipeline_individual_id.feature_selection_wrapper._forward_ranking
+## FIT_python.pipeline_general.feature_selection_wrapper._forward_ranking
 
 ## FIT_python.pipeline_individual_id.generate_trails_and_trailpairs.generate_pairwise_comparisons_from_df
 Generate all pairwise trail comparisons.
@@ -231,12 +231,12 @@ Supported methods
 - MDS
 - Isomap
 
-## FIT_python.pipeline_sex.feature_scaler_wrapper.FeatureScalerTransformer
+## FIT_python.pipeline_general.feature_scaler_wrapper.FeatureScalerTransformer
 Scale numerical features using either a standard or robust approach.
 
-## FIT_python.pipeline_sex.feature_selection_wrapper.FeatureSelectionTransformer
+## FIT_python.pipeline_general.feature_selection_wrapper.FeatureSelectionTransformer
 
-## FIT_python.pipeline_sex.feature_selection_wrapper._forward_ranking
+## FIT_python.pipeline_general.feature_selection_wrapper._forward_ranking
 
 ## FIT_python.pipeline_sex.grouped_metrics.individual_accuracies
 
@@ -244,7 +244,7 @@ Scale numerical features using either a standard or robust approach.
 
 ## FIT_python.pipeline_sex.imputation_wrapper.ImputationWrapper
 
-## FIT_python.pipeline_sex.outlier_wrapper.OutlierCleanerTransformer
+## FIT_python.pipeline_general.outlier_wrapper.OutlierCleanerTransformer
 Clean numerical outliers using clipping or z-score limiting.
 
 Methods

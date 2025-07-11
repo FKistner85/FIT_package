@@ -7,7 +7,7 @@ The `FeatureScalerTransformer` applies either standard or robust scaling. The op
       - method='standard': StandardScaler (z-Transformation)
       - method='robust':   RobustScaler (Median & IQR)
 ```
-【F:src/FIT_python/pipeline_individual_id/feature_scaler_wrapper.py†L10-L14】
+【F:src/FIT_python/pipeline_general/feature_scaler_wrapper.py†L10-L15】
 
 * **StandardScaler** rescales features to zero mean and unit variance. This is the classic z‑transformation often recommended when the data roughly follow a normal distribution. In practice it is widely used for algorithms that rely on gradient descent or distance based measures. The downside is that it can be heavily influenced by extreme outliers.
 

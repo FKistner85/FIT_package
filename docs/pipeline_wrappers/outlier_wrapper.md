@@ -7,7 +7,7 @@
       - 'clip': alle Features auf [q_low, q_high] clippen (Percentile-Clipping)
       - 'zscore': Werte außerhalb von ±z_thresh*σ auf ±z_thresh*σ setzen (Winsorizing)
 ```
-【F:src/FIT_python/pipeline_sex/outlier_wrapper.py†L8-L14】
+【F:src/FIT_python/pipeline_general/outlier_wrapper.py†L8-L15】
 
 * **Clippen** ersetzt Werte oberhalb bzw. unterhalb festgelegter Quantile durch die jeweiligen Grenzwerte. Das Vorgehen ist robust und unkompliziert, kann jedoch wirkliche Extremfälle verdecken.
 

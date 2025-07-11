@@ -9,7 +9,7 @@
       - 'clip': alle Features auf [q_low, q_high] clippen (Percentile-Clipping)
       - 'zscore': Werte außerhalb von ±z_thresh*σ auf ±z_thresh*σ setzen (Winsorizing)
 ```
-【F:src/FIT_python/pipeline_individual_id/outlier_wrapper.py†L8-L14】
+【F:src/FIT_python/pipeline_general/outlier_wrapper.py†L8-L15】
 
 Clipping is a simple non-parametric technique that replaces extreme values by upper and lower quantiles. It is robust and easy to explain, yet it risks truncating genuinely informative observations if they naturally fall outside the chosen bounds.
 

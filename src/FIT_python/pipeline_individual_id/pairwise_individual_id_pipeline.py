@@ -21,17 +21,13 @@ from FIT_python.config import RESULTS_DATA_DIR
 
 # Local modules
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
-from FIT_python.pipeline_individual_id.feature_selection_wrapper import (
-    FeatureSelectionTransformer,
-)
-from FIT_python.pipeline_individual_id.dimensionality_reduction_wrapper import (
+from FIT_python.pipeline_general import (
     DimensionalityReducerTransformer,
-)
-from FIT_python.pipeline_individual_id.distance_metrics import compute_distances
-from FIT_python.pipeline_individual_id.outlier_wrapper import OutlierCleanerTransformer
-from FIT_python.pipeline_individual_id.feature_scaler_wrapper import (
+    FeatureSelectionTransformer,
+    OutlierCleanerTransformer,
     FeatureScalerTransformer,
 )
+from FIT_python.pipeline_individual_id.distance_metrics import compute_distances
 
 from typing import List, Dict, Union, Optional, Tuple
 from scipy.spatial.distance import cdist

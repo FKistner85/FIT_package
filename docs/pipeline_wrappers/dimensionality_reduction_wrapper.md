@@ -12,7 +12,7 @@ Die Klasse `DimensionalityReducerTransformer` stellt mehrere Verfahren bereit:
       - MDS
       - Isomap
 ```
-【F:src/FIT_python/pipeline_sex/dimensionality_reduction_wrapper.py†L12-L21】
+【F:src/FIT_python/pipeline_general/dimensionality_reduction_wrapper.py†L12-L23】
 
 * **PCA** eignet sich für schnelle lineare Projektionen und ist gut interpretierbar. Die Methode ist sinnvoll, wenn eine lineare Struktur vorliegt und Varianz ein guter Indikator für Information ist. Nachteilig ist, dass nur lineare Zusammenhänge abgebildet werden und eine Skalierung der Eingaben meist notwendig ist.
 

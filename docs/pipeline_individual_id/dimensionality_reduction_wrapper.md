@@ -11,7 +11,7 @@ The `DimensionalityReducerTransformer` bundles several algorithms for reducing f
       - MDS (unsupervised)
       - Isomap (unsupervised)
 ```
-【F:src/FIT_python/pipeline_individual_id/dimensionality_reduction_wrapper.py†L13-L21】
+【F:src/FIT_python/pipeline_general/dimensionality_reduction_wrapper.py†L12-L23】
 
 * **PCA** (principal component analysis, *Pearson 1901; Hotelling 1933*) rotates the feature space to directions of maximal variance. It is straightforward to compute and interpret, but only captures linear structure and may require scaling of the inputs.
 

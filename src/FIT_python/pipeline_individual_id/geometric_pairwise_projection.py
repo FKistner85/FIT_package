@@ -13,10 +13,8 @@ _cache_dir = Path(__file__).parent / "__cache__"
 memory = Memory(location=_cache_dir, verbose=0)
 
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
-from FIT_python.pipeline_individual_id.feature_selection_wrapper import (
+from FIT_python.pipeline_general import (
     FeatureSelectionTransformer,
-)
-from FIT_python.pipeline_individual_id.dimensionality_reduction_wrapper import (
     DimensionalityReducerTransformer,
 )
 from FIT_python.pipeline_individual_id.distance_metrics import compute_distances
