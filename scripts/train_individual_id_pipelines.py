@@ -17,6 +17,11 @@ from typing import List, Dict
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from FIT_python.plot_style import apply_style
+from FIT_python.caption_utils import save_caption
 
 from FIT_python import config
 from FIT_python.data_split_and_summary.split_wrapper import SplitWrapper
@@ -75,6 +80,24 @@ def _select_and_scale_features(dfs: dict[str, pd.DataFrame]) -> tuple[List[str],
         df2 = df.copy()
         df2[morph_cols] = scaler.transform(df2[morph_cols])
         scaled[name] = df2
+
+    # Plot correlation heatmap for the scaled morphometric features
+    corr = scaled["train"][morph_cols].corr()
+    apply_style()
+    fig, ax = plt.subplots(figsize=(6, 5))
+    sns.heatmap(corr, cmap="viridis", center=0, ax=ax)
+    ax.set_xlabel("Morphometric Features")
+    ax.set_ylabel("Morphometric Features")
+    fig.tight_layout()
+    out_dir = config.FIGURES_DIR / "individual_id"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / "morph_corr_heatmap.png"
+    fig.savefig(out_file)
+    save_caption(out_file, "Correlation between scaled morphometric features")
+    plt.close(fig)
+
+    print(f"[INFO] correlation heatmap saved to {out_file}")
+
     return morph_cols, scaled
 
 
