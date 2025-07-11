@@ -155,7 +155,10 @@ def run(
         supervised=True,
         random_state=random_state,
     )
-    embeddings = reducer.fit_transform(X_prep, train_df.get("individual_id"))
+    labels = train_df.get("individual_id")
+    if not np.issubdtype(labels.dtype, np.number):
+        labels = pd.factorize(labels)[0]
+    embeddings = reducer.fit_transform(X_prep, labels)
     emb_df = pd.DataFrame(
         embeddings,
         index=train_df.index,
