@@ -8,6 +8,7 @@ from joblib import Memory, dump
 from time import perf_counter
 import matplotlib.pyplot as plt
 import seaborn as sns
+from tqdm.auto import tqdm
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
@@ -202,7 +203,10 @@ class PipelineWrapper:
         # iterate over all feature-selection variants
         fs_methods = [self.fs_method] if self.fs_method else [None]
         for fs_m in fs_methods:
-            for species_dir in sorted(Path(SPLITS_DIR).iterdir()):
+            species_dirs = [d for d in sorted(Path(SPLITS_DIR).iterdir()) if d.is_dir()]
+            total_species = len(species_dirs)
+            total_models = len(self.model_keys)
+            for s_idx, species_dir in enumerate(tqdm(species_dirs, desc="Species"), start=1):
                 if not species_dir.is_dir():
                     continue
 
@@ -251,7 +255,7 @@ class PipelineWrapper:
                     X_test = df_test.drop(columns=drop_pred_test)
 
                 # iterate over all models
-                for mk in self.model_keys:
+                for m_idx, mk in enumerate(tqdm(self.model_keys, desc=f"{key} models", leave=False), start=1):
                     model = MODELS[mk]
                     steps = get_pipeline_steps(
                         fs_method=fs_m,
@@ -264,7 +268,10 @@ class PipelineWrapper:
                     )
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
-                    print(f"Training {key} – {mk}")
+                    print(
+                        f"Training {key} – {mk} "
+                        f"[{s_idx}/{total_species} | {m_idx}/{total_models}]"
+                    )
 
                     # cross-val using balanced accuracy and out-of-fold predictions
                     try:
