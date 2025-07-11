@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 import logging
-from typing import Tuple
+from typing import Tuple, Optional, List
 from sklearn.model_selection import StratifiedGroupKFold
 from FIT_python.config import GLOBAL_RANDOM_SEED, TEST_SIZE, NUM_FOLDS, GROUP_COL, SPLITS_DIR
 from sklearn.model_selection import (
