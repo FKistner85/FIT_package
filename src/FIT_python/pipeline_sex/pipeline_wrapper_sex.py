@@ -15,6 +15,7 @@ from FIT_python.config import (
     SPLITS_DIR,
     RESULTS_DATA_DIR,
     GLOBAL_RANDOM_SEED,
+    PIPELINE_SEX_CFG,
 )
 
 # Utility functions
@@ -43,12 +44,16 @@ memory = Memory(location=_cache_dir, verbose=0)
 # In-memory cache of loaded splits
 _DATA_CACHE: dict[str, dict[str, pd.DataFrame]] = {}
 
-# Allowed hyperparameter values
-_ALLOWED_FS       = [None, "forward", "random_forest", "variance", "univariate", "lasso"]
-_ALLOWED_IMPUTE   = [None, "miss_forest"]
-_ALLOWED_OUTLIERS = [None, "clip", "zscore"]
-_ALLOWED_SCALERS  = [None, "standard", "robust"]
-_ALLOWED_REDS     = [None, "pca", "umap", "tsne"]
+# Allowed hyperparameter values from configuration
+_ALLOWED_FS       = PIPELINE_SEX_CFG.get("allowed_fs", [])
+_ALLOWED_IMPUTE   = PIPELINE_SEX_CFG.get("allowed_impute", [])
+_ALLOWED_OUTLIERS = PIPELINE_SEX_CFG.get("allowed_outliers", [])
+_ALLOWED_SCALERS  = PIPELINE_SEX_CFG.get("allowed_scalers", [])
+_ALLOWED_REDS     = PIPELINE_SEX_CFG.get("allowed_reds", [])
+
+_OUTLIER_CLIP_QUANTILES = PIPELINE_SEX_CFG.get("outlier_clip_quantiles", [0.01, 0.99])
+_OUTLIER_ZSCORE_THRESH  = PIPELINE_SEX_CFG.get("outlier_zscore_threshold", 3.0)
+_RED_N_COMPONENTS       = PIPELINE_SEX_CFG.get("dim_reduction_n_components", 10)
 
 
 def get_pipeline_steps(
@@ -85,37 +90,46 @@ def get_pipeline_steps(
 
     # 4) Outlier cleaning
     if outlier_method == "clip":
-        steps.append((
-            "outlier",
-            OutlierCleanerTransformer(method="clip", lower_quantile=0.01, upper_quantile=0.99)
-        ))
+        lq, uq = _OUTLIER_CLIP_QUANTILES
+        steps.append(
+            (
+                "outlier",
+                OutlierCleanerTransformer(method="clip", lower_quantile=lq, upper_quantile=uq)
+            )
+        )
     elif outlier_method == "zscore":
-        steps.append((
-            "outlier",
-            OutlierCleanerTransformer(method="zscore", z_thresh=3.0)
-        ))
+        steps.append(
+            (
+                "outlier",
+                OutlierCleanerTransformer(method="zscore", z_thresh=_OUTLIER_ZSCORE_THRESH)
+            )
+        )
 
     # 5) Scaling
     if scaler_method in ("standard", "robust"):
         steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
 
     # 6) Pre-dimensionality reduction
-    if reduce_pre_method in ("pca", "umap", "tsne"):
-        steps.append((
-            "reduce_pre",
-            DimensionalityReducerTransformer(method=reduce_pre_method, n_components=10)
-        ))
+    if reduce_pre_method in _ALLOWED_REDS:
+        steps.append(
+            (
+                "reduce_pre",
+                DimensionalityReducerTransformer(method=reduce_pre_method, n_components=_RED_N_COMPONENTS)
+            )
+        )
 
     # 7) Feature selection
     if fs_method:
         steps.append(("select", FeatureSelectionTransformer(method=fs_method, k=fs_k)))
 
     # 8) Post-dimensionality reduction
-    if reduce_post_method in ("pca", "umap", "tsne"):
-        steps.append((
-            "reduce_post",
-            DimensionalityReducerTransformer(method=reduce_post_method, n_components=10)
-        ))
+    if reduce_post_method in _ALLOWED_REDS:
+        steps.append(
+            (
+                "reduce_post",
+                DimensionalityReducerTransformer(method=reduce_post_method, n_components=_RED_N_COMPONENTS)
+            )
+        )
 
     return steps
 
