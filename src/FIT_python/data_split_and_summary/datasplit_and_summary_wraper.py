@@ -38,7 +38,9 @@ def prepare_all_splits(
         dfs = importer.run()
         # Schlüssel finden, der zur aktuellen Datei passt
         # (DataImporter kann mehrere Tabs/Sheets liefern)
-        key = next(k for k in dfs if species.lower() in k.lower())
+        # match against cleaned keys where spaces are converted to underscores
+        target_key = species.lower().replace(" ", "_")
+        key = next(k for k in dfs if target_key in k.lower())
         df = dfs[key]
 
         # 2) Splits erstellen
