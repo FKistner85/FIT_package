@@ -22,7 +22,13 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     - Isomap (unsupervised)
     """
 
-    def __init__(self, method: str = "pca", n_components: int = 2, supervised: bool = False, **kwargs):
+    def __init__(
+        self,
+        method: str = "pca",
+        n_components: int = 2,
+        supervised: bool = False,
+        **kwargs,
+    ):
         """Store parameters verbatim for sklearn cloning."""
 
         self.method = method
@@ -45,7 +51,9 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         n_used = min(self.requested_n, max_c)
 
         if self._method_norm in ("umap", "lda") and self.supervised and y is None:
-            raise ValueError(f"Supervised {self._method_norm.upper()} requires target labels `y`.")
+            raise ValueError(
+                f"Supervised {self._method_norm.upper()} requires target labels `y`."
+            )
 
         if self._method_norm == "pca":
             reducer = PCA(n_components=n_used, **self.kwargs)
@@ -53,7 +61,9 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
         elif self._method_norm == "umap":
             if self.supervised and y is not None:
-                reducer = umap.UMAP(n_components=n_used, target_metric='categorical', **self.kwargs)
+                reducer = umap.UMAP(
+                    n_components=n_used, target_metric="categorical", **self.kwargs
+                )
                 reducer.fit(arr, y)
             else:
                 reducer = umap.UMAP(n_components=n_used, **self.kwargs)
@@ -76,12 +86,16 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             reducer.fit(arr)
 
         self.reducer_ = reducer
-        self.feature_names_out_ = [f"{self._method_norm.upper()}{i+1}" for i in range(n_used)]
+        self.feature_names_out_ = [
+            f"{self._method_norm.upper()}{i+1}" for i in range(n_used)
+        ]
         return self
 
     def transform(self, X):
         if self.reducer_ is None:
-            raise RuntimeError("DimensionalityReducerTransformer must be fitted before transform.")
+            raise RuntimeError(
+                "DimensionalityReducerTransformer must be fitted before transform."
+            )
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
 
         if self._method_norm in ("pca", "umap", "lda", "mds", "isomap"):
@@ -92,3 +106,11 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
     def get_feature_names_out(self, input_features=None) -> list[str]:
         return self.feature_names_out_
+
+
+# Standard presets for typical reducer settings
+REDUCER_PRESETS = {
+    "pca_10": DimensionalityReducerTransformer(method="pca", n_components=10),
+    "umap_10": DimensionalityReducerTransformer(method="umap", n_components=10),
+    "tsne_2": DimensionalityReducerTransformer(method="tsne", n_components=2),
+}

@@ -8,6 +8,7 @@ from sklearn.manifold import TSNE, MDS, Isomap
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap
 
+
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     """Apply different dimensionality reduction techniques.
 
@@ -21,43 +22,52 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     - MDS
     - Isomap
     """
+
     def __init__(
         self,
         method: str | None = None,
         n_components: int = 2,
         supervised: bool = False,
-        n_neighbors: int = 15,    # UMAP only
-        min_dist: float = 0.1,    # UMAP only
-        whiten: bool = False,     # PCA only
+        n_neighbors: int = 15,  # UMAP only
+        min_dist: float = 0.1,  # UMAP only
+        whiten: bool = False,  # PCA only
         **kwargs,
     ):
         # raw parameters for cloning
-        self.method       = method
+        self.method = method
         self.n_components = n_components
-        self.supervised   = supervised
-        self.n_neighbors  = n_neighbors
-        self.min_dist     = min_dist
-        self.whiten       = whiten
-        self.kwargs       = kwargs
+        self.supervised = supervised
+        self.n_neighbors = n_neighbors
+        self.min_dist = min_dist
+        self.whiten = whiten
+        self.kwargs = kwargs
 
         # intern normalisiert
         self._method_norm = method.lower() if method is not None else None
-        if self._method_norm not in (None, "pca", "umap", "tsne", "lda", "mds", "isomap"):
+        if self._method_norm not in (
+            None,
+            "pca",
+            "umap",
+            "tsne",
+            "lda",
+            "mds",
+            "isomap",
+        ):
             raise ValueError(f"Unknown method: {method!r}")
 
         self.requested_n = n_components
-        self.reducer_    = None
+        self.reducer_ = None
         self.feature_names_out_: list[str] = []
 
     def get_params(self, deep=True):
         # return exactly the init parameters expected by RandomizedSearchCV
         return {
-            "method":       self.method,
+            "method": self.method,
             "n_components": self.n_components,
-            "supervised":   self.supervised,
-            "n_neighbors":  self.n_neighbors,
-            "min_dist":     self.min_dist,
-            "whiten":       self.whiten,
+            "supervised": self.supervised,
+            "n_neighbors": self.n_neighbors,
+            "min_dist": self.min_dist,
+            "whiten": self.whiten,
             **self.kwargs,
         }
 
@@ -74,17 +84,21 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         n_used = min(self.requested_n, n_samples, n_features)
 
         if self._method_norm == "pca":
-            reducer = PCA(n_components=n_used, whiten=self.whiten, **self.kwargs).fit(arr)
+            reducer = PCA(n_components=n_used, whiten=self.whiten, **self.kwargs).fit(
+                arr
+            )
 
         elif self._method_norm == "umap":
             umap_params = {
                 "n_components": n_used,
-                "n_neighbors":  self.n_neighbors,
-                "min_dist":     self.min_dist,
+                "n_neighbors": self.n_neighbors,
+                "min_dist": self.min_dist,
                 **self.kwargs,
             }
             if self.supervised and y is not None:
-                reducer = umap.UMAP(target_metric="categorical", **umap_params).fit(arr, y)
+                reducer = umap.UMAP(target_metric="categorical", **umap_params).fit(
+                    arr, y
+                )
             else:
                 reducer = umap.UMAP(**umap_params).fit(arr)
 
@@ -92,7 +106,9 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             reducer = TSNE(n_components=n_used, **self.kwargs)
 
         elif self._method_norm == "lda":
-            reducer = LinearDiscriminantAnalysis(n_components=n_used, **self.kwargs).fit(arr, y)
+            reducer = LinearDiscriminantAnalysis(
+                n_components=n_used, **self.kwargs
+            ).fit(arr, y)
 
         elif self._method_norm == "mds":
             reducer = MDS(n_components=n_used, **self.kwargs).fit(arr)
@@ -104,15 +120,21 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             raise ValueError(f"Unhandled reduction method: {self.method!r}")
 
         self.reducer_ = reducer
-        self.feature_names_out_ = [f"{self._method_norm.upper()}{i+1}" for i in range(n_used)]
+        self.feature_names_out_ = [
+            f"{self._method_norm.upper()}{i+1}" for i in range(n_used)
+        ]
         return self
 
     def transform(self, X):
         if self._method_norm is None:
-            return X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+            return (
+                X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+            )
 
         if self.reducer_ is None:
-            raise RuntimeError("DimensionalityReducerTransformer must be fitted before transform.")
+            raise RuntimeError(
+                "DimensionalityReducerTransformer must be fitted before transform."
+            )
 
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
         if self._method_norm in ("pca", "umap", "lda", "mds", "isomap"):
@@ -122,3 +144,13 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
     def get_feature_names_out(self, input_features=None) -> list[str]:
         return self.feature_names_out_
+
+
+# Standard presets for typical reducer settings
+REDUCER_PRESETS = {
+    "pca_10": DimensionalityReducerTransformer(method="pca", n_components=10),
+    "umap_10": DimensionalityReducerTransformer(
+        method="umap", n_components=10, n_neighbors=15, min_dist=0.1
+    ),
+    "tsne_2": DimensionalityReducerTransformer(method="tsne", n_components=2),
+}

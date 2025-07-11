@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 
+
 class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
     """Clean numerical outliers using clipping or z-score limiting.
 
@@ -21,12 +22,13 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
     z_thresh : float
         Z-score threshold for ``'zscore'`` mode, e.g. ``3.0``
     """
+
     def __init__(
         self,
         method: str = "clip",
         lower_quantile: float = 0.01,
         upper_quantile: float = 0.99,
-        z_thresh: float = 3.0
+        z_thresh: float = 3.0,
     ):
         if method not in ("clip", "zscore"):
             raise ValueError("method must be 'clip' or 'zscore'")
@@ -53,7 +55,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         else:
             # determine z-score bounds
             means = np.mean(arr, axis=0)
-            stds  = np.std(arr, axis=0)
+            stds = np.std(arr, axis=0)
             self.bounds_ = {"mean": means, "std": stds, "cols": cols}
 
         return self
@@ -68,13 +70,13 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
             cols = self.bounds_.get("cols", [f"f{i}" for i in range(arr.shape[1])])
 
         if self.method == "clip":
-            low  = self.bounds_["low"]
+            low = self.bounds_["low"]
             high = self.bounds_["high"]
             arr = np.minimum(np.maximum(arr, low), high)
         else:
             mean = self.bounds_["mean"]
-            std  = self.bounds_["std"]
-            zt   = self.z_thresh
+            std = self.bounds_["std"]
+            zt = self.z_thresh
             lower = mean - zt * std
             upper = mean + zt * std
             arr = np.minimum(np.maximum(arr, lower), upper)
@@ -83,3 +85,15 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         if isinstance(X, pd.DataFrame):
             return pd.DataFrame(arr, index=X.index, columns=cols)
         return arr
+
+
+# Preset configurations combining common methods with sensible hyperparameters.
+OUTLIER_PRESETS = {
+    "clip_90": OutlierCleanerTransformer(
+        method="clip", lower_quantile=0.05, upper_quantile=0.95
+    ),
+    "clip_98": OutlierCleanerTransformer(
+        method="clip", lower_quantile=0.01, upper_quantile=0.99
+    ),
+    "zscore_3": OutlierCleanerTransformer(method="zscore", z_thresh=3.0),
+}

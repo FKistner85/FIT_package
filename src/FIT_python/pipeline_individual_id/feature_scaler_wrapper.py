@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler, RobustScaler
 
+
 class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
     """Scale numerical features using either a standard or robust approach."""
 
@@ -51,3 +52,10 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
             return pd.DataFrame(arr_out, index=X.index, columns=self.feature_names_in_)
         # otherwise return ``ndarray``
         return arr_out
+
+
+# Convenient presets for common scaler configurations
+SCALER_PRESETS = {
+    "standard": FeatureScalerTransformer(method="standard"),
+    "robust": FeatureScalerTransformer(method="robust"),
+}
