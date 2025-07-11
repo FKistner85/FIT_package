@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
+from FIT_python.soft_config import SOFT_CONFIG
 
 
 class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
@@ -25,10 +26,10 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        method: str = "clip",
-        lower_quantile: float = 0.01,
-        upper_quantile: float = 0.99,
-        z_thresh: float = 3.0,
+        method: str = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["method"],
+        lower_quantile: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["lower_quantile"],
+        upper_quantile: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["upper_quantile"],
+        z_thresh: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["z_thresh"],
     ):
         if method not in ("clip", "zscore"):
             raise ValueError("method must be 'clip' or 'zscore'")
