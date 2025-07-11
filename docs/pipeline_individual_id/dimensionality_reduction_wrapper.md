@@ -1,5 +1,8 @@
 # dimensionality_reduction_wrapper.py
 
+The dimensionality reducer resides in ``pipeline_general`` so both
+pipelines use the same implementation.
+
 The `DimensionalityReducerTransformer` bundles several algorithms for reducing feature space dimensionality. Available methods are listed in the class docstring:
 
 ```python

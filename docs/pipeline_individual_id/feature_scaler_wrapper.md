@@ -1,5 +1,8 @@
 # feature_scaler_wrapper.py
 
+The scaling utilities are now shared in ``pipeline_general`` to avoid
+duplicate implementations across pipelines.
+
 The `FeatureScalerTransformer` applies either standard or robust scaling. The options are summarised in its docstring:
 
 ```python

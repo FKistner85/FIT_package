@@ -1,5 +1,8 @@
 # feature_selection_wrapper.py
 
+This module was moved to the shared ``pipeline_general`` package. The
+documentation remains here for backwards compatibility.
+
 `FeatureSelectionTransformer` supports several strategies. Initialisation restricts the method to one of the following:
 
 ```python

@@ -1,5 +1,8 @@
 # outlier_wrapper.py
 
+This documentation now references the implementation in
+``pipeline_general/outlier_wrapper.py``.
+
 `OutlierCleanerTransformer` mitigates extreme values by either clipping percentiles or applying a Z-score threshold:
 
 ```python
