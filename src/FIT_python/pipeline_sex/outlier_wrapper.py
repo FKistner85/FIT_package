@@ -87,6 +87,18 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         return arr
 
 
+# Preset configurations combining common methods with sensible hyperparameters.
+OUTLIER_PRESETS = {
+    "clip_90": OutlierCleanerTransformer(
+        method="clip", lower_quantile=0.05, upper_quantile=0.95
+    ),
+    "clip_98": OutlierCleanerTransformer(
+        method="clip", lower_quantile=0.01, upper_quantile=0.99
+    ),
+    "zscore_3": OutlierCleanerTransformer(method="zscore", z_thresh=3.0),
+}
+
+
 def plot_feature_distributions(
     df_before: pd.DataFrame, df_after: pd.DataFrame, out_dir: "Path | str"
 ) -> None:

@@ -8,10 +8,7 @@ from sklearn.linear_model import LassoCV
 
 
 def _forward_ranking(
-    X_arr: np.ndarray,
-    y_arr: np.ndarray,
-    feature_names: List[str],
-    k_max: int
+    X_arr: np.ndarray, y_arr: np.ndarray, feature_names: List[str], k_max: int
 ) -> List[Tuple[str, float]]:
     selected: List[str] = []
     ranking: List[Tuple[str, float]] = []
@@ -62,9 +59,16 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         self,
         method: str = None,  # 'forward', 'random_forest', 'variance', 'univariate', 'lasso', or None (use all)
         k: int = None,
-        random_state: int = 0
+        random_state: int = 0,
     ):
-        allowed_methods = [None, 'forward', 'random_forest', 'variance', 'univariate', 'lasso']
+        allowed_methods = [
+            None,
+            "forward",
+            "random_forest",
+            "variance",
+            "univariate",
+            "lasso",
+        ]
         if method not in allowed_methods:
             raise ValueError(f"method must be one of {allowed_methods}")
         self.method = method
@@ -89,10 +93,14 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
             self.feature_ranking_ = [(f, 1.0) for f in feat_names]
 
         elif self.method == "forward":
-            self.feature_ranking_ = _forward_ranking(arr, np.array(y), feat_names, k_max)
+            self.feature_ranking_ = _forward_ranking(
+                arr, np.array(y), feat_names, k_max
+            )
 
         elif self.method == "random_forest":
-            rf = RandomForestClassifier(n_estimators=100, random_state=self.random_state).fit(arr, y)
+            rf = RandomForestClassifier(
+                n_estimators=100, random_state=self.random_state
+            ).fit(arr, y)
             imp = rf.feature_importances_
             ranked = sorted(zip(feat_names, imp), key=lambda x: x[1], reverse=True)
             self.feature_ranking_ = ranked[:k_max]
@@ -101,13 +109,19 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
             vt = VarianceThreshold()
             vt.fit(arr)
             variances = vt.variances_
-            ranked = sorted(zip(feat_names, variances), key=lambda x: x[1], reverse=True)
+            ranked = sorted(
+                zip(feat_names, variances), key=lambda x: x[1], reverse=True
+            )
             self.feature_ranking_ = ranked[:k_max]
 
         elif self.method == "univariate":
-            skb = SelectKBest(score_func=f_classif, k='all').fit(arr, y)
+            skb = SelectKBest(score_func=f_classif, k="all").fit(arr, y)
             scores = skb.scores_
-            ranked = sorted(zip(feat_names, scores), key=lambda x: x[1] if x[1] is not None else 0, reverse=True)
+            ranked = sorted(
+                zip(feat_names, scores),
+                key=lambda x: x[1] if x[1] is not None else 0,
+                reverse=True,
+            )
             self.feature_ranking_ = ranked[:k_max]
 
         elif self.method == "lasso":
@@ -133,3 +147,12 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
     # Provide sklearn style API for feature names
     def get_feature_names_out(self, input_features=None) -> List[str]:
         return self.selected_features_
+
+
+# Shortcuts combining method and ``k`` to limit hyperparameter search
+FEATURE_SELECTION_PRESETS = {
+    "forward_10": FeatureSelectionTransformer(method="forward", k=10),
+    "random_forest_20": FeatureSelectionTransformer(method="random_forest", k=20),
+    "variance": FeatureSelectionTransformer(method="variance"),
+    "lasso_10": FeatureSelectionTransformer(method="lasso", k=10),
+}
