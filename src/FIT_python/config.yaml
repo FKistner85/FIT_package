@@ -1,0 +1,51 @@
+paths:
+  data_dir: data
+  raw_dir: data/raw
+  cleaned_dir: data/cleaned
+  splits_dir: data/splits
+  processed_dir: data/processed
+  processed_splits_dir: data/processed/splits
+  scaled_dir: data/processed/scaled
+  feature_selected_dir: data/processed/feature_selected
+  dim_reduced_dir: data/processed/dim_reduced
+  numeric_dir: data/processed/numeric
+  otter_landmark_map_path: data/processed/otter_landmark_map.json
+  otter_point_map_path: data/processed/otter_point_map.json
+  results_dir: results
+  results_data_dir: results/data
+  figures_dir: results/figures
+  scripts_dir: scripts
+  notebooks_dir: notebooks
+
+# section for data split and summary utilities
+data_split_and_summary:
+  otter_meta_cols: [id, date, location, dataorigin, substrate]
+  default_targets: [species, individual_id, trail, sex]
+  group_col: individual_id
+  stratify_col: sex
+  global_random_seed: 123
+  test_size: 0.2
+  num_folds: 3
+
+# placeholder for general pipeline settings
+general_pipeline_steps: {}
+
+pipeline_sex:
+  allowed_fs: [null, forward, random_forest, variance, univariate, lasso]
+  allowed_impute: [null, miss_forest]
+  allowed_outliers: [null, clip, zscore]
+  outlier_clip_quantiles: [0.01, 0.99]
+  outlier_zscore_threshold: 3.0
+  allowed_scalers: [null, standard, robust]
+  allowed_reds: [null, pca, umap, tsne]
+  dim_reduction_n_components: 10
+
+pipeline_individual_id:
+  chunk_size: 7
+  trail_size_list: [7, 5, 3]
+  max_individuals: null
+  max_trails_per_animal: null
+  n_folds: 3
+  random_state: 0
+  fallback_col: trail
+  sampling_mode: window

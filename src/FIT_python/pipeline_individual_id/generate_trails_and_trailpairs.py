@@ -13,6 +13,7 @@ from itertools import combinations
 from typing import List, Dict, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
+from FIT_python.config import PIPELINE_INDIVIDUAL_ID_CFG
 
 
 def sample_trails(
@@ -167,14 +168,14 @@ def build_pairwise_comparisons(
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
     id_col: str = "individual_id",
-    chunk_size: int = 7,
-    trail_size_list: List[int] = [7, 5, 3],
-    max_individuals: Optional[int] = None,
-    max_trails_per_animal: Optional[int] = None,
-    n_folds: int = 3,
-    random_state: int = 0,
-    fallback_col: str = "trail",
-    sampling_mode: str = "window",
+    chunk_size: int = PIPELINE_INDIVIDUAL_ID_CFG.get("chunk_size", 7),
+    trail_size_list: List[int] = PIPELINE_INDIVIDUAL_ID_CFG.get("trail_size_list", [7, 5, 3]),
+    max_individuals: Optional[int] = PIPELINE_INDIVIDUAL_ID_CFG.get("max_individuals"),
+    max_trails_per_animal: Optional[int] = PIPELINE_INDIVIDUAL_ID_CFG.get("max_trails_per_animal"),
+    n_folds: int = PIPELINE_INDIVIDUAL_ID_CFG.get("n_folds", 3),
+    random_state: int = PIPELINE_INDIVIDUAL_ID_CFG.get("random_state", 0),
+    fallback_col: str = PIPELINE_INDIVIDUAL_ID_CFG.get("fallback_col", "trail"),
+    sampling_mode: str = PIPELINE_INDIVIDUAL_ID_CFG.get("sampling_mode", "window"),
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Generate all pairwise trail comparisons.
 
