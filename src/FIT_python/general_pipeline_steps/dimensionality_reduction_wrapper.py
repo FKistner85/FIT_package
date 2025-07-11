@@ -61,10 +61,15 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
         elif self._method_norm == "umap":
             if self.supervised and y is not None:
+                y_series = pd.Series(y)
+                if not np.issubdtype(y_series.dtype, np.number):
+                    y_encoded = pd.factorize(y_series)[0]
+                else:
+                    y_encoded = y_series.to_numpy()
                 reducer = umap.UMAP(
                     n_components=n_used, target_metric="categorical", **self.kwargs
                 )
-                reducer.fit(arr, y)
+                reducer.fit(arr, y_encoded)
             else:
                 reducer = umap.UMAP(n_components=n_used, **self.kwargs)
                 reducer.fit(arr)
