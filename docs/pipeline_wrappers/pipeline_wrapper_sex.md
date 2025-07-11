@@ -7,6 +7,15 @@ Nach Abschluss des Trainings werden alle Pipelines auf Platte gespeichert und pr
 
 Details zur Methodik stehen in `pipeline_sex_methodology.md`.
 
+## Modell-Caching
+
+Seit Version 1.2 prüft `PipelineWrapper.train()` nach dem Zusammenbau des Dateinamens,
+ob das jeweilige Modellartefakt bereits unter `results/data/sex_models` existiert.
+Ist dies der Fall, wird das Modell mit `joblib.load()` geladen und für die
+Vorhersagen verwendet statt neu trainiert zu werden. Über die Konsole wird dies
+mit entsprechenden Print-Ausgaben dokumentiert. Nur wenn kein Artefakt gefunden
+wird, erfolgt ein erneutes Fitten und Speichern.
+
 ## Cross-Validation Predictions
 
 Ab Version 1.1 werden während `PipelineWrapper.train()` zusätzlich

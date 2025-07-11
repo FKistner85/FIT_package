@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from typing import Optional, Union, List
-from joblib import Memory, dump
+from joblib import Memory, dump, load
 from time import perf_counter
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -427,10 +427,6 @@ class PipelineWrapper:
                 reduce_post_method=row["reduce_post_method"],
             )
             steps.append(("classifier", MODELS[mk]))
-            final_pipe = Pipeline(steps)
-            final_pipe.fit(X_t, y_t)
-
-            # 1) Save every model using a filename that encodes the hyperparameters
             fname_all = (
                 f"{species}__{mk}"
                 f"__fs-{row['fs_method'] or 'none'}-{row['fs_k']}"
@@ -440,7 +436,15 @@ class PipelineWrapper:
                 f"__redpre-{row['reduce_pre_method'] or 'none'}"
                 f"__redpost-{row['reduce_post_method'] or 'none'}.joblib"
             )
-            dump(final_pipe, self._model_dir / fname_all)
+            model_path = self._model_dir / fname_all
+            if model_path.exists():
+                print(f"🔁 Lade bestehendes Modell {fname_all}")
+                final_pipe = load(model_path)
+            else:
+                print(f"⚙️ Trainiere Modell {fname_all}")
+                final_pipe = Pipeline(steps)
+                final_pipe.fit(X_t, y_t)
+                dump(final_pipe, model_path)
 
             # 2) Best model per species
             best_path = self._best_dir / f"{species}.joblib"
