@@ -268,10 +268,10 @@ training/evaluation of all model variants.
 Construct the list of ``(name, transformer)`` steps based on the chosen hyperparameters.
 
 ## FIT_python.pipeline_sex.transform_utils.convert_numeric
-Convert feature columns to float, replacing comma decimal separators.
-
-Non-convertible values are coerced to NaN so that mixed columns do not
-raise errors during conversion.
+Convert feature columns to numeric values. Decimal commas are replaced with dots
+and columns consisting solely of text are automatically one-hot encoded. Mixed
+columns still coerce invalid entries to ``NaN`` so that numeric processing does
+not fail.
 
 ## FIT_python.pipeline_sex.transform_utils.one_hot_encode_targets
 One-hot encode target columns.
