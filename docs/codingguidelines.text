@@ -1,0 +1,167 @@
+# Coding Guidelines for `requeseriy`
+
+Ein Leitfaden für saubere, modulare und wartbare Code-Basis.  
+A guide to clean, modular, and maintainable code.
+
+---
+
+## 1. Configuration (Konfiguration)
+
+- **Keine Hardcodierung**  
+  All parameters (paths, thresholds, hyper-parameters, etc.) must be read from a single `config` module or file (e.g. YAML/JSON/env vars).  
+  *Beispiel:*  
+  ```yaml
+  data_dir: "data/raw"
+  outlier_threshold: 3.0
+  models:
+    - name: "FastPCA"
+      params: {n_components: 10}
+    - name: "ExactPCA"
+      params: {n_components: 10, svd_solver: "full"}
+  ```
+- **Ladezeitpunkt**  
+  Configuration is loaded **once** at application startup.  
+  Konfigurations-Objekt als Singleton oder via Dependency Injection bereitstellen.
+
+---
+
+## 2. Fail Fast (Fehlerbehandlung)
+
+- **Keine `try/except`-Schlachten**  
+  Erkenne Fehler frühestmöglich und lasse das Programm abstürzen, damit Faults sofort sichtbar werden.  
+  Only catch exceptions if you can *meaningfully* handle or wrap them.
+- **Assertions**  
+  Für Vorbedingungen `assert` verwenden, z.B.  
+  ```python
+  assert config.test_size > 0 and config.test_size < 1, "test_size must be between 0 and 1"
+  ```
+
+---
+
+## 3. Modularity & Parallelism (Modularität & Parallelisierbarkeit)
+
+- **Kleine, fokussierte Modules**  
+  Jede Datei bzw. Klasse implementiert nur eine Aufgabe (z. B. Daten laden, Outlier Detection, Dimensionality Reduction, Klassifikation).
+- **Function/Method Signatures**  
+  - Nur reine Eingabe-/Ausgabe-Parameter (keine globalen States)  
+  - Typ-Hints vollständig
+- **Pipeline-Orchestrierung**  
+  Verwende `dask`, `joblib` oder Airflow für Parallelisierung.  
+  Jeder Pipeline-Schritt wird als eigenständige Task definiert.
+
+---
+
+## 4. Dokumentation
+
+- **Docs:**  
+  - Deutsch **und** Englisch in `/docs` (z. B. `index_de.md` und `index_en.md`)  
+  - Architekturübersicht, Coding-Standards, How-tos
+- **Code-Kommentare:**  
+  - **Nur** auf **Englisch**  
+  - Kurze Erklärung _warum_, nicht _wie_
+
+---
+
+## 5. Dependencies & Setup
+
+- **Fehlende Pakete**  
+  - Beim Import: wenn Package fehlt → Installationsbefehl ausgeben und `requirements.txt` bzw. `setup.py` aktualisieren.  
+  - Beispiel im Code:
+    ```python
+    try:
+        import numpy
+    except ImportError:
+        raise RuntimeError("Please `pip install -r requirements.txt` to continue.")
+    ```
+- **Environment**  
+  - Verwende `venv` oder `conda`  
+  - `setup.py` / `pyproject.toml` immer aktuell halten
+
+---
+
+## 6. Pipeline Components (Pipeline-Bausteine)
+
+### 6.1 Outlier Detection
+
+- Definiere mindestens zwei Klassen:
+  - `FastOutlierDetector` (einfache, schnelle Methode)
+  - `ExactOutlierDetector` (genauere, ggf. langsamere Methode)
+- Beide erben von einer gemeinsamen Basisklasse `BaseOutlierDetector`
+
+### 6.2 Dimensionality Reduction
+
+- Klassenbeispiel:
+  ```python
+  class BaseDimReducer(ABC):
+      @abstractmethod
+      def fit(self, X): ...
+      @abstractmethod
+      def transform(self, X): ...
+
+  class FastPCA(BaseDimReducer): ...
+  class ExactPCA(BaseDimReducer): ...
+  ```
+- Parameter via Config: Liste von `{name, params}`-Einträgen
+
+### 6.3 Classifier (Modelle)
+
+- Immer eine Liste von Klassen-Instanzen mit Default-Parametern definieren:
+  ```yaml
+  classifiers:
+    - name: "LogisticRegression"
+      params: {C: 1.0}
+    - name: "RandomForest"
+      params: {n_estimators: 100}
+  ```
+- **Hyperparameter-Suche**  
+  - Definiere in Config nur „Model-Klassen mit Param-Optionen“  
+  - **Nicht**: Tuning innerhalb der `predict`-/`fit`-Methoden  
+  - Für jede Stufe („fast“ vs. „exact“) unterschiedliche Default-Paramter-Sets
+
+---
+
+## 7. Beispiele
+
+```python
+from config import settings
+from pipeline import Pipeline
+from modules.outliers import FastOutlierDetector, ExactOutlierDetector
+from modules.dim_reduction import FastPCA, ExactPCA
+from modules.classifiers import LogisticRegression, RandomForest
+
+# Build detector list from config
+detectors = [
+    FastOutlierDetector(**settings.outlier.fast.params),
+    ExactOutlierDetector(**settings.outlier.exact.params),
+]
+
+reducers = [
+    FastPCA(**settings.dim_reduction.fast.params),
+    ExactPCA(**settings.dim_reduction.exact.params),
+]
+
+classifiers = [
+    LogisticRegression(**settings.classifiers[0].params),
+    RandomForest(**settings.classifiers[1].params),
+]
+
+pipeline = Pipeline(
+    detectors=detectors,
+    reducers=reducers,
+    classifiers=classifiers,
+)
+pipeline.run(settings.data.input_path, settings.data.output_path)
+```
+
+---
+
+## 8. Testing & CI
+
+- **Unit-Tests** für jedes Modul, Mocking von I/O  
+- **Parallel- und Performance-Tests** für kritische Pfade  
+- CI-Pipeline prüft: Linting (flake8), Typing (mypy), Tests (pytest), Coverage
+
+---
+
+*Ende der Richtlinien*  
+*End of guidelines*
