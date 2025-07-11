@@ -59,7 +59,17 @@ def _prepare_features(
         X_prep = pd.DataFrame(X_prep, index=df.index, columns=cols)
 
     if sex_features:
-        X_prep = pd.concat([X_prep, df[list(sex_features)]], axis=1)
+        sex_df = df[list(sex_features)].copy()
+        for col in sex_df.columns:
+            if sex_df[col].dtype == object:
+                sex_df[col] = (
+                    sex_df[col]
+                    .astype(str)
+                    .str.lower()
+                    .map({"f": 0, "m": 1})
+                )
+            sex_df[col] = pd.to_numeric(sex_df[col], errors="coerce")
+        X_prep = pd.concat([X_prep, sex_df], axis=1)
 
     return X_prep, pipe
 
