@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import List, Sequence, Optional, Tuple, Dict
 
+from FIT_python.data_split_and_summary.data_import_utils import coerce_numeric_columns
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -36,9 +38,12 @@ def _prepare_features(
 ) -> Tuple[pd.DataFrame, Pipeline]:
     """Return processed feature matrix and the fitted preprocessing pipeline."""
 
-    df = df.copy()
+    df = coerce_numeric_columns(df.copy())
     df[feature_cols] = df[feature_cols].apply(pd.to_numeric, errors="coerce")
-    X = df[feature_cols]
+    X = df[feature_cols].astype(float)
+    if X.select_dtypes(exclude=[float, int]).shape[1] > 0:
+        bad_cols = X.select_dtypes(exclude=[float, int]).columns.tolist()
+        raise ValueError(f"Non-numeric data found in columns: {bad_cols}")
     y = df.get("individual_id")
 
     steps: list[tuple[str, object]] = []
