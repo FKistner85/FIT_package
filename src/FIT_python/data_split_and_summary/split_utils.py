@@ -1,28 +1,20 @@
 # src/FIT_python/split_utils.py
 
-import pandas as pd
-import numpy as np
 import logging
-from typing import List, Optional
-from typing import Tuple
-from sklearn.model_selection import StratifiedGroupKFold
-from FIT_python.config import GLOBAL_RANDOM_SEED, TEST_SIZE, NUM_FOLDS, GROUP_COL, SPLITS_DIR, RESULTS_DATA_DIR
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import (
     StratifiedGroupKFold,
     GroupKFold,
     KFold,
+    train_test_split,
 )
+from FIT_python.config import GLOBAL_RANDOM_SEED, NUM_FOLDS, SPLITS_DIR
 
 import warnings
-
-
-from sklearn.model_selection import train_test_split
-
-from pathlib import Path
-import pandas as pd
-
-
-from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL
 
 def stratified_individual_split(
     df: pd.DataFrame,
@@ -53,12 +45,11 @@ def stratified_individual_split(
         .drop_duplicates(subset=[group_col])
     )
     # Allow only m/f values
-    meta = meta[meta[stratify_col].astype(str).str.lower().isin(["M","F"])].copy()
-    meta[stratify_col] = meta[stratify_col].str.lower()
+    meta = meta[meta[stratify_col].isin(["f", "m"])].copy()
 
     # 3) Stratified split on the group level
     ids    = meta[group_col].tolist()
-    labels = meta[stratify_col].map({"F":0, "M":1}).tolist()
+    labels = meta[stratify_col].map({"f": 0, "m": 1}).tolist()
     train_ids, test_ids = train_test_split(
         ids,
         test_size=test_size,
@@ -72,7 +63,7 @@ def stratified_individual_split(
     inference_df = df[~df[group_col].isin(ids)].reset_index(drop=True)
 
     if add_folds:
-        y_ser = train_df[stratify_col].map({"F": 0, "M": 1})
+        y_ser = train_df[stratify_col].map({"f": 0, "m": 1})
         fold_ids, _ = _make_folds(
             train_df, y_ser, n_splits=n_folds, group_col=group_col
         )
@@ -158,15 +149,8 @@ def sample_individuals(
     n: int,
     seed: int = GLOBAL_RANDOM_SEED,
 ) -> pd.DataFrame:
-    """
-    Randomly select `n` unique individuals for a dataset/sex combination.
-    Used for the fixed Otter test split.
-    """
-    # nach normalize: alle Spalten snake_case lowercase
-    subset = df[
-        (df["dataorigin"] == dataset) &
-        (df["sex"].str.lower() == sex.lower())
-    ]
+    """Randomly select ``n`` unique individuals for a dataset/sex combination."""
+    subset = df[(df["dataorigin"] == dataset) & (df["sex"] == sex)]
     inds = subset["individual_id"].unique()
     sampled = (
         pd.Series(inds)
@@ -179,41 +163,43 @@ def sample_individuals(
 
 def create_train_test_split_otter(
     df: pd.DataFrame,
+    *,
+    inference_origin: str,
+    test_origin: str,
+    sample_origins: Dict[str, Dict[str, int]],
     seed: int = GLOBAL_RANDOM_SEED,
+    n_folds: int = NUM_FOLDS,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Create deterministic train/test/inference splits for Otter.
     Returns (train_df, test_df, inference_df).
     """
-    # ─── 0) Normierung ────────────────────────────────────────────────────────
-    df = df.rename(columns=lambda c: c.strip().lower().replace(" ", "_").replace(".", "_"))
-    df["sex"]   = df["sex"].str.strip().str.lower()
-    df["trail"] = df["trail"].str.strip()
 
-    # ─── 1) Inference-Split ───────────────────────────────────────────────────
-    inference_df = df[df["dataorigin"] == "Fieldprints portugal"]
+    # ─── 1) Inference split ───────────────────────────────────────────────────
+    inference_df = df[df["dataorigin"] == inference_origin]
 
-    # ─── 2) Rest (kein Portugal) ───────────────────────────────────────────────
-    df_clean = df[df["dataorigin"] != "Fieldprints portugal"]
+    # ─── 2) Remaining data ───────────────────────────────────────────────
+    df_clean = df[df["dataorigin"] != inference_origin]
 
     # ─── 3) Test-Split ────────────────────────────────────────────────────────
-    test_ls    = df_clean[df_clean["dataorigin"] == "Fieldprints lower saxony"]
-    test_own_f = sample_individuals(df_clean, "Own data collection", "F", 3, seed)
-    test_own_m = sample_individuals(df_clean, "Own data collection", "M", 3, seed)
-    test_vet_f = sample_individuals(df_clean, "Vetrecova et al", "F", 2, seed)
-    test_vet_m = sample_individuals(df_clean, "Vetrecova et al", "M", 2, seed)
-    test_df = pd.concat([test_ls, test_own_f, test_own_m, test_vet_f, test_vet_m]) \
-                 .drop_duplicates()
+    parts = [df_clean[df_clean["dataorigin"] == test_origin]]
+    for origin, counts in sample_origins.items():
+        for sx, n in counts.items():
+            parts.append(sample_individuals(df_clean, origin, sx, n, seed))
+    test_df = pd.concat(parts).drop_duplicates()
 
     # ─── 4) Train-Split ───────────────────────────────────────────────────────
     train_df = df_clean[~df_clean["individual_id"].isin(test_df["individual_id"])]
 
     # ─── 5) Strat. Folds nach Sex ─────────────────────────────────────────────
-    y_train = train_df["sex"].map({"F": 0, "M": 1})
-    folds, method = _make_folds(
-        train_df, y_train, n_splits=NUM_FOLDS, group_col="individual_id"
+    y_train = train_df["sex"].map({"f": 0, "m": 1})
+    folds, _ = _make_folds(
+        train_df,
+        y_train,
+        n_splits=n_folds,
+        group_col="individual_id",
     )
-    train_df["fold"] = folds
+    train_df = train_df.assign(Fold=folds)
 
     # ─── 6) Sanity-Checks ─────────────────────────────────────────────────────
     # a) Individuen‐Overlap
@@ -229,7 +215,7 @@ def create_train_test_split_otter(
     assert total_rows == len(df), f"Row count mismatch: {total_rows} vs {len(df)}"
 
     # c) Fold‐Verteilung anschauen
-    print("Fold distribution (train):\n", train_df["fold"].value_counts().sort_index())
+    print("Fold distribution (train):\n", train_df["Fold"].value_counts().sort_index())
 
     return train_df, test_df, inference_df
 

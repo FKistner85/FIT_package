@@ -1,7 +1,13 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 import pandas as pd
-from FIT_python.config import DEFAULT_TARGETS, RAW_DIR, SPLITS_DIR, RESULTS_DATA_DIR, NUM_FOLDS, GROUP_COL
+from FIT_python.config import (
+    DEFAULT_TARGETS,
+    RAW_DIR,
+    RESULTS_DATA_DIR,
+    SPLITS_DIR,
+    GLOBAL_RANDOM_SEED,
+)
 
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter, DataImportWrapper
 from FIT_python.data_split_and_summary.split_utils import (
@@ -9,6 +15,52 @@ from FIT_python.data_split_and_summary.split_utils import (
     stratified_individual_split, _make_folds
 )
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
+
+# ==== Config ================================================================
+GROUP_COL: str = "individual_id"
+STRATIFY_COL: str = "sex"
+NUM_FOLDS: int = 3
+TEST_SIZE: float = 0.2
+
+# Mapping for column renaming during normalization
+COLUMN_RENAME_MAP: Dict[str, str] = {
+    "animal": "individual_id",
+    "individual": "individual_id",
+}
+
+# Species requiring the custom Otter split algorithm
+SPECIAL_SPLITS: Dict[str, str] = {"eurasian_otter": "otter"}
+
+# Parameters used by ``create_train_test_split_otter``
+OTTER_SPLIT: Dict[str, object] = {
+    "inference_origin": "fieldprints_portugal",
+    "test_origin": "fieldprints_lower_saxony",
+    "sample_origins": {
+        "own_data_collection": {"f": 3, "m": 3},
+        "vetrecova_et_al": {"f": 2, "m": 2},
+    },
+}
+
+
+def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Return a normalized copy of ``df``."""
+    df_norm = df.copy()
+    df_norm.columns = [
+        c.strip().lower().replace(" ", "_").replace(".", "_") for c in df_norm.columns
+    ]
+    df_norm.rename(columns=COLUMN_RENAME_MAP, inplace=True)
+
+    for col in ["individual_id", "dataorigin", "sex", "trail"]:
+        if col in df_norm.columns:
+            df_norm[col] = (
+                df_norm[col]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .str.replace(" ", "_")
+                .str.replace(".", "_")
+            )
+    return df_norm
 
 
 def prepare_all_splits(csv_fp: Path) -> None:
@@ -40,27 +92,40 @@ def prepare_all_splits(csv_fp: Path) -> None:
         print(f"⚠️ Keine exakte Übereinstimmung für '{species}', verwende Key {key!r}")
     df = dfs[key]
 
-    # jetzt ist jede Spalte in snake_case lowercase
+    # Normalize columns/labels
+    df = normalize_df(df)
 
-    # 3) Splits erzeugen
-    if species.lower() == "eurasian otter":
-        train_df, test_df, inf_df = create_train_test_split_otter(df)
+    # 3) Choose split strategy
+    if SPECIAL_SPLITS.get(sp_key) == "otter":
+        train_df, test_df, inf_df = create_train_test_split_otter(
+            df,
+            inference_origin=OTTER_SPLIT["inference_origin"],
+            test_origin=OTTER_SPLIT["test_origin"],
+            sample_origins=OTTER_SPLIT["sample_origins"],
+            seed=GLOBAL_RANDOM_SEED,
+            n_folds=NUM_FOLDS,
+        )
     else:
         train_df, test_df, inf_df = stratified_individual_split(
-            df, id_col=GROUP_COL, n_splits=NUM_FOLDS, random_state=0
+            df,
+            test_size=TEST_SIZE,
+            random_state=GLOBAL_RANDOM_SEED,
+            group_col=GROUP_COL,
+            stratify_col=STRATIFY_COL,
+            add_folds=True,
+            n_folds=NUM_FOLDS,
         )
 
-    # 4) Fold-Spalte ergänzen, falls fehlt
-    if "fold" not in train_df.columns:
-        # stratifiziert nach sex
-        y_train = train_df["sex"].map({"F": 0, "M": 1})
+    # 4) Ensure fold column exists
+    if "Fold" not in train_df.columns:
+        y_train = train_df[STRATIFY_COL].map({"f": 0, "m": 1})
         folds, _ = _make_folds(
             train_df,
             y_train,
             n_splits=NUM_FOLDS,
-            group_col=GROUP_COL
+            group_col=GROUP_COL,
         )
-        train_df = train_df.assign(fold=folds)
+        train_df = train_df.assign(Fold=folds)
 
     # 5) Abspeichern
     out_dir = SPLITS_DIR / species.replace(" ", "_").lower()
