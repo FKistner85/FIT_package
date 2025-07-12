@@ -18,8 +18,9 @@ two columns clean to the same label.
 
 ### load_raw_files
 Reads every CSV or Excel file in the given directory, applies
-`clean_columns` and optionally inserts an `id` column. All returned data frames
-share the same normalised naming scheme. Unsupported file extensions are
+`clean_columns` and optionally inserts an `id` column. The `id` values are
+simple sequential integers starting at ``1`` for each file. All returned data
+frames share the same normalised naming scheme. Unsupported file extensions are
 skipped which means inconsistent layouts can easily be missed.
 
 ### coerce_numeric_columns

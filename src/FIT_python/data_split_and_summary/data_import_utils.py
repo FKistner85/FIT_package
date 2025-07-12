@@ -52,8 +52,7 @@ def load_raw_files(
 
         # Add id column if requested
         if add_id:
-            stem = id_prefix if id_prefix else file.stem.replace(' ', '_')
-            df.insert(0, 'id', [f"{stem}_{i}" for i in range(1, len(df) + 1)])
+            df.insert(0, 'id', range(1, len(df) + 1))
 
         # Attempt to coerce comma decimal strings to float
         df = coerce_numeric_columns(df)
