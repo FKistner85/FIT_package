@@ -42,12 +42,10 @@ def run_all_pairwise_projections_parallel(
     comparisons: List[Dict],
     df: pd.DataFrame,
     feature_cols: List[str],
-    k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"][
-        "pairwise_defaults"
-    ]["k_features"],
-    reducers: List[str] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
-        "reducers"
+    k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "k_features"
     ],
+    reducers: List[str] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"],
     selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "selection_method"
     ],
@@ -81,9 +79,7 @@ def run_all_pairwise_projections_parallel(
     # --- 0) load sex model if requested ---
     if use_sexmodel_prediction:
         if not sexmodel_path:
-            raise ValueError(
-                "sexmodel_path must be provided when use_sexmodel_prediction=True"
-            )
+            raise ValueError("sexmodel_path must be provided when use_sexmodel_prediction=True")
 
         model_fp = Path(sexmodel_path)
         if not model_fp.is_file():
@@ -96,6 +92,8 @@ def run_all_pairwise_projections_parallel(
     df2["id"] = df2["id"].astype(str)
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
     df_base = df2.set_index("id")
+    # keep a mapping from positional indices to IDs for backwards compatibility
+    idx_to_id = df2["id"].astype(str).reset_index(drop=True)
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
@@ -125,11 +123,25 @@ def run_all_pairwise_projections_parallel(
     else:
         scalers = [None]
 
+    def _map_indices(id_list: List[str]) -> List[str]:
+        """Map positional indices to ID strings if necessary."""
+        mapped = []
+        for x in id_list:
+            sx = str(x)
+            if sx in df_base.index:
+                mapped.append(sx)
+            else:
+                try:
+                    mapped.append(idx_to_id.iloc[int(x)])
+                except (ValueError, IndexError):
+                    raise KeyError(f"ID '{x}' not found in DataFrame")
+        return mapped
+
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-        ids_a = [str(i) for i in comp["samples_a"]]
-        ids_b = [str(i) for i in comp["samples_b"]]
+        ids_a = _map_indices(comp["samples_a"])
+        ids_b = _map_indices(comp["samples_b"])
 
         size_a, size_b = len(ids_a), len(ids_b)
 
@@ -161,13 +173,9 @@ def run_all_pairwise_projections_parallel(
             for scaler_method in scalers:
                 steps = []
                 if out_method:
-                    steps.append(
-                        ("outlier", OutlierCleanerTransformer(method=out_method))
-                    )
+                    steps.append(("outlier", OutlierCleanerTransformer(method=out_method)))
                 if scaler_method:
-                    steps.append(
-                        ("scale", FeatureScalerTransformer(method=scaler_method))
-                    )
+                    steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
                 selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
                 steps.append(("select", selector))
                 pipe = Pipeline(steps)
@@ -186,25 +194,15 @@ def run_all_pairwise_projections_parallel(
                 # back to a ``DataFrame`` if necessary.
                 if not isinstance(df_a_fs, pd.DataFrame):
                     feat_names = selector.get_feature_names_out()
-                    df_a_fs = pd.DataFrame(
-                        df_a_fs, columns=feat_names, index=df_a.index
-                    )
-                    df_b_fs = pd.DataFrame(
-                        df_b_fs, columns=feat_names, index=df_b.index
-                    )
-                    df_r_fs = pd.DataFrame(
-                        df_r_fs, columns=feat_names, index=df_r.index
-                    )
+                    df_a_fs = pd.DataFrame(df_a_fs, columns=feat_names, index=df_a.index)
+                    df_b_fs = pd.DataFrame(df_b_fs, columns=feat_names, index=df_b.index)
+                    df_r_fs = pd.DataFrame(df_r_fs, columns=feat_names, index=df_r.index)
 
                 # 5) iterate over reducers, n_components and k_features
                 for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
                     supervised = reducer in ("lda", "umap")
-                    for nc in tqdm(
-                        ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False
-                    ):
-                        for k in tqdm(
-                            ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False
-                        ):
+                    for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
+                        for k in tqdm(ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False):
                             sel_feats = [feat for feat, _ in full_ranking[:k]]
 
                             da = df_a_fs[sel_feats].copy()
@@ -234,9 +232,7 @@ def run_all_pairwise_projections_parallel(
                                 nc_eff = min(nc, arr.shape[1], n_cls - 1)
                                 if nc_eff < 1:
                                     if debug:
-                                        print(
-                                            f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}"
-                                        )
+                                        print(f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}")
                                     continue
 
                             # Fit & Transform
@@ -307,21 +303,13 @@ def run_all_pairwise_projections_parallel(
                                 "center_r_x": float(cR[0]) if cR.size > 0 else None,
                                 "center_r_y": float(cR[1]) if cR.size > 1 else None,
                                 "coords_a_x": ca[:, 0].tolist(),
-                                "coords_a_y": (
-                                    ca[:, 1].tolist() if ca.shape[1] > 1 else []
-                                ),
+                                "coords_a_y": (ca[:, 1].tolist() if ca.shape[1] > 1 else []),
                                 "coords_b_x": cb[:, 0].tolist(),
-                                "coords_b_y": (
-                                    cb[:, 1].tolist() if cb.shape[1] > 1 else []
-                                ),
+                                "coords_b_y": (cb[:, 1].tolist() if cb.shape[1] > 1 else []),
                                 "coords_r_x": cr[:, 0].tolist(),
-                                "coords_r_y": (
-                                    cr[:, 1].tolist() if cr.shape[1] > 1 else []
-                                ),
+                                "coords_r_y": (cr[:, 1].tolist() if cr.shape[1] > 1 else []),
                                 "selected_features": sel_feats,
-                                "selected_scores": [
-                                    score for _, score in full_ranking[:k]
-                                ],
+                                "selected_scores": [score for _, score in full_ranking[:k]],
                             }
                             for m, v in dists.items():
                                 res[f"dist_{m}"] = float(v)
@@ -351,9 +339,7 @@ def run_all_pairwise_projections_parallel(
                                     iu = np.triu_indices(len(A), k=1)
                                     flat_aa = d_aa[iu]
                                     res[f"mean_{m}_within_a"] = float(np.mean(flat_aa))
-                                    res[f"median_{m}_within_a"] = float(
-                                        np.median(flat_aa)
-                                    )
+                                    res[f"median_{m}_within_a"] = float(np.median(flat_aa))
                                 else:
                                     res[f"mean_{m}_within_a"] = None
                                     res[f"median_{m}_within_a"] = None
@@ -364,9 +350,7 @@ def run_all_pairwise_projections_parallel(
                                     iu = np.triu_indices(len(B), k=1)
                                     flat_bb = d_bb[iu]
                                     res[f"mean_{m}_within_b"] = float(np.mean(flat_bb))
-                                    res[f"median_{m}_within_b"] = float(
-                                        np.median(flat_bb)
-                                    )
+                                    res[f"median_{m}_within_b"] = float(np.median(flat_bb))
                                 else:
                                     res[f"mean_{m}_within_b"] = None
                                     res[f"median_{m}_within_b"] = None
@@ -390,18 +374,12 @@ def run_embedding_once_pipeline(
     df: pd.DataFrame,
     *,
     feature_cols: List[str],
-    k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
-        "k_features"
-    ],
-    reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
-        "reducers"
-    ][0],
+    k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
+    reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
     selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "selection_method"
     ],
-    n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
-        "n_components"
-    ],
+    n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
     outlier_method: str | None = None,
     scaler_method: str | None = None,
     use_sexmodel_prediction: bool = False,
