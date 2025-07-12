@@ -33,13 +33,13 @@ from FIT_python.data_split_and_summary.datasplit_and_summary_wraper import Split
 from FIT_python.data_split_and_summary.summary_data_wrapper import SummaryWrapper
 
 # Wrappers for pipeline steps
-from FIT_python.general_pipeline_steps.transform_wrapper import NumericTransformer
+from FIT_python.data_split_and_summary.transform_wrapper import NumericTransformer
 from FIT_python.general_pipeline_steps.imputation_wrapper import ImputationWrapper
-from FIT_python.general_pipeline_steps.outlier_wrapper2 import OutlierCleanerTransformer
-from FIT_python.general_pipeline_steps.feature_scaler_wrapper2 import (
+from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTransformer
+from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
     FeatureScalerTransformer,
 )
-from FIT_python.general_pipeline_steps.feature_selection_wrapper2 import (
+from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
     FeatureSelectionTransformer,
 )
 from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import (
