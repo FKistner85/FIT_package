@@ -156,21 +156,19 @@ def run(
         lr=lr,
     )
 
-    embeddings = net.transform(df_train[use_cols])
+    embeddings_arr = net.transform(df_train[use_cols])
     df_train["id"] = df_train["id"].astype(str)
-    id_map = {sid: i for i, sid in enumerate(df_train["id"])}
+    emb_df = pd.DataFrame(embeddings_arr, index=df_train["id"])
     ids = df_train["individual_id"].astype(str).tolist()
-    X_cls, y_cls = _pairwise_dataset(embeddings, ids)
+    X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
 
     results: List[Dict] = []
     for comp in val_comparisons:
         ids_a = [str(i) for i in comp["samples_a"]]
         ids_b = [str(i) for i in comp["samples_b"]]
-        idx_a = [id_map[i] for i in ids_a]
-        idx_b = [id_map[i] for i in ids_b]
-        emb_a = embeddings[idx_a].mean(axis=0)
-        emb_b = embeddings[idx_b].mean(axis=0)
+        emb_a = emb_df.loc[ids_a].to_numpy().mean(axis=0)
+        emb_b = emb_df.loc[ids_b].to_numpy().mean(axis=0)
         dists = compute_distances(emb_a, emb_b)
         X_feat = np.array([list(dists.values())])
         proba = clf.predict_proba(X_feat)[0, 1]

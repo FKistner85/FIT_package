@@ -45,8 +45,8 @@ def generate_pairwise_comparisons_from_df(
     it = df.iterrows()
     if show_progress:
         it = tqdm(it, total=len(df), desc="index", leave=False)
-    for idx, row in it:
-        individuals[row[id_col]].append(idx)
+    for _, row in it:
+        individuals[row[id_col]].append(row["id"])
 
     raw = []
     for size_a in tqdm(
@@ -179,13 +179,16 @@ def run_all_pairwise_projections_parallel(
 
     # 1) Basis-DF
     df2 = df.copy()
+    df2["id"] = df2["id"].astype(str)
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
-    index_map = {orig_idx: pos for pos, orig_idx in enumerate(df2.index)}
-    df_base = df2.reset_index(drop=True)
+    df_base = df2.set_index("id")
 
     # 2) predict_proba komplett vorberechnen
     if use_sexmodel_prediction:
-        proba_all = sex_clf.predict_proba(df_base[feature_cols])
+        proba_all = pd.DataFrame(
+            sex_clf.predict_proba(df_base[feature_cols]),
+            index=df_base.index,
+        )
     else:
         proba_all = None
 
@@ -197,16 +200,16 @@ def run_all_pairwise_projections_parallel(
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-        idx_a = np.asarray([index_map[x] for x in comp["samples_a"]], dtype=int)
-        idx_b = np.asarray([index_map[x] for x in comp["samples_b"]], dtype=int)
-        size_a, size_b = len(idx_a), len(idx_b)
+        ids_a = [str(i) for i in comp["samples_a"]]
+        ids_b = [str(i) for i in comp["samples_b"]]
+        size_a, size_b = len(ids_a), len(ids_b)
 
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
         # 1) feature matrices for A & B
-        df_a = df_base.iloc[idx_a][feature_cols]
-        df_b = df_base.iloc[idx_b][feature_cols]
+        df_a = df_base.loc[ids_a, feature_cols]
+        df_b = df_base.loc[ids_b, feature_cols]
 
         # 2) feature selection using ``k_max``
         X_ab = pd.concat([df_a, df_b], ignore_index=True)
@@ -216,15 +219,14 @@ def run_all_pairwise_projections_parallel(
         full_ranking = selector.feature_ranking_
 
         # 3) RCV set as the complement
-        all_idx = np.arange(len(df_base))
-        rcv_idx = list(set(all_idx) - set(idx_a) - set(idx_b))
-        df_r = df_base.iloc[rcv_idx][feature_cols]
+        rcv_ids = df_base.index.difference(ids_a + ids_b)
+        df_r = df_base.loc[rcv_ids, feature_cols]
 
         # 4) extract and average sex probabilities per group
         if use_sexmodel_prediction:
-            pa = proba_all[idx_a]  # shape (size_a,2)
-            pb = proba_all[idx_b]  # shape (size_b,2)
-            pr = proba_all[rcv_idx]  # shape (len(rcv_idx),2)
+            pa = proba_all.loc[ids_a].to_numpy()
+            pb = proba_all.loc[ids_b].to_numpy()
+            pr = proba_all.loc[rcv_ids].to_numpy()
             avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
             avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
             avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
@@ -285,8 +287,8 @@ def run_all_pairwise_projections_parallel(
                         res = {
                             "trail_a_id": trail_a_id,
                             "trail_b_id": trail_b_id,
-                            "samples_a": idx_a,
-                            "samples_b": idx_b,
+                            "samples_a": ids_a,
+                            "samples_b": ids_b,
                             "ind_a": ind_a,
                             "ind_b": ind_b,
                             "same_individual": comp["same_individual"],
