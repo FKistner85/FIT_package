@@ -88,10 +88,12 @@ def _compute_pair_features(
     arr = embeddings.to_numpy()
     records: list[DistanceRecord] = []
     for comp in comparisons:
+
         idx_a = [id_map[str(i)] for i in comp["samples_a"]]
         idx_b = [id_map[str(i)] for i in comp["samples_b"]]
         ca = arr[idx_a].mean(axis=0)
         cb = arr[idx_b].mean(axis=0)
+
         dists = compute_distances(ca, cb)
         rec: DistanceRecord = {
             "trail_a_id": comp["trail_a_id"],
