@@ -61,9 +61,10 @@ def sequential_holdout_ids(
 ) -> List[Dict[str, List[str]]]:
     """Generate sequential train/validation splits based on unique IDs.
 
-    For each iteration the validation set grows according to ``val_sizes``.
-    The IDs selected for a smaller ``val_size`` remain part of all subsequent
-    validation sets within the same iteration.
+    For each iteration a new validation set is drawn for every entry in
+    ``val_sizes``.
+    Each split is therefore independent and does not build on the previous one
+    within the same iteration.
     """
 
     ids = list(unique_ids)
@@ -73,20 +74,15 @@ def sequential_holdout_ids(
     rng = np.random.default_rng(random_state)
     results = []
     for it in range(n_iter):
-        val_ids: list[str] = []
         for n_val in val_sizes:
             n_val_eff = max(2, min(n_val, len(ids) - 1))
-            add_count = n_val_eff - len(val_ids)
-            if add_count > 0:
-                remaining = [i for i in ids if i not in val_ids]
-                new_ids = rng.choice(remaining, size=add_count, replace=False)
-                val_ids.extend(list(new_ids))
+            val_ids = list(rng.choice(ids, size=n_val_eff, replace=False))
             train_ids = [i for i in ids if i not in val_ids]
             results.append(
                 {
                     "iteration": it,
                     "n_val": n_val_eff,
-                    "val_ids": list(val_ids),
+                    "val_ids": val_ids,
                     "train_ids": train_ids,
                 }
             )
