@@ -138,6 +138,7 @@ def run(
     epochs: int = 10,
     batch_size: int = 32,
     lr: float = 1e-3,
+    val_df: pd.DataFrame | None = None,
 ) -> List[Dict]:
     """Train a siamese network and evaluate on validation comparisons."""
 
@@ -159,6 +160,15 @@ def run(
     embeddings_arr = net.transform(df_train[use_cols])
     df_train["id"] = df_train["id"].astype(str)
     emb_df = pd.DataFrame(embeddings_arr, index=df_train["id"])
+
+    if val_df is not None:
+        df_val = val_df.copy()
+        df_val[use_cols] = df_val[use_cols].apply(pd.to_numeric, errors="coerce")
+        df_val = df_val.dropna(subset=use_cols)
+        df_val["id"] = df_val["id"].astype(str)
+        emb_val = net.transform(df_val[use_cols])
+        emb_val_df = pd.DataFrame(emb_val, index=df_val["id"])
+        emb_df = pd.concat([emb_df, emb_val_df])
     ids = df_train["individual_id"].astype(str).tolist()
     X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
