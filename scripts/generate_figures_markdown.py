@@ -3,6 +3,18 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable
 
+PLOT_TYPES: dict[str, str] = {
+    'boxplot': 'Boxplot',
+    'heatmap': 'Heatmap',
+    'heatmaps': 'Heatmap',
+    'scatter': 'Scatter plot',
+    'summary': 'Summary',
+    'probabilities': 'Probability plot',
+    'prediction': 'Prediction',
+    'hyperparam': 'Hyperparameter plot',
+    'stepimpact': 'Step impact',
+}
+
 OUTPUT_FILE = Path('docs/generated_figures.md')
 
 # Mapping of figure categories to the directories or files containing images
@@ -45,7 +57,12 @@ def _caption_for(img: Path) -> str:
     txt = img.with_suffix('.txt')
     if txt.exists():
         return txt.read_text().strip()
-    return img.stem.replace('_', ' ')
+    stem = img.stem.lower().replace('__', '_')
+    tokens = stem.split('_')
+    for token in tokens:
+        if token in PLOT_TYPES:
+            return f"**{PLOT_TYPES[token]}**"
+    return f"**{tokens[-1].replace('-', ' ').title()}**"
 
 
 def main() -> None:
