@@ -23,7 +23,7 @@ from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTran
 from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
     FeatureScalerTransformer,
 )
-from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import (
+from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import (
     DimensionalityReducerTransformer,
 )
 from FIT_python.pipeline_sex.models import MODELS
