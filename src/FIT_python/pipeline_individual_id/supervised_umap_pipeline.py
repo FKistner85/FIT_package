@@ -91,8 +91,8 @@ def _compute_pair_features(
 
     records: list[DistanceRecord] = []
     for comp in comparisons:
-        idx_a = comp["samples_a"]
-        idx_b = comp["samples_b"]
+        idx_a = [str(i) for i in comp["samples_a"]]
+        idx_b = [str(i) for i in comp["samples_b"]]
         ca = embeddings.loc[idx_a].mean().to_numpy()
         cb = embeddings.loc[idx_b].mean().to_numpy()
         dists = compute_distances(ca, cb)
@@ -165,7 +165,7 @@ def run(
     embeddings = reducer.fit_transform(X_prep, labels)
     emb_df = pd.DataFrame(
         embeddings,
-        index=train_df["id"],
+        index=train_df["id"].astype(str),
         columns=reducer.get_feature_names_out(),
     )
 
