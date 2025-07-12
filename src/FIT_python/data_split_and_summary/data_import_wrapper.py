@@ -137,5 +137,16 @@ class DataImportWrapper:
                     plot_feature_distributions(raw_df, df, fig_dir)
                 except Exception as exc:
                     print(f"[WARN] plotting failed for {name}: {exc}")
+
+                # correlation heatmap of feature groups
+                try:
+                    from FIT_python.data_split_and_summary.feature_corr_utils import (
+                        plot_feature_correlations,
+                    )
+
+                    corr_dir = config.FIGURES_DIR / "feature_correlations" / name
+                    plot_feature_correlations(df, corr_dir)
+                except Exception as exc:
+                    print(f"[WARN] correlation plot failed for {name}: {exc}")
         print("[SUCCESS] clean_all completed.")
         return 0
