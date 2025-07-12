@@ -16,6 +16,7 @@ scipy
 umap-learn
 pyarrow
 tqdm
+torch
 
 # Entwicklungs- und Testing-Tools
 pytest
