@@ -181,10 +181,14 @@ def run(
                 mapped.append(sx)
             else:
                 try:
-                    mapped.append(idx_to_id.iloc[int(x)])
-                except (ValueError, IndexError):
+                    idx = int(x)
+                except (ValueError, TypeError):
                     raise KeyError(f"ID '{x}' not found in embeddings DataFrame")
+                if idx < 0 or idx >= len(idx_to_id):
+                    raise KeyError(f"ID '{x}' not found in embeddings DataFrame")
+                mapped.append(idx_to_id.iloc[idx])
         return mapped
+
     ids = df_train["individual_id"].astype(str).tolist()
     X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
