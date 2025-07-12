@@ -10,6 +10,14 @@ from FIT_python.soft_config import SOFT_CONFIG
 
 
 class ImputationWrapper(TransformerMixin, BaseEstimator):
+    """Impute missing numeric values using ``IterativeImputer``.
+
+    The wrapper configures :class:`~sklearn.impute.IterativeImputer` with a
+    :class:`~sklearn.ensemble.RandomForestRegressor` estimator. Default values
+    for ``n_estimators``, ``max_iter`` and ``random_state`` are taken from the
+    :data:`SOFT_CONFIG` dictionary.
+    """
+
     def __init__(
         self,
         n_estimators: int = SOFT_CONFIG["general_pipeline_steps"][
@@ -22,6 +30,18 @@ class ImputationWrapper(TransformerMixin, BaseEstimator):
             "imputation_defaults"
         ]["random_state"],
     ):
+        """Initialise the wrapper with RandomForest-based imputation.
+
+        Parameters
+        ----------
+        n_estimators:
+            Number of trees for the underlying ``RandomForestRegressor``.
+        max_iter:
+            Maximum number of imputation rounds performed by
+            ``IterativeImputer``.
+        random_state:
+            Seed used for both the regressor and the imputer.
+        """
         # 1) Signatur-Parameter als Attribute setzen
         self.n_estimators = n_estimators
         self.max_iter = max_iter
@@ -38,6 +58,15 @@ class ImputationWrapper(TransformerMixin, BaseEstimator):
         )
 
     def fit(self, X, y=None):
+        """Fit the underlying imputer on the numeric columns of ``X``.
+
+        Parameters
+        ----------
+        X:
+            Input data as ``pandas.DataFrame`` or ``numpy.ndarray``.
+        y:
+            Ignored, present for compatibility with sklearn's API.
+        """
         # Unterscheide DataFrame vs. np.ndarray
         if isinstance(X, pd.DataFrame):
             X_num = X.select_dtypes(include=[np.number])
@@ -47,6 +76,7 @@ class ImputationWrapper(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
+        """Return ``X`` with missing numeric values imputed."""
         if isinstance(X, pd.DataFrame):
             X_out = X.copy()
             num_cols = X_out.select_dtypes(include=[np.number]).columns
