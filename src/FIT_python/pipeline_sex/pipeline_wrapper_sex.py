@@ -45,7 +45,7 @@ from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
 from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import (
     DimensionalityReducerTransformer,
 )
-from FIT_python.pipeline_sex.models import MODELS
+from FIT_python.general_pipeline_steps.models import MODELS
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
     plot_hyperparam_heatmap,
 )

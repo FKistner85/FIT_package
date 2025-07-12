@@ -26,7 +26,7 @@ from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
 from FIT_python.general_pipeline_steps.dimensionality_reduction_wrappe2 import (
     DimensionalityReducerTransformer,
 )
-from FIT_python.pipeline_sex.models import MODELS
+from FIT_python.general_pipeline_steps.models import MODELS
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.pipeline_sex.grouped_metrics import (
     individual_accuracies,
