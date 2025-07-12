@@ -7,6 +7,9 @@ Die Pipeline kombiniert Feature-Selektionsmethoden, Dimensionsreduktion und Dist
 ## Wichtige Bestandteile
 - run_all_pairwise_projections_parallel
 
+### run_all_pairwise_projections_parallel
+Übernimmt die vollständige Verarbeitung aller Trail-Vergleiche. Die Funktion führt Ausreißerbehandlung, Skalierung, Feature-Selektion und Dimensionsreduktion durch, bevor mehrere Distanzmetriken berechnet werden. Übergeben wird eine Liste von Vergleichen aus `generate_trails_and_trailpairs` sowie das Basis-DataFrame. Umfangreiche Parameterkombinationen können lange Laufzeiten verursachen, daher empfiehlt sich eine parallele Ausführung über `n_jobs`.
+
 ## Referenzen
 - https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html
 
