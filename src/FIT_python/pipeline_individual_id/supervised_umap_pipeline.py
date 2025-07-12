@@ -67,12 +67,7 @@ def _prepare_features(
         sex_df = df[list(sex_features)].copy()
         for col in sex_df.columns:
             if sex_df[col].dtype == object:
-                sex_df[col] = (
-                    sex_df[col]
-                    .astype(str)
-                    .str.lower()
-                    .map({"f": 0, "m": 1})
-                )
+                sex_df[col] = sex_df[col].astype(str).str.lower().map({"f": 0, "m": 1})
             sex_df[col] = pd.to_numeric(sex_df[col], errors="coerce")
         X_prep = pd.concat([X_prep, sex_df], axis=1)
 
@@ -89,12 +84,16 @@ def _compute_pair_features(
     ``samples_b`` can be looked up directly via ``loc``.
     """
 
+    id_map = {str(sid): i for i, sid in enumerate(embeddings.index)}
+    arr = embeddings.to_numpy()
     records: list[DistanceRecord] = []
     for comp in comparisons:
-        idx_a = [str(i) for i in comp["samples_a"]]
-        idx_b = [str(i) for i in comp["samples_b"]]
-        ca = embeddings.loc[idx_a].mean().to_numpy()
-        cb = embeddings.loc[idx_b].mean().to_numpy()
+
+        idx_a = [id_map[str(i)] for i in comp["samples_a"]]
+        idx_b = [id_map[str(i)] for i in comp["samples_b"]]
+        ca = arr[idx_a].mean(axis=0)
+        cb = arr[idx_b].mean(axis=0)
+
         dists = compute_distances(ca, cb)
         rec: DistanceRecord = {
             "trail_a_id": comp["trail_a_id"],
