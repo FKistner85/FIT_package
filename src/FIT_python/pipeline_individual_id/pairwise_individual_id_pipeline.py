@@ -95,10 +95,7 @@ def run_all_pairwise_projections_parallel(
     df2 = df.copy()
     df2["id"] = df2["id"].astype(str)
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df_base = df2.reset_index(drop=True)
-
-    # mapping from original DataFrame index to position after reset
-    index_map = {str(idx): pos for pos, idx in enumerate(df2.index)}
+    df_base = df2.set_index("id")
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
@@ -133,31 +130,28 @@ def run_all_pairwise_projections_parallel(
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
         ids_a = [str(i) for i in comp["samples_a"]]
         ids_b = [str(i) for i in comp["samples_b"]]
-        idx_a = [index_map[i] for i in ids_a]
-        idx_b = [index_map[i] for i in ids_b]
 
-        size_a, size_b = len(idx_a), len(idx_b)
+        size_a, size_b = len(ids_a), len(ids_b)
 
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
         # feature matrices A & B
-        df_a = df_base.iloc[idx_a][feature_cols]
-        df_b = df_base.iloc[idx_b][feature_cols]
+        df_a = df_base.loc[ids_a, feature_cols]
+        df_b = df_base.loc[ids_b, feature_cols]
 
         # RCV set as the complement
-        all_idx = set(range(len(df_base)))
-        rcv_idx = list(all_idx - set(idx_a) - set(idx_b))
-        df_r = df_base.iloc[rcv_idx][feature_cols]
+        rcv_ids = df_base.index.difference(ids_a + ids_b)
+        df_r = df_base.loc[rcv_ids, feature_cols]
 
         # labels for feature selection
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
 
         # extract sex probabilities if required
         if use_sexmodel_prediction:
-            pa = proba_all.iloc[idx_a].to_numpy()
-            pb = proba_all.iloc[idx_b].to_numpy()
-            pr = proba_all.iloc[rcv_idx].to_numpy()
+            pa = proba_all.loc[ids_a].to_numpy()
+            pb = proba_all.loc[ids_b].to_numpy()
+            pr = proba_all.loc[rcv_ids].to_numpy()
             avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
             avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
             avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())

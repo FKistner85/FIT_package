@@ -10,7 +10,7 @@ from FIT_python.data_split_and_summary.data_import_utils import (
     load_raw_files,
     sanitize_labels,
 )
-from FIT_python.general_pipeline_steps.transform_utils import convert_numeric
+from FIT_python.data_split_and_summary.transform_utils import convert_numeric
 import FIT_python.config as config
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 import sys
@@ -30,10 +30,16 @@ class DataImporter:
         self.target_cols = target_cols or []
         self.skip_fillna = skip_fillna or []
         self.label_map = label_map or {}
+        self._next_id = 0
 
     def load(self) -> Dict[str, pd.DataFrame]:
         """Load raw files into DataFrames with cleaned columns and IDs."""
-        return load_raw_files(self.raw_dir)
+        dfs = load_raw_files(self.raw_dir, add_id=False)
+        for df in dfs.values():
+            n = len(df)
+            df.insert(0, "id", range(self._next_id, self._next_id + n))
+            self._next_id += n
+        return dfs
 
     def clean(self, dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
         """Apply label cleaning to each DataFrame's target columns."""

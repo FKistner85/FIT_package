@@ -84,15 +84,13 @@ def _compute_pair_features(
     ``samples_b`` can be looked up directly via ``loc``.
     """
 
-    id_map = {str(sid): i for i, sid in enumerate(embeddings.index)}
-    arr = embeddings.to_numpy()
     records: list[DistanceRecord] = []
     for comp in comparisons:
 
-        idx_a = [id_map[str(i)] for i in comp["samples_a"]]
-        idx_b = [id_map[str(i)] for i in comp["samples_b"]]
-        ca = arr[idx_a].mean(axis=0)
-        cb = arr[idx_b].mean(axis=0)
+        ids_a = [str(i) for i in comp["samples_a"]]
+        ids_b = [str(i) for i in comp["samples_b"]]
+        ca = embeddings.loc[ids_a].to_numpy().mean(axis=0)
+        cb = embeddings.loc[ids_b].to_numpy().mean(axis=0)
 
         dists = compute_distances(ca, cb)
         rec: DistanceRecord = {
