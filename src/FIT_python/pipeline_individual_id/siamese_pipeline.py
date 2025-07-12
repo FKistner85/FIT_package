@@ -169,14 +169,30 @@ def run(
         emb_val = net.transform(df_val[use_cols])
         emb_val_df = pd.DataFrame(emb_val, index=df_val["id"])
         emb_df = pd.concat([emb_df, emb_val_df])
+
+    idx_to_id = emb_df.index.to_series().reset_index(drop=True)
+
+    def _map_indices(id_list: List[str]) -> List[str]:
+        """Map positional indices to ID strings if necessary."""
+        mapped = []
+        for x in id_list:
+            sx = str(x)
+            if sx in emb_df.index:
+                mapped.append(sx)
+            else:
+                try:
+                    mapped.append(idx_to_id.iloc[int(x)])
+                except (ValueError, IndexError):
+                    raise KeyError(f"ID '{x}' not found in embeddings DataFrame")
+        return mapped
     ids = df_train["individual_id"].astype(str).tolist()
     X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
 
     results: List[Dict] = []
     for comp in val_comparisons:
-        ids_a = [str(i) for i in comp["samples_a"]]
-        ids_b = [str(i) for i in comp["samples_b"]]
+        ids_a = _map_indices(comp["samples_a"])
+        ids_b = _map_indices(comp["samples_b"])
         emb_a = emb_df.loc[ids_a].to_numpy().mean(axis=0)
         emb_b = emb_df.loc[ids_b].to_numpy().mean(axis=0)
         dists = compute_distances(emb_a, emb_b)
