@@ -10,7 +10,7 @@ Main pipeline computing pairwise distances after feature selection and reduction
 Handles end‑to‑end processing of all trail comparisons. The function performs
 outlier removal, scaling, feature selection and dimensionality reduction before
 computing multiple distance metrics. Pass a list of comparisons generated from
-`generate_trails_and_trailpairs` along with the base DataFrame. Extensive
+`geometric_pairwise_projection` along with the base DataFrame. Extensive
 parameter combinations can lead to long runtimes so parallel execution via
 `n_jobs` is recommended.
 

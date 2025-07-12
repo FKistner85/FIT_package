@@ -7,7 +7,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
+from FIT_python.pipeline_individual_id.geometric_pairwise_projection import (
     generate_pairwise_comparisons_from_df,
 )
 from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (

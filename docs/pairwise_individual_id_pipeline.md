@@ -4,7 +4,7 @@ This document summarises the code found in `src/FIT_python/pipeline_individual_i
 
 ## 1. Generating Trail Pairs
 
-The function `generate_pairwise_comparisons_from_df` in `generate_trails_and_trailpairs.py` creates all necessary pairings.  Its docstring outlines the steps:
+The function `generate_pairwise_comparisons_from_df` in `geometric_pairwise_projection.py` creates all necessary pairings.  Its docstring outlines the steps:
 
 ```
 1) Erzeuge `group_id` aus `id_col` bzw. `fallback_col`.
@@ -16,9 +16,9 @@ The function `generate_pairwise_comparisons_from_df` in `generate_trails_and_tra
    einem Fold zu und behält nur Paare aus demselben Fold.
 6) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
 ```
-【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L209-L218】
+【F:src/FIT_python/pipeline_individual_id/geometric_pairwise_projection.py†L26-L42】
 
-Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual`, `same_sex`, trail sizes and the assigned fold.  A summary table records the number of animals and trails per length. Individuals are stratified by sex into folds and only comparisons from the same fold are retained.【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L153-L161】
+Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual`, `same_sex`, trail sizes and the assigned fold.  A summary table records the number of animals and trails per length. Individuals are stratified by sex into folds and only comparisons from the same fold are retained.【F:src/FIT_python/pipeline_individual_id/geometric_pairwise_projection.py†L94-L136】
 
 ## 2. Distance Metrics
 

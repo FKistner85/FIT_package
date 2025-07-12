@@ -126,15 +126,15 @@ Scale numerical features using either a standard or robust approach.
 
 ## FIT_python.pipeline_individual_id.feature_selection_wrapper._forward_ranking
 
-## FIT_python.pipeline_individual_id.generate_trails_and_trailpairs.generate_pairwise_comparisons_from_df
-Generate all pairwise trail comparisons.
+## FIT_python.pipeline_individual_id.generate_trails_and_trailpairs.generate_pairwise_comparisons_from_df (veraltet)
+Former helper to generate all pairwise trail comparisons. The logic now resides in `geometric_pairwise_projection.generate_pairwise_comparisons_from_df`.
 
 Steps
 -----
 1. ``group_id`` wird aus ``id_col`` oder ``fallback_col`` gebildet, wenn ersteres fehlt.
 2. ``trails_per_animal`` stammt entweder aus vorgegebenen Pools oder wird
    über vielfältige Zufallsteilsets mit Jaccard-Distanz ausgewählt.
-3. Erstelle alle Cross- und Within-Individual-Paare aus unterschiedlichen Fenstern.
+3. Erstelle alle Cross- und Within-Individual-Paare.
 4. ``same_individual`` und ``same_sex`` kennzeichnen Gleichheit oder ``"unknown"``.
 5. Jede Person wird per ``StratifiedKFold`` (nach ``sex``) einem Fold zugewiesen; Paare werden nur behalten, wenn beide Individuen dem gleichen Fold angehören.
 6. Eine Summary-Tabelle zeigt Mittelwert und Standardabweichung der Pair-Anzahl.

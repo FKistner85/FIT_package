@@ -1,11 +1,11 @@
-# generate_trails_and_trailpairs.py
+# generate_trails_and_trailpairs.py (veraltet)
 
 ## Überblick
-Erzeugt Trail-Segmente und alle Paarvergleiche mit Metadaten.
-Das Modul dient dazu, Bewegungsabläufe in vergleichbare Abschnitte zu zerlegen und daraus Paarungen zu bilden. Dadurch lassen sich individuelle Muster miteinander kontrastieren. Bei großen Datensätzen können die Berechnungen jedoch zeitaufwändig werden.
+Erzeugte Trail-Segmente und alle Paarvergleiche mit Metadaten.
+Die Funktionalität befindet sich nun in `geometric_pairwise_projection.generate_pairwise_comparisons_from_df`.
 
 ## Wichtige Bestandteile
-- generate_pairwise_comparisons_from_df
+- generate_pairwise_comparisons_from_df (verschoben nach `geometric_pairwise_projection`)
 
 ## Referenzen
 - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html

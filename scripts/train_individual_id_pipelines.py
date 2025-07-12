@@ -30,7 +30,7 @@ from FIT_python.pipeline_individual_id.utils import (
     sequential_holdout_ids,
     compute_overlap_jsl_style,
 )
-from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
+from FIT_python.pipeline_individual_id.geometric_pairwise_projection import (
     generate_pairwise_comparisons_from_df,
 )
 from FIT_python.pipeline_individual_id import (

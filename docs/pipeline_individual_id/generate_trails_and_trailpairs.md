@@ -1,6 +1,6 @@
-# generate_trails_and_trailpairs.py
+# generate_trails_and_trailpairs.py (deprecated)
 
-`generate_pairwise_comparisons_from_df()` constructs training pairs of trails. Its docstring details the procedure:
+This module previously contained `generate_pairwise_comparisons_from_df()` to construct training pairs of trails. The functionality now lives in `geometric_pairwise_projection.generate_pairwise_comparisons_from_df()`. The former procedure sampled windows for each individual:
 
 ```python
     1) Erzeuge group_id = individual_id, bzw. wenn NaN/unknown dann fallback trail.
@@ -14,6 +14,6 @@
        liegen.
     7) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
 ```
-【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L34-L42】
+【F:src/FIT_python/pipeline_individual_id/geometric_pairwise_projection.py†L26-L42】
 
 The function samples fixed-length segments from each individual, creates both cross- and within-individual pairings and assigns folds on the individual level (stratified by sex). A summary table counts the resulting pairs.

@@ -1,10 +1,10 @@
-# generate_trails_and_trailpairs.py
+# generate_trails_and_trailpairs.py (deprecated)
 
 ## Overview
-Creates trail segments and all pairwise comparisons with metadata.
+Previously created trail segments and pairwise comparisons with metadata.
 
 ## Key Components
-- generate_pairwise_comparisons_from_df
+- generate_pairwise_comparisons_from_df (moved to `geometric_pairwise_projection`)
 
 ### generate_pairwise_comparisons_from_df
 Takes a raw footprint DataFrame and creates all valid trail combinations for the
