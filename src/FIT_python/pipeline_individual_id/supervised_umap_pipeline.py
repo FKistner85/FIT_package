@@ -111,6 +111,7 @@ def run(
     feature_cols: Sequence[str],
     sex_features: Sequence[str] | None = None,
     *,
+    val_df: pd.DataFrame | None = None,
     outlier_method: str | None = None,
     scaler_method: str | None = None,
     selection_method: str = "forward",
@@ -133,6 +134,10 @@ def run(
         Columns used as numeric input features.
     sex_features : sequence of str, optional
         Extra columns appended before dimensionality reduction.
+    val_df : pd.DataFrame, optional
+        Validation samples referenced by ``val_comparisons``. When provided,
+        embeddings are also computed for these samples so that their IDs are
+        available during pair feature computation.
 
     Returns
     -------
@@ -165,6 +170,24 @@ def run(
         index=train_df["id"].astype(str),
         columns=reducer.get_feature_names_out(),
     )
+
+    if val_df is not None:
+        X_val = prep_pipe.transform(val_df[feature_cols])
+        if sex_features:
+            sex_df = val_df[list(sex_features)].copy()
+            for col in sex_df.columns:
+                if sex_df[col].dtype == object:
+                    sex_df[col] = sex_df[col].astype(str).str.lower().map({"f": 0, "m": 1})
+                sex_df[col] = pd.to_numeric(sex_df[col], errors="coerce")
+            X_val = pd.concat([X_val, sex_df], axis=1)
+
+        emb_val = reducer.transform(X_val)
+        emb_val_df = pd.DataFrame(
+            emb_val,
+            index=val_df["id"].astype(str),
+            columns=reducer.get_feature_names_out(),
+        )
+        emb_df = pd.concat([emb_df, emb_val_df])
 
     dist_df = _compute_pair_features(emb_df, val_comparisons)
 

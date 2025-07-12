@@ -25,6 +25,7 @@ class DistanceBaseline:
         val_comparisons: Iterable[Dict],
         feature_cols: List[str],
         *,
+        val_df: pd.DataFrame | None = None,
         reducers: List[str] | None = None,
         selection_method: str = "forward",
         n_components: int | List[int] = 2,
@@ -47,6 +48,10 @@ class DistanceBaseline:
             ``generate_pairwise_comparisons_from_df``.
         feature_cols:
             Names of the morphometric feature columns to use.
+        val_df:
+            Optional validation dataframe containing the samples referenced in
+            ``val_comparisons``. If provided, it will be concatenated to the
+            training dataframe so that all required IDs are present.
         reducers:
             Dimensionality reduction methods passed through to
             ``run_all_pairwise_projections_parallel``. Defaults to ``["lda"]``.
@@ -74,9 +79,11 @@ class DistanceBaseline:
         if "Trail" in df_rcv.columns:
             df_rcv["Trail"] = "RCV"
 
+        base_df = df_rcv if val_df is None else pd.concat([df_rcv, val_df], ignore_index=True)
+
         results = run_all_pairwise_projections_parallel(
             list(val_comparisons),
-            df_rcv,
+            base_df,
             feature_cols,
             k_features=16,
             reducers=reducers or ["lda"],
