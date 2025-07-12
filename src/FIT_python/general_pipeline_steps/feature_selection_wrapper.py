@@ -55,12 +55,26 @@ def _forward_ranking(
 
 
 class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
+    """Flexible feature selection supporting several strategies."""
+
     def __init__(
         self,
         method: str = None,  # 'forward', 'random_forest', 'variance', 'univariate', 'lasso', or None (use all)
         k: int = None,
         random_state: int = 0,
     ):
+        """Create the transformer with the desired selection method.
+
+        Parameters
+        ----------
+        method:
+            Selection algorithm to use. See :data:`FEATURE_SELECTION_PRESETS` for
+            common options.
+        k:
+            Number of top features to retain. ``None`` keeps all.
+        random_state:
+            Seed for methods relying on randomness.
+        """
         allowed_methods = [
             None,
             "forward",
@@ -78,6 +92,7 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         self.selected_features_: List[str] = []
 
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y):
+        """Rank features according to the chosen method."""
         if isinstance(X, pd.DataFrame):
             df = X.copy()
             feat_names = df.columns.tolist()

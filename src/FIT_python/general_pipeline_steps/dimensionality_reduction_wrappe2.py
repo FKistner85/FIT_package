@@ -44,6 +44,23 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         ],
         **kwargs,
     ):
+        """Initialise the reducer with the desired algorithm.
+
+        Parameters
+        ----------
+        method:
+            Reduction technique, e.g. ``'pca'`` or ``'umap'``.
+        n_components:
+            Number of dimensions to produce.
+        supervised:
+            Whether supervised variants (``UMAP``/``LDA``) should use the target
+            labels.
+        n_neighbors, min_dist, whiten:
+            Additional parameters forwarded to the lower level functions such as
+            :class:`~sklearn.decomposition.PCA` or :func:`umap.UMAP`.
+        **kwargs:
+            Extra keyword arguments passed to the underlying reducer.
+        """
         # raw parameters for cloning
         self.method = method
         self.n_components = n_components
@@ -83,6 +100,16 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         }
 
     def fit(self, X, y=None):
+        """Fit the configured reducer on ``X``.
+
+        Parameters
+        ----------
+        X:
+            Input data as ``DataFrame`` or ``ndarray``.
+        y:
+            Optional target labels for supervised methods like ``LDA`` or
+            supervised ``UMAP``.
+        """
         # Identity-Fall
         if self._method_norm is None:
             cols = X.columns.tolist() if isinstance(X, pd.DataFrame) else None
@@ -137,6 +164,7 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
+        """Apply the fitted reducer to ``X`` and return the transformed data."""
         if self._method_norm is None:
             return (
                 X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
