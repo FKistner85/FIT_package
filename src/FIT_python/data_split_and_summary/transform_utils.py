@@ -12,14 +12,21 @@ def convert_numeric(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
 
     Non-convertible values are coerced to NaN so that mixed columns do not
     raise errors during conversion.
+
+    Updated to convert all columns together to avoid DataFrame fragmentation
+    warnings when many columns are present.
     """
-    for col in feature_cols:
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.replace(",", ".", regex=False)
-            .pipe(pd.to_numeric, errors="coerce")
-        )
+
+    if not feature_cols:
+        return df
+
+    ser = (
+        df[feature_cols]
+        .astype(str)
+        .replace({",": "."}, regex=False)
+        .apply(pd.to_numeric, errors="coerce")
+    )
+    df[feature_cols] = ser
     return df
 
 

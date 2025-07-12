@@ -35,9 +35,16 @@ class DataImporter:
     def load(self) -> Dict[str, pd.DataFrame]:
         """Load raw files into DataFrames with cleaned columns and IDs."""
         dfs = load_raw_files(self.raw_dir, add_id=False)
-        for df in dfs.values():
+        for name, df in dfs.items():
             n = len(df)
-            df.insert(0, "id", range(self._next_id, self._next_id + n))
+            # inserting repeatedly can lead to fragmentation; assign instead
+            df = df.copy()
+            df["id"] = range(self._next_id, self._next_id + n)
+            # ensure id is the first column
+            cols = ["id"] + [c for c in df.columns if c != "id"]
+            dfs[name] = df.loc[:, cols]
+            if config.DEBUG_MODE:
+                print(f"[DEBUG] loaded {name}: shape={df.shape}")
             self._next_id += n
         return dfs
 
@@ -52,6 +59,8 @@ class DataImporter:
                 mapping=self.label_map,
             )
             cleaned[name] = df_clean
+            if config.DEBUG_MODE:
+                print(f"[DEBUG] cleaned {name}: shape={df_clean.shape}")
         return cleaned
 
     def convert(self, dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
@@ -70,6 +79,8 @@ class DataImporter:
             # convert these to numeric floats
             df_num = convert_numeric(df_copy, feature_cols)
             converted[name] = df_num
+            if config.DEBUG_MODE:
+                print(f"[DEBUG] converted {name}: shape={df_num.shape}")
         return converted
 
     def run(self) -> Dict[str, pd.DataFrame]:
@@ -107,6 +118,8 @@ class DataImportWrapper:
         raw_dfs = importer.load()
         cleaned_dfs = importer.clean(raw_dfs)
         dfs = importer.convert(cleaned_dfs)
+        if config.DEBUG_MODE:
+            print("[DEBUG] saving cleaned datasets")
 
         for name, df in dfs.items():
             out = config.CLEANED_DIR / f"{name}.parquet"

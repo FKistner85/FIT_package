@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Iterable, Mapping
 
+import FIT_python.config as config
+
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 
@@ -32,9 +34,29 @@ def compute_confusion(
     if true_col not in results_df.columns or pred_col not in results_df.columns:
         raise KeyError(f"Missing '{true_col}' or '{pred_col}' in results_df")
 
-    mapping = {"True": 1, "False": 0, True: 1, False: 0}
-    y_true = results_df[true_col].map(mapping).astype(int)
-    y_pred = results_df[pred_col].map(mapping).astype(int)
+    mapping = {"True": 1, "False": 0, True: 1, False: 0, 1: 1, 0: 0}
+    raw_true = results_df[true_col]
+    raw_pred = results_df[pred_col]
+
+    if config.DEBUG_MODE:
+        print(
+            f"[DEBUG] unique true labels: {sorted(raw_true.dropna().unique())};"
+            f" pred labels: {sorted(raw_pred.dropna().unique())}"
+        )
+
+    y_true = raw_true.map(mapping)
+    y_pred = raw_pred.map(mapping)
+
+    if y_true.isna().any() or y_pred.isna().any():
+        missing = results_df[y_true.isna() | y_pred.isna()]
+        if config.DEBUG_MODE:
+            print("[DEBUG] rows with NaN after mapping:\n", missing)
+        raise ValueError(
+            "Invalid label values found when computing confusion matrix."
+        )
+
+    y_true = y_true.astype(int)
+    y_pred = y_pred.astype(int)
 
     cm = confusion_matrix(y_true, y_pred, labels=[1, 0])
     return pd.DataFrame(
