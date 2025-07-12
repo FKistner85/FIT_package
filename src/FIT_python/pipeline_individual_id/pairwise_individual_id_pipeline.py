@@ -97,6 +97,8 @@ def run_all_pairwise_projections_parallel(
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
     df_base = df2.reset_index(drop=True)
     id_map = {sid: i for i, sid in enumerate(df_base["id"])}
+    # mapping from original DataFrame index to position after reset
+    index_map = {str(idx): pos for pos, idx in enumerate(df2.index)}
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
@@ -131,8 +133,12 @@ def run_all_pairwise_projections_parallel(
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
         ids_a = [str(i) for i in comp["samples_a"]]
         ids_b = [str(i) for i in comp["samples_b"]]
-        idx_a = [id_map[i] for i in ids_a]
-        idx_b = [id_map[i] for i in ids_b]
+        if ids_a and ids_a[0] not in id_map:
+            idx_a = [index_map[i] for i in ids_a]
+            idx_b = [index_map[i] for i in ids_b]
+        else:
+            idx_a = [id_map[i] for i in ids_a]
+            idx_b = [id_map[i] for i in ids_b]
         size_a, size_b = len(idx_a), len(idx_b)
 
         trail_a_id = comp["trail_a_id"]
