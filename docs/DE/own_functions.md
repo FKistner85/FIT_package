@@ -136,7 +136,7 @@ Steps
    über vielfältige Zufallsteilsets mit Jaccard-Distanz ausgewählt.
 3. Erstelle alle Cross- und Within-Individual-Paare aus unterschiedlichen Fenstern.
 4. ``same_individual`` und ``same_sex`` kennzeichnen Gleichheit oder ``"unknown"``.
-5. ``StratifiedKFold`` erfolgt nach ``trail_size_a``.
+5. Jede Person wird per ``StratifiedKFold`` (nach ``sex``) einem Fold zugewiesen; Paare werden nur behalten, wenn beide Individuen dem gleichen Fold angehören.
 6. Eine Summary-Tabelle zeigt Mittelwert und Standardabweichung der Pair-Anzahl.
 
 ## FIT_python.pipeline_individual_id.geometric_pairwise_projection.generate_pairwise_comparisons_from_df

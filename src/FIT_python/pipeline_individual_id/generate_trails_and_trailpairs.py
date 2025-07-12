@@ -190,14 +190,26 @@ def build_pairwise_comparisons(
                 }
             )
 
-    labels = [c["trail_size_a"] for c in comparisons]
-    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
-    fold_map: Dict[int, int] = {}
-    for fold, (_, val_idx) in enumerate(skf.split(comparisons, labels)):
+    # --- assign folds by individual to avoid data leakage ---
+    id_labels = [sex_map[i] for i in all_ids]
+    skf_ind = StratifiedKFold(
+        n_splits=n_folds, shuffle=True, random_state=random_state
+    )
+    id_to_fold: Dict[str, int] = {}
+    for fold, (_, val_idx) in enumerate(skf_ind.split(all_ids, id_labels)):
         for vi in val_idx:
-            fold_map[vi] = fold
-    for idx, comp in enumerate(comparisons):
-        comp["fold"] = fold_map[idx]
+            id_to_fold[all_ids[vi]] = fold
+
+    filtered: List[Dict] = []
+    for comp in comparisons:
+        fa = id_to_fold[comp["ind_a"]]
+        fb = id_to_fold[comp["ind_b"]]
+        if fa != fb:
+            continue
+        comp["fold"] = fa
+        filtered.append(comp)
+
+    comparisons = filtered
 
     comp_df = pd.DataFrame(comparisons)
     summary_rows = []
