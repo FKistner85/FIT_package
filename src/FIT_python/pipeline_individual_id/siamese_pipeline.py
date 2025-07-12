@@ -157,14 +157,18 @@ def run(
     )
 
     embeddings = net.transform(df_train[use_cols])
+    df_train["id"] = df_train["id"].astype(str)
+    id_map = {sid: i for i, sid in enumerate(df_train["id"])}
     ids = df_train["individual_id"].astype(str).tolist()
     X_cls, y_cls = _pairwise_dataset(embeddings, ids)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
 
     results: List[Dict] = []
     for comp in val_comparisons:
-        idx_a = comp["samples_a"]
-        idx_b = comp["samples_b"]
+        ids_a = [str(i) for i in comp["samples_a"]]
+        ids_b = [str(i) for i in comp["samples_b"]]
+        idx_a = [id_map[i] for i in ids_a]
+        idx_b = [id_map[i] for i in ids_b]
         emb_a = embeddings[idx_a].mean(axis=0)
         emb_b = embeddings[idx_b].mean(axis=0)
         dists = compute_distances(emb_a, emb_b)

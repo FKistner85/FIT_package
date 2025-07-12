@@ -95,7 +95,8 @@ def run_all_pairwise_projections_parallel(
     df2 = df.copy()
     df2["id"] = df2["id"].astype(str)
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df_base = df2.set_index("id")
+    df_base = df2.reset_index(drop=True)
+    id_map = {sid: i for i, sid in enumerate(df_base["id"])}
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
@@ -128,30 +129,32 @@ def run_all_pairwise_projections_parallel(
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-        idx_a = [str(i) for i in comp["samples_a"]]
-        idx_b = [str(i) for i in comp["samples_b"]]
+        ids_a = [str(i) for i in comp["samples_a"]]
+        ids_b = [str(i) for i in comp["samples_b"]]
+        idx_a = [id_map[i] for i in ids_a]
+        idx_b = [id_map[i] for i in ids_b]
         size_a, size_b = len(idx_a), len(idx_b)
 
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
         # feature matrices A & B
-        df_a = df_base.loc[idx_a, feature_cols]
-        df_b = df_base.loc[idx_b, feature_cols]
+        df_a = df_base.iloc[idx_a][feature_cols]
+        df_b = df_base.iloc[idx_b][feature_cols]
 
         # RCV set as the complement
-        all_ids = set(df_base.index)
-        rcv_idx = list(all_ids - set(idx_a) - set(idx_b))
-        df_r = df_base.loc[rcv_idx, feature_cols]
+        all_idx = set(range(len(df_base)))
+        rcv_idx = list(all_idx - set(idx_a) - set(idx_b))
+        df_r = df_base.iloc[rcv_idx][feature_cols]
 
         # labels for feature selection
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
 
         # extract sex probabilities if required
         if use_sexmodel_prediction:
-            pa = proba_all.loc[idx_a].to_numpy()
-            pb = proba_all.loc[idx_b].to_numpy()
-            pr = proba_all.loc[rcv_idx].to_numpy()
+            pa = proba_all.iloc[idx_a].to_numpy()
+            pb = proba_all.iloc[idx_b].to_numpy()
+            pr = proba_all.iloc[rcv_idx].to_numpy()
             avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
             avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
             avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
@@ -270,8 +273,8 @@ def run_all_pairwise_projections_parallel(
                             res = {
                                 "trail_a_id": comp["trail_a_id"],
                                 "trail_b_id": comp["trail_b_id"],
-                                "samples_a": idx_a,
-                                "samples_b": idx_b,
+                                "samples_a": ids_a,
+                                "samples_b": ids_b,
                                 "ind_a": ind_a,
                                 "ind_b": ind_b,
                                 # store as string to avoid mixed bool/object dtype
