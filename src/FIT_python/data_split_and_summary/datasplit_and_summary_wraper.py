@@ -10,12 +10,9 @@ from FIT_python.data_split_and_summary.split_utils import (
 )
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 
-RAW_DIR = Path("data/raw")
-SPLITS_DIR = Path("data/splits")
-RESULTS_DATA_DIR = Path("results/data")
-DEFAULT_TARGETS = [...]  # wie gehabt
-NUM_FOLDS = 5
-GROUP_COL = "individual_id"
+from FIT_python.config import RAW_DIR, SPLITS_DIR, RESULTS_DATA_DIR, DEFAULT_TARGETS, GROUP_COL, NUM_FOLDS
+
+
 
 
 def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
