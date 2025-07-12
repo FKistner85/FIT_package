@@ -12,12 +12,13 @@ The function `generate_pairwise_comparisons_from_df` in `generate_trails_and_tra
    diverse Teilmengen-Sampling mittels Jaccard-Distanz.
 3) Baue alle Cross- und Within-Individual-Paare.
 4) `same_individual` und `same_sex` markieren Gleichheit oder "unknown".
-5) `StratifiedKFold` nach `trail_size_a`.
+5) Weist jede Person per `StratifiedKFold` (stratifiziert nach Geschlecht)
+   einem Fold zu und behält nur Paare aus demselben Fold.
 6) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
 ```
 【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L209-L218】
 
-Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual`, `same_sex`, trail sizes and the assigned fold.  A summary table records the number of animals and trails per length. The folds are assigned using `StratifiedKFold` over the first trail size, as shown around lines 153‑161.【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L153-L161】
+Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual`, `same_sex`, trail sizes and the assigned fold.  A summary table records the number of animals and trails per length. Individuals are stratified by sex into folds and only comparisons from the same fold are retained.【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L153-L161】
 
 ## 2. Distance Metrics
 

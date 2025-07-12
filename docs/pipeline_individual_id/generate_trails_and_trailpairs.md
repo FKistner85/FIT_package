@@ -9,9 +9,11 @@
     3) Baue alle Cross-Individual-Paare UND alle Within-Individual, cross-chunk Paare.
     4) same_individual = True/False, oder "unknown" wenn eine Seite fallback benutzt.
     5) same_sex = True/False/"unknown" analog.
-    6) StratifiedKFold nach trail_size_a.
+    6) Weise jede ``_group_id`` per ``StratifiedKFold`` (nach ``sex``) genau
+       einem Fold zu und behalte nur Paare, deren Individuen im selben Fold
+       liegen.
     7) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
 ```
 【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L34-L42】
 
-The function samples fixed-length segments from each individual, creates both cross- and within-individual pairings and assigns folds using `StratifiedKFold`. A summary table counts the resulting pairs.
+The function samples fixed-length segments from each individual, creates both cross- and within-individual pairings and assigns folds on the individual level (stratified by sex). A summary table counts the resulting pairs.
