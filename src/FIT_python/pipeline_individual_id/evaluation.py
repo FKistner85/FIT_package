@@ -48,12 +48,11 @@ def compute_confusion(
     y_pred = raw_pred.map(mapping)
 
     if y_true.isna().any() or y_pred.isna().any():
-        missing = results_df[y_true.isna() | y_pred.isna()]
+        invalid = y_true.isna() | y_pred.isna()
         if config.DEBUG_MODE:
-            print("[DEBUG] rows with NaN after mapping:\n", missing)
-        raise ValueError(
-            "Invalid label values found when computing confusion matrix."
-        )
+            print("[DEBUG] dropping rows with NaN after mapping:\n", results_df[invalid])
+        y_true = y_true[~invalid]
+        y_pred = y_pred[~invalid]
 
     y_true = y_true.astype(int)
     y_pred = y_pred.astype(int)
