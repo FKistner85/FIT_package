@@ -93,6 +93,7 @@ def run_all_pairwise_projections_parallel(
 
     # --- 1) prepare base DataFrame ---
     df2 = df.copy()
+    df2["id"] = df2["id"].astype(str)
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
     df_base = df2.set_index("id")
 
@@ -127,7 +128,8 @@ def run_all_pairwise_projections_parallel(
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-        idx_a, idx_b = comp["samples_a"], comp["samples_b"]
+        idx_a = [str(i) for i in comp["samples_a"]]
+        idx_b = [str(i) for i in comp["samples_b"]]
         size_a, size_b = len(idx_a), len(idx_b)
 
         trail_a_id = comp["trail_a_id"]

@@ -10,7 +10,7 @@ def build_data():
     rows += [{'individual_id': 'A', 'sex': 0, 'f1': 0.0, 'f2': 0.0} for _ in range(2)]  # A2
     rows += [{'individual_id': 'B', 'sex': 1, 'f1': 1.0, 'f2': 1.0} for _ in range(2)]  # B1
     df = pd.DataFrame(rows)
-    df.insert(0, "id", [f"r{i}" for i in range(len(df))])
+    df.insert(0, "id", list(range(len(df))))
     return df
 
 def build_comparisons():
@@ -20,8 +20,8 @@ def build_comparisons():
             'ind_b': 'A',
             'trail_a_id': 'A2',
             'trail_b_id': 'A1',
-            'samples_a': ['r2', 'r3'],
-            'samples_b': ['r0', 'r1'],
+            'samples_a': [2, 3],
+            'samples_b': [0, 1],
             'same_individual': True,
             'fold': 0,
         },
@@ -30,8 +30,8 @@ def build_comparisons():
             'ind_b': 'B',
             'trail_a_id': 'A2',
             'trail_b_id': 'B1',
-            'samples_a': ['r2', 'r3'],
-            'samples_b': ['r4', 'r5'],
+            'samples_a': [2, 3],
+            'samples_b': [4, 5],
             'same_individual': False,
             'fold': 0,
         },
