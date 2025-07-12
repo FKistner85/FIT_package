@@ -1,0 +1,7 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
+amur_tiger Test,F,70,5,10,14.0,3.95,2.0,0.63,panthera tigris altaica
+amur_tiger Test,M,44,4,6,11.0,2.55,1.5,0.5,panthera tigris altaica
+amur_tiger Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris altaica
+amur_tiger Train,F,274,18,40,15.22,3.94,2.22,0.63,panthera tigris altaica
+amur_tiger Train,M,217,17,31,12.76,3.64,1.94,0.8,panthera tigris altaica
+amur_tiger Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris altaica

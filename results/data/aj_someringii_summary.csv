@@ -1,0 +1,7 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
+aj_someringii Test,F,55,3,8,18.33,3.77,2.67,0.47,a j soemmeringii
+aj_someringii Test,M,28,2,4,14.0,0.0,2.0,0.0,a j soemmeringii
+aj_someringii Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j soemmeringii
+aj_someringii Train,F,134,10,19,13.4,1.8,1.9,0.3,a j soemmeringii
+aj_someringii Train,M,153,10,22,15.3,2.87,2.2,0.4,a j soemmeringii
+aj_someringii Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j soemmeringii

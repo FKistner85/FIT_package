@@ -1,0 +1,7 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
+jubatus Test,F,70,5,10,14.0,0.0,2.0,0.0,a j jubatus
+jubatus Test,M,49,3,7,16.33,3.3,2.33,0.47,a j jubatus
+jubatus Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j jubatus
+jubatus Train,F,258,19,37,13.58,1.57,1.95,0.22,a j jubatus
+jubatus Train,M,189,13,27,14.54,1.87,2.08,0.27,a j jubatus
+jubatus Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j jubatus

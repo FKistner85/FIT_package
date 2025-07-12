@@ -1,0 +1,7 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
+mountain_lion Test,F,63,4,10,15.75,3.11,2.5,0.5,puma concolor
+mountain_lion Test,M,44,3,6,14.67,1.25,2.0,0.0,puma concolor
+mountain_lion Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,puma concolor
+mountain_lion Train,F,237,15,35,15.8,4.62,2.33,0.7,puma concolor
+mountain_lion Train,M,191,13,28,14.69,5.21,2.15,0.86,puma concolor
+mountain_lion Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,puma concolor
