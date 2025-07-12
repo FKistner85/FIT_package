@@ -6,6 +6,7 @@ from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.split_utils import (
     create_train_test_split_otter,
     stratified_individual_split,
+    _make_folds,
 )
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 
@@ -48,7 +49,7 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         else:
             # generischer Stratified split nach individual_id (oder GROUP_COL)
             train_df, test_df, inf_df = stratified_individual_split(
-                df, id_col=GROUP_COL, n_splits=NUM_FOLDS, random_state=0
+                df, group_col=GROUP_COL, n_splits=NUM_FOLDS, random_state=0
             )
 
         # 3) Folds ins train_df schreiben, falls nicht schon geschehen
