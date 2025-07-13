@@ -136,15 +136,13 @@ Steps
    diverse index subsets based on Jaccard dissimilarity.
 3. Construct all cross-individual pairs and all within-individual pairs using different windows.
 4. ``same_individual`` and ``same_sex`` mark equality or ``"unknown"``.
-5. Assign each individual to a fold using ``StratifiedKFold`` (stratified by ``sex``) and keep only pairs where both individuals share the same fold.
-6. Produce a summary table including average and standard deviation of pair counts.
+5. Produce a summary table including average and standard deviation of pair counts.
 
 ## FIT_python.pipeline_individual_id.geometric_pairwise_projection.generate_pairwise_comparisons_from_df
 Create trail pair comparisons with metadata:
 - ``samples_a``/``samples_b``: lists of ``id`` values
 - ``trail_a_id``/``trail_b_id``: unique identifiers
 - ``same_individual``: boolean flag
-- ``fold``: stratified k-fold based on ``same_individual``
 
 ## FIT_python.pipeline_individual_id.geometric_pairwise_projection.run_all_pairwise_projections_parallel
 Run projections for all pairings.

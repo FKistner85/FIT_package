@@ -12,13 +12,11 @@ The function `generate_pairwise_comparisons_from_df` in `generate_trails_and_tra
    diverse Teilmengen-Sampling mittels Jaccard-Distanz.
 3) Baue alle Cross- und Within-Individual-Paare.
 4) `same_individual` und `same_sex` markieren Gleichheit oder "unknown".
-5) Weist jede Person per `StratifiedKFold` (stratifiziert nach Geschlecht)
-   einem Fold zu und behält nur Paare aus demselben Fold.
-6) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
+5) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.
 ```
-【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L209-L218】
+【F:src/FIT_python/pipeline_individual_id/pair_generation.py†L17-L138】
 
-Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual`, `same_sex`, trail sizes and the assigned fold.  A summary table records the number of animals and trails per length. Individuals are stratified by sex into folds and only comparisons from the same fold are retained.【F:src/FIT_python/pipeline_individual_id/generate_trails_and_trailpairs.py†L153-L161】
+Each generated pair dictionary includes the indexes of both trails, unique trail IDs and metadata such as `same_individual` and `same_sex` alongside trail sizes.  A summary table records the number of animals and trails per length.【F:src/FIT_python/pipeline_individual_id/pair_generation.py†L93-L138】
 
 ## 2. Distance Metrics
 
@@ -64,7 +62,7 @@ The projection of each pair is handled by `process_pair`, and the top-level func
 
 ## 5. Output Structure
 
-Each result dictionary returned by `run_all_pairwise_projections_parallel` contains the trail IDs, lists of `id` values for both trails, individual identifiers, fold number and whether the trails belong to the same individual.  It also includes the chosen preprocessing options (`pipeline`), the selected features with their scores, the computed distances and—if a sex classifier is used—the average predicted probabilities for each group.  Coordinates for each trail and the RCV set are stored under `coords_*` fields, along with their centroids.
+Each result dictionary returned by `run_all_pairwise_projections_parallel` contains the trail IDs, lists of `id` values for both trails, individual identifiers and whether the trails belong to the same individual.  It also includes the chosen preprocessing options (`pipeline`), the selected features with their scores, the computed distances and—if a sex classifier is used—the average predicted probabilities for each group.  Coordinates for each trail and the RCV set are stored under `coords_*` fields, along with their centroids.
 
 The collected results can later be written to a CSV file for statistical analysis or model training.
 

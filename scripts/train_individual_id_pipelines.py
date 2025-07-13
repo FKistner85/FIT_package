@@ -26,10 +26,8 @@ from FIT_python.caption_utils import save_caption
 from FIT_python import config
 from FIT_python.data_split_and_summary.datasplit_and_summary_wraper import SplitWrapper
 from FIT_python.data_split_and_summary.summary_data_utils import compute_summary
-from FIT_python.pipeline_individual_id.utils import (
-    sequential_holdout_ids,
-    compute_overlap_jsl_style,
-)
+from FIT_python.pipeline_individual_id.data_split import sequential_holdout_ids
+from FIT_python.pipeline_individual_id.utils import compute_overlap_jsl_style
 from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
     generate_pairwise_comparisons_from_df,
 )

@@ -51,39 +51,3 @@ def compute_overlap_jsl_style(row, p: float = 0.5) -> bool:
     return center_dist <= (r1 + r2)
 
 
-def sequential_holdout_ids(
-    unique_ids: Iterable[str],
-    val_sizes: Iterable[int] = tuple(
-        SOFT_CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
-    ),
-    n_iter: int = 1,
-    random_state: int | None = None,
-) -> List[Dict[str, List[str]]]:
-    """Generate sequential train/validation splits based on unique IDs.
-
-    For each iteration a new validation set is drawn for every entry in
-    ``val_sizes``.
-    Each split is therefore independent and does not build on the previous one
-    within the same iteration.
-    """
-
-    ids = list(unique_ids)
-    if len(ids) < 3:
-        raise ValueError("Need at least three unique IDs for holdouts")
-
-    rng = np.random.default_rng(random_state)
-    results = []
-    for it in range(n_iter):
-        for n_val in val_sizes:
-            n_val_eff = max(2, min(n_val, len(ids) - 1))
-            val_ids = list(rng.choice(ids, size=n_val_eff, replace=False))
-            train_ids = [i for i in ids if i not in val_ids]
-            results.append(
-                {
-                    "iteration": it,
-                    "n_val": n_val_eff,
-                    "val_ids": val_ids,
-                    "train_ids": train_ids,
-                }
-            )
-    return results

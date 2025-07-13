@@ -27,8 +27,8 @@ This document translates the rough notes in `pipeline_individual_id_3_pipelines.
    - Define the number of iterations (default: 1, later ~10).
    - For each iteration, create validation sets with increasing numbers of unique individuals e.g. `[2,4,6,8]`.
    - An individual must appear entirely in either the train or validation split of a given iteration.
-   - The helper `sequential_holdout_ids` implements this logic and returns a list
-     of dictionaries with `train_ids` and `val_ids` for each step.
+   - The helper `sequential_holdout_ids` in `data_split.py` implements this logic
+     and returns a list of dictionaries with `train_ids` and `val_ids` for each step.
 3. **Per‑Iteration Dictionaries**
    - Store the mapping of train/val individual IDs for every iteration to reproduce splits.
 
