@@ -42,6 +42,8 @@ def run_all_pairwise_projections_parallel(
     comparisons: List[Dict],
     df: pd.DataFrame,
     feature_cols: List[str],
+    *,
+    sample_col: str = "id",
     k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "k_features"
     ],
@@ -89,11 +91,11 @@ def run_all_pairwise_projections_parallel(
 
     # --- 1) prepare base DataFrame ---
     df2 = df.copy()
-    df2["id"] = df2["id"].astype(str)
+    df2[sample_col] = df2[sample_col].astype(str)
     df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df_base = df2.set_index("id")
+    df_base = df2.set_index(sample_col)
     # keep a mapping from positional indices to IDs for backwards compatibility
-    idx_to_id = df2["id"].astype(str).reset_index(drop=True)
+    idx_to_id = df2[sample_col].astype(str).reset_index(drop=True)
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
@@ -377,6 +379,7 @@ def run_embedding_once_pipeline(
     df: pd.DataFrame,
     *,
     feature_cols: List[str],
+    sample_col: str = "id",
     k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
     reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
     selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
@@ -395,6 +398,7 @@ def run_embedding_once_pipeline(
         comparisons,
         df,
         feature_cols=feature_cols,
+        sample_col=sample_col,
         k_features=k_features,
         reducers=[reducer],
         selection_method=selection_method,

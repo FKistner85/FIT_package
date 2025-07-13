@@ -25,7 +25,9 @@ from FIT_python.pipeline_individual_id.distance_metrics import compute_distances
 @memory.cache
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
+    *,
     id_col: str = "individual_id",
+    sample_col: str = "id",
     group_sizes: List[int] = [3, 5, 7, 10],
     n_repeats: int = 5,
     mode: str = "both",
@@ -34,11 +36,24 @@ def generate_pairwise_comparisons_from_df(
     random_state: int = 0,
     show_progress: bool = False,
 ) -> List[Dict]:
-    """Create trail pair comparisons with metadata:
-    - ``samples_a``/``samples_b``: lists of original indices
-    - ``trail_a_id``/``trail_b_id``: unique identifiers
-    - ``same_individual``: boolean flag
-    - ``fold``: stratified k-fold based on ``same_individual``
+    """Create trail pair comparisons with metadata.
+
+    Parameters
+    ----------
+    df:
+        Input dataframe containing one row per footprint.
+    id_col:
+        Column that identifies the individual for grouping.
+    sample_col:
+        Column containing unique sample identifiers. ``samples_a`` and
+        ``samples_b`` in the returned comparisons reference values from this
+        column.
+
+    Returns
+    -------
+    list of dict
+        Each dictionary describes one comparison with trail IDs and fold
+        assignment.
     """
     # 1) Alle Roh-Paare sammeln
     individuals = defaultdict(list)
@@ -46,7 +61,7 @@ def generate_pairwise_comparisons_from_df(
     if show_progress:
         it = tqdm(it, total=len(df), desc="index", leave=False)
     for _, row in it:
-        individuals[row[id_col]].append(row["id"])
+        individuals[row[id_col]].append(row[sample_col])
 
     raw = []
     for size_a in tqdm(

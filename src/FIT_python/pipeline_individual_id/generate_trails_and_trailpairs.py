@@ -274,7 +274,9 @@ def build_pairwise_comparisons(
 
 def generate_pairwise_comparisons_from_df(
     df: pd.DataFrame,
+    *,
     id_col: str = "individual_id",
+    sample_col: str = "id",
     group_sizes: List[int] | None = None,
     n_repeats: int = 5,
     mode: str = "both",
@@ -288,6 +290,7 @@ def generate_pairwise_comparisons_from_df(
     comps = _generate_pw_from_df(
         df=df,
         id_col=id_col,
+        sample_col=sample_col,
         group_sizes=group_sizes or [3, 5, 7, 10],
         n_repeats=n_repeats,
         mode=mode,
