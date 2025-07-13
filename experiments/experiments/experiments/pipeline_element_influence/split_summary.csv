@@ -1,0 +1,70 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
+aj_someringii Test,F,42,3,6,14.0,0.0,2.0,0.0,a j soemmeringii
+aj_someringii Test,M,28,2,4,14.0,0.0,2.0,0.0,a j soemmeringii
+aj_someringii Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j soemmeringii
+aj_someringii Train,F,147,10,21,14.7,3.61,2.1,0.54,a j soemmeringii
+aj_someringii Train,M,153,10,22,15.3,2.87,2.2,0.4,a j soemmeringii
+aj_someringii Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j soemmeringii
+amur_tiger Test,F,84,5,12,16.8,3.54,2.4,0.49,panthera tigris altaica
+amur_tiger Test,M,45,4,7,11.25,2.38,1.75,0.83,panthera tigris altaica
+amur_tiger Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris altaica
+amur_tiger Train,F,260,18,38,14.44,3.93,2.11,0.66,panthera tigris altaica
+amur_tiger Train,M,216,17,31,12.71,3.69,1.88,0.76,panthera tigris altaica
+amur_tiger Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris altaica
+bengal_tiger Inference,F,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+bengal_tiger Inference,M,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+bengal_tiger Inference,Unknown,38,6,7,6.33,1.97,1.17,0.37,panthera tigris tigris
+bengal_tiger Test,F,48,3,8,16.0,2.83,2.67,0.47,panthera tigris tigris
+bengal_tiger Test,M,76,4,11,19.0,9.25,2.75,1.3,panthera tigris tigris
+bengal_tiger Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+bengal_tiger Train,F,172,12,25,14.33,8.07,2.08,1.11,panthera tigris tigris
+bengal_tiger Train,M,252,15,36,16.8,6.95,2.4,0.95,panthera tigris tigris
+bengal_tiger Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+cheetah Test,F,66,3,10,22.0,2.94,3.33,0.47,acinonyx jubatus
+cheetah Test,M,92,5,13,18.4,6.02,2.6,1.02,acinonyx jubatus
+cheetah Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,acinonyx jubatus
+cheetah Train,F,320,13,45,24.62,7.58,3.46,0.93,acinonyx jubatus
+cheetah Train,M,303,17,42,17.82,8.15,2.47,1.19,acinonyx jubatus
+cheetah Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,acinonyx jubatus
+eurasian_otter Inference,F,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+eurasian_otter Inference,M,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+eurasian_otter Inference,Unknown,81,1,8,81.0,0.0,8.0,0.0,lutra lutra
+eurasian_otter Test,F,86,7,12,12.29,5.34,2.29,0.7,lutra lutra
+eurasian_otter Test,M,66,7,8,9.43,5.55,1.29,0.45,lutra lutra
+eurasian_otter Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+eurasian_otter Train,F,220,13,29,16.92,7.33,2.85,1.1,lutra lutra
+eurasian_otter Train,M,175,14,26,12.5,5.26,2.0,0.85,lutra lutra
+eurasian_otter Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+giant_panda Test,F,63,5,8,12.6,5.16,1.6,0.8,ailuropoda melanoleuca
+giant_panda Test,M,56,4,8,14.0,9.51,2.0,1.22,ailuropoda melanoleuca
+giant_panda Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,ailuropoda melanoleuca
+giant_panda Train,F,238,17,36,14.0,9.02,2.12,1.02,ailuropoda melanoleuca
+giant_panda Train,M,166,16,25,10.38,8.48,1.56,0.93,ailuropoda melanoleuca
+giant_panda Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,ailuropoda melanoleuca
+jubatus Test,F,70,5,10,14.0,0.0,2.0,0.0,a j jubatus
+jubatus Test,M,49,3,7,16.33,3.3,2.33,0.47,a j jubatus
+jubatus Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j jubatus
+jubatus Train,F,258,19,37,13.58,1.57,1.95,0.22,a j jubatus
+jubatus Train,M,189,13,27,14.54,1.87,2.08,0.27,a j jubatus
+jubatus Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,a j jubatus
+lowlandtapir Inference,F,0,0,0,0.0,0.0,0.0,0.0,tapirus terrestris
+lowlandtapir Inference,M,0,0,0,0.0,0.0,0.0,0.0,tapirus terrestris
+lowlandtapir Inference,Unknown,4,1,1,4.0,0.0,1.0,0.0,tapirus terrestris
+lowlandtapir Test,F,43,4,7,10.75,3.27,1.75,0.43,tapirus terrestris
+lowlandtapir Test,M,60,4,8,15.0,6.2,2.0,0.71,tapirus terrestris
+lowlandtapir Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,tapirus terrestris
+lowlandtapir Train,F,149,15,24,9.93,3.26,1.6,0.49,tapirus terrestris
+lowlandtapir Train,M,170,13,24,13.08,7.94,1.85,1.03,tapirus terrestris
+lowlandtapir Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,tapirus terrestris
+mountain_lion Test,F,68,4,10,17.0,1.58,2.5,0.5,puma concolor
+mountain_lion Test,M,51,3,7,17.0,2.94,2.33,0.47,puma concolor
+mountain_lion Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,puma concolor
+mountain_lion Train,F,232,15,35,15.47,4.77,2.33,0.7,puma concolor
+mountain_lion Train,M,184,13,27,14.15,4.9,2.08,0.83,puma concolor
+mountain_lion Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,puma concolor
+white_rhino Test,F,205,5,25,41.0,13.81,5.6,1.85,ceratotherium simum
+white_rhino Test,M,124,4,16,31.0,9.51,4.25,1.48,ceratotherium simum
+white_rhino Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,ceratotherium simum
+white_rhino Train,F,437,16,55,27.31,15.77,3.88,2.0,ceratotherium simum
+white_rhino Train,M,507,16,61,31.69,23.12,4.31,2.75,ceratotherium simum
+white_rhino Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,ceratotherium simum
