@@ -298,99 +298,38 @@ def generate_pairwise_comparisons_from_df(
     )
     return comps, pd.DataFrame()
 
-#outdated
-#def generate_pairwise_comparisons_from_df(
-    df: pd.DataFrame,
-    id_col: str = "individual_id",
-    trail_size_list: Optional[List[int]] = None,
-    num_individuals: Optional[int] = None,
-    strict_individuals: bool = False,
-    n_folds: int = 3,
-    random_state: int = 0,
-    fallback_col: str = "trail",
-    *,
-    sampling_mode: Literal["predefined", "window"] = "window",
-    trails_per_animal: Optional[Dict] = None,
-    window_lengths: Optional[List[int]] = None,
-    N_pool: int = 500,
-    n_windows: int = 5,
-) -> Tuple[List[Dict], pd.DataFrame]:
-    """Generate trail pairs with metadata.
-
-    Steps
-    -----
-    1. Create ``group_id`` from ``id_col`` or ``fallback_col``.
-    2. Obtain ``trails_per_animal`` either from predefined pools or via
-       diverse subset sampling based on Jaccard dissimilarity (default).
-    3. Build cross- and within-individual pairings.
-    4. Mark ``same_individual`` and ``same_sex`` as boolean or ``"unknown"``.
-    5. Apply ``StratifiedKFold`` on ``trail_size_a``.
-    6. Return a summary table with per-length and total statistics.
-    """
-    df = df.copy()
-
-    # --- 0) group_id + sex_map + fallback_map ---
-    if fallback_col not in df.columns:
-        raise ValueError(f"fallback column '{fallback_col}' not found")
-    df["_group_id"] = (
-        df[id_col]
-        .where(df[id_col].notna() & (df[id_col] != "unknown"), df[fallback_col])
-        .astype(str)
-    )
-    # sex_map: per group_id
-    sex_map = (
-        df.set_index("_group_id")["sex"]
-        .fillna("unknown")
-        .replace("", "unknown")
-        .to_dict()
-    )
-    # fallback_map: True, wenn original id fehlte
-    fallback_map = {
-        gid: (orig is pd.NA or orig == "unknown")
-        for gid, orig in zip(df["_group_id"], df[id_col])
-    }
-
-    rng = np.random.default_rng(random_state)
-    all_ids = list(df["_group_id"].unique())
-    if num_individuals is not None:
-        if len(all_ids) < num_individuals:
-            if strict_individuals:
-                raise ValueError(
-                    f"Dataset has only {len(all_ids)} individuals, "
-                    f"but num_individuals={num_individuals}"
-                )
-            n_pick = len(all_ids)
-        else:
-            n_pick = num_individuals
-        selected = rng.choice(all_ids, size=n_pick, replace=False)
-        df = df[df["_group_id"].isin(selected)]
-
-    if sampling_mode == "predefined" and trails_per_animal is None:
-        sampling_mode = "window"
-
-    if sampling_mode == "window":
-        sampled = sample_trails(
-            df,
-            group_col="_group_id",
-            window_lengths=window_lengths or [10],
-            N_pool=N_pool,
-            n_windows=n_windows,
-            random_state=random_state,
-            id_col="id",
-        )
-        trails_per_animal = {
-            gid: {L: [(i, w) for i, w in enumerate(wins)] for L, wins in by_len.items()}
-            for gid, by_len in sampled.items()
-        }
-
-    comparisons, summary_df = build_pairwise_comparisons(
-        trails_per_animal,
-        df,
-        id_col,
-        sex_map,
-        fallback_map,
-        n_folds,
-        random_state,
-    )
-
-    return comparisons, summary_df
+# --- Legacy implementation -------------------------------------------------
+# The block below used to contain the original implementation of
+# ``generate_pairwise_comparisons_from_df``. It has been kept for reference but
+# is no longer executed. Commenting out the old code avoids syntax errors while
+# preserving the historical context.
+#
+## def generate_pairwise_comparisons_from_df(
+##     df: pd.DataFrame,
+##     id_col: str = "individual_id",
+##     trail_size_list: Optional[List[int]] = None,
+##     num_individuals: Optional[int] = None,
+##     strict_individuals: bool = False,
+##     n_folds: int = 3,
+##     random_state: int = 0,
+##     fallback_col: str = "trail",
+##     *,
+##     sampling_mode: Literal["predefined", "window"] = "window",
+##     trails_per_animal: Optional[Dict] = None,
+##     window_lengths: Optional[List[int]] = None,
+##     N_pool: int = 500,
+##     n_windows: int = 5,
+## ) -> Tuple[List[Dict], pd.DataFrame]:
+##     """Generate trail pairs with metadata.
+##
+##     Steps
+##     -----
+##     1. Create ``group_id`` from ``id_col`` or ``fallback_col``.
+##     2. Obtain ``trails_per_animal`` either from predefined pools or via
+##        diverse subset sampling based on Jaccard dissimilarity (default).
+##     3. Build cross- and within-individual pairings.
+##     4. Mark ``same_individual`` and ``same_sex`` as boolean or ``"unknown"``.
+##     5. Apply ``StratifiedKFold`` on ``trail_size_a``.
+##     6. Return a summary table with per-length and total statistics.
+##     """
+##     ...  # Implementation removed for brevity
