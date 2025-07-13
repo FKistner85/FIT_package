@@ -1,6 +1,6 @@
 mean_fit_time,std_fit_time,mean_score_time,std_score_time,param_clf,param_outlier,param_reduce_pre,param_scale,param_select,params,split0_test_score,split1_test_score,split2_test_score,mean_test_score,std_test_score,rank_test_score
-0.6886741320292155,0.06654395265243497,0.12560526529947916,0.015051839280269437,"RandomForestClassifier(n_estimators=20, n_jobs=-1)",OutlierCleanerTransformer(method='zscore'),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,"FeatureSelectionTransformer(k=10, method='forward')","OrderedDict([('clf', RandomForestClassifier(n_estimators=20, n_jobs=-1)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', FeatureSelectionTransformer(k=10, method='forward'))])",0.6579226285108638,0.6715942028985507,0.6036922015182884,0.644403010975901,0.029322977242884015,2
-0.48780028025309247,0.08878208761161739,0.04573885599772135,0.0017354501456322583,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+0.7937142848968506,0.09783138002300562,0.15556462605794272,0.028669125836567742,"RandomForestClassifier(n_estimators=20, n_jobs=-1)",OutlierCleanerTransformer(method='zscore'),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,"FeatureSelectionTransformer(k=10, method='forward')","OrderedDict([('clf', RandomForestClassifier(n_estimators=20, n_jobs=-1)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', FeatureSelectionTransformer(k=10, method='forward'))])",0.6873343932167462,0.6353623188405797,0.578847481021394,0.6338480643595733,0.04430253758266709,19
+0.7527881463368734,0.22827623252687262,0.053487539291381836,0.005008783537792177,"XGBClassifier(base_score=None, booster=None, callbacks=None,
               colsample_bylevel=None, colsample_bynode=None,
               colsample_bytree=None, device=None, early_stopping_rounds=None,
               enable_categorical=False, eval_metric=None, feature_types=None,
@@ -20,4 +20,102 @@ mean_fit_time,std_fit_time,mean_score_time,std_score_time,param_clf,param_outlie
               max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
               max_leaves=None, min_child_weight=None, missing=nan,
               monotone_constraints=None, multi_strategy=None, n_estimators=100,
-              n_jobs=None, num_parallel_tree=None, ...)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', 'passthrough'), ('scale', FeatureScalerTransformer(method='robust')), ('select', FeatureSelectionTransformer(k=10, method='lasso'))])",0.6518282988871225,0.7394202898550725,0.5940303657694963,0.6617596515038972,0.05976917449656602,1
+              n_jobs=None, num_parallel_tree=None, ...)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', 'passthrough'), ('scale', FeatureScalerTransformer(method='robust')), ('select', FeatureSelectionTransformer(k=10, method='lasso'))])",0.6518282988871225,0.7394202898550725,0.5940303657694963,0.6617596515038972,0.05976917449656602,14
+0.1356360117594401,0.026598707176822087,0.08660316467285156,0.007076286144939881,"RandomForestClassifier(n_estimators=20, n_jobs=-1)",OutlierCleanerTransformer(method='zscore'),passthrough,FeatureScalerTransformer(),passthrough,"OrderedDict([('clf', RandomForestClassifier(n_estimators=20, n_jobs=-1)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', 'passthrough'), ('scale', FeatureScalerTransformer()), ('select', 'passthrough')])",0.6629570747217807,0.7310144927536233,0.6621808143547274,0.6853841272767105,0.03226709712392117,11
+0.5459334055582682,0.111486192413126,0.04821451505025228,0.0039923357886485445,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",passthrough,DimensionalityReducerTransformer(n_components=5),FeatureScalerTransformer(method='robust'),"FeatureSelectionTransformer(k=10, method='forward')","OrderedDict([('clf', XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)), ('outlier', 'passthrough'), ('reduce_pre', DimensionalityReducerTransformer(n_components=5)), ('scale', FeatureScalerTransformer(method='robust')), ('select', FeatureSelectionTransformer(k=10, method='forward'))])",0.6751457339692635,0.6457971014492754,0.6214630779848171,0.6474686378011186,0.02194770168252632,17
+0.73347274462382,0.18132030988402303,0.05541372299194336,0.003628178061274604,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",OutlierCleanerTransformer(),DimensionalityReducerTransformer(n_components=5),FeatureScalerTransformer(method='robust'),"FeatureSelectionTransformer(k=10, method='lasso')","OrderedDict([('clf', XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(n_components=5)), ('scale', FeatureScalerTransformer(method='robust')), ('select', FeatureSelectionTransformer(k=10, method='lasso'))])",0.5204027556968733,0.7231884057971014,0.5809178743961352,0.6081696786300367,0.08500000234174585,20
+0.34429454803466797,0.1136870527132714,0.05045310656229655,0.0034355636345207137,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",OutlierCleanerTransformer(method='zscore'),passthrough,passthrough,"FeatureSelectionTransformer(k=10, method='lasso')","OrderedDict([('clf', XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', 'passthrough'), ('scale', 'passthrough'), ('select', FeatureSelectionTransformer(k=10, method='lasso'))])",0.5855855855855856,0.7249275362318841,0.6295721187025535,0.6466950801733411,0.05816036255977336,18
+0.5439234574635824,0.03993671660750169,0.08025916417439778,0.005298931441042947,"RandomForestClassifier(n_estimators=20, n_jobs=-1)",OutlierCleanerTransformer(method='zscore'),DimensionalityReducerTransformer(n_components=5),FeatureScalerTransformer(method='robust'),"FeatureSelectionTransformer(k=10, method='forward')","OrderedDict([('clf', RandomForestClassifier(n_estimators=20, n_jobs=-1)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(n_components=5)), ('scale', FeatureScalerTransformer(method='robust')), ('select', FeatureSelectionTransformer(k=10, method='forward'))])",0.6261261261261262,0.673623188405797,0.6849551414768806,0.6615681520029346,0.025484716842198843,15
+0.3384523391723633,0.07088175402340631,0.0790101687113444,0.0032372929820729413,"RandomForestClassifier(n_estimators=20, n_jobs=-1)",OutlierCleanerTransformer(method='zscore'),DimensionalityReducerTransformer(n_components=5),FeatureScalerTransformer(method='robust'),"FeatureSelectionTransformer(k=5, method='forward')","OrderedDict([('clf', RandomForestClassifier(n_estimators=20, n_jobs=-1)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(n_components=5)), ('scale', FeatureScalerTransformer(method='robust')), ('select', FeatureSelectionTransformer(k=5, method='forward'))])",0.7156862745098039,0.7115942028985507,0.6354382332643203,0.6875729035575583,0.03690261189903667,10
+0.5942228635152181,0.10747549974737762,0.11786770820617676,0.015713051936334384,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",OutlierCleanerTransformer(method='zscore'),"DimensionalityReducerTransformer(method='umap', n_components=5)",FeatureScalerTransformer(),"FeatureSelectionTransformer(k=5, method='forward')","OrderedDict([('clf', XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', FeatureScalerTransformer()), ('select', FeatureSelectionTransformer(k=5, method='forward'))])",0.6383147853736089,0.7194202898550724,0.6433747412008282,0.6670366054765031,0.03709841488121854,13
+0.8081031640370687,0.01626263194000274,0.15842175483703613,0.04652906530023271,LogisticRegression(max_iter=200),OutlierCleanerTransformer(method='zscore'),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,"FeatureSelectionTransformer(k=10, method='forward')","OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', FeatureSelectionTransformer(k=10, method='forward'))])",0.7082670906200318,0.7721739130434782,0.6036922015182884,0.6947110683939327,0.0694470833731707,6
+12.700896422068277,0.016479669465906472,5.214944839477539,0.06259503818161617,LogisticRegression(max_iter=200),OutlierCleanerTransformer(method='zscore'),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer(method='zscore')), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', 'passthrough')])",0.7156862745098039,0.8144927536231884,0.6216356107660456,0.7172715462996794,0.07874157818561056,3
+0.09142899513244629,0.004383478396731569,0.05518778165181478,0.005452905698447381,LogisticRegression(max_iter=200),passthrough,DimensionalityReducerTransformer(n_components=5),FeatureScalerTransformer(method='robust'),passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', 'passthrough'), ('reduce_pre', DimensionalityReducerTransformer(n_components=5)), ('scale', FeatureScalerTransformer(method='robust')), ('select', 'passthrough')])",0.6102278749337573,0.8307246376811595,0.6235334713595583,0.6881619946581584,0.1009532568843598,9
+0.3855292002360026,0.03736524462192352,0.13846691449483237,0.019362791970006947,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', 'passthrough')])",0.7549019607843137,0.7762318840579709,0.6613181504485852,0.7308173317636233,0.04990887402263201,1
+0.6425657272338867,0.048685680028586475,0.14879957834879556,0.03554446678982589,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,"FeatureSelectionTransformer(k=10, method='lasso')","OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', FeatureSelectionTransformer(k=10, method='lasso'))])",0.6531531531531531,0.8005797101449276,0.6364734299516908,0.6967354310832571,0.07374405744147755,5
+0.09865800539652507,0.016504594794026835,0.05562941233317057,0.007207420217765318,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),DimensionalityReducerTransformer(n_components=5),passthrough,passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(n_components=5)), ('scale', 'passthrough'), ('select', 'passthrough')])",0.7156862745098039,0.8240579710144927,0.6195652173913043,0.7197698209718669,0.08353373803392009,2
+13.45450202624003,0.6413603258944746,5.64340607325236,0.29354286349476694,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),"DimensionalityReducerTransformer(method='umap', n_components=5)",FeatureScalerTransformer(),passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', FeatureScalerTransformer()), ('select', 'passthrough')])",0.696078431372549,0.7715942028985507,0.6136991028295375,0.6937905790335458,0.06448070180394924,7
+0.1122130552927653,0.010021157503667664,0.06483602523803711,0.017562929242995167,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),passthrough,passthrough,passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', 'passthrough'), ('scale', 'passthrough'), ('select', 'passthrough')])",0.7450980392156863,0.7260869565217392,0.6076604554865424,0.6929484837413226,0.06080510471438052,8
+0.5998318195343018,0.12844634817086073,0.13135981559753418,0.02883711041186205,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),"DimensionalityReducerTransformer(method='umap', n_components=5)",passthrough,"FeatureSelectionTransformer(k=5, method='forward')","OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', 'passthrough'), ('select', FeatureSelectionTransformer(k=5, method='forward'))])",0.7082670906200318,0.7843478260869565,0.6195652173913043,0.7040600446994308,0.06733796085750167,4
+0.451898733774821,0.08227676290501021,0.1462219556172689,0.03539717767554944,LogisticRegression(max_iter=200),OutlierCleanerTransformer(),"DimensionalityReducerTransformer(method='umap', n_components=5)",FeatureScalerTransformer(method='robust'),passthrough,"OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', OutlierCleanerTransformer()), ('reduce_pre', DimensionalityReducerTransformer(method='umap', n_components=5)), ('scale', FeatureScalerTransformer(method='robust')), ('select', 'passthrough')])",0.6764705882352942,0.7220289855072464,0.634575569358178,0.6776917143669062,0.03571314753987678,12
+0.64841095606486,0.06761727925097968,0.06885592142740886,0.004136609560586816,LogisticRegression(max_iter=200),passthrough,passthrough,FeatureScalerTransformer(),"FeatureSelectionTransformer(k=10, method='lasso')","OrderedDict([('clf', LogisticRegression(max_iter=200)), ('outlier', 'passthrough'), ('reduce_pre', 'passthrough'), ('scale', FeatureScalerTransformer()), ('select', FeatureSelectionTransformer(k=10, method='lasso'))])",0.6285108638049814,0.7576811594202899,0.5909247757073843,0.6590389329775519,0.0714184622853474,16
