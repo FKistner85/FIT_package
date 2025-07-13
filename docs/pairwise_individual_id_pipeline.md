@@ -56,6 +56,8 @@ The main computation takes place in `run_all_pairwise_projections_parallel` with
 
 After optionally loading a pre-trained sex classifier, the function converts the selected feature columns to numeric values (lines 85‑88) and precomputes `predict_proba` values if requested (lines 90‑94).  For each pair the pipeline iterates over outlier cleaning and scaling choices, applies forward feature selection, and then reduces the dimension with either LDA, PCA or UMAP.  The results include the projected coordinates of both trails and of an RCV reference set, as well as multiple distance metrics computed between the trail centroids.
 
+Sample IDs supplied for each comparison can be given either as explicit strings or as positional indices.  The helper `_map_indices` first checks whether the string exists in the base DataFrame.  If not, it interprets the value as an integer index and verifies that it falls within the stored ID range.  Indices outside this range raise a `KeyError`, ensuring that invalid values are caught early.
+
 Distances between all individual points are also summarised to provide mean and median values both between and within the two trails.  This happens at lines 324‑357 of the same file.
 
 ## 4. Parallel Execution
