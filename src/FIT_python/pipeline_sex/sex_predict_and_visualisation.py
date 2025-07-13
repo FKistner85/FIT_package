@@ -123,10 +123,14 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
     }
     df = df.rename(columns={k: v for k, v in col_map.items() if k in df.columns})
 
-    required = {"fs_method", "reduce_pre_method", "cv_balanced_accuracy"}
-    missing = required - set(df.columns)
-    if missing:
-        raise KeyError(f"Missing columns for heatmap: {sorted(missing)}")
+    # Missing pipeline step columns default to "None" so the heatmap can still
+    # be generated even when a search varied only a subset of options.
+    if "fs_method" not in df.columns:
+        df["fs_method"] = "None"
+    if "reduce_pre_method" not in df.columns:
+        df["reduce_pre_method"] = "None"
+    if "cv_balanced_accuracy" not in df.columns:
+        raise KeyError("Missing column 'cv_balanced_accuracy' for heatmap")
 
     # Pivot dynamically so the heatmap adapts to available hyperparameter values
     pivot = (

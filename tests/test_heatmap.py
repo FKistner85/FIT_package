@@ -10,3 +10,12 @@ def test_heatmap_accepts_bayessearch_columns(tmp_path):
     })
     out = plot_hyperparam_heatmap(df, tmp_path)
     assert out.exists()
+
+
+def test_heatmap_defaults_missing_columns(tmp_path):
+    df = pd.DataFrame({
+        "fs_method": ["forward", "lasso"],
+        "cv_balanced_accuracy": [0.8, 0.75],
+    })
+    out = plot_hyperparam_heatmap(df, tmp_path)
+    assert out.exists()
