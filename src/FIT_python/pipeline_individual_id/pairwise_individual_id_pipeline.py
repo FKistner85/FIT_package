@@ -130,11 +130,14 @@ def run_all_pairwise_projections_parallel(
             sx = str(x)
             if sx in df_base.index:
                 mapped.append(sx)
-            else:
-                try:
-                    mapped.append(idx_to_id.iloc[int(x)])
-                except (ValueError, IndexError):
-                    raise KeyError(f"ID '{x}' not found in DataFrame")
+                continue
+            try:
+                idx = int(x)
+            except (ValueError, TypeError):
+                raise KeyError(f"ID '{x}' not found in DataFrame")
+            if idx < 0 or idx >= len(idx_to_id):
+                raise KeyError(f"ID '{x}' not found in DataFrame")
+            mapped.append(idx_to_id.iloc[idx])
         return mapped
 
     def process_pair(i: int, comp: Dict) -> List[Dict]:
