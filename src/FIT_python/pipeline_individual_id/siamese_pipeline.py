@@ -18,10 +18,11 @@ class TripletDataset(Dataset):
         df: pd.DataFrame,
         feature_cols: List[str],
         id_col: str = "individual_id",
+        sample_col: str = "id",
     ) -> None:
         df = df.copy()
-        df["id"] = df["id"].astype(str)
-        self.df = df.set_index("id")
+        df[sample_col] = df[sample_col].astype(str)
+        self.df = df.set_index(sample_col)
         self.row_ids = list(self.df.index)
         self.features = feature_cols
         self.id_col = id_col
@@ -52,9 +53,9 @@ class TripletDataset(Dataset):
 
 
 def build_dataloader(
-    df: pd.DataFrame, feature_cols: List[str], batch_size: int
+    df: pd.DataFrame, feature_cols: List[str], batch_size: int, *, sample_col: str = "id"
 ) -> DataLoader:
-    ds = TripletDataset(df, feature_cols)
+    ds = TripletDataset(df, feature_cols, sample_col=sample_col)
     return DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
 
 
@@ -86,13 +87,14 @@ def train_siamese(
     df: pd.DataFrame,
     feature_cols: List[str],
     *,
+    sample_col: str = "id",
     embedding_dim: int = 16,
     hidden_dim: int = 32,
     epochs: int = 10,
     batch_size: int = 32,
     lr: float = 1e-3,
 ) -> SiameseNet:
-    dataloader = build_dataloader(df, feature_cols, batch_size)
+    dataloader = build_dataloader(df, feature_cols, batch_size, sample_col=sample_col)
     net = SiameseNet(len(feature_cols), embedding_dim, hidden_dim)
     criterion = nn.TripletMarginLoss(margin=1.0)
     optim = torch.optim.Adam(net.parameters(), lr=lr)
@@ -132,6 +134,7 @@ def run(
     val_comparisons: List[Dict],
     feature_cols: List[str],
     *,
+    sample_col: str = "id",
     sex_features: Optional[List[str]] = None,
     embedding_dim: int = 16,
     hidden_dim: int = 32,
@@ -150,6 +153,7 @@ def run(
     net = train_siamese(
         df_train,
         use_cols,
+        sample_col=sample_col,
         embedding_dim=embedding_dim,
         hidden_dim=hidden_dim,
         epochs=epochs,
@@ -158,16 +162,16 @@ def run(
     )
 
     embeddings_arr = net.transform(df_train[use_cols])
-    df_train["id"] = df_train["id"].astype(str)
-    emb_df = pd.DataFrame(embeddings_arr, index=df_train["id"])
+    df_train[sample_col] = df_train[sample_col].astype(str)
+    emb_df = pd.DataFrame(embeddings_arr, index=df_train[sample_col])
 
     if val_df is not None:
         df_val = val_df.copy()
         df_val[use_cols] = df_val[use_cols].apply(pd.to_numeric, errors="coerce")
         df_val = df_val.dropna(subset=use_cols)
-        df_val["id"] = df_val["id"].astype(str)
+        df_val[sample_col] = df_val[sample_col].astype(str)
         emb_val = net.transform(df_val[use_cols])
-        emb_val_df = pd.DataFrame(emb_val, index=df_val["id"])
+        emb_val_df = pd.DataFrame(emb_val, index=df_val[sample_col])
         emb_df = pd.concat([emb_df, emb_val_df])
 
     idx_to_id = emb_df.index.to_series().reset_index(drop=True)
