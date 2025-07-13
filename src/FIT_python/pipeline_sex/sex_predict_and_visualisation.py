@@ -98,11 +98,30 @@ def predict_all(
 
 
 def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
-    """Plot a heatmap visualising mean CV accuracy across preprocessing options."""
+    """Plot a heatmap visualising mean CV accuracy across preprocessing options.
+
+    Parameters
+    ----------
+    df:
+        DataFrame with the preprocessing options and CV scores.  Columns using
+        the names produced by :class:`skopt.BayesSearchCV` (e.g.
+        ``select__method`` and ``mean_test_score``) are mapped automatically.
+    out_dir:
+        Directory where the plot will be saved.
+    """
     from FIT_python.plot_style import apply_style
 
     if df.empty:
         raise ValueError("DataFrame for heatmap is empty")
+
+    # Accept column names from BayesSearchCV output for convenience
+    col_map = {
+        "select__method": "fs_method",
+        "reduce_pre__method": "reduce_pre_method",
+        "mean_test_score": "cv_balanced_accuracy",
+        "mean_test_balanced_accuracy": "cv_balanced_accuracy",
+    }
+    df = df.rename(columns={k: v for k, v in col_map.items() if k in df.columns})
 
     required = {"fs_method", "reduce_pre_method", "cv_balanced_accuracy"}
     missing = required - set(df.columns)
