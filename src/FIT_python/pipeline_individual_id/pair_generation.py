@@ -15,7 +15,9 @@ def build_pairwise_comparisons(
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Create cross- and within-individual comparisons without folds."""
     trail_size_list = (
-        sorted(next(iter(trails_per_animal.values())).keys()) if trails_per_animal else []
+        sorted(next(iter(trails_per_animal.values())).keys())
+        if trails_per_animal
+        else []
     )
     all_ids = list(trails_per_animal.keys())
 
@@ -66,7 +68,9 @@ def build_pairwise_comparisons(
         same_sex = "True"
 
         all_trails = [
-            (size, ci, tr) for size in trail_size_list for ci, tr in trails_per_animal[ind][size]
+            (size, ci, tr)
+            for size in trail_size_list
+            for ci, tr in trails_per_animal[ind][size]
         ]
 
         for (sa, cia, ta), (sb, cib, tb) in combinations(all_trails, 2):
