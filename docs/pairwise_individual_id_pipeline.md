@@ -11,7 +11,9 @@ The function `generate_pairwise_comparisons_from_df` in `generate_trails_and_tra
 2) Erzeuge `trails_per_animal` indem jede Person zunächst in zufällig
    geshuffelte Abschnitte der längsten Trail-Länge aufgeteilt wird. Übrige
    Beobachtungen werden gleichmäßig verteilt und kürzere Teilmengen werden
-   anschließend zufällig daraus gezogen.
+   anschließend zufällig daraus gezogen. Alternativ kann eine bereits
+   vorhandene `trail`‑Spalte übergeben werden, um vordefinierte Trails zu
+   verwenden.
 3) Baue alle Cross- und Within-Individual-Paare.
 4) `same_individual` und `same_sex` markieren Gleichheit oder "unknown".
 5) Summary-Tabelle mit pro-Länge und Total-Zeile inkl. avg/sd Pair counts.

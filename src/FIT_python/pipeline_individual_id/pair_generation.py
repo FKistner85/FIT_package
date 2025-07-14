@@ -1,5 +1,5 @@
 from itertools import combinations
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import pandas as pd
 import numpy as np
 
@@ -7,13 +7,32 @@ __all__ = ["build_pairwise_comparisons"]
 
 
 def build_pairwise_comparisons(
-    trails_per_animal: Dict[str, Dict[int, List[Tuple[int, List[str]]]]],
     df: pd.DataFrame,
     id_col: str,
     sex_map: Dict[str, str],
     fallback_map: Dict[str, bool],
+    *,
+    trails_per_animal: Optional[
+        Dict[str, Dict[int, List[Tuple[int, List[str]]]]]
+    ] = None,
+    trail_col: Optional[str] = None,
 ) -> Tuple[List[Dict], pd.DataFrame]:
-    """Create cross- and within-individual comparisons without folds."""
+    """Create cross- and within-individual comparisons without folds.
+
+    Either ``trails_per_animal`` must be supplied or ``trail_col`` must be the
+    name of a column in ``df`` that already groups observations into trails.
+    """
+    if trails_per_animal is None:
+        if trail_col is None:
+            raise ValueError("Either trails_per_animal or trail_col must be provided")
+
+        trails_per_animal = {}
+        for (gid, tid), grp in df.groupby(["_group_id", trail_col]):
+            size = len(grp)
+            trails_per_animal.setdefault(str(gid), {}).setdefault(size, []).append(
+                (str(tid), grp[id_col].astype(str).tolist())
+            )
+
     trail_size_list = (
         sorted(next(iter(trails_per_animal.values())).keys())
         if trails_per_animal
