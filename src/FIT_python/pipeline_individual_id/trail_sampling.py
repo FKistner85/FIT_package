@@ -1,6 +1,4 @@
-from itertools import combinations
-from typing import Dict, List
-import math
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,64 +10,51 @@ def sample_trails(
     df: pd.DataFrame,
     group_col: str,
     window_lengths: List[int],
-    N_pool: int,
     n_windows: int,
     random_state: int,
     *,
     id_col: str = "id",
-) -> Dict[str, Dict[int, List[List[str]]]]:
-    """Sample diverse ``id`` subsets for each individual.
+) -> Dict[str, Dict[int, List[Tuple[int, List[str]]]]]:
+    """Randomly sample trails for each individual.
 
-    The function draws a pool of candidate windows for every ``group_col`` and
-    ``window_length``. The average Jaccard dissimilarity to all other
-    windows in the pool is computed and the ``n_windows`` most diverse
-    subsets are returned. Windows are returned as lists of ``id`` values so
-    the original row order can be restored later.
+    The largest ``window_length`` defines the base trail size. All
+    observations of an individual are shuffled and split into as many full
+    trails of this size as possible **without replacement**. Remaining
+    samples are distributed evenly across the trails.  Sub-trails of the
+    requested lengths are then drawn at random from these base trails.
     """
 
     rng = np.random.default_rng(random_state)
 
-    pools: Dict[str, Dict[int, List[List[str]]]] = {}
+    max_len = max(window_lengths)
+    result: Dict[str, Dict[int, List[Tuple[int, List[str]]]]] = {}
     for gid, grp in df.groupby(group_col):
-        idxs = sorted(grp[id_col].astype(str).tolist())
+        idxs = grp[id_col].astype(str).tolist()
+        rng.shuffle(idxs)
         gid = str(gid)
-        pools[gid] = {}
-        for L in window_lengths:
-            if len(idxs) < L:
-                pools[gid][L] = []
-                continue
 
-            max_pool = math.comb(len(idxs), L)
-            if max_pool <= N_pool:
-                pool_windows = [list(c) for c in combinations(idxs, L)]
-            else:
-                seen = set()
-                pool_windows = []
-                while len(pool_windows) < N_pool:
-                    cand = tuple(sorted(rng.choice(idxs, size=L, replace=False)))
-                    if cand in seen:
-                        continue
-                    seen.add(cand)
-                    pool_windows.append(list(cand))
+        n_base = len(idxs) // max_len
+        if n_base == 0:
+            result[gid] = {L: [] for L in window_lengths}
+            continue
 
-            sets = [set(w) for w in pool_windows]
-            n = len(sets)
-            if n == 1:
-                diversity = np.array([0.0])
-            else:
-                diversity = np.zeros(n)
-                for i in range(n):
-                    acc = 0.0
-                    for j in range(n):
-                        if i == j:
-                            continue
-                        inter = len(sets[i] & sets[j])
-                        union = len(sets[i] | sets[j])
-                        sim = inter / union if union else 1.0
-                        acc += 1.0 - sim
-                    diversity[i] = acc / (n - 1)
+        base_trails = [idxs[i * max_len : (i + 1) * max_len] for i in range(n_base)]
+        leftover = idxs[n_base * max_len :]
+        for i, obs in enumerate(leftover):
+            base_trails[i % n_base].append(obs)
 
-            select_idx = np.argsort(-diversity)[:n_windows]
-            pools[gid][L] = [pool_windows[i] for i in select_idx]
+        per_size: Dict[int, List[Tuple[int, List[str]]]] = {
+            L: [] for L in window_lengths
+        }
+        for bi, base in enumerate(base_trails):
+            per_size[max_len].append((bi, base[:max_len]))
+            for L in window_lengths:
+                if L == max_len or len(base) < L:
+                    continue
+                for rep in range(n_windows):
+                    subset = list(rng.choice(base, size=L, replace=True))
+                    per_size[L].append((bi * n_windows + rep, subset))
 
-    return pools
+        result[gid] = per_size
+
+    return result

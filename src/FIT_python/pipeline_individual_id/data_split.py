@@ -1,4 +1,5 @@
 """Utilities for data splitting and cross-validation."""
+
 from typing import Iterable, List, Dict
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
@@ -12,7 +13,11 @@ def sequential_holdout_ids(
     n_iter: int = 1,
     random_state: int | None = None,
 ) -> List[Dict[str, List[str]]]:
-    """Generate sequential train/validation splits based on unique IDs."""
+    """Generate sequential train/validation splits based on unique IDs.
+
+    Validation IDs are drawn **with replacement** in every step. The
+    corresponding training set is the complement of the drawn IDs.
+    """
     ids = list(unique_ids)
     if len(ids) < 3:
         raise ValueError("Need at least three unique IDs for holdouts")
@@ -22,8 +27,8 @@ def sequential_holdout_ids(
     for it in range(n_iter):
         for n_val in val_sizes:
             n_val_eff = max(2, min(n_val, len(ids) - 1))
-            val_ids = list(rng.choice(ids, size=n_val_eff, replace=False))
-            train_ids = [i for i in ids if i not in val_ids]
+            val_ids = list(rng.choice(ids, size=n_val_eff, replace=True))
+            train_ids = [i for i in ids if i not in set(val_ids)]
             results.append(
                 {
                     "iteration": it,
