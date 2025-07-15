@@ -301,6 +301,386 @@ def generate_pairwise_comparisons_from_df(
     )
     return comps, pd.DataFrame()
 
+
+def generate_pairwise_comparisons_from_df(
+    df: pd.DataFrame,
+    *,
+    id_col: str = "individual_id",
+    sample_col: str = "id",
+    group_sizes: List[int] = [3, 5, 7, 10],
+    n_repeats: int = 5,
+    mode: str = "both",
+    selfmatch_factor: float = 2.0,
+    n_folds: int = 5,
+    random_state: int = 0,
+    show_progress: bool = False,
+) -> List[Dict]:
+    """Create trail pair comparisons with metadata.
+
+    Parameters
+    ----------
+    df:
+        Input dataframe containing one row per footprint.
+    id_col:
+        Column that identifies the individual for grouping.
+    sample_col:
+        Column containing unique sample identifiers. ``samples_a`` and
+        ``samples_b`` in the returned comparisons reference values from this
+        column.
+
+    Returns
+    -------
+    list of dict
+        Each dictionary describes one comparison with trail IDs and fold
+        assignment.
+    """
+    # 1) Alle Roh-Paare sammeln
+    individuals = defaultdict(list)
+    it = df.iterrows()
+    if show_progress:
+        it = tqdm(it, total=len(df), desc="index", leave=False)
+    for _, row in it:
+        individuals[row[id_col]].append(row[sample_col])
+
+    raw = []
+    for size_a in tqdm(
+        group_sizes, desc="size_a", leave=False, disable=not show_progress
+    ):
+        for size_b in tqdm(
+            group_sizes,
+            desc=f"size_b({size_a})",
+            leave=False,
+            disable=not show_progress,
+        ):
+            if mode == "symmetric" and size_a != size_b:
+                continue
+            if mode == "asymmetric" and size_a == size_b:
+                continue
+
+            elig_a = [ind for ind, s in individuals.items() if len(s) >= size_a]
+            elig_b = [ind for ind, s in individuals.items() if len(s) >= size_b]
+
+            # cross-individual
+            for ind_a in elig_a:
+                for ind_b in elig_b:
+                    if ind_a >= ind_b:
+                        continue
+                    for _ in range(n_repeats):
+                        sa = random.sample(individuals[ind_a], size_a)
+                        sb = random.sample(individuals[ind_b], size_b)
+                        raw.append((ind_a, ind_b, sa, sb, False))
+
+            # same-individual
+            for ind in individuals:
+                if len(individuals[ind]) < size_a + size_b:
+                    continue
+                for _ in range(int(n_repeats * selfmatch_factor)):
+                    combo = random.sample(individuals[ind], size_a + size_b)
+                    sa, sb = combo[:size_a], combo[size_a:]
+                    raw.append((ind, ind, sa, sb, True))
+
+    # 2) Stratified K-Fold auf Pair-Level (ind_a, ind_b)
+    pair_keys, y = [], []
+    seen = {}
+    for ind_a, ind_b, sa, sb, same in raw:
+        key = (ind_a, ind_b)
+        if key not in seen:
+            seen[key] = same
+            pair_keys.append(key)
+            y.append(1 if same else 0)
+
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
+    fold_map = {}
+    for fold_idx, (_, val_idx) in enumerate(skf.split(pair_keys, y)):
+        for pi in val_idx:
+            fold_map[pair_keys[pi]] = fold_idx
+
+    # 3) trail ID counter per individual and group size
+    trail_counters = defaultdict(int)
+
+    # 4) final list with trail IDs and fold assignment
+    comparisons = []
+    it_raw = raw
+    if show_progress:
+        it_raw = tqdm(raw, desc="pairs", leave=False)
+    for ind_a, ind_b, sa, sb, same in it_raw:
+        size_a = len(sa)
+        trail_counters[(ind_a, size_a)] += 1
+        letter_a = chr(ord("a") + (trail_counters[(ind_a, size_a)] - 1) % 26)
+        trail_a_id = f"{ind_a}_{size_a}{letter_a}"
+
+        size_b = len(sb)
+        trail_counters[(ind_b, size_b)] += 1
+        letter_b = chr(ord("a") + (trail_counters[(ind_b, size_b)] - 1) % 26)
+        trail_b_id = f"{ind_b}_{size_b}{letter_b}"
+
+        comparisons.append(
+            {
+                "ind_a": ind_a,
+                "ind_b": ind_b,
+                "samples_a": sa,
+                "samples_b": sb,
+                "trail_a_id": trail_a_id,
+                "trail_b_id": trail_b_id,
+                "same_individual": same,
+                "fold": fold_map[(ind_a, ind_b)],
+            }
+        )
+
+    return comparisons
+
+#@ gtp this is the version I want to have implemented!"!! delete all other versions that do similar things in this py file 
+def select_ or_generate_trails
+    if trail colum is selected retuleren values from trail colum
+    if genetaret trails is selected do this:
+        
+        Sample_size = 9 #can be changed
+        for every unique individual df[individual_id] estimate in how many samples full samples can be created per individual.  (eg. individual with 30 observation gernerates 3 trails). Randomly sample without replacement for each individual;
+        return trails  (update values in trail colum) naming: f "inidividual_id"_f(sample_size)_f(integer a, b, c....)  #Trails are either 
+
+#@ gtp this is the version I want to have implemented!"!! delete all other versions that do similar things in this py file 
+def generate subsamples of smaler trail Sample_size
+    for every unique individual with rows Trail = NA distribute all rows equually between all trails of this individual to increase sample poolsize.
+    for every unique value in trails generate subsamples of size [3,5,7]
+    draw subsamples with replacement _n = 20 times per unique value in trail and sample Sample_size
+    calculate jacard indey for all subsamles of one trail and one Sample_size
+    selected number of subsamples = 3  by selecting 3 trails with lowest similarity per trail and subsample size; if JAquard index = 1 reduce number of subsamples for this trail. 
+    map all subsamples to trail id and df["id"] so that features can be assigned later correctly
+    return trails naming: f (name that was from select or generate trails )_ fsub(subsamplesize)_sample(subsamples)  
+
+#@ gtp this is the version I want to have implemented!"!! delete all other versions that do similar things in this py file 
+def generate pairs ()
+    generate pairs of all trail combinations and all combinatiions of all subsample that do not originate from the same trail.
+
+
+
+def run_all_pairwise_projections_parallel(
+    comparisons: List[Dict],
+    df: pd.DataFrame,
+    feature_cols: List[str],
+    k_features: Union[int, List[int]] = 15,
+    reducers: List[str] = ["lda"],
+    selection_method: str = "forward",
+    n_components: Union[int, List[int]] = 2,
+    use_sexmodel_prediction: bool = False,
+    sexmodel_path: str = None,
+    debug: bool = False,
+    n_jobs: int = -1,
+    batch_size: int | None = None,
+) -> List[Dict]:
+    """Run projections for all pairings.
+
+    Steps
+    -----
+    0. If ``use_sexmodel_prediction`` is ``True``, load the sex model and precompute ``predict_proba`` on the entire base DataFrame.
+    1. Clean the base DataFrame.
+    2. Perform feature selection once with ``k_max``.
+    3. Use an RCV set comprising the remaining indices.
+    4. Extract ``predict_proba`` for A, B and R and compute their averages.
+    5. For every combination of ``reducer``, ``n_components`` and ``k``:
+       - apply the dimensionality reducer
+       - compute distances
+       - record results including averaged probabilities
+
+    Parameters
+    ----------
+    batch_size : int or None, optional
+        If set, comparisons are processed in batches of this size.
+    """
+    # 0) Sex-Modell
+    if use_sexmodel_prediction:
+        if not sexmodel_path:
+            raise ValueError(
+                "sexmodel_path must be provided when use_sexmodel_prediction=True"
+            )
+        sex_clf = load(sexmodel_path)
+
+    # 1) Basis-DF
+    df2 = df.copy()
+    df2["id"] = df2["id"].astype(str)
+    df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
+    df_base = df2.set_index("id")
+
+    # 2) predict_proba komplett vorberechnen
+    if use_sexmodel_prediction:
+        proba_all = pd.DataFrame(
+            sex_clf.predict_proba(df_base[feature_cols]),
+            index=df_base.index,
+        )
+    else:
+        proba_all = None
+
+    # 3) Parameter
+    ks = k_features if isinstance(k_features, (list, tuple)) else [k_features]
+    k_max = max(ks)
+    ncs = n_components if isinstance(n_components, (list, tuple)) else [n_components]
+
+    def process_pair(i: int, comp: Dict) -> List[Dict]:
+        out = []
+        ind_a, ind_b = comp["ind_a"], comp["ind_b"]
+        ids_a = [str(i) for i in comp["samples_a"]]
+        ids_b = [str(i) for i in comp["samples_b"]]
+        size_a, size_b = len(ids_a), len(ids_b)
+
+        trail_a_id = comp["trail_a_id"]
+        trail_b_id = comp["trail_b_id"]
+
+        # 1) feature matrices for A & B
+        df_a = df_base.loc[ids_a, feature_cols]
+        df_b = df_base.loc[ids_b, feature_cols]
+
+        # 2) feature selection using ``k_max``
+        X_ab = pd.concat([df_a, df_b], ignore_index=True)
+        y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
+        selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
+        selector.fit(X_ab, y_ab)
+        full_ranking = selector.feature_ranking_
+
+        # 3) RCV set as the complement
+        rcv_ids = df_base.index.difference(ids_a + ids_b)
+        df_r = df_base.loc[rcv_ids, feature_cols]
+
+        # 4) extract and average sex probabilities per group
+        if use_sexmodel_prediction:
+            pa = proba_all.loc[ids_a].to_numpy()
+            pb = proba_all.loc[ids_b].to_numpy()
+            pr = proba_all.loc[rcv_ids].to_numpy()
+            avg_A_0, avg_A_1 = float(pa[:, 0].mean()), float(pa[:, 1].mean())
+            avg_B_0, avg_B_1 = float(pb[:, 0].mean()), float(pb[:, 1].mean())
+            avg_R_0, avg_R_1 = float(pr[:, 0].mean()), float(pr[:, 1].mean())
+
+            # 5) projection and distance
+            for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
+                supervised = reducer in ("lda", "umap")
+                for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
+                    for k in tqdm(
+                        ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False
+                    ):
+                        sel_feats = [feat for feat, _ in full_ranking[:k]]
+                        da = df_a[sel_feats].copy()
+                        db = df_b[sel_feats].copy()
+                        dr = df_r[sel_feats].copy()
+
+                        # 6) append sex probabilities as features
+                        if use_sexmodel_prediction:
+                            da["proba_0"], da["proba_1"] = pa[:, 0], pa[:, 1]
+                            db["proba_0"], db["proba_1"] = pb[:, 0], pb[:, 1]
+                            dr["proba_0"], dr["proba_1"] = pr[:, 0], pr[:, 1]
+
+                        # 7) combine and build labeled array
+                        arr = pd.concat([da, db, dr], ignore_index=True)
+                        y_all = np.concatenate(
+                            [
+                                np.zeros(len(da), int),
+                                np.ones(len(db), int),
+                                np.full(len(dr), 2, int),
+                            ]
+                        )
+
+                        # 8) clamp dimensions for LDA
+                        nc_eff = nc
+                        if reducer == "lda":
+                            n_classes = len(np.unique(y_all))
+                            nc_eff = min(nc, arr.shape[1], n_classes - 1)
+                            if nc_eff < 1:
+                                if debug:
+                                    print(f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}")
+                                continue
+
+                        # 9) Fit & transform
+                        dr_model = DimensionalityReducerTransformer(
+                            method=reducer, n_components=nc_eff, supervised=supervised
+                        )
+                        dr_model.fit(arr, y_all if supervised else None)
+                        coords = dr_model.transform(arr)
+
+                        ca = coords[: len(da)]
+                        cb = coords[len(da) : len(da) + len(db)]
+                        cr = coords[len(da) + len(db) :]
+
+                        cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
+                        dists = compute_distances(cA, cB)
+
+                        # 10) Result-Dict
+                        res = {
+                            "trail_a_id": trail_a_id,
+                            "trail_b_id": trail_b_id,
+                            "samples_a": ids_a,
+                            "samples_b": ids_b,
+                            "ind_a": ind_a,
+                            "ind_b": ind_b,
+                            "same_individual": comp["same_individual"],
+                            "fold": comp["fold"],
+                            "pipeline": (
+                                f"{selection_method}_k{k}_{reducer}_nc{nc_eff}_"
+                                f"{'sex_on' if use_sexmodel_prediction else 'sex_off'}"
+                            ),
+                            "selection_method": selection_method,
+                            "reducer": reducer,
+                            "k_features": k,
+                            "n_components": nc_eff,
+                            "comparison_id": i,
+                            "min_observations": min(size_a, size_b),
+                            "max_observations": max(size_a, size_b),
+                            "use_sexmodel_prediction": use_sexmodel_prediction,
+                            **(
+                                {
+                                    "avg_proba_A_0": avg_A_0,
+                                    "avg_proba_A_1": avg_A_1,
+                                    "avg_proba_B_0": avg_B_0,
+                                    "avg_proba_B_1": avg_B_1,
+                                    "avg_proba_R_0": avg_R_0,
+                                    "avg_proba_R_1": avg_R_1,
+                                }
+                                if use_sexmodel_prediction
+                                else {}
+                            ),
+                            "center_a_x": float(cA[0]) if cA.size > 0 else None,
+                            "center_a_y": float(cA[1]) if cA.size > 1 else None,
+                            "center_b_x": float(cB[0]) if cB.size > 0 else None,
+                            "center_b_y": float(cB[1]) if cB.size > 1 else None,
+                            "center_r_x": float(cR[0]) if cR.size > 0 else None,
+                            "center_r_y": float(cR[1]) if cR.size > 1 else None,
+                            "coords_a_x": ca[:, 0].tolist(),
+                            "coords_a_y": ca[:, 1].tolist() if ca.shape[1] > 1 else [],
+                            "coords_b_x": cb[:, 0].tolist(),
+                            "coords_b_y": cb[:, 1].tolist() if cb.shape[1] > 1 else [],
+                            "coords_r_x": cr[:, 0].tolist(),
+                            "coords_r_y": cr[:, 1].tolist() if cr.shape[1] > 1 else [],
+                            "selected_features": sel_feats,
+                            "selected_scores": [score for _, score in full_ranking[:k]],
+                        }
+                        for m, v in dists.items():
+                            res[f"dist_{m}"] = float(v)
+
+                        out.append(res)
+
+            return out
+
+    cached_pair = memory.cache(process_pair)
+
+    results: List[Dict] = []
+    batches = (
+        [
+            comparisons[i : i + batch_size]
+            for i in range(0, len(comparisons), batch_size)
+        ]
+        if batch_size
+        else [comparisons]
+    )
+    offset = 0
+    for batch in tqdm(batches, desc="batches", leave=False):
+        with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(batch), leave=False)):
+            nested = Parallel(n_jobs=n_jobs)(
+                delayed(cached_pair)(offset + i, comp) for i, comp in enumerate(batch)
+            )
+        results.extend(row for group in nested for row in group)
+        offset += len(batch)
+
+    return results
+
+
+
 # --- Legacy implementation -------------------------------------------------
 # The block below used to contain the original implementation of
 # ``generate_pairwise_comparisons_from_df``. It has been kept for reference but
