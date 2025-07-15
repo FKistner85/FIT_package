@@ -14,6 +14,7 @@ from typing import Iterable, List, Dict, Optional
 import pandas as pd
 
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
+from FIT_python.soft_config import SOFT_CONFIG
 
 
 class DistanceBaseline:
@@ -85,7 +86,7 @@ class DistanceBaseline:
             list(val_comparisons),
             base_df,
             feature_cols,
-            k_features=16,
+            k_features=SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
             reducers=reducers or ["lda"],
             selection_method=selection_method,
             n_components=n_components,
