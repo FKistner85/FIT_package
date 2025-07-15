@@ -1,456 +1,150 @@
 from itertools import combinations
-from typing import Dict, List, Optional, Tuple, Literal
-import math
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
-
-from .geometric_pairwise_projection import (
-    generate_pairwise_comparisons_from_df as _generate_pw_from_df,
-)
 
 __all__ = [
-    "sample_trails",
-    "build_pairwise_comparisons",
-    "generate_pairwise_comparisons_from_df",
+    "select_or_generate_trails",
+    "generate_subsamples",
+    "generate_pairs",
+    "run_all_pairwise_projections_parallel",
 ]
 
 
-def sample_trails(
+
+def select_or_generate_trails(
     df: pd.DataFrame,
-    group_col: str,
-    window_lengths: List[int],
-    N_pool: int,
-    n_windows: int,
-    random_state: int,
     *,
-    id_col: str = "id",
-) -> Dict[str, Dict[int, List[List[str]]]]:
-    """Sample diverse ``id`` subsets for each individual.
+    strategy: str = "generate",
+    individual_col: str = "individual_id",
+    trail_col: str = "trail",
+    sample_size: int = 9,
+    random_state: int = 0,
+) -> pd.DataFrame:
+    """Return existing trails or generate new ones.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Input data containing one row per footprint.
-    group_col : str
-        Column to group by (usually the prepared ``_group_id``).
-    window_lengths : list of int
-        Desired trail lengths.
-    N_pool : int
-        Number of random subsets to draw **without replacement** per
-        individual and length.
-    n_windows : int
-        Number of final subsets to return per individual and length.
-    random_state : int
-        Seed for the random number generator.
-    id_col : str, optional
-        Column containing unique IDs for each footprint. Defaults to ``"id"``.
-
-    The function draws a pool of subsets for every ``group_col`` and
-    ``window_length``. The average Jaccard dissimilarity to all other
-    subsets in the pool is computed and the ``n_windows`` most diverse
-    subsets are returned.  Windows are returned as lists of ``id`` values
-    so the original row order can be restored later.
-    """
-
-    rng = np.random.default_rng(random_state)
-
-    pools: Dict[str, Dict[int, List[List[str]]]] = {}
-    for gid, grp in df.groupby(group_col):
-        idxs = sorted(grp[id_col].astype(str).tolist())
-        gid = str(gid)
-        pools[gid] = {}
-        for L in window_lengths:
-            if len(idxs) < L:
-                pools[gid][L] = []
-                continue
-
-            max_pool = math.comb(len(idxs), L)
-            if max_pool <= N_pool:
-                pool_windows = [list(c) for c in combinations(idxs, L)]
-            else:
-                seen = set()
-                pool_windows = []
-                while len(pool_windows) < N_pool:
-                    cand = tuple(sorted(rng.choice(idxs, size=L, replace=False)))
-                    if cand in seen:
-                        continue
-                    seen.add(cand)
-                    pool_windows.append(list(cand))
-
-            # precompute sets for Jaccard diversity
-            sets = [set(w) for w in pool_windows]
-            n = len(sets)
-            if n == 1:
-                diversity = np.array([0.0])
-            else:
-                diversity = np.zeros(n)
-                for i in range(n):
-                    acc = 0.0
-                    for j in range(n):
-                        if i == j:
-                            continue
-                        inter = len(sets[i] & sets[j])
-                        union = len(sets[i] | sets[j])
-                        sim = inter / union if union else 1.0
-                        acc += 1.0 - sim
-                    diversity[i] = acc / (n - 1)
-
-            select_idx = np.argsort(-diversity)[:n_windows]
-            pools[gid][L] = [pool_windows[i] for i in select_idx]
-
-    return pools
-
-
-def build_pairwise_comparisons(
-    trails_per_animal: Dict[str, Dict[int, List[Tuple[int, List[str]]]]],
-    df: pd.DataFrame,
-    id_col: str,
-    sex_map: Dict[str, str],
-    fallback_map: Dict[str, bool],
-    n_folds: int,
-    random_state: int,
-) -> Tuple[List[Dict], pd.DataFrame]:
-    """Create cross- and within-individual comparisons and summary.
-
-    ``samples_a`` and ``samples_b`` contain lists of ``id`` values
-    corresponding to the original rows of ``df``.
-    """
-
-    trail_size_list = (
-        sorted(next(iter(trails_per_animal.values())).keys())
-        if trails_per_animal
-        else []
-    )
-    all_ids = list(trails_per_animal.keys())
-
-    comparisons: List[Dict] = []
-
-    for a, b in combinations(all_ids, 2):
-        ids_a = df.loc[df["_group_id"] == a, id_col].dropna().unique()
-        ids_b = df.loc[df["_group_id"] == b, id_col].dropna().unique()
-
-        if (
-            not ids_a.size
-            or ids_a[0] == "unknown"
-            or not ids_b.size
-            or ids_b[0] == "unknown"
-        ):
-            same_ind = "unknown"
-        else:
-            same_ind = str(ids_a[0] == ids_b[0])
-
-        if fallback_map[a] or fallback_map[b]:
-            same_sex = "unknown"
-        else:
-            same_sex = str(sex_map[a] == sex_map[b])
-
-        for size in trail_size_list:
-            for ci, ta in trails_per_animal[a][size]:
-                for cj, tb in trails_per_animal[b][size]:
-                    comparisons.append(
-                        {
-                            "ind_a": a,
-                            "ind_b": b,
-                            "trail_a_id": f"{a}_{size}c{ci}",
-                            "trail_b_id": f"{b}_{size}c{cj}",
-                            "same_individual": same_ind,
-                            "same_sex": same_sex,
-                            "samples_a": ta,
-                            "samples_b": tb,
-                            "trail_size_a": size,
-                            "trail_size_b": size,
-                            "diff_size": 0,
-                            "chunk_a": ci,
-                            "chunk_b": cj,
-                        }
-                    )
-
-    for ind in all_ids:
-        # use string values to ensure consistent dtype across the column
-        # (cross-individual comparisons use "True"/"False" strings)
-        same_ind = "True"
-        same_sex = "True"
-
-        all_trails = [
-            (size, ci, tr)
-            for size in trail_size_list
-            for ci, tr in trails_per_animal[ind][size]
-        ]
-
-        for (sa, cia, ta), (sb, cib, tb) in combinations(all_trails, 2):
-            if cia == cib:
-                continue
-            comparisons.append(
-                {
-                    "ind_a": ind,
-                    "ind_b": ind,
-                    "trail_a_id": f"{ind}_{sa}c{cia}",
-                    "trail_b_id": f"{ind}_{sb}c{cib}",
-                    "same_individual": same_ind,
-                    "same_sex": same_sex,
-                    "samples_a": ta,
-                    "samples_b": tb,
-                    "trail_size_a": sa,
-                    "trail_size_b": sb,
-                    "diff_size": abs(sa - sb),
-                    "chunk_a": cia,
-                    "chunk_b": cib,
-                }
-            )
-
-    # --- assign folds by individual to avoid data leakage ---
-    id_labels = [sex_map[i] for i in all_ids]
-    skf_ind = StratifiedKFold(
-        n_splits=n_folds, shuffle=True, random_state=random_state
-    )
-    id_to_fold: Dict[str, int] = {}
-    for fold, (_, val_idx) in enumerate(skf_ind.split(all_ids, id_labels)):
-        for vi in val_idx:
-            id_to_fold[all_ids[vi]] = fold
-
-    filtered: List[Dict] = []
-    for comp in comparisons:
-        fa = id_to_fold[comp["ind_a"]]
-        fb = id_to_fold[comp["ind_b"]]
-        if fa != fb:
-            continue
-        comp["fold"] = fa
-        filtered.append(comp)
-
-    comparisons = filtered
-
-    comp_df = pd.DataFrame(comparisons)
-    summary_rows = []
-    for size in trail_size_list:
-        mask = comp_df["trail_size_a"] == size
-        animals = pd.unique(comp_df.loc[mask, ["ind_a", "ind_b"]].values.ravel())
-        summary_rows.append(
-            {
-                "sub_size": size,
-                "n_animals": len(animals),
-                "n_trails": sum(len(trails_per_animal[ind][size]) for ind in animals),
-            }
-        )
-    summary_rows.append(
-        {"sub_size": "Total", "n_animals": len(all_ids), "n_trails": len(comp_df)}
-    )
-    summary_df = pd.DataFrame(summary_rows)
-
-    same_counts, diff_counts = [], []
-    for ind in all_ids:
-        same = comp_df[(comp_df.ind_a == ind) & (comp_df.ind_b == ind)].shape[0]
-        diff = comp_df[
-            ((comp_df.ind_a == ind) & (comp_df.ind_b != ind))
-            | ((comp_df.ind_b == ind) & (comp_df.ind_a != ind))
-        ].shape[0]
-        same_counts.append(same)
-        diff_counts.append(diff)
-    avg_same = float(np.mean(same_counts))
-    sd_same = float(np.std(same_counts, ddof=1)) if len(same_counts) > 1 else 0.0
-    avg_diff = float(np.mean(diff_counts))
-    sd_diff = float(np.std(diff_counts, ddof=1)) if len(diff_counts) > 1 else 0.0
-    # ``same_individual`` is stored as the strings "True", "False" or "unknown".
-    # Count the occurrences accordingly for the summary statistics.
-    ratio = float(
-        (comp_df.same_individual == "True").sum()
-        / max(1, (comp_df.same_individual == "False").sum())
-    )
-
-    summary_df.loc[
-        summary_df.sub_size == "Total",
-        [
-            "avg_comp_per_ind_same",
-            "sd_comp_per_ind_same",
-            "avg_comp_per_ind_diff",
-            "sd_comp_per_ind_diff",
-            "ratio_same_to_diff",
-        ],
-    ] = [avg_same, sd_same, avg_diff, sd_diff, ratio]
-
-    return comparisons, summary_df
-
-
-def generate_pairwise_comparisons_from_df(
-    df: pd.DataFrame,
-    *,
-    id_col: str = "individual_id",
-    sample_col: str = "id",
-    group_sizes: List[int] | None = None,
-    n_repeats: int = 5,
-    mode: str = "both",
-    selfmatch_factor: float = 2.0,
-    n_folds: int = 5,
-    random_state: int = 0,
-    show_progress: bool = False,
-) -> Tuple[List[Dict], pd.DataFrame]:
-    """Wrapper for :func:`geometric_pairwise_projection.generate_pairwise_comparisons_from_df`."""
-
-    comps = _generate_pw_from_df(
-        df=df,
-        id_col=id_col,
-        sample_col=sample_col,
-        group_sizes=group_sizes or [3, 5, 7, 10],
-        n_repeats=n_repeats,
-        mode=mode,
-        selfmatch_factor=selfmatch_factor,
-        n_folds=n_folds,
-        random_state=random_state,
-        show_progress=show_progress,
-    )
-    return comps, pd.DataFrame()
-
-
-def generate_pairwise_comparisons_from_df(
-    df: pd.DataFrame,
-    *,
-    id_col: str = "individual_id",
-    sample_col: str = "id",
-    group_sizes: List[int] = [3, 5, 7, 10],
-    n_repeats: int = 5,
-    mode: str = "both",
-    selfmatch_factor: float = 2.0,
-    n_folds: int = 5,
-    random_state: int = 0,
-    show_progress: bool = False,
-) -> List[Dict]:
-    """Create trail pair comparisons with metadata.
-
-    Parameters
-    ----------
-    df:
-        Input dataframe containing one row per footprint.
-    id_col:
-        Column that identifies the individual for grouping.
-    sample_col:
-        Column containing unique sample identifiers. ``samples_a`` and
-        ``samples_b`` in the returned comparisons reference values from this
-        column.
+        Input data with one row per footprint.
+    strategy : str, optional
+        ``"select"`` to keep existing ``trail`` values or ``"generate``" to
+        create new trails. Defaults to ``"generate"``.
+    individual_col : str, optional
+        Column identifying individuals. Defaults to ``"individual_id"``.
+    trail_col : str, optional
+        Column containing trail identifiers. Defaults to ``"trail"``.
+    sample_size : int, optional
+        Number of observations per generated trail. Defaults to ``9``.
+    random_state : int, optional
+        Seed for random sampling. Defaults to ``0``.
 
     Returns
     -------
-    list of dict
-        Each dictionary describes one comparison with trail IDs and fold
-        assignment.
+    pd.DataFrame
+        ``df`` with updated ``trail_col`` values.
     """
-    # 1) Alle Roh-Paare sammeln
-    individuals = defaultdict(list)
-    it = df.iterrows()
-    if show_progress:
-        it = tqdm(it, total=len(df), desc="index", leave=False)
-    for _, row in it:
-        individuals[row[id_col]].append(row[sample_col])
 
-    raw = []
-    for size_a in tqdm(
-        group_sizes, desc="size_a", leave=False, disable=not show_progress
-    ):
-        for size_b in tqdm(
-            group_sizes,
-            desc=f"size_b({size_a})",
-            leave=False,
-            disable=not show_progress,
-        ):
-            if mode == "symmetric" and size_a != size_b:
+    df = df.copy()
+    rng = np.random.default_rng(random_state)
+
+    if strategy == "select" and trail_col in df.columns:
+        return df
+
+    df[trail_col] = pd.NA
+    for ind, grp in df.groupby(individual_col):
+        idxs = grp.index.tolist()
+        rng.shuffle(idxs)
+        n_trails = len(idxs) // sample_size
+        for i in range(n_trails):
+            sel = idxs[i * sample_size : (i + 1) * sample_size]
+            trail_id = f"{ind}_{sample_size}_{i + 1}"
+            df.loc[sel, trail_col] = trail_id
+
+    return df
+
+
+def generate_subsamples(
+    df: pd.DataFrame,
+    *,
+    trail_col: str = "trail",
+    id_col: str = "id",
+    individual_col: str = "individual_id",
+    sample_size: int = 9,
+    subsample_sizes: Tuple[int, ...] = (3, 5, 7),
+    n_candidates: int = 20,
+    random_state: int = 0,
+) -> Dict[str, List[str]]:
+    """Create diverse subsamples for each trail."""
+
+    df = df.copy()
+    rng = np.random.default_rng(random_state)
+
+    for ind, grp in df.groupby(individual_col):
+        trails = grp[trail_col].dropna().unique().tolist()
+        if not trails:
+            continue
+        remaining = grp[grp[trail_col].isna()].index.tolist()
+        if remaining:
+            assign = rng.choice(trails, size=len(remaining))
+            for idx, tr in zip(remaining, assign):
+                df.at[idx, trail_col] = tr
+
+    trail_to_ids = {
+        tr: df.loc[df[trail_col] == tr, id_col].tolist()
+        for tr in df[trail_col].dropna().unique()
+    }
+
+    subsamples: Dict[str, List[str]] = {}
+    for tr, ids in trail_to_ids.items():
+        for ss in subsample_sizes:
+            if len(ids) < ss:
                 continue
-            if mode == "asymmetric" and size_a == size_b:
-                continue
-
-            elig_a = [ind for ind, s in individuals.items() if len(s) >= size_a]
-            elig_b = [ind for ind, s in individuals.items() if len(s) >= size_b]
-
-            # cross-individual
-            for ind_a in elig_a:
-                for ind_b in elig_b:
-                    if ind_a >= ind_b:
-                        continue
-                    for _ in range(n_repeats):
-                        sa = random.sample(individuals[ind_a], size_a)
-                        sb = random.sample(individuals[ind_b], size_b)
-                        raw.append((ind_a, ind_b, sa, sb, False))
-
-            # same-individual
-            for ind in individuals:
-                if len(individuals[ind]) < size_a + size_b:
+            cand = [list(rng.choice(ids, size=ss, replace=False)) for _ in range(n_candidates)]
+            sets = [set(c) for c in cand]
+            sims = np.zeros(len(cand))
+            for i, a in enumerate(sets):
+                if len(cand) == 1:
+                    sims[i] = 0.0
+                else:
+                    acc = 0.0
+                    for j, b in enumerate(sets):
+                        if i == j:
+                            continue
+                        inter = len(a & b)
+                        union = len(a | b)
+                        acc += inter / union if union else 1.0
+                    sims[i] = acc / (len(cand) - 1)
+            order = np.argsort(sims)
+            chosen = []
+            for idx in order:
+                c = cand[idx]
+                if any(set(c) == set(o) for o in chosen):
                     continue
-                for _ in range(int(n_repeats * selfmatch_factor)):
-                    combo = random.sample(individuals[ind], size_a + size_b)
-                    sa, sb = combo[:size_a], combo[size_a:]
-                    raw.append((ind, ind, sa, sb, True))
+                chosen.append(c)
+                if len(chosen) == 3:
+                    break
+            for i, sub in enumerate(chosen, 1):
+                name = f"{tr}_sub{ss}_sample{i}"
+                subsamples[name] = sub
 
-    # 2) Stratified K-Fold auf Pair-Level (ind_a, ind_b)
-    pair_keys, y = [], []
-    seen = {}
-    for ind_a, ind_b, sa, sb, same in raw:
-        key = (ind_a, ind_b)
-        if key not in seen:
-            seen[key] = same
-            pair_keys.append(key)
-            y.append(1 if same else 0)
+    return subsamples
 
-    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
-    fold_map = {}
-    for fold_idx, (_, val_idx) in enumerate(skf.split(pair_keys, y)):
-        for pi in val_idx:
-            fold_map[pair_keys[pi]] = fold_idx
 
-    # 3) trail ID counter per individual and group size
-    trail_counters = defaultdict(int)
+def generate_pairs(trails: Dict[str, List[str]]) -> List[Tuple[str, str]]:
+    """Create all trail pair combinations excluding same base trail."""
 
-    # 4) final list with trail IDs and fold assignment
-    comparisons = []
-    it_raw = raw
-    if show_progress:
-        it_raw = tqdm(raw, desc="pairs", leave=False)
-    for ind_a, ind_b, sa, sb, same in it_raw:
-        size_a = len(sa)
-        trail_counters[(ind_a, size_a)] += 1
-        letter_a = chr(ord("a") + (trail_counters[(ind_a, size_a)] - 1) % 26)
-        trail_a_id = f"{ind_a}_{size_a}{letter_a}"
-
-        size_b = len(sb)
-        trail_counters[(ind_b, size_b)] += 1
-        letter_b = chr(ord("a") + (trail_counters[(ind_b, size_b)] - 1) % 26)
-        trail_b_id = f"{ind_b}_{size_b}{letter_b}"
-
-        comparisons.append(
-            {
-                "ind_a": ind_a,
-                "ind_b": ind_b,
-                "samples_a": sa,
-                "samples_b": sb,
-                "trail_a_id": trail_a_id,
-                "trail_b_id": trail_b_id,
-                "same_individual": same,
-                "fold": fold_map[(ind_a, ind_b)],
-            }
-        )
-
-    return comparisons
-
-#@ gtp this is the version I want to have implemented!"!! delete all other versions that do similar things in this py file 
-def select_ or_generate_trails
-    if trail colum is selected retuleren values from trail colum
-    if genetaret trails is selected do this:
-        
-        Sample_size = 9 #can be changed
-        for every unique individual df[individual_id] estimate in how many samples full samples can be created per individual.  (eg. individual with 30 observation gernerates 3 trails). Randomly sample without replacement for each individual;
-        return trails  (update values in trail colum) naming: f "inidividual_id"_f(sample_size)_f(integer a, b, c....)  #Trails are either 
-
-#@ gtp this is the version I want to have implemented!"!! delete all other versions that do similar things in this py file 
-def generate subsamples of smaler trail Sample_size
-    for every unique individual with rows Trail = NA distribute all rows equually between all trails of this individual to increase sample poolsize.
-    for every unique value in trails generate subsamples of size [3,5,7]
-    draw subsamples with replacement _n = 20 times per unique value in trail and sample Sample_size
-    calculate jacard indey for all subsamles of one trail and one Sample_size
-    selected number of subsamples = 3  by selecting 3 trails with lowest similarity per trail and subsample size; if JAquard index = 1 reduce number of subsamples for this trail. 
-    map all subsamples to trail id and df["id"] so that features can be assigned later correctly
-    return trails naming: f (name that was from select or generate trails )_ fsub(subsamplesize)_sample(subsamples)  
-
-#@ gtp this is the version I want to have implemented!"!! delete all other versions that do similar things in this py file 
-def generate pairs ()
-    generate pairs of all trail combinations and all combinatiions of all subsample that do not originate from the same trail.
+    names = list(trails.keys())
+    pairs: List[Tuple[str, str]] = []
+    for i in range(len(names)):
+        base_i = names[i].split("_sub")[0]
+        for j in range(i + 1, len(names)):
+            base_j = names[j].split("_sub")[0]
+            if base_i == base_j:
+                continue
+            pairs.append((names[i], names[j]))
+    return pairs
 
 
 
@@ -681,38 +375,3 @@ def run_all_pairwise_projections_parallel(
 
 
 
-# --- Legacy implementation -------------------------------------------------
-# The block below used to contain the original implementation of
-# ``generate_pairwise_comparisons_from_df``. It has been kept for reference but
-# is no longer executed. Commenting out the old code avoids syntax errors while
-# preserving the historical context.
-#
-## def generate_pairwise_comparisons_from_df(
-##     df: pd.DataFrame,
-##     id_col: str = "individual_id",
-##     trail_size_list: Optional[List[int]] = None,
-##     num_individuals: Optional[int] = None,
-##     strict_individuals: bool = False,
-##     n_folds: int = 3,
-##     random_state: int = 0,
-##     fallback_col: str = "trail",
-##     *,
-##     sampling_mode: Literal["predefined", "window"] = "window",
-##     trails_per_animal: Optional[Dict] = None,
-##     window_lengths: Optional[List[int]] = None,
-##     N_pool: int = 500,
-##     n_windows: int = 5,
-## ) -> Tuple[List[Dict], pd.DataFrame]:
-##     """Generate trail pairs with metadata.
-##
-##     Steps
-##     -----
-##     1. Create ``group_id`` from ``id_col`` or ``fallback_col``.
-##     2. Obtain ``trails_per_animal`` either from predefined pools or via
-##        diverse subset sampling based on Jaccard dissimilarity (default).
-##     3. Build cross- and within-individual pairings.
-##     4. Mark ``same_individual`` and ``same_sex`` as boolean or ``"unknown"``.
-##     5. Apply ``StratifiedKFold`` on ``trail_size_a``.
-##     6. Return a summary table with per-length and total statistics.
-##     """
-##     ...  # Implementation removed for brevity
