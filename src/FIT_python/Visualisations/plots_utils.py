@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -119,8 +120,8 @@ def plot_sex_boxplots(
     for ax, feat in zip(axes.flat, features):
         sns.boxplot(
             x="sex_mapped", y=feat, data=plot_df, ax=ax,
-            palette={k: SEX_COLORS[k] for k in order},
-            order=order
+            hue="sex_mapped", palette={k: SEX_COLORS[k] for k in order},
+            order=order, hue_order=order, legend=False, dodge=False
         )
         ax.set_xlabel("Sex")
         ax.set_ylabel(feat)
@@ -167,3 +168,167 @@ def plot_umap_scatter(
         "2D UMAP projection colored by sex (Female, Male)."
     )
     return out
+
+
+FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}
+
+
+def _scatter_points(ax, x, y, color, marker, label="") -> None:
+    """Helper to plot scatter points with consistent styling."""
+    params = dict(c=color, marker=marker, label=label, alpha=0.7)
+    if marker in FILLED_MARKERS:
+        params.update(edgecolor="w", linewidth=0.5)
+    ax.scatter(x, y, **params)
+
+
+def make_marker_map(ids) -> dict:
+    """Assign a distinct marker to each ID."""
+    from itertools import cycle
+
+    base = ["o", "s", "^", "v", "P", "X", "D", "*", "h", "+", "x", "1", "2", "3", "4", "8"]
+    return {i: m for i, m in zip(ids, cycle(base))}
+
+
+def plot_individual_boxplots(
+    df: pd.DataFrame,
+    top4_feats: list[str],
+    fig_dir: Path,
+    filename: str,
+) -> Path:
+    """Plot 2×2 boxplots grouped by individual and sex."""
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    female_ids = df.loc[df["sex_mapped"] == "Female", "individual_id"].unique().tolist()
+    male_ids = df.loc[df["sex_mapped"] == "Male", "individual_id"].unique().tolist()
+    ind_order = female_ids + male_ids
+
+    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams["figure.figsize"])
+    for ax, feat in zip(axes.flat, top4_feats):
+        sns.boxplot(
+            data=df,
+            x="individual_id",
+            y=feat,
+            hue="sex_mapped",
+            palette=SEX_COLORS,
+            dodge=False,
+            order=ind_order,
+            hue_order=["Female", "Male"],
+            legend=False,
+            ax=ax,
+        )
+        ax.set_xlabel("")
+        ax.set_xticks([])
+        ax.set_ylabel(feat)
+    plt.tight_layout()
+
+    out = fig_dir / filename
+    plt.savefig(out, dpi=150)
+    plt.close()
+    save_caption(out, f"Boxplots of {top4_feats} grouped by individual")
+    return out
+
+
+def plot_embedding_by_individual(
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    marker_map: dict,
+    fig_dir: Path,
+    filename: str,
+    xcol: str,
+    ycol: str,
+    titles: tuple[str, str],
+) -> Path:
+    """Scatter embeddings for train/test splits grouped by individual."""
+    from matplotlib.patches import Patch
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
+    for ax, df, title in zip(axes, (train_df, test_df), titles):
+        for ind, subset in df.groupby("individual_id"):
+            _scatter_points(
+                ax,
+                subset[xcol],
+                subset[ycol],
+                SEX_COLORS[subset["sex_mapped"].iloc[0]],
+                marker_map.get(ind, "o"),
+                ind if ax is axes[1] else "",
+            )
+        ax.set_title(title, loc="left")
+        ax.set_xlabel(xcol)
+        ax.set_ylabel(ycol)
+
+    legend_elems = [
+        Patch(color=SEX_COLORS["Female"], label="Female"),
+        Patch(color=SEX_COLORS["Male"], label="Male"),
+    ]
+    fig.legend(handles=legend_elems, loc="center right", bbox_to_anchor=(1.15, 0.5), title="Sex")
+    fig.tight_layout(rect=[0, 0, 0.85, 1])
+
+    out = fig_dir / filename
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, f"{xcol}/{ycol} scatter by individual")
+    return out
+
+
+def mark_outliers_centroid(df: pd.DataFrame, bandwidth: float = 0.5, percentile: float = 1) -> pd.DataFrame:
+    """Mark centroid-based outliers per individual in a UMAP embedding."""
+    from scipy.stats import multivariate_normal
+    df = df.copy()
+    df["centroid_density"] = np.nan
+    df["is_outlier_centroid"] = False
+
+    for ind, idx in df.groupby("individual_id").groups.items():
+        pts = df.loc[idx, ["UMAP1", "UMAP2"]].values
+        cx, cy = pts.mean(axis=0)
+        cov = [[bandwidth ** 2, 0], [0, bandwidth ** 2]]
+        kernel = multivariate_normal(mean=[cx, cy], cov=cov)
+        dens = kernel.pdf(pts)
+        thresh = np.percentile(dens, percentile)
+        df.loc[idx, "centroid_density"] = dens
+        df.loc[idx, "is_outlier_centroid"] = dens < thresh
+    return df
+
+
+def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> plt.Figure:
+    """Small-multiple plots of UMAP points with centroid-based outliers."""
+    n_ind = df["individual_id"].nunique()
+    rows = int(np.ceil(n_ind / cols))
+    fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False)
+    axes = axes.flatten()
+
+    for ax, (ind, subset) in zip(axes, df.groupby("individual_id")):
+        sns.kdeplot(
+            data=subset,
+            x="UMAP1",
+            y="UMAP2",
+            fill=True,
+            thresh=0.05,
+            levels=5,
+            alpha=0.4,
+            ax=ax,
+            color=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+        )
+        _scatter_points(
+            ax,
+            subset["UMAP1"],
+            subset["UMAP2"],
+            SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            "o",
+        )
+        out = subset[subset["is_outlier_centroid"]]
+        if not out.empty:
+            ax.scatter(out["UMAP1"], out["UMAP2"], marker="x", c="red", s=40, label="Outlier (Centroid)")
+        ax.set_title(ind)
+        ax.set_xlabel("UMAP1")
+        ax.set_ylabel("UMAP2")
+
+    for ax in axes[n_ind:]:
+        ax.axis("off")
+
+    handles = [
+        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="gray", markersize=8, label="Inlier"),
+        plt.Line2D([0], [0], marker="x", color="red", markersize=8, label="Outlier (Centroid)"),
+    ]
+    fig.legend(handles=handles, loc="upper right")
+    plt.tight_layout(rect=[0, 0, 0.95, 1])
+    return fig
