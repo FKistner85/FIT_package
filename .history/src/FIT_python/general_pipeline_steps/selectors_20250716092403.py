@@ -29,7 +29,6 @@ SELECTORS = {
     "random_forest_5": FeatureSelectionTransformer(method="random_forest", k=5),
     "random_forest_6": FeatureSelectionTransformer(method="random_forest", k=6),
     "random_forest_7": FeatureSelectionTransformer(method="random_forest", k=7),
-    
     "lasso_1": FeatureSelectionTransformer(method="lasso", k=1),
     "lasso_2": FeatureSelectionTransformer(method="lasso", k=2),
     "lasso_3": FeatureSelectionTransformer(method="lasso", k=3),
