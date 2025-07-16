@@ -1,13 +1,3 @@
-# generate_rcv.py
-
-try:
-    import pandas as pd
-
-    _pd_err = None
-except Exception as exc:
-    pd = None
-    _pd_err = exc
-
 import pandas as pd
 
 
@@ -41,10 +31,4 @@ def generate_rcv(full_df: pd.DataFrame, exclude_ids: list) -> pd.DataFrame:
     return df_rcv
 
 
-if __name__ == "__main__":
-    sample = pd.DataFrame(
-        {"individual_id": ["A", "B"], "Trail": ["t1", "t2"]}, index=[0, 1]
-    )
-    full = pd.concat([sample] * 5, ignore_index=True)
-    res = generate_rcv(full, exclude_ids=["0", "1"])
-    print(res.head())
+
