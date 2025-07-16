@@ -1,1 +1,1 @@
-2×2 panel of correlation heatmaps: a) full, b) distance, c) angle, d) triangles.
+2×2 panel of correlation heatmaps a)–d) with a single external colorbar.

@@ -19,15 +19,12 @@ def plot_feature_correlation_matrix(
      - b) distance-only features
      - c) angle-only features
      - d) triangles-only features
-    Returns the path to the saved image.
     """
-    import matplotlib as mpl
-
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     num_df = df.select_dtypes(include="number")
     groups = {
-        "distance": [c for c in num_df.columns if c.lower().startswith(("d", "dist"))],
+        "distance": [c for c in num_df.columns if c.lower().startswith(("d","dist"))],
         "angle":    [c for c in num_df.columns if c.lower().startswith("ang")],
         "triangles":[c for c in num_df.columns if c.lower().startswith("t") and not c.lower().startswith("trail")]
     }
@@ -35,15 +32,22 @@ def plot_feature_correlation_matrix(
     sel = sorted({c for cols in groups.values() for c in cols})
     corr_full = num_df[sel].corr()
 
+    # Use default figsize or override as needed
     fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
     cmap = "RdBu_r"
 
-    # a) full correlation, no internal colorbar
+    # --- a) Full matrix, no internal cbar ---
     ax = axes[0, 0]
     sns.heatmap(
-        corr_full, cmap=cmap, center=0, ax=ax,
-        xticklabels=False, yticklabels=False, cbar=False
+        corr_full,
+        cmap=cmap,
+        center=0,
+        ax=ax,
+        xticklabels=False,
+        yticklabels=False,
+        cbar=False          # remove internal bar
     )
+    # group ticks as before...
     ordered = corr_full.columns.tolist()
     positions, labels = [], []
     for grp, cols in groups.items():
@@ -59,12 +63,17 @@ def plot_feature_correlation_matrix(
     ax.set_yticklabels(labels, rotation=0, fontsize="small")
     ax.set_title("a)", loc="left")
 
-    # helper for single-group plots
+    # --- b/c/d) Single‐group panels, all without cbar ---
     def single(ax, grp, cols, title):
         corr = num_df[cols].corr()
         sns.heatmap(
-            corr, cmap=cmap, center=0, ax=ax,
-            xticklabels=False, yticklabels=False, cbar=False
+            corr,
+            cmap=cmap,
+            center=0,
+            ax=ax,
+            xticklabels=False,
+            yticklabels=False,
+            cbar=False
         )
         n = len(cols)
         mid = (n - 1) / 2
@@ -74,19 +83,21 @@ def plot_feature_correlation_matrix(
         ax.set_yticklabels([f"{grp} ({n})"], rotation=0, fontsize="small")
         ax.set_title(title, loc="left")
 
-    single(axes[0,1], "distance",  groups["distance"],  "b)")
-    single(axes[1,0], "angle",     groups["angle"],     "c)")
-    single(axes[1,1], "triangles", groups["triangles"], "d)")
+    single(axes[0,1], "distance", groups["distance"], "b)")
+    single(axes[1,0], "angle",    groups["angle"],    "c)")
+    single(axes[1,1], "triangles",groups["triangles"],"d)")
 
     plt.tight_layout()
 
-    # add a single external colorbar
-    cax = fig.add_axes([1.03, 0.15, 0.02, 0.7])
+    # --- Single, external colorbar on the right of the entire figure ---
+    # create a new axes on the right for the colorbar
+    cax = fig.add_axes([0.93, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
     norm = mpl.colors.Normalize(vmin=-1, vmax=1)
     sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     fig.colorbar(sm, cax=cax, label="Pearson $r$")
 
+    # save and clean up
     out = fig_dir / filename
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -96,9 +107,6 @@ def plot_feature_correlation_matrix(
         "2×2 panel of correlation heatmaps a)–d) with a single external colorbar."
     )
     return out
-
-
-
 
 
 def plot_sex_boxplots(

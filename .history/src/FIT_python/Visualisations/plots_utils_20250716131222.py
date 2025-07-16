@@ -81,7 +81,7 @@ def plot_feature_correlation_matrix(
     plt.tight_layout()
 
     # add a single external colorbar
-    cax = fig.add_axes([1.03, 0.15, 0.02, 0.7])
+    cax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
     norm = mpl.colors.Normalize(vmin=-1, vmax=1)
     sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])

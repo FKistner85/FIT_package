@@ -14,20 +14,18 @@ def plot_feature_correlation_matrix(
     filename: str = "feature_corr_matrix_2x2.png"
 ) -> Path:
     """
-    Create and save a 2×2 panel of correlation heatmaps with a single, external colorbar:
+    Create and save a 2×2 panel of correlation heatmaps:
      - a) full correlation (distance/angle/triangles)
      - b) distance-only features
      - c) angle-only features
      - d) triangles-only features
     Returns the path to the saved image.
     """
-    import matplotlib as mpl
-
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     num_df = df.select_dtypes(include="number")
     groups = {
-        "distance": [c for c in num_df.columns if c.lower().startswith(("d", "dist"))],
+        "distance": [c for c in num_df.columns if c.lower().startswith(("d","dist"))],
         "angle":    [c for c in num_df.columns if c.lower().startswith("ang")],
         "triangles":[c for c in num_df.columns if c.lower().startswith("t") and not c.lower().startswith("trail")]
     }
@@ -38,12 +36,10 @@ def plot_feature_correlation_matrix(
     fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
     cmap = "RdBu_r"
 
-    # a) full correlation, no internal colorbar
     ax = axes[0, 0]
-    sns.heatmap(
-        corr_full, cmap=cmap, center=0, ax=ax,
-        xticklabels=False, yticklabels=False, cbar=False
-    )
+    sns.heatmap(corr_full, cmap=cmap, center=0, ax=ax,
+                xticklabels=False, yticklabels=False,
+                cbar_kws={"shrink": 0.8})
     ordered = corr_full.columns.tolist()
     positions, labels = [], []
     for grp, cols in groups.items():
@@ -59,13 +55,11 @@ def plot_feature_correlation_matrix(
     ax.set_yticklabels(labels, rotation=0, fontsize="small")
     ax.set_title("a)", loc="left")
 
-    # helper for single-group plots
     def single(ax, grp, cols, title):
         corr = num_df[cols].corr()
-        sns.heatmap(
-            corr, cmap=cmap, center=0, ax=ax,
-            xticklabels=False, yticklabels=False, cbar=False
-        )
+        sns.heatmap(corr, cmap=cmap, center=0, ax=ax,
+                    xticklabels=False, yticklabels=False,
+                    cbar=False)
         n = len(cols)
         mid = (n - 1) / 2
         ax.set_xticks([mid])
@@ -74,32 +68,20 @@ def plot_feature_correlation_matrix(
         ax.set_yticklabels([f"{grp} ({n})"], rotation=0, fontsize="small")
         ax.set_title(title, loc="left")
 
-    single(axes[0,1], "distance",  groups["distance"],  "b)")
-    single(axes[1,0], "angle",     groups["angle"],     "c)")
-    single(axes[1,1], "triangles", groups["triangles"], "d)")
+    single(axes[0,1], "distance", groups["distance"], "b)")
+    single(axes[1,0], "angle",    groups["angle"],    "c)")
+    single(axes[1,1], "triangles",groups["triangles"],"d)")
 
     plt.tight_layout()
-
-    # add a single external colorbar
-    cax = fig.add_axes([1.03, 0.15, 0.02, 0.7])
-    norm = mpl.colors.Normalize(vmin=-1, vmax=1)
-    sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    fig.colorbar(sm, cax=cax, label="Pearson $r$")
-
     out = fig_dir / filename
-    fig.savefig(out, dpi=150, bbox_inches="tight")
+    fig.savefig(out, dpi=150)
     plt.close(fig)
 
     save_caption(
         out,
-        "2×2 panel of correlation heatmaps a)–d) with a single external colorbar."
+        "2×2 panel of correlation heatmaps: a) full, b) distance, c) angle, d) triangles."
     )
     return out
-
-
-
-
 
 def plot_sex_boxplots(
     df: pd.DataFrame,
