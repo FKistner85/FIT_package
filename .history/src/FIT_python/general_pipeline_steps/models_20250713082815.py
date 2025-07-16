@@ -36,8 +36,8 @@ MODELS = {
     "lgbm_std": LGBMClassifier(n_estimators=100, verbose=-1),
     "lgbm_md10": LGBMClassifier(n_estimators=100, max_depth=10, verbose=-1),
     # ─── CatBoost Variants ────────────────────────────────────────────────────
-  #  "catb_std": CatBoostClassifier(iterations=100, learning_rate=0.1, verbose=0),
- #   "catb_fast": CatBoostClassifier(iterations=50, learning_rate=0.2, verbose=0),
+    "catb_std": CatBoostClassifier(iterations=100, learning_rate=0.1, verbose=0),
+    "catb_fast": CatBoostClassifier(iterations=50, learning_rate=0.2, verbose=0),
 }
 
 
