@@ -140,7 +140,7 @@ class DataImportWrapper:
 
                 # correlation heatmap of feature groups
                 try:
-                    from FIT_python.Visualisations.plots_utils import (
+                    from FIT_python.Visualisations.feature_corr_utils import (
                         plot_feature_correlations,
                     )
 
