@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import pandas as pd
 import matplotlib as mpl
 import seaborn as sns
@@ -29,7 +31,7 @@ def _lighten(color: str, amount: float) -> str:
 
     ``amount`` specifies the blend ratio with white where ``0`` returns the
     original colour and ``1`` returns white.
-    """"
+    """
     r, g, b = mpl.colors.to_rgb(color)
     return mpl.colors.to_hex([
         r + (1 - r) * amount,
@@ -57,4 +59,5 @@ def apply_style() -> None:
         'xtick.labelsize': 10,
         'ytick.labelsize': 10,
         'legend.fontsize': 10,
+        'figure.figsize': tuple(map(float, os.getenv('FIGSIZE', '8,6').split(','))),
     })

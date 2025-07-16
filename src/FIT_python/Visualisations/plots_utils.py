@@ -33,7 +33,7 @@ def plot_feature_correlation_matrix(
     sel = sorted({c for cols in groups.values() for c in cols})
     corr_full = num_df[sel].corr()
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
     cmap = "RdBu_r"
 
     ax = axes[0, 0]
@@ -97,7 +97,7 @@ def plot_sex_boxplots(
     fig_dir.mkdir(parents=True, exist_ok=True)
     plot_df = df[df["sex_mapped"].isin(order)]
 
-    fig, axes = plt.subplots(2, 2, figsize=(8, 6))
+    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
     for ax, feat in zip(axes.flat, features):
         sns.boxplot(
             x="sex_mapped", y=feat, data=plot_df, ax=ax,
@@ -129,7 +129,7 @@ def plot_umap_scatter(
     emb: DataFrame with columns ['UMAP1','UMAP2'].
     """
     fig_dir.mkdir(parents=True, exist_ok=True)
-    fig, ax = plt.subplots(figsize=(6, 5))
+    fig, ax = plt.subplots(figsize=plt.rcParams['figure.figsize'])
     sns.scatterplot(
         data=emb, x="UMAP1", y="UMAP2",
         hue="sex_mapped",
