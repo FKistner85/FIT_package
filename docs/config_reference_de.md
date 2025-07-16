@@ -3,7 +3,9 @@
 Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden können. **Alle automatisch erstellten Codes müssen ihre Werte aus `FIT_python.soft_config.SOFT_CONFIG` lesen und dürfen keine festen Literale verwenden.**
 
 ## data_split_and_summary
-- `sex_categories`: Kategorien zur Zusammenfassung der Datensätze.
+- `sex_categories`: Kategorien zur Zusammenfassung der Datensätze. Der
+  Standardwert ist `['Female', 'Male']`, entsprechend dem Ergebnis der
+  Funktion `map_sex()`.
 - `split_labels`: Bezeichnungen für Train/Test-Splits.
 - `species_remap`: Zuordnung der Kurzarten zu den wissenschaftlichen Namen.
 

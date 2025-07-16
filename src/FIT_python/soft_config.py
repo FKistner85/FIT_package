@@ -1,6 +1,6 @@
 SOFT_CONFIG = {
     "data_split_and_summary": {
-        "sex_categories": ["F", "M"],
+        "sex_categories": ["Female", "Male"],
         "split_labels": ["Train", "Test"],
         "species_remap": {
             "a_j_soemmeringii": "acinonyx_jubatus_soemmeringii",

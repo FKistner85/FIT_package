@@ -7,7 +7,12 @@ from typing import Dict
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from FIT_python.Visualisations.plot_style import apply_style, TRAIN_COLORS, TEST_COLORS
+from FIT_python.Visualisations.plot_style import (
+    apply_style,
+    TRAIN_COLORS,
+    TEST_COLORS,
+    map_sex,
+)
 from FIT_python.soft_config import SOFT_CONFIG
 
 
@@ -104,22 +109,12 @@ def compute_summary(
 
     # 2) clean sex categories
     df = df.copy()
-    df["sex"] = (
-        df["sex"]
-        .fillna("unknown")
-        .astype(str)
-        .str.strip()
-        .str.lower()
-        .map(
-            lambda s: (
-                "F" if s.startswith("f") else "M" if s.startswith("m") else "Unknown"
-            )
-        )
-    )
+    df["sex"] = map_sex(df["sex"])
     print(f"[DEBUG] sex value counts:\n{df['sex'].value_counts(dropna=False)}")
 
+    cfg = SOFT_CONFIG["data_split_and_summary"]
     rows = []
-    for sex in ["F", "M", "Unknown"]:
+    for sex in [*cfg["sex_categories"], "Unknown"]:
         sub = df[df["sex"] == sex]
         print(f"[DEBUG] sex = {sex}, subset shape = {sub.shape}")
 
@@ -208,7 +203,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
     for ax, code in zip(axes, species_codes):
         sub = df_summary[df_summary["Species"] == code]
-        bottoms = {"F": 0, "M": 0}
+        bottoms = {"Female": 0, "Male": 0}
         for split in splits:
             for sex in sexes:
                 row = sub[(sub["Sex"] == sex) & sub["Dataset"].str.endswith(split)]
@@ -266,7 +261,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
         }
 
         fig, ax = plt.subplots(figsize=(6, 5))
-        bottoms = {"F": 0, "M": 0}
+        bottoms = {"Female": 0, "Male": 0}
 
         for split in splits:
             for sex in sexes:
