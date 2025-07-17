@@ -38,6 +38,7 @@ from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
     plot_hyperparam_heatmap,
 )
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
+from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from FIT_python.data_split_and_summary.split_utils import (
     create_train_test_split_otter,
     _make_folds,
@@ -114,6 +115,8 @@ def run_otter_search(
         .query("sex in ['f','m']")
         .drop(columns=["Fold"], errors="ignore")
     )
+
+    feature_cols = get_feature_cols(df_train)
 
     X_tr, y_tr, ids_tr = (
         df_train[feature_cols],
