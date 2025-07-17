@@ -22,6 +22,7 @@ class NumericTransformer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self):
+        """Initialize the transformer."""
         self.feature_cols: List[str] = []
 
     def fit(self, df: pd.DataFrame, y=None):

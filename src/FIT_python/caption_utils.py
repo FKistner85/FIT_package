@@ -1,3 +1,5 @@
+"""Utility helpers for saving plot captions."""
+
 from __future__ import annotations
 
 from pathlib import Path

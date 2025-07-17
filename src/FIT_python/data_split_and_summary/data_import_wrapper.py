@@ -26,6 +26,7 @@ class DataImporter:
         skip_fillna: Optional[List[str]] = None,
         label_map: Optional[Dict[str, str]] = None,
     ):
+        """Initialize the wrapper."""
         self.raw_dir = raw_dir
         self.target_cols = target_cols or []
         self.skip_fillna = skip_fillna or []
@@ -97,6 +98,7 @@ class DataImportWrapper:
     """High-level wrapper to clean all raw datasets and persist Parquet files."""
 
     def __init__(self) -> None:
+        """Initialize the wrapper."""
         pass
 
     def clean_all(self) -> int:
