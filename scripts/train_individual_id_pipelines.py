@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from FIT_python.plot_style import apply_style
+from FIT_python.Visualisations.plot_style import apply_style
 from FIT_python.caption_utils import save_caption
 
 from FIT_python import config

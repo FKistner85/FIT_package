@@ -30,6 +30,9 @@ given directory and complements the absolute counts from `plot_summary_table`.
 - https://matplotlib.org/
 
 ## Assumptions and Limitations
-Expects columns like "sex" and "individual_id".
+Expects columns like "sex" and "individual_id". Raw values are
+normalised using `map_sex()` so that plots always use the labels
+"Female" and "Male". Entries mapped to "Unknown" are ignored in the
+charts.
 All plotting functions write a caption next to each image using
 `FIT_python.caption_utils.save_caption`.

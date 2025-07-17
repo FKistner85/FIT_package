@@ -1,6 +1,6 @@
 SOFT_CONFIG = {
     "data_split_and_summary": {
-        "sex_categories": ["F", "M"],
+        "sex_categories": ["Female", "Male"],
         "split_labels": ["Train", "Test"],
         "species_remap": {
             "a_j_soemmeringii": "acinonyx_jubatus_soemmeringii",
@@ -107,6 +107,11 @@ SOFT_CONFIG = {
             "reducers": ["lda"],
             "selection_method": "forward",
             "n_components": 2,
+        },
+        "trail_generation_defaults": {
+            "sample_size": 9,
+            "subsample_sizes": [3, 5, 7],
+            "n_candidates": 20,
         },
         "sequential_holdout_val_sizes": [2, 4, 6, 8],
     },
