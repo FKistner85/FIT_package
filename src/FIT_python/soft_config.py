@@ -97,7 +97,7 @@ SOFT_CONFIG = {
             "reduce_post__whiten",
             "clf",
         ],
-        "run_otter_search": {
+        "run_otter_search_sex": {
             "n_iter": 2,
             "cv": 2,
             "random_state": 42,

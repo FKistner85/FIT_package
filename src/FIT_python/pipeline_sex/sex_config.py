@@ -95,10 +95,10 @@ def prepare_eurasian_otter() -> None:
     )
 
 
-def run_otter_search(
-    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
+def run_otter_search_sex(
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
     """Run RandomizedSearchCV for the Eurasian otter dataset."""
 
