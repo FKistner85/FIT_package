@@ -154,6 +154,19 @@ def compute_confusion(
     )
 
 
+def compute_bcr(cm: pd.DataFrame) -> float:
+    """Return the Balanced Classification Rate (BCR) for ``cm``.
+
+    BCR as described in the FIT documentation is the mean of the true
+    positive rate and the true negative rate calculated from the confusion
+    matrix produced by :func:`compute_confusion`.
+    """
+
+    tpr = cm.loc["true_same", "pred_same"] / cm.loc["true_same"].sum()
+    tnr = cm.loc["true_diff", "pred_diff"] / cm.loc["true_diff"].sum()
+    return (tpr + tnr) / 2
+
+
 def report_skipped(skipped_counts: Mapping[str, int]) -> str:
     """Return a multi-line summary of skipped validation counts."""
     total = sum(skipped_counts.values())
