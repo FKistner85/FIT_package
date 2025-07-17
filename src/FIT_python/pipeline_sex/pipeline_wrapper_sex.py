@@ -1,3 +1,5 @@
+"""High level training wrapper for sex classification."""
+
 # src/FIT_python/pipeline/pipeline_wrapper_sex.py
 
 from pathlib import Path

@@ -1,7 +1,10 @@
+"""Metrics grouped by individual identifiers."""
+
 import pandas as pd
 
 
 def individual_accuracies(y_true, y_pred, ids):
+    """Return female, male and balanced accuracy per individual."""
     df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred, "id": ids})
     # FutureWarning vermeiden mit include_groups=False
     acc_per = df.groupby("id").apply(
@@ -16,6 +19,7 @@ def individual_accuracies(y_true, y_pred, ids):
 
 
 def individual_majority_stats(y_true, y_pred, ids):
+    """Count individuals with majority correct predictions."""
     df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred, "id": ids})
     # auch hier include_groups=False
     pct_per = df.groupby("id").apply(
