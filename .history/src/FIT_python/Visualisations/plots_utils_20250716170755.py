@@ -185,15 +185,12 @@ def plot_umap_scatter(
     fig_dir.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=plt.rcParams['figure.figsize'])
     sns.scatterplot(
-        data=emb,
-        x="UMAP1",
-        y="UMAP2",
+        data=emb, x="UMAP1", y="UMAP2",
         hue="sex_mapped",
-        palette={k: SEX_COLORS[k] for k in order},
+        palette={k:SEX_COLORS[k] for k in order},
         hue_order=order,
         alpha=0.7,
-        edgecolor="none",
-        ax=ax,
+        ax=ax
     )
     ax.legend(title="Sex")
     plt.tight_layout()
@@ -372,87 +369,54 @@ def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> 
     return fig
 
 
-def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> plt.Figure:
-    """
-    Small‑multiple UMAP plots with KDE background and optional centroid‑based outlier markers.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Must contain columns 'UMAP1', 'UMAP2', 'individual_id', 'sex_mapped',
-        and optionally 'is_outlier_centroid'.
-    title : str
-        Title to display above the grid.
-    cols : int, default=6
-        Number of columns in the facet grid.
-
-    Returns
-    -------
-    fig : plt.Figure
-        The matplotlib Figure object containing the small multiples.
-    """
-    n_ind = df["individual_id"].nunique()
-    rows = int(np.ceil(n_ind / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False)
+# --- 2) Small‑Multiples‑Visualisierung mit Centroid‑Outliern ---
+def plot_umap_centroid_outliers(df, title, cols=6):
+    n_ind = df['individual_id'].nunique()
+    rows  = int(np.ceil(n_ind / cols))
+    fig, axes = plt.subplots(rows, cols, figsize=(cols*3, rows*3),
+                             sharex=False, sharey=False)
     axes = axes.flatten()
 
     display(Markdown(f"**{title}**"))
-
-    # Detect if outlier column is present
-    has_outliers = "is_outlier_centroid" in df.columns
-
-    for ax, (ind, subset) in zip(axes, df.groupby("individual_id")):
-        # 1) KDE‑Heatmap of the true points
+    for ax, (ind, subset) in zip(axes, df.groupby('individual_id')):
+        # a) KDE-Heatmap der echten Punkte
         sns.kdeplot(
             data=subset,
-            x="UMAP1",
-            y="UMAP2",
-            fill=True,
-            thresh=0.05,
-            levels=5,
-            alpha=0.4,
+            x='UMAP1', y='UMAP2',
+            fill=True, thresh=0.05, levels=5, alpha=0.4,
             ax=ax,
-            color=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            color=SEX_COLORS[subset['sex_mapped'].iloc[0]]
         )
-
-        # 2) Scatter all points
+        # b) Alle Punkte
         ax.scatter(
-            subset["UMAP1"],
-            subset["UMAP2"],
-            s=20,
-            edgecolor="w",
-            linewidth=0.5,
-            c=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            subset['UMAP1'], subset['UMAP2'],
+            s=20, edgecolor='w', linewidth=0.5,
+            c=SEX_COLORS[subset['sex_mapped'].iloc[0]]
         )
-
-        # 3) Mark centroid‑based outliers if present
-        if has_outliers:
-            out = subset[subset["is_outlier_centroid"]]
-            if not out.empty:
-                ax.scatter(
-                    out["UMAP1"],
-                    out["UMAP2"],
-                    marker="x",
-                    c="red",
-                    s=40,
-                    label="Outlier (Centroid)",
-                )
-
+        # c) Centroid‑Outlier als rote Kreuze
+        out = subset[subset['is_outlier_centroid']]
+        if not out.empty:
+            ax.scatter(
+                out['UMAP1'], out['UMAP2'],
+                marker='x', c='red', s=40,
+                label='Outlier (Centroid)'
+            )
         ax.set_title(ind)
-        ax.set_xlabel("UMAP1")
-        ax.set_ylabel("UMAP2")
+        ax.set_xlabel('UMAP1')
+        ax.set_ylabel('UMAP2')
 
-    # Turn off any unused subplots
+    # Leere Plots abschalten
     for ax in axes[n_ind:]:
-        ax.axis("off")
+        ax.axis('off')
 
-    # Add a global legend if outliers are shown
-    if has_outliers:
-        handles = [
-            plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="gray", markersize=8, label="Inlier"),
-            plt.Line2D([0], [0], marker="x", color="red", markersize=8, label="Outlier (Centroid)"),
-        ]
-        fig.legend(handles=handles, loc="upper right")
-
-    plt.tight_layout(rect=[0, 0, 0.95, 1])
+    # Gemeinsame Legende
+    handles = [
+        plt.Line2D([0],[0], marker='o', color='w',
+                   markerfacecolor='gray', markersize=8,
+                   label='Inlier'),
+        plt.Line2D([0],[0], marker='x', color='red',
+                   markersize=8, label='Outlier (Centroid)')
+    ]
+    fig.legend(handles=handles, loc='upper right')
+    plt.tight_layout(rect=[0,0,0.95,1])
     return fig

@@ -124,101 +124,126 @@ def print_filter_stats(name, df_before, df_after):
     print(f"{'<3 Beobachtungen Tiere:':25}{few_animals}\n")
 
 
-
-
+# --- 2) Neuer Transformer: CentroidOutlierTransformer ---
 class CentroidOutlierTransformer(TransformerMixin, BaseEstimator):
     """
-    Pro individual_id im UMAP‑Embedding Ausreißer markieren oder entfernen.
-    Erwartet DataFrame mit ['UMAP1','UMAP2','individual_id'].
+    Transformer, der pro individual_id im UMAP‐Embedding Ausreißer markiert oder
+    entfernt. Erwartet als Input stets einen pandas.DataFrame mit Spalten
+    ['UMAP1','UMAP2','individual_id'] (und optional 'sex_mapped').
+
+    Parameters
+    ----------
+    bandwidth : float
+        Standardabweichung des Gauß‐Kernels um den Centroid.
+    percentile : float
+        Perzentil (0–100), unterhalb dessen Punkte als Ausreißer gelten.
+    drop : bool
+        Wenn True, werden markierte Ausreißer in transform() herausgefiltert.
+        Andernfalls bleibt die Spalte 'is_outlier_centroid' erhalten.
     """
-    def __init__(self, bandwidth: float=0.5, percentile: float=1.0, drop: bool=False):
+
+    def __init__(self, bandwidth: float = 0.5, percentile: float = 1.0, drop: bool = False):
         self.bandwidth  = bandwidth
         self.percentile = percentile
         self.drop       = drop
 
     def fit(self, X, y=None):
+        # Kein Learning erforderlich
         return self
 
     def transform(self, X):
+        # Sicherstellen, dass wir einen DataFrame vorliegen haben
         if not isinstance(X, pd.DataFrame):
             raise RuntimeError(
                 "CentroidOutlierTransformer.transform erwartet einen pandas.DataFrame "
                 "mit Spalten ['UMAP1','UMAP2','individual_id']."
             )
+
+        df = X.copy()
+        # Markierung per individual_id
         df = mark_outliers_centroid(
-            X,
+            df,
             bandwidth=self.bandwidth,
             percentile=self.percentile
         )
+
         if self.drop:
+            # Entferne Ausreißer und die Hilfsspalten
             return df.loc[~df['is_outlier_centroid']].drop(
                 columns=['centroid_density','is_outlier_centroid']
             )
+        # Andernfalls behalten wir die Markierungsspalten bei
         return df
 
-# --- 2) Wrapper, der UMAP → DataFrame konvertiert ---
 
-class UMAPtoDF(TransformerMixin, BaseEstimator):
-    """
-    Wrapper um DimensionalityReducerTransformer, der das Array
-    in einen DataFrame mit UMAP1, UMAP2 und individual_id umwandelt.
-    """
-    def __init__(self, **umap_kwargs):
-        self.reducer = DimensionalityReducerTransformer(method='umap', **umap_kwargs)
 
-    def fit(self, X, y=None):
-        # X must be DataFrame including 'individual_id'
-        self.reducer.fit(X.drop(columns=['individual_id']), y)
-        return self
 
-    def transform(self, X):
-        arr = self.reducer.transform(X.drop(columns=['individual_id']))
-        df = pd.DataFrame(arr, columns=['UMAP1','UMAP2'], index=X.index)
-        df['individual_id'] = X['individual_id'].values
-        return df
 
-# --- 3) Pipeline‑Presets mit UMAPtoDF + CentroidOutlierTransformer ---
 
-OUTLIER_PRESETS = {}
 
-# 3.1 Unsupervised UMAP → DF → 1% drop
+# Ergänzungen zu src/FIT_python/pipeline/outlier_wrapper.py
+
+from sklearn.pipeline import Pipeline
+from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
+
+# 1) Unsupervised UMAP + 1 % Centroid-Outlier (drop)
 OUTLIER_PRESETS["umap_centroid_1pct"] = Pipeline([
-    ("umap_df", UMAPtoDF(n_components=2)),
-    ("centroid", CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True)),
+    ("umap",     DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("centroid", CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True))
 ])
 
-# 3.2 Supervised UMAP → DF → 1% drop
+# 2) Supervised UMAP + 1 % Centroid-Outlier (drop)
 OUTLIER_PRESETS["sup_umap_centroid_1pct"] = Pipeline([
-    ("umap_df", UMAPtoDF(n_components=2, supervised=True)),
-    ("centroid", CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True)),
+    ("umap",     DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("centroid", CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True))
 ])
 
-# 3.3 Iterative unsupervised: 20%→UMAP→5%→UMAP→1%
+# 3) Unsupervised Iterative: 20% → UMAP → 5% → UMAP → 1%
 OUTLIER_PRESETS["umap_centroid_iterative"] = Pipeline([
-    ("umap0",     UMAPtoDF(n_components=2)),
-    ("coarse20",  CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True)),
-    ("umap1",     UMAPtoDF(n_components=2)),
-    ("fine5",     CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=True)),
-    ("umap2",     UMAPtoDF(n_components=2)),
-    ("very1",     CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=True)),
+    ("umap0",    DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("coarse20", CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True)),
+    ("umap1",    DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("fine5",    CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=True)),
+    ("umap2",    DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("very1",    CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=True)),
 ])
 
-# 3.4 Iterative supervised: 20%→sup-UMAP→5%→sup-UMAP→1%
+# 4) Supervised Iterative: 20% → sup-UMAP → 5% → sup-UMAP → 1%
 OUTLIER_PRESETS["sup_umap_centroid_iterative"] = Pipeline([
-    ("umap0",     UMAPtoDF(n_components=2, supervised=True)),
-    ("coarse20",  CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True)),
-    ("umap1",     UMAPtoDF(n_components=2, supervised=True)),
-    ("fine5",     CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=True)),
-    ("umap2",     UMAPtoDF(n_components=2, supervised=True)),
-    ("very1",     CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=True)),
+    ("umap0",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("coarse20", CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True)),
+    ("umap1",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("fine5",    CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=True)),
+    ("umap2",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("very1",    CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=True)),
 ])
 
-# 3.5 Hybrid unsup→sup→unsup
+# 5) Unsupervised Iterative but keep markers (drop=False)
+OUTLIER_PRESETS["umap_centroid_iterative_mark"] = Pipeline([
+    ("umap0",    DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("coarse20", CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=False)),
+    ("umap1",    DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("fine5",    CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=False)),
+    ("umap2",    DimensionalityReducerTransformer(method="umap", n_components=2)),
+    ("very1",    CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=False)),
+])
+
+# 6) Supervised Iterative but keep markers (drop=False)
+OUTLIER_PRESETS["sup_umap_centroid_iterative_mark"] = Pipeline([
+    ("umap0",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("coarse20", CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=False)),
+    ("umap1",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("fine5",    CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=False)),
+    ("umap2",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("very1",    CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=False)),
+])
+
+# 5) Hybrid: unsupervised Coarse→Sup-UMAP→Fine→UMAP→VeryFine
 OUTLIER_PRESETS["hybrid_umap_centroid_iterative"] = Pipeline([
-    ("umap0",     UMAPtoDF(n_components=2, supervised=False)),
-    ("coarse20",  CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True)),
-    ("umap1",     UMAPtoDF(n_components=2, supervised=True)),
-    ("fine5",     CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=True)),
-    ("umap2",     UMAPtoDF(n_components=2, supervised=False)),
-    ("very1",     CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=True)),
+    ("umap0",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=False)),
+    ("coarse20", CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True)),
+    ("umap1",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=True)),
+    ("fine5",    CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0,  drop=True)),
+    ("umap2",    DimensionalityReducerTransformer(method="umap", n_components=2, supervised=False)),
+    ("very1",    CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0,  drop=True)),
 ])

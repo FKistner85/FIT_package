@@ -185,15 +185,12 @@ def plot_umap_scatter(
     fig_dir.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=plt.rcParams['figure.figsize'])
     sns.scatterplot(
-        data=emb,
-        x="UMAP1",
-        y="UMAP2",
+        data=emb, x="UMAP1", y="UMAP2",
         hue="sex_mapped",
-        palette={k: SEX_COLORS[k] for k in order},
+        palette={k:SEX_COLORS[k] for k in order},
         hue_order=order,
         alpha=0.7,
-        edgecolor="none",
-        ax=ax,
+        ax=ax
     )
     ax.legend(title="Sex")
     plt.tight_layout()
