@@ -12,7 +12,8 @@ from sklearn.exceptions import ConvergenceWarning
 from collections import Counter
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
-from sklearn.model_selection import RandomizedSearchCV
+from skopt import BayesSearchCV
+from skopt.space import Categorical
 from tqdm.auto import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
@@ -57,8 +58,24 @@ PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
 
 MODEL_KEYS = PIPE_CFG["model_keys"]
 
-PARAM_DISTRIBUTIONS = PIPE_CFG["param_distributions"].copy()
-PARAM_DISTRIBUTIONS["clf"] = [MODELS[k] for k in MODEL_KEYS]
+SEARCH_SPACE_CFG = PIPE_CFG["search_spaces"].copy()
+SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
+
+SEARCH_SPACES = {
+    "outlier": Categorical([OutlierCleanerTransformer(method="clip")], transform="identity"),
+    "scale": Categorical([FeatureScalerTransformer(method="standard")], transform="identity"),
+    "select__method": Categorical(SEARCH_SPACE_CFG["select__method"]),
+    "select__k": Categorical(SEARCH_SPACE_CFG["select__k"]),
+    "reduce_pre": Categorical(
+        [DimensionalityReducerTransformer(method=None, n_components=1)],
+        transform="identity",
+    ),
+    "reduce_post": Categorical(
+        [DimensionalityReducerTransformer(method=None, n_components=1)],
+        transform="identity",
+    ),
+    "clf": Categorical([MODELS["rf_small"]], transform="identity"),
+}
 
 METRICS = PIPE_CFG["metrics"]
 
@@ -141,9 +158,9 @@ def _run_species_search(
     ]
     pipe = Pipeline(steps)
 
-    search = RandomizedSearchCV(
+    search = BayesSearchCV(
         estimator=pipe,
-        param_distributions=PARAM_DISTRIBUTIONS,
+        search_spaces=SEARCH_SPACES,
         n_iter=n_iter,
         scoring=SCORING,
         refit=False,
@@ -165,7 +182,7 @@ def _run_species_search(
     raw_records = []
     best_records = []
 
-    with tqdm_joblib(tqdm(desc=f"{species} RS-CV", total=total_fits, leave=False)):
+    with tqdm_joblib(tqdm(desc=f"{species} BS-CV", total=total_fits, leave=False)):
         with warnings.catch_warnings(record=True) as warn_list:
             warnings.simplefilter("always", ConvergenceWarning)
             warnings.filterwarnings(
@@ -292,10 +309,10 @@ def run_otter_search_sex(
     cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
-    """Run RandomizedSearchCV for the Eurasian otter dataset."""
+    """Run BayesSearchCV for the Eurasian otter dataset."""
     _run_species_search(
         "eurasian_otter",
-        "eurasian_otter_random_search_standard_metrics",
+        "eurasian_otter_bayes_search_standard_metrics",
         n_iter,
         cv,
         random_state,
