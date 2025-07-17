@@ -207,6 +207,57 @@ def plot_umap_scatter(
     )
     return out
 
+# --- 2) Small‑Multiples‑Visualisierung mit Centroid‑Outliern ---
+def plot_umap_centroid_outliers(df, title, cols=6):
+    n_ind = df['individual_id'].nunique()
+    rows  = int(np.ceil(n_ind / cols))
+    fig, axes = plt.subplots(rows, cols, figsize=(cols*3, rows*3),
+                             sharex=False, sharey=False)
+    axes = axes.flatten()
+
+    display(Markdown(f"**{title}**"))
+    for ax, (ind, subset) in zip(axes, df.groupby('individual_id')):
+        # a) KDE-Heatmap der echten Punkte
+        sns.kdeplot(
+            data=subset,
+            x='UMAP1', y='UMAP2',
+            fill=True, thresh=0.05, levels=5, alpha=0.4,
+            ax=ax,
+            color=SEX_COLORS[subset['sex_mapped'].iloc[0]]
+        )
+        # b) Alle Punkte
+        ax.scatter(
+            subset['UMAP1'], subset['UMAP2'],
+            s=20, edgecolor='w', linewidth=0.5,
+            c=SEX_COLORS[subset['sex_mapped'].iloc[0]]
+        )
+        # c) Centroid‑Outlier als rote Kreuze
+        out = subset[subset['is_outlier_centroid']]
+        if not out.empty:
+            ax.scatter(
+                out['UMAP1'], out['UMAP2'],
+                marker='x', c='red', s=40,
+                label='Outlier (Centroid)'
+            )
+        ax.set_title(ind)
+        ax.set_xlabel('UMAP1')
+        ax.set_ylabel('UMAP2')
+
+    # Leere Plots abschalten
+    for ax in axes[n_ind:]:
+        ax.axis('off')
+
+    # Gemeinsame Legende
+    handles = [
+        plt.Line2D([0],[0], marker='o', color='w',
+                   markerfacecolor='gray', markersize=8,
+                   label='Inlier'),
+        plt.Line2D([0],[0], marker='x', color='red',
+                   markersize=8, label='Outlier (Centroid)')
+    ]
+    fig.legend(handles=handles, loc='upper right')
+    plt.tight_layout(rect=[0,0,0.95,1])
+    return fig
 
 FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}
 
@@ -308,23 +359,7 @@ def plot_embedding_by_individual(
     return out
 
 
-def mark_outliers_centroid(df: pd.DataFrame, bandwidth: float = 0.5, percentile: float = 1) -> pd.DataFrame:
-    """Mark centroid-based outliers per individual in a UMAP embedding."""
-    from scipy.stats import multivariate_normal
-    df = df.copy()
-    df["centroid_density"] = np.nan
-    df["is_outlier_centroid"] = False
 
-    for ind, idx in df.groupby("individual_id").groups.items():
-        pts = df.loc[idx, ["UMAP1", "UMAP2"]].values
-        cx, cy = pts.mean(axis=0)
-        cov = [[bandwidth ** 2, 0], [0, bandwidth ** 2]]
-        kernel = multivariate_normal(mean=[cx, cy], cov=cov)
-        dens = kernel.pdf(pts)
-        thresh = np.percentile(dens, percentile)
-        df.loc[idx, "centroid_density"] = dens
-        df.loc[idx, "is_outlier_centroid"] = dens < thresh
-    return df
 
 
 def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> plt.Figure:
