@@ -95,14 +95,15 @@ def prepare_eurasian_otter() -> None:
     )
 
 
-def run_otter_search_sex(
-    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
+def _run_species_search(
+    species: str,
+    base_dir_suffix: str,
+    n_iter: int,
+    cv: int,
+    random_state: int,
 ) -> None:
-    """Run RandomizedSearchCV for the Eurasian otter dataset."""
+    """Run the hyperparameter search for a single species."""
 
-    species = "eurasian_otter"
     species_dir = SPLITS_DIR / species
 
     df_train = (
@@ -153,12 +154,10 @@ def run_otter_search_sex(
     )
 
     folds = (
-        search.cv
-        if isinstance(search.cv, int)
-        else getattr(search.cv, "n_splits", len(list(search.cv)))
+        search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
     )
     total_fits = search.n_iter * folds
-    base_dir = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
+    base_dir = RESULTS_DATA_DIR / base_dir_suffix
     base_dir.mkdir(parents=True, exist_ok=True)
     for m in METRICS:
         (base_dir / f"best_{m}").mkdir(exist_ok=True)
@@ -286,3 +285,38 @@ def run_otter_search_sex(
         }
     )
     plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
+
+
+def run_otter_search_sex(
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
+) -> None:
+    """Run RandomizedSearchCV for the Eurasian otter dataset."""
+    _run_species_search(
+        "eurasian_otter",
+        "eurasian_otter_random_search_standard_metrics",
+        n_iter,
+        cv,
+        random_state,
+    )
+
+
+def run_other_species_search(
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
+) -> None:
+    """Run the search for all species except the Eurasian otter."""
+
+    for species_dir in sorted(SPLITS_DIR.iterdir()):
+        if not species_dir.is_dir() or species_dir.name == "eurasian_otter":
+            continue
+        species = species_dir.name
+        _run_species_search(
+            species,
+            f"{species}_bayes_search_standard_metrics",
+            n_iter,
+            cv,
+            random_state,
+        )
