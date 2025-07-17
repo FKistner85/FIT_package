@@ -17,11 +17,11 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 
 ## pipeline_sex
 - `model_keys`: Reihenfolge der Klassifikatorkürzel aus `MODELS`.
-- `param_distributions`: Suchraum für die Hyperparameter.
+- `search_spaces`: Suchräume für BayesSearchCV mit `Categorical`-Objekten.
 - `metrics`: erfasste Metriken während der Suche.
 - `scoring`: Mapping der Scoring-Bezeichner von sklearn.
 - `pipeline_order`: Reihenfolge der Kennzeichen in Pipeline-IDs.
-- `run_otter_search`: Standardwerte für die Hilfsfunktion `run_otter_search`.
+- `run_otter_search_sex`: Standardwerte für die Hilfsfunktion `run_otter_search_sex`.
 
 ## pipeline_individual_id
 - `pairwise_defaults`: Voreinstellungen für Paar-Embedding-Pipelines.
