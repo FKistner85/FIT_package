@@ -1,5 +1,3 @@
-"""Configuration and search utilities for sex classification pipelines."""
-
 from __future__ import annotations
 from pathlib import Path
 import pandas as pd
@@ -42,6 +40,9 @@ from FIT_python.data_split_and_summary.split_utils import (
     create_train_test_split_otter,
     _make_folds,
 )
+from FIT_python.Visualisations.plot_style import  map_sex
+
+
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 from FIT_python.config import (
     RAW_DIR,
@@ -94,6 +95,11 @@ def prepare_eurasian_otter() -> None:
     )
 
 
+
+
+# 3) Select top-4 sex-discriminative features
+
+
 def run_otter_search(
     n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
     cv: int = PIPE_CFG["run_otter_search"]["cv"],
@@ -114,7 +120,13 @@ def run_otter_search(
         .query("sex in ['f','m']")
         .drop(columns=["Fold"], errors="ignore")
     )
+    for df in (train_df, test_df):
+        df["sex_mapped"] = map_sex(df["sex"])
+        
+        meta_cols = ["id","species","individual_id","date","location","dataorigin","substrate","sex","trail","Fold"]
+        feature_cols = [c for c in train_df.columns if c not in meta_cols + ["sex_mapped"]]
 
+                
     X_tr, y_tr, ids_tr = (
         df_train[feature_cols],
         df_train["sex"].map({"f": 0, "m": 1}).values,

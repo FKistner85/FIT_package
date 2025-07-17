@@ -1,3 +1,5 @@
+"""Default configuration parameters for pipelines."""
+
 SOFT_CONFIG = {
     "data_split_and_summary": {
         "sex_categories": ["Female", "Male"],

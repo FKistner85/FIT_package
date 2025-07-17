@@ -1,3 +1,5 @@
+"""Utilities for identifying and removing outliers."""
+
 # src/FIT_python/pipeline/outlier_wrapper.py
 
 import numpy as np
@@ -23,6 +25,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         upper_quantile: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["upper_quantile"],
         z_thresh: float  = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"]["z_thresh"],
     ):
+        """Store configuration for clipping or z-score cleaning."""
         if method not in ("clip", "zscore"):
             raise ValueError("method must be 'clip' or 'zscore'")
         self.method = method
@@ -32,6 +35,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         self.bounds_ = {}
 
     def fit(self, X, y=None):
+        """No fitting necessary."""
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
         if self.method == "clip":
             lows  = np.quantile(arr, self.lower_quantile, axis=0)
@@ -44,6 +48,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
+        """Transform the DataFrame by clipping or z-score limiting."""
         arr = X.values.copy() if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
         if self.method == "clip":
             low, high = self.bounds_["low"], self.bounds_["high"]
@@ -97,11 +102,7 @@ def mark_outliers_centroid(df, bandwidth=0.5, percentile=1):
 
 
 def print_filter_stats(name, df_before, df_after):
-    """
-    Druckt Anzahl und Prozent der entfernten Punkte sowie
-    Min/Max/Ø/SD der Beobachtungen pro individual_id
-    und die Summe aller Tiere mit < 3 Beobachtungen.
-    """
+    """Print summary statistics about removed records."""
     n_before    = len(df_before)
     n_after     = len(df_after)
     removed     = n_before - n_after
@@ -127,19 +128,21 @@ def print_filter_stats(name, df_before, df_after):
 
 
 class CentroidOutlierTransformer(TransformerMixin, BaseEstimator):
-    """
-    Pro individual_id im UMAP‑Embedding Ausreißer markieren oder entfernen.
-    Erwartet DataFrame mit ['UMAP1','UMAP2','individual_id'].
-    """
+    """Mark or remove outliers per individual in UMAP space.
+    Expects a DataFrame with columns ['UMAP1','UMAP2','individual_id']."""
     def __init__(self, bandwidth: float=0.5, percentile: float=1.0, drop: bool=False):
+        """Store configuration for clipping or z-score cleaning."""
+        """Store parameters."""
         self.bandwidth  = bandwidth
         self.percentile = percentile
         self.drop       = drop
 
     def fit(self, X, y=None):
+        """No fitting necessary."""
         return self
 
     def transform(self, X):
+        """Transform the DataFrame by clipping or z-score limiting."""
         if not isinstance(X, pd.DataFrame):
             raise RuntimeError(
                 "CentroidOutlierTransformer.transform erwartet einen pandas.DataFrame "
@@ -159,19 +162,19 @@ class CentroidOutlierTransformer(TransformerMixin, BaseEstimator):
 # --- 2) Wrapper, der UMAP → DataFrame konvertiert ---
 
 class UMAPtoDF(TransformerMixin, BaseEstimator):
-    """
-    Wrapper um DimensionalityReducerTransformer, der das Array
-    in einen DataFrame mit UMAP1, UMAP2 und individual_id umwandelt.
-    """
+    """Convert arrays to a DataFrame with UMAP coordinates and IDs."""
     def __init__(self, **umap_kwargs):
+        """Store configuration for clipping or z-score cleaning."""
+        """Store UMAP reducer parameters."""
         self.reducer = DimensionalityReducerTransformer(method='umap', **umap_kwargs)
-
     def fit(self, X, y=None):
+        """No fitting necessary."""
         # X must be DataFrame including 'individual_id'
         self.reducer.fit(X.drop(columns=['individual_id']), y)
         return self
 
     def transform(self, X):
+        """Return a DataFrame with UMAP coordinates and IDs."""
         arr = self.reducer.transform(X.drop(columns=['individual_id']))
         df = pd.DataFrame(arr, columns=['UMAP1','UMAP2'], index=X.index)
         df['individual_id'] = X['individual_id'].values
