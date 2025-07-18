@@ -8,8 +8,8 @@ from pathlib import Path
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from FIT_python.soft_config import SOFT_CONFIG
-from . import image_manager
-from .annotation_canvas import AnnotationCanvas
+from FIT_python.gui_annotator import image_manager
+from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas
 
 CFG = SOFT_CONFIG.get("gui_annotator", {})
 RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
