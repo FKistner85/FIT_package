@@ -35,3 +35,25 @@ erd = compute_erd(predicted_n, true_n)
 ```
 
 The ERD returns ``abs(predicted - true) / true`` so smaller values indicate a more accurate estimate.
+
+`optimal_cutoff()` locates the Ward distance that most confidently
+yields a target number of clusters and reports a 25% confidence interval:
+
+```python
+    def optimal_cutoff(distances: pd.DataFrame, true_n: int) -> tuple[float, tuple[float, float]]:
+        """Return the Ward distance most likely to yield ``true_n`` clusters.
+        ...
+        ``(cutoff, (low, high))`` is returned where the interval corresponds to
+        the 25% and 75% percentiles of valid distances.
+        """
+```
+【F:src/FIT_python/pipeline_individual_id/population_estimation.py†L56-L103】
+
+`concordance_correlation_coefficient()` implements Lin's coefficient to compare
+two measurements:
+
+```python
+    def concordance_correlation_coefficient(x: Sequence[float], y: Sequence[float]) -> float:
+        """Return Lin's concordance correlation coefficient between ``x`` and ``y``."""
+```
+【F:src/FIT_python/pipeline_individual_id/population_estimation.py†L106-L124】
