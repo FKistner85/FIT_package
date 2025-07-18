@@ -16,6 +16,7 @@ scipy
 umap-learn
 pyarrow
 tqdm
+PyQt5
 torch
 tqdm-joblib
 joblib
