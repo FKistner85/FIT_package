@@ -9,7 +9,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.gui_annotator import image_manager
-from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas
+from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas, Landmark
 
 CFG = SOFT_CONFIG.get("gui_annotator", {})
 RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
@@ -46,6 +46,14 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.scale_button = QtWidgets.QPushButton("Scale Mode")
         self.scale_button.setCheckable(True)
         self.scale_label = QtWidgets.QLabel("Scale: n/a")
+        self.landmark_table = QtWidgets.QTableWidget(0, 3)
+        self.landmark_table.setHorizontalHeaderLabels(["X", "Y", "Visible"])
+        self.landmark_table.horizontalHeader().setSectionResizeMode(
+            QtWidgets.QHeaderView.Stretch
+        )
+        self.landmark_table.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
+        )
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.canvas)
         controls = QtWidgets.QHBoxLayout()
@@ -66,6 +74,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         scale_controls.addWidget(self.scale_label)
         scale_controls.addStretch()
         layout.addLayout(scale_controls)
+        layout.addWidget(self.landmark_table)
         self.current_id: str | None = None
         self.image_paths: list[Path] = []
         self.current_index: int | None = None
@@ -79,6 +88,9 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.reference_combo.currentIndexChanged.connect(self._on_reference_changed)
         self.scale_button.toggled.connect(self.canvas.set_scale_mode)
         self.canvas.scale_changed.connect(self._on_scale_changed)
+        self.canvas.landmarks_changed.connect(self._update_landmark_table)
+
+        self._update_landmark_table()
 
     # slots --------------------------------------------------------------
     def on_open(self) -> None:
@@ -102,7 +114,10 @@ class AnnotatorApp(QtWidgets.QWidget):
         out_path = ANNOTATION_DIR / f"{self.current_id}.json"
         data = {
             "image_path": str(RAW_DIR / f"{self.current_id}.jpg"),
-            "landmarks": self.canvas.landmarks,
+            "landmarks": [
+                {"x": lm.x, "y": lm.y, "visible": lm.visible}
+                for lm in self.canvas.landmarks
+            ],
         }
         if self.canvas.pixels_per_cm is not None:
             data["pixels_per_cm"] = self.canvas.pixels_per_cm
@@ -142,6 +157,26 @@ class AnnotatorApp(QtWidgets.QWidget):
         else:
             self.scale_label.setText(f"Scale: {factor:.2f} px/cm")
 
+    def _update_landmark_table(self) -> None:
+        self.landmark_table.setRowCount(len(self.canvas.landmarks))
+        for row, lm in enumerate(self.canvas.landmarks):
+            x_item = QtWidgets.QTableWidgetItem(f"{lm.x:.3f}")
+            y_item = QtWidgets.QTableWidgetItem(f"{lm.y:.3f}")
+            chk = QtWidgets.QCheckBox()
+            chk.setChecked(lm.visible)
+            chk.stateChanged.connect(
+                lambda state, r=row: self._on_visibility_changed(r, state)
+            )
+            self.landmark_table.setItem(row, 0, x_item)
+            self.landmark_table.setItem(row, 1, y_item)
+            self.landmark_table.setCellWidget(row, 2, chk)
+
+    def _on_visibility_changed(self, idx: int, state: int) -> None:
+        if 0 <= idx < len(self.canvas.landmarks):
+            lm = self.canvas.landmarks[idx]
+            self.canvas.landmarks[idx] = Landmark(lm.x, lm.y, state == QtCore.Qt.Checked)
+            self.canvas.update()
+
     # helpers ------------------------------------------------------------
     def _load_current(self) -> None:
         if self.current_index is None or not self.image_paths:
@@ -155,6 +190,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         pixmap = QtGui.QPixmap.fromImage(qimg)
         self.canvas.load_pixmap(pixmap)
         self.current_id = image_id
+        self._update_landmark_table()
 
     def _update_buttons(self) -> None:
         if not self.image_paths or self.current_index is None:
