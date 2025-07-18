@@ -121,7 +121,7 @@ SOFT_CONFIG = {
         "raw_image_dir": "data/raw/images",
         "processed_image_dir": "data/processed/images",
         "annotation_dir": "data/processed/annotations",
-        "reference_image": "data/raw/reference_overlay.png",
+        "reference_template_dir": "data/raw/reference_templates",
         "default_scale": 1.0,
         "display_size": [512, 512],
     },

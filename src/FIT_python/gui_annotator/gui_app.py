@@ -26,6 +26,12 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.save_button = QtWidgets.QPushButton("Save Annotations")
         self.next_button = QtWidgets.QPushButton("Next")
         self.back_button = QtWidgets.QPushButton("Back")
+        self.opacity_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.opacity_slider.setRange(0, 100)
+        self.opacity_slider.setValue(int(self.canvas.crossfade_opacity * 100))
+        self.reference_combo = QtWidgets.QComboBox()
+        if self.canvas.reference_names:
+            self.reference_combo.addItems(self.canvas.reference_names)
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.canvas)
         controls = QtWidgets.QHBoxLayout()
@@ -34,6 +40,12 @@ class AnnotatorApp(QtWidgets.QWidget):
         controls.addWidget(self.next_button)
         controls.addWidget(self.save_button)
         layout.addLayout(controls)
+        overlay_controls = QtWidgets.QHBoxLayout()
+        overlay_controls.addWidget(QtWidgets.QLabel("Overlay:"))
+        overlay_controls.addWidget(self.reference_combo)
+        overlay_controls.addWidget(QtWidgets.QLabel("Opacity:"))
+        overlay_controls.addWidget(self.opacity_slider)
+        layout.addLayout(overlay_controls)
         self.current_id: str | None = None
         self.image_paths: list[Path] = []
         self.current_index: int | None = None
@@ -43,9 +55,11 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.save_button.clicked.connect(self.on_save)
         self.next_button.clicked.connect(self.on_next)
         self.back_button.clicked.connect(self.on_back)
+        self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
+        self.reference_combo.currentIndexChanged.connect(self._on_reference_changed)
         self.setFixedSize(
             self.canvas.width() + 40,
-            self.canvas.height() + 100,
+            self.canvas.height() + 140,
         )
 
     # slots --------------------------------------------------------------
@@ -91,6 +105,12 @@ class AnnotatorApp(QtWidgets.QWidget):
             self.current_index -= 1
             self._load_current()
         self._update_buttons()
+
+    def _on_opacity_changed(self, value: int) -> None:
+        self.canvas.set_crossfade_opacity(value / 100.0)
+
+    def _on_reference_changed(self, idx: int) -> None:
+        self.canvas.set_reference_index(idx)
 
     # helpers ------------------------------------------------------------
     def _load_current(self) -> None:
