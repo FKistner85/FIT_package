@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.linear_model import LogisticRegression
 
 from .distance_metrics import compute_distances
+from .utils import map_indices
 
 
 class TripletDataset(Dataset):
@@ -176,31 +177,14 @@ def run(
 
     idx_to_id = emb_df.index.to_series().reset_index(drop=True)
 
-    def _map_indices(id_list: List[str]) -> List[str]:
-        """Map positional indices to ID strings if necessary."""
-        mapped = []
-        for x in id_list:
-            sx = str(x)
-            if sx in emb_df.index:
-                mapped.append(sx)
-            else:
-                try:
-                    idx = int(x)
-                except (ValueError, TypeError):
-                    raise KeyError(f"ID '{x}' not found in embeddings DataFrame")
-                if idx < 0 or idx >= len(idx_to_id):
-                    raise KeyError(f"ID '{x}' not found in embeddings DataFrame")
-                mapped.append(idx_to_id.iloc[idx])
-        return mapped
-
     ids = df_train["individual_id"].astype(str).tolist()
     X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
 
     results: List[Dict] = []
     for comp in val_comparisons:
-        ids_a = _map_indices(comp["samples_a"])
-        ids_b = _map_indices(comp["samples_b"])
+        ids_a = map_indices(comp["samples_a"], idx_to_id, emb_df.index)
+        ids_b = map_indices(comp["samples_b"], idx_to_id, emb_df.index)
         emb_a = emb_df.loc[ids_a].to_numpy().mean(axis=0)
         emb_b = emb_df.loc[ids_b].to_numpy().mean(axis=0)
         dists = compute_distances(emb_a, emb_b)
