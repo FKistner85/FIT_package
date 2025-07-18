@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Sequence
 
+import numpy as np
 import pandas as pd
 
 from FIT_python.config import RESULTS_DATA_DIR
@@ -15,6 +16,12 @@ from .evaluation import (
     compute_confusion,
     compute_overlap_jsl_style,
     compute_bcr,
+)
+from .population_estimation import (
+    cluster_population,
+    compute_erd,
+    optimal_cutoff,
+    concordance_correlation_coefficient,
 )
 from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
@@ -123,12 +130,34 @@ def run(
         df_res["pred"] = df_res.apply(compute_overlap_jsl_style, axis=1)
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
         bcr = compute_bcr(cm)
+
+        # --- build square distance matrix ---
+        trails = sorted(set(df_res["trail_a_id"]) | set(df_res["trail_b_id"]))
+        dist_mat = pd.DataFrame(np.nan, index=trails, columns=trails)
+        for a, b, val in zip(df_res["trail_a_id"], df_res["trail_b_id"], df_res["dist_euclidean"]):
+            try:
+                v = float(val)
+            except Exception:
+                continue
+            dist_mat.at[a, b] = v
+            dist_mat.at[b, a] = v
+        np.fill_diagonal(dist_mat.values, 0.0)
+        max_d = np.nanmax(dist_mat.values)
+        dist_mat = dist_mat.fillna(max_d)
+
+        true_n = len(val_ids)
+        cutoff, _ = optimal_cutoff(dist_mat, true_n)
+        pred_n = cluster_population(dist_mat, cutoff)
+        erd = compute_erd(pred_n, true_n)
         summaries.append(
             {
                 "split": idx,
                 "iteration": split["iteration"],
                 "n_val": split["n_val"],
                 "bcr": bcr,
+                "pred_count": pred_n,
+                "true_count": true_n,
+                "erd": erd,
                 "tp": int(cm.loc["true_same", "pred_same"]),
                 "fp": int(cm.loc["true_diff", "pred_same"]),
                 "tn": int(cm.loc["true_diff", "pred_diff"]),
@@ -139,5 +168,12 @@ def run(
         df_res.to_csv(out_dir / f"split_{idx}.csv", index=False)
 
     summary_df = pd.DataFrame(summaries)
+    if not summary_df.empty:
+        ccc = concordance_correlation_coefficient(
+            summary_df["pred_count"], summary_df["true_count"]
+        )
+        summary_df["ccc"] = ccc
+    else:
+        summary_df["ccc"] = float("nan")
     summary_df.to_csv(out_dir / "summary.csv", index=False)
     return summary_df
