@@ -22,6 +22,7 @@ from FIT_python.soft_config import SOFT_CONFIG
 
 # Local modules
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
+from FIT_python.pipeline_individual_id.utils import prepare_base_df
 from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
     FeatureSelectionTransformer,
 )
@@ -91,12 +92,9 @@ def run_all_pairwise_projections_parallel(
         sex_clf = load(model_fp)
 
     # --- 1) prepare base DataFrame ---
-    df2 = df.copy()
-    df2[sample_col] = df2[sample_col].astype(str)
-    df2[feature_cols] = df2[feature_cols].apply(pd.to_numeric, errors="coerce")
-    df_base = df2.set_index(sample_col)
-    # keep a mapping from positional indices to IDs for backwards compatibility
-    idx_to_id = df2[sample_col].astype(str).reset_index(drop=True)
+    df_base, idx_to_id = prepare_base_df(
+        df, feature_cols, sample_col=sample_col
+    )
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
     if use_sexmodel_prediction:
