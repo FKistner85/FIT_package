@@ -60,6 +60,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self._scale_tmp: list[tuple[float, float]] = []
         self.pixels_per_cm: float | None = None
         self.pixels_per_cm_sd: float | None = None
+        self._zoom: float = 1.0
 
     # configuration slots -------------------------------------------------
     def set_crossfade_opacity(self, value: float) -> None:
@@ -89,6 +90,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.pixels_per_cm = None
         self.pixels_per_cm_sd = None
         self.scale_changed.emit(float("nan"), float("nan"))
+        self._zoom = 1.0
         self._rescale_pixmaps()
         self.update()
 
@@ -123,6 +125,17 @@ class AnnotationCanvas(QtWidgets.QLabel):
             return
 
         self._add_or_update_landmark(x_norm, y_norm, event.button() == QtCore.Qt.LeftButton)
+        self.update()
+
+    def wheelEvent(self, event: QtGui.QWheelEvent) -> None:  # type: ignore[override]
+        """Zoom the canvas in and out with the mouse wheel."""
+        delta = event.angleDelta().y()
+        if delta > 0:
+            self._zoom *= 1.1
+        else:
+            self._zoom /= 1.1
+        self._zoom = max(0.1, min(self._zoom, 10.0))
+        self._rescale_pixmaps()
         self.update()
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:  # type: ignore[override]
@@ -178,9 +191,11 @@ class AnnotationCanvas(QtWidgets.QLabel):
     def _rescale_pixmaps(self) -> None:
         """Scale loaded pixmaps to the current widget size."""
         if self.original_pixmap:
+            target_w = int(self.width() * self._zoom)
+            target_h = int(self.height() * self._zoom)
             self.image = self.original_pixmap.scaled(
-                self.width(),
-                self.height(),
+                target_w,
+                target_h,
                 QtCore.Qt.KeepAspectRatio,
                 QtCore.Qt.SmoothTransformation,
             )
@@ -193,8 +208,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if self._reference_pixmaps:
             self.references = [
                 pm.scaled(
-                    self.width() // 2,
-                    self.height() // 2,
+                    self.image.width(),
+                    self.image.height(),
                     QtCore.Qt.KeepAspectRatio,
                     QtCore.Qt.SmoothTransformation,
                 )
