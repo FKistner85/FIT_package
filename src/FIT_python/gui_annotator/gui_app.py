@@ -45,8 +45,17 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.reference_combo = QtWidgets.QComboBox()
         if self.canvas.reference_names:
             self.reference_combo.addItems(self.canvas.reference_names)
-        self.scale_button = QtWidgets.QPushButton("Scale Mode")
+        self.rotate_button = QtWidgets.QPushButton("Rotate")
+        self.rotate_button.setCheckable(True)
+        self.scale_button = QtWidgets.QPushButton("Scale")
         self.scale_button.setCheckable(True)
+        self.landmark_button = QtWidgets.QPushButton("Landmark")
+        self.landmark_button.setCheckable(True)
+        self.mode_group = QtWidgets.QButtonGroup(self)
+        self.mode_group.setExclusive(True)
+        for btn in (self.rotate_button, self.scale_button, self.landmark_button):
+            self.mode_group.addButton(btn)
+        self.rotate_button.setChecked(True)
         self.scale_label = QtWidgets.QLabel("Scale: n/a")
         self.stats_label = QtWidgets.QLabel("")
         self.landmark_table = QtWidgets.QTableWidget(0, 3)
@@ -72,11 +81,13 @@ class AnnotatorApp(QtWidgets.QWidget):
         overlay_controls.addWidget(QtWidgets.QLabel("Opacity:"))
         overlay_controls.addWidget(self.opacity_slider)
         layout.addLayout(overlay_controls)
-        scale_controls = QtWidgets.QHBoxLayout()
-        scale_controls.addWidget(self.scale_button)
-        scale_controls.addWidget(self.scale_label)
-        scale_controls.addStretch()
-        layout.addLayout(scale_controls)
+        mode_controls = QtWidgets.QHBoxLayout()
+        mode_controls.addWidget(self.rotate_button)
+        mode_controls.addWidget(self.scale_button)
+        mode_controls.addWidget(self.landmark_button)
+        mode_controls.addWidget(self.scale_label)
+        mode_controls.addStretch()
+        layout.addLayout(mode_controls)
         layout.addWidget(self.stats_label)
         layout.addWidget(self.landmark_table)
         self.current_id: str | None = None
@@ -90,7 +101,15 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.back_button.clicked.connect(self.on_back)
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.reference_combo.currentIndexChanged.connect(self._on_reference_changed)
-        self.scale_button.toggled.connect(self.canvas.set_scale_mode)
+        self.rotate_button.toggled.connect(
+            lambda checked: checked and self.canvas.set_mode("rotate")
+        )
+        self.scale_button.toggled.connect(
+            lambda checked: checked and self.canvas.set_mode("scale")
+        )
+        self.landmark_button.toggled.connect(
+            lambda checked: checked and self.canvas.set_mode("landmark")
+        )
         self.canvas.scale_changed.connect(self._on_scale_changed)
         self.canvas.landmarks_changed.connect(self._update_landmark_table)
 
@@ -194,6 +213,8 @@ class AnnotatorApp(QtWidgets.QWidget):
         qimg = QtGui.QImage(img.tobytes(), w, h, w * 3, QtGui.QImage.Format_RGB888)
         pixmap = QtGui.QPixmap.fromImage(qimg)
         self.canvas.load_pixmap(pixmap)
+        self.canvas.set_mode("rotate")
+        self.rotate_button.setChecked(True)
         self.current_id = image_id
         self.stats_label.setText("")
         annotation_files = sorted(ANNOTATION_DIR.glob(f"{image_id}*.json"))

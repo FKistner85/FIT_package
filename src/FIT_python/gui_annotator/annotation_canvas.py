@@ -55,7 +55,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self._pixmap_offset: tuple[int, int] = (0, 0)
         self.rotation_refs: list[Tuple[float, float]] = []
         self.rotation_matrix = QtGui.QTransform()
-        self.scale_mode = False
+        self.mode: str = "rotate"
         self.scale_pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
         self._scale_tmp: list[tuple[float, float]] = []
         self.pixels_per_cm: float | None = None
@@ -73,10 +73,17 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self._reference_index = idx
             self.update()
 
-    def set_scale_mode(self, active: bool) -> None:
-        """Enable or disable selection of scale reference pairs."""
-        self.scale_mode = active
+
+    def set_mode(self, mode: str) -> None:
+        """Set interaction mode (rotate, scale, or landmark)."""
+        if mode not in {"rotate", "scale", "landmark"}:
+            return
+        if mode == self.mode:
+            return
+        self.mode = mode
+        self.rotation_refs = []
         self._scale_tmp = []
+        self.update()
 
     def load_pixmap(self, pixmap: QtGui.QPixmap) -> None:
         """Load ``pixmap`` and rescale to the current widget size."""
@@ -90,6 +97,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.pixels_per_cm = None
         self.pixels_per_cm_sd = None
         self.scale_changed.emit(float("nan"), float("nan"))
+        self.mode = "rotate"
         self._zoom = 1.0
         self._rescale_pixmaps()
         self.update()
@@ -109,7 +117,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         x_norm = x / w
         y_norm = y / h
 
-        if self.scale_mode:
+        if self.mode == "scale":
             self._scale_tmp.append((x_norm, y_norm))
             if len(self._scale_tmp) == 2:
                 self.scale_pairs.append((self._scale_tmp[0], self._scale_tmp[1]))
@@ -118,7 +126,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self.update()
             return
 
-        if len(self.rotation_refs) < 2:
+        if self.mode == "rotate":
             self.rotation_refs.append((x_norm, y_norm))
             if len(self.rotation_refs) == 2:
                 self._apply_rotation()
@@ -169,7 +177,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 )
                 painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
                 painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
-            if self.scale_mode and self._scale_tmp:
+            if self.mode == "scale" and self._scale_tmp:
                 x, y = self._scale_tmp[0]
                 painter.drawEllipse(QtCore.QPoint(ox + int(x * w), oy + int(y * h)), 3, 3)
         painter.end()
