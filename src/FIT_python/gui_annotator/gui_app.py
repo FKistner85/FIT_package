@@ -43,6 +43,9 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.reference_combo = QtWidgets.QComboBox()
         if self.canvas.reference_names:
             self.reference_combo.addItems(self.canvas.reference_names)
+        self.scale_button = QtWidgets.QPushButton("Scale Mode")
+        self.scale_button.setCheckable(True)
+        self.scale_label = QtWidgets.QLabel("Scale: n/a")
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.canvas)
         controls = QtWidgets.QHBoxLayout()
@@ -58,6 +61,11 @@ class AnnotatorApp(QtWidgets.QWidget):
         overlay_controls.addWidget(QtWidgets.QLabel("Opacity:"))
         overlay_controls.addWidget(self.opacity_slider)
         layout.addLayout(overlay_controls)
+        scale_controls = QtWidgets.QHBoxLayout()
+        scale_controls.addWidget(self.scale_button)
+        scale_controls.addWidget(self.scale_label)
+        scale_controls.addStretch()
+        layout.addLayout(scale_controls)
         self.current_id: str | None = None
         self.image_paths: list[Path] = []
         self.current_index: int | None = None
@@ -69,6 +77,8 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.back_button.clicked.connect(self.on_back)
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.reference_combo.currentIndexChanged.connect(self._on_reference_changed)
+        self.scale_button.toggled.connect(self.canvas.set_scale_mode)
+        self.canvas.scale_changed.connect(self._on_scale_changed)
 
     # slots --------------------------------------------------------------
     def on_open(self) -> None:
@@ -94,6 +104,10 @@ class AnnotatorApp(QtWidgets.QWidget):
             "image_path": str(RAW_DIR / f"{self.current_id}.jpg"),
             "landmarks": self.canvas.landmarks,
         }
+        if self.canvas.pixels_per_cm is not None:
+            data["pixels_per_cm"] = self.canvas.pixels_per_cm
+            if self.canvas.pixels_per_cm_sd is not None:
+                data["pixels_per_cm_sd"] = self.canvas.pixels_per_cm_sd
         with open(out_path, "w", encoding="utf-8") as fh:
             json.dump(data, fh, indent=2)
         QtWidgets.QMessageBox.information(self, "Saved", f"Annotations written to {out_path}")
@@ -119,6 +133,14 @@ class AnnotatorApp(QtWidgets.QWidget):
 
     def _on_reference_changed(self, idx: int) -> None:
         self.canvas.set_reference_index(idx)
+
+    def _on_scale_changed(self, factor: float, sd: float) -> None:
+        if factor != factor or factor is None:  # NaN check
+            self.scale_label.setText("Scale: n/a")
+        elif sd:
+            self.scale_label.setText(f"Scale: {factor:.2f} px/cm (±{sd:.2f})")
+        else:
+            self.scale_label.setText(f"Scale: {factor:.2f} px/cm")
 
     # helpers ------------------------------------------------------------
     def _load_current(self) -> None:
