@@ -33,6 +33,7 @@ from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTran
 from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
     FeatureScalerTransformer,
 )
+from FIT_python.pipeline_individual_id.utils import map_indices
 
 from typing import List, Dict, Union, Optional, Tuple
 from scipy.spatial.distance import cdist
@@ -125,28 +126,11 @@ def run_all_pairwise_projections_parallel(
     else:
         scalers = [None]
 
-    def _map_indices(id_list: List[str]) -> List[str]:
-        """Map positional indices to ID strings if necessary."""
-        mapped = []
-        for x in id_list:
-            sx = str(x)
-            if sx in df_base.index:
-                mapped.append(sx)
-                continue
-            try:
-                idx = int(x)
-            except (ValueError, TypeError):
-                raise KeyError(f"ID '{x}' not found in DataFrame")
-            if idx < 0 or idx >= len(idx_to_id):
-                raise KeyError(f"ID '{x}' not found in DataFrame")
-            mapped.append(idx_to_id.iloc[idx])
-        return mapped
-
     def process_pair(i: int, comp: Dict) -> List[Dict]:
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
-        ids_a = _map_indices(comp["samples_a"])
-        ids_b = _map_indices(comp["samples_b"])
+        ids_a = map_indices(comp["samples_a"], idx_to_id, df_base.index)
+        ids_b = map_indices(comp["samples_b"], idx_to_id, df_base.index)
 
         size_a, size_b = len(ids_a), len(ids_b)
 
