@@ -51,6 +51,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
             if self._reference_pixmaps:
                 self._reference_index = 0
         self.setMouseTracking(True)
+        self.setStyleSheet("background: white")
+        self._pixmap_offset: tuple[int, int] = (0, 0)
         self.rotation_refs: list[Tuple[float, float]] = []
         self.rotation_matrix = QtGui.QTransform()
         self.scale_mode = False
@@ -95,10 +97,15 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if event.button() not in (QtCore.Qt.LeftButton, QtCore.Qt.RightButton):
             return
 
-        w = max(self.width(), 1)
-        h = max(self.height(), 1)
-        x_norm = event.x() / w
-        y_norm = event.y() / h
+        w = max(self.image.width() if self.image else self.width(), 1)
+        h = max(self.image.height() if self.image else self.height(), 1)
+        ox, oy = self._pixmap_offset
+        x = event.x() - ox
+        y = event.y() - oy
+        if x < 0 or y < 0 or x > w or y > h:
+            return
+        x_norm = x / w
+        y_norm = y / h
 
         if self.scale_mode:
             self._scale_tmp.append((x_norm, y_norm))
@@ -121,7 +128,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:  # type: ignore[override]
         painter = QtGui.QPainter(self)
         if self.image:
-            painter.drawPixmap(0, 0, self.image)
+            ox, oy = self._pixmap_offset
+            painter.drawPixmap(ox, oy, self.image)
         if (
             self._reference_index is not None
             and self.image
@@ -129,28 +137,28 @@ class AnnotationCanvas(QtWidgets.QLabel):
         ):
             painter.setOpacity(self.crossfade_opacity)
             overlay = self.references[self._reference_index]
-            painter.drawPixmap(0, 0, overlay)
+            painter.drawPixmap(ox, oy, overlay)
             painter.setOpacity(1.0)
         painter.setPen(QtGui.QPen(QtCore.Qt.red, 4))
         if self.image:
-            w = self.width()
-            h = self.height()
+            w = self.image.width()
+            h = self.image.height()
             for lm in self.landmarks:
                 if not lm.visible:
                     continue
                 painter.drawEllipse(
-                    QtCore.QPoint(int(lm.x * w), int(lm.y * h)), 4, 4
+                    QtCore.QPoint(ox + int(lm.x * w), oy + int(lm.y * h)), 4, 4
                 )
             painter.setPen(QtGui.QPen(QtCore.Qt.green, 2))
             for (x1, y1), (x2, y2) in self.scale_pairs:
                 painter.drawLine(
-                    int(x1 * w), int(y1 * h), int(x2 * w), int(y2 * h)
+                    ox + int(x1 * w), oy + int(y1 * h), ox + int(x2 * w), oy + int(y2 * h)
                 )
-                painter.drawEllipse(QtCore.QPoint(int(x1 * w), int(y1 * h)), 3, 3)
-                painter.drawEllipse(QtCore.QPoint(int(x2 * w), int(y2 * h)), 3, 3)
+                painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
+                painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
             if self.scale_mode and self._scale_tmp:
                 x, y = self._scale_tmp[0]
-                painter.drawEllipse(QtCore.QPoint(int(x * w), int(y * h)), 3, 3)
+                painter.drawEllipse(QtCore.QPoint(ox + int(x * w), oy + int(y * h)), 3, 3)
         painter.end()
 
     def sizeHint(self) -> QtCore.QSize:  # type: ignore[override]
@@ -173,15 +181,21 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self.image = self.original_pixmap.scaled(
                 self.width(),
                 self.height(),
-                QtCore.Qt.IgnoreAspectRatio,
+                QtCore.Qt.KeepAspectRatio,
                 QtCore.Qt.SmoothTransformation,
             )
+            self._pixmap_offset = (
+                (self.width() - self.image.width()) // 2,
+                (self.height() - self.image.height()) // 2,
+            )
+        else:
+            self._pixmap_offset = (0, 0)
         if self._reference_pixmaps:
             self.references = [
                 pm.scaled(
                     self.width() // 2,
                     self.height() // 2,
-                    QtCore.Qt.IgnoreAspectRatio,
+                    QtCore.Qt.KeepAspectRatio,
                     QtCore.Qt.SmoothTransformation,
                 )
                 for pm in self._reference_pixmaps
@@ -192,8 +206,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
 
     def _add_or_update_landmark(self, x: float, y: float, visible: bool) -> None:
         """Insert or update a landmark near ``(x, y)``."""
-        w = max(self.width(), 1)
-        h = max(self.height(), 1)
+        w = max(self.image.width() if self.image else self.width(), 1)
+        h = max(self.image.height() if self.image else self.height(), 1)
         threshold = 6  # pixels
         for idx, lm in enumerate(self.landmarks):
             if abs(lm.x - x) * w < threshold and abs(lm.y - y) * h < threshold:
@@ -212,8 +226,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self.scale_changed.emit(float("nan"), float("nan"))
             return
 
-        w = max(self.width(), 1)
-        h = max(self.height(), 1)
+        w = max(self.image.width() if self.image else self.width(), 1)
+        h = max(self.image.height() if self.image else self.height(), 1)
         distances = []
         for (x1, y1), (x2, y2) in self.scale_pairs:
             dx = (x1 - x2) * w
@@ -240,8 +254,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if not self.original_pixmap or len(self.rotation_refs) != 2:
             return
 
-        w = max(self.width(), 1)
-        h = max(self.height(), 1)
+        w = max(self.image.width() if self.image else self.width(), 1)
+        h = max(self.image.height() if self.image else self.height(), 1)
         (x1, y1), (x2, y2) = self.rotation_refs
         p1 = QtCore.QPointF(x1 * w, y1 * h)
         p2 = QtCore.QPointF(x2 * w, y2 * h)
