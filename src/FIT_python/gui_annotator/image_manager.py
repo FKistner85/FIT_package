@@ -13,6 +13,7 @@ CFG = SOFT_CONFIG.get("gui_annotator", {})
 RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
 PROCESSED_DIR = Path(CFG.get("processed_image_dir", "data/processed/images"))
 DEFAULT_SCALE = float(CFG.get("default_scale", 1.0))
+DISPLAY_SIZE = tuple(int(v) for v in CFG.get("display_size", [512, 512]))
 
 
 def load_image(image_path: Path) -> Image.Image:
