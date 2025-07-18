@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import math
 
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.gui_annotator import image_manager
@@ -46,6 +48,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.scale_button = QtWidgets.QPushButton("Scale Mode")
         self.scale_button.setCheckable(True)
         self.scale_label = QtWidgets.QLabel("Scale: n/a")
+        self.stats_label = QtWidgets.QLabel("")
         self.landmark_table = QtWidgets.QTableWidget(0, 3)
         self.landmark_table.setHorizontalHeaderLabels(["X", "Y", "Visible"])
         self.landmark_table.horizontalHeader().setSectionResizeMode(
@@ -74,6 +77,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         scale_controls.addWidget(self.scale_label)
         scale_controls.addStretch()
         layout.addLayout(scale_controls)
+        layout.addWidget(self.stats_label)
         layout.addWidget(self.landmark_table)
         self.current_id: str | None = None
         self.image_paths: list[Path] = []
@@ -111,7 +115,8 @@ class AnnotatorApp(QtWidgets.QWidget):
         if not self.current_id:
             return
         ANNOTATION_DIR.mkdir(parents=True, exist_ok=True)
-        out_path = ANNOTATION_DIR / f"{self.current_id}.json"
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        out_path = ANNOTATION_DIR / f"{self.current_id}_{ts}.json"
         data = {
             "image_path": str(RAW_DIR / f"{self.current_id}.jpg"),
             "landmarks": [
@@ -190,6 +195,75 @@ class AnnotatorApp(QtWidgets.QWidget):
         pixmap = QtGui.QPixmap.fromImage(qimg)
         self.canvas.load_pixmap(pixmap)
         self.current_id = image_id
+        self.stats_label.setText("")
+        annotation_files = sorted(ANNOTATION_DIR.glob(f"{image_id}*.json"))
+        if annotation_files:
+            res = QtWidgets.QMessageBox.question(
+                self,
+                "Load Annotations?",
+                "Existing annotations found. Load them?",
+            )
+            if res == QtWidgets.QMessageBox.Yes:
+                all_sets: list[list[Landmark]] = []
+                first_data: dict | None = None
+                for p in annotation_files:
+                    with open(p, "r", encoding="utf-8") as fh:
+                        data = json.load(fh)
+                    if first_data is None:
+                        first_data = data
+                    lms = [
+                        Landmark(
+                            lm.get("x", 0.0),
+                            lm.get("y", 0.0),
+                            lm.get("visible", True),
+                        )
+                        for lm in data.get("landmarks", [])
+                    ]
+                    all_sets.append(lms)
+                if all_sets:
+                    self.canvas.landmarks = all_sets[0]
+                    self.canvas.landmarks_changed.emit()
+                    if first_data and first_data.get("pixels_per_cm") is not None:
+                        self.canvas.pixels_per_cm = first_data["pixels_per_cm"]
+                        self.canvas.pixels_per_cm_sd = first_data.get("pixels_per_cm_sd")
+                        self.canvas.scale_changed.emit(
+                            self.canvas.pixels_per_cm,
+                            self.canvas.pixels_per_cm_sd or float("nan"),
+                        )
+                if len(all_sets) > 1:
+                    diffs: list[tuple[float, float]] = []
+                    for idx in range(len(all_sets[0])):
+                        coords = [
+                            (s[idx].x * w, s[idx].y * h)
+                            for s in all_sets
+                            if idx < len(s)
+                        ]
+                        if len(coords) < 2:
+                            diffs.append((float("nan"), float("nan")))
+                            continue
+                        dists = []
+                        for i in range(len(coords)):
+                            for j in range(i + 1, len(coords)):
+                                dx = coords[i][0] - coords[j][0]
+                                dy = coords[i][1] - coords[j][1]
+                                dists.append(math.hypot(dx, dy))
+                        if not dists:
+                            diffs.append((float("nan"), float("nan")))
+                            continue
+                        mean = sum(dists) / len(dists)
+                        sd = 0.0
+                        if len(dists) > 1:
+                            var = sum((d - mean) ** 2 for d in dists) / (len(dists) - 1)
+                            sd = math.sqrt(var)
+                        diffs.append((mean, sd))
+                    summary_lines = [
+                        f"LM {i+1}: {m:.2f} ± {s:.2f} px" if m == m else f"LM {i+1}: n/a"
+                        for i, (m, s) in enumerate(diffs)
+                    ]
+                    self.stats_label.setText("; ".join(summary_lines))
+            else:
+                self.canvas.landmarks = []
+                self.canvas.landmarks_changed.emit()
         self._update_landmark_table()
 
     def _update_buttons(self) -> None:
