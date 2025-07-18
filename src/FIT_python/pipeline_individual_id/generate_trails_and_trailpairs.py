@@ -1,5 +1,5 @@
 from itertools import combinations
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -148,5 +148,98 @@ def generate_pairs(trails: Dict[str, List[str]]) -> List[Tuple[str, str]]:
     return pairs
 
 
+def generate_pairwise_comparisons_from_df(
+    df: pd.DataFrame,
+    *,
+    trails: Optional[Dict[str, List[str]]] = None,
+    strategy: str = "select",
+    id_col: str = "individual_id",
+    trail_col: str = "trail",
+    fold_col: str = "fold",
+    sex_col: str = "sex",
+    id_field: str = "id",
+    subsample: bool = False,
+    random_state: int = 0,
+) -> Tuple[List[Dict], pd.DataFrame]:
+    """Create pairwise trail comparisons.
 
+    The function uses :func:`select_or_generate_trails` and
+    :func:`generate_subsamples` to obtain trail definitions. ``fold_a`` and
+    ``fold_b`` are read directly from ``fold_col`` in ``df`` with
+    ``same_fold`` indicating equality. If a ``substrate`` column exists or the
+    species is ``"eurasian_otter"`` then ``substrate_a`` and ``substrate_b`` are
+    added to each comparison.
+    """
+
+    df = select_or_generate_trails(
+        df,
+        strategy=strategy,
+        individual_col=id_col,
+        trail_col=trail_col,
+        random_state=random_state,
+    )
+
+    if trails is None:
+        if subsample:
+            trails = generate_subsamples(
+                df,
+                trail_col=trail_col,
+                id_col=id_field,
+                individual_col=id_col,
+                random_state=random_state,
+            )
+        else:
+            trails = {
+                tr: df.loc[df[trail_col] == tr, id_field].tolist()
+                for tr in df[trail_col].dropna().unique()
+            }
+
+    pairs = generate_pairs(trails)
+
+    base_to_ind = df.groupby(trail_col)[id_col].first().to_dict()
+    base_to_fold = df.groupby(trail_col)[fold_col].first().to_dict()
+    base_to_sex = df.groupby(trail_col)[sex_col].first().fillna("unknown").replace("", "unknown").to_dict()
+
+    use_sub = "substrate" in df.columns or (
+        "species" in df.columns and df["species"].eq("eurasian_otter").any()
+    )
+    base_to_sub = (
+        df.groupby(trail_col)["substrate"].apply(_mode).to_dict() if use_sub and "substrate" in df.columns else {}
+    )
+
+    comparisons: List[Dict] = []
+    for ta, tb in pairs:
+        base_a = ta.split("_sub")[0]
+        base_b = tb.split("_sub")[0]
+        ind_a = base_to_ind.get(base_a, "unknown")
+        ind_b = base_to_ind.get(base_b, "unknown")
+        sex_a = base_to_sex.get(base_a, "unknown")
+        sex_b = base_to_sex.get(base_b, "unknown")
+        fold_a = base_to_fold.get(base_a)
+        fold_b = base_to_fold.get(base_b)
+        rec = {
+            "ind_a": ind_a,
+            "ind_b": ind_b,
+            "trail_a_id": ta,
+            "trail_b_id": tb,
+            "samples_a": trails[ta],
+            "samples_b": trails[tb],
+            "same_individual": (
+                "unknown" if "unknown" in (ind_a, ind_b) else ind_a == ind_b
+            ),
+            "same_sex": (
+                "unknown" if "unknown" in (sex_a, sex_b) else sex_a == sex_b
+            ),
+            "fold_a": fold_a,
+            "fold_b": fold_b,
+            "same_fold": fold_a == fold_b,
+            "fold": max(fold_a, fold_b) if fold_a is not None and fold_b is not None else fold_a or fold_b,
+        }
+        if use_sub:
+            rec["substrate_a"] = base_to_sub.get(base_a)
+            rec["substrate_b"] = base_to_sub.get(base_b)
+        comparisons.append(rec)
+
+    summary = pd.DataFrame({"n_pairs": [len(comparisons)], "n_trails": [len(trails)]})
+    return comparisons, summary
 
