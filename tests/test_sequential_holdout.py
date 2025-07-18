@@ -26,4 +26,8 @@ def test_run_produces_summary(tmp_path):
     summary = run(df, ['f1', 'f2'], preds, val_sizes=[2], iterations=1, out_dir=tmp_path, n_jobs=1)
     assert not summary.empty
     assert 'bcr' in summary.columns
+    assert 'erd' in summary.columns
+    assert 'pred_count' in summary.columns
+    assert 'true_count' in summary.columns
+    assert 'ccc' in summary.columns
     assert (tmp_path / 'summary.csv').exists()
