@@ -4,6 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Tuple
+from dataclasses import dataclass
+
+
+@dataclass
+class Landmark:
+    """Single annotated landmark with visibility flag."""
+
+    x: float
+    y: float
+    visible: bool = True
 import math
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -19,11 +29,12 @@ class AnnotationCanvas(QtWidgets.QLabel):
     """Interactive canvas allowing placement of landmarks and scale refs."""
 
     scale_changed = QtCore.pyqtSignal(float, float)
+    landmarks_changed = QtCore.pyqtSignal()
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
         self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-        self.landmarks: List[Tuple[float, float]] = []
+        self.landmarks: List[Landmark] = []
         self.crossfade_opacity = 0.3
         self.image: QtGui.QPixmap | None = None
         self.original_pixmap: QtGui.QPixmap | None = None
@@ -68,6 +79,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         """Load ``pixmap`` and rescale to the current widget size."""
         self.original_pixmap = pixmap
         self.landmarks = []
+        self.landmarks_changed.emit()
         self.rotation_refs = []
         self.rotation_matrix = QtGui.QTransform()
         self.scale_pairs = []
@@ -80,14 +92,16 @@ class AnnotationCanvas(QtWidgets.QLabel):
 
     # Qt event handlers -------------------------------------------------
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:  # type: ignore[override]
-        if event.button() != QtCore.Qt.LeftButton:
+        if event.button() not in (QtCore.Qt.LeftButton, QtCore.Qt.RightButton):
             return
 
         w = max(self.width(), 1)
         h = max(self.height(), 1)
+        x_norm = event.x() / w
+        y_norm = event.y() / h
 
         if self.scale_mode:
-            self._scale_tmp.append((event.x() / w, event.y() / h))
+            self._scale_tmp.append((x_norm, y_norm))
             if len(self._scale_tmp) == 2:
                 self.scale_pairs.append((self._scale_tmp[0], self._scale_tmp[1]))
                 self._scale_tmp = []
@@ -96,14 +110,13 @@ class AnnotationCanvas(QtWidgets.QLabel):
             return
 
         if len(self.rotation_refs) < 2:
-            self.rotation_refs.append((event.x() / w, event.y() / h))
+            self.rotation_refs.append((x_norm, y_norm))
             if len(self.rotation_refs) == 2:
                 self._apply_rotation()
             return
 
-        if len(self.landmarks) < 11:
-            self.landmarks.append((event.x() / w, event.y() / h))
-            self.update()
+        self._add_or_update_landmark(x_norm, y_norm, event.button() == QtCore.Qt.LeftButton)
+        self.update()
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:  # type: ignore[override]
         painter = QtGui.QPainter(self)
@@ -122,8 +135,12 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if self.image:
             w = self.width()
             h = self.height()
-            for x, y in self.landmarks:
-                painter.drawEllipse(QtCore.QPoint(int(x * w), int(y * h)), 4, 4)
+            for lm in self.landmarks:
+                if not lm.visible:
+                    continue
+                painter.drawEllipse(
+                    QtCore.QPoint(int(lm.x * w), int(lm.y * h)), 4, 4
+                )
             painter.setPen(QtGui.QPen(QtCore.Qt.green, 2))
             for (x1, y1), (x2, y2) in self.scale_pairs:
                 painter.drawLine(
@@ -172,6 +189,20 @@ class AnnotationCanvas(QtWidgets.QLabel):
         else:
             self.references = []
         self._update_scale()
+
+    def _add_or_update_landmark(self, x: float, y: float, visible: bool) -> None:
+        """Insert or update a landmark near ``(x, y)``."""
+        w = max(self.width(), 1)
+        h = max(self.height(), 1)
+        threshold = 6  # pixels
+        for idx, lm in enumerate(self.landmarks):
+            if abs(lm.x - x) * w < threshold and abs(lm.y - y) * h < threshold:
+                self.landmarks[idx] = Landmark(x, y, visible)
+                self.landmarks_changed.emit()
+                return
+        if len(self.landmarks) < 11:
+            self.landmarks.append(Landmark(x, y, visible))
+            self.landmarks_changed.emit()
 
     def _update_scale(self) -> None:
         """Recompute pixels-per-cm from stored scale pairs."""
@@ -226,12 +257,15 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if self.landmarks:
             rot_w = rotated.width()
             rot_h = rotated.height()
-            new_pts: list[Tuple[float, float]] = []
-            for lx, ly in self.landmarks:
-                pt = QtCore.QPointF(lx * w, ly * h)
+            new_pts: list[Landmark] = []
+            for lm in self.landmarks:
+                pt = QtCore.QPointF(lm.x * w, lm.y * h)
                 pt = self.rotation_matrix.map(pt)
-                new_pts.append((pt.x() / rot_w, pt.y() / rot_h))
+                new_pts.append(
+                    Landmark(pt.x() / rot_w, pt.y() / rot_h, lm.visible)
+                )
             self.landmarks = new_pts
+            self.landmarks_changed.emit()
 
         self.rotation_refs = []
         self.scale_pairs = []
