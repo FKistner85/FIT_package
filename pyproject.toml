@@ -23,6 +23,7 @@ dependencies = [                       # aus install_requires=
   "scipy",
   "umap-learn",
   "scikit-optimize",
+  "PyQt5",
   "tqdm",
 ]
 

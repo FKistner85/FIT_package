@@ -19,6 +19,9 @@ Alternatively you can create a conda environment via `environment.yml`:
 conda env create -f environment.yml
 ```
 
+The annotation GUI relies on `PyQt5`, which is listed in the main
+dependencies.
+
 ## Usage
 
 The package exposes several pipeline utilities under `FIT_python`. Refer to the
