@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Tuple
+import math
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -37,6 +38,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
             if self._reference_pixmaps:
                 self._reference_index = 0
         self.setMouseTracking(True)
+        self.rotation_refs: list[Tuple[float, float]] = []
+        self.rotation_matrix = QtGui.QTransform()
 
     # configuration slots -------------------------------------------------
     def set_crossfade_opacity(self, value: float) -> None:
@@ -53,14 +56,26 @@ class AnnotationCanvas(QtWidgets.QLabel):
         """Load ``pixmap`` and rescale to the current widget size."""
         self.original_pixmap = pixmap
         self.landmarks = []
+        self.rotation_refs = []
+        self.rotation_matrix = QtGui.QTransform()
         self._rescale_pixmaps()
         self.update()
 
     # Qt event handlers -------------------------------------------------
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:  # type: ignore[override]
-        if event.button() == QtCore.Qt.LeftButton and len(self.landmarks) < 11:
-            w = max(self.width(), 1)
-            h = max(self.height(), 1)
+        if event.button() != QtCore.Qt.LeftButton:
+            return
+
+        w = max(self.width(), 1)
+        h = max(self.height(), 1)
+
+        if len(self.rotation_refs) < 2:
+            self.rotation_refs.append((event.x() / w, event.y() / h))
+            if len(self.rotation_refs) == 2:
+                self._apply_rotation()
+            return
+
+        if len(self.landmarks) < 11:
             self.landmarks.append((event.x() / w, event.y() / h))
             self.update()
 
@@ -124,3 +139,36 @@ class AnnotationCanvas(QtWidgets.QLabel):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:  # type: ignore[override]
         self._rescale_pixmaps()
         super().resizeEvent(event)
+
+    def _apply_rotation(self) -> None:
+        """Rotate loaded pixmap and existing landmarks using reference points."""
+        if not self.original_pixmap or len(self.rotation_refs) != 2:
+            return
+
+        w = max(self.width(), 1)
+        h = max(self.height(), 1)
+        (x1, y1), (x2, y2) = self.rotation_refs
+        p1 = QtCore.QPointF(x1 * w, y1 * h)
+        p2 = QtCore.QPointF(x2 * w, y2 * h)
+
+        angle = math.atan2(p2.y() - p1.y(), p2.x() - p1.x())
+        self.rotation_matrix = QtGui.QTransform().rotateRadians(-angle)
+
+        rotated = self.original_pixmap.transformed(
+            self.rotation_matrix, QtCore.Qt.SmoothTransformation
+        )
+        self.original_pixmap = rotated
+
+        if self.landmarks:
+            rot_w = rotated.width()
+            rot_h = rotated.height()
+            new_pts: list[Tuple[float, float]] = []
+            for lx, ly in self.landmarks:
+                pt = QtCore.QPointF(lx * w, ly * h)
+                pt = self.rotation_matrix.map(pt)
+                new_pts.append((pt.x() / rot_w, pt.y() / rot_h))
+            self.landmarks = new_pts
+
+        self.rotation_refs = []
+        self._rescale_pixmaps()
+        self.update()
