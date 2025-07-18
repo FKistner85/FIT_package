@@ -121,8 +121,11 @@ SOFT_CONFIG = {
         "raw_image_dir": "data/raw/images",
         "processed_image_dir": "data/processed/images",
         "annotation_dir": "data/processed/annotations",
-        "reference_image": "data/raw/reference_overlay.png",
+        # Default reference template shown beside the annotation canvas
+        "reference_image": "src/FIT_python/gui_annotator/Reference_template/template.png",
         "default_scale": 1.0,
-        "display_size": [512, 512],
+        # Size of the displayed images in the GUI. Doubled compared to the
+        # previous default to provide a larger working area.
+        "display_size": [1024, 1024],
     },
 }

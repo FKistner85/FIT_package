@@ -42,3 +42,9 @@ pytest
 ```
 
 The unit tests located in `tests/` cover a small subset of the pipeline logic.
+
+## GUI Annotator
+
+To display a reference image next to the annotation canvas, place your template
+at `src/FIT_python/gui_annotator/Reference_template/template.png`. The file is
+not included in the repository.

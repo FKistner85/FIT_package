@@ -22,10 +22,20 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.setWindowTitle("FIT Image Annotator")
         self.canvas = AnnotationCanvas()
         self.canvas.setFixedSize(*image_manager.DISPLAY_SIZE)
+        # Reference image shown permanently next to the canvas
+        self.reference_label = QtWidgets.QLabel()
+        ref_path = Path(CFG.get("reference_image", ""))
+        if ref_path.exists():
+            pixmap = QtGui.QPixmap(str(ref_path))
+            self.reference_label.setPixmap(pixmap.scaled(*image_manager.DISPLAY_SIZE))
+        self.reference_label.setFixedSize(*image_manager.DISPLAY_SIZE)
         self.open_button = QtWidgets.QPushButton("Open Image")
         self.save_button = QtWidgets.QPushButton("Save Annotations")
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.canvas)
+        images_layout = QtWidgets.QHBoxLayout()
+        images_layout.addWidget(self.reference_label)
+        images_layout.addWidget(self.canvas)
+        layout.addLayout(images_layout)
         controls = QtWidgets.QHBoxLayout()
         controls.addWidget(self.open_button)
         controls.addWidget(self.save_button)
@@ -34,8 +44,8 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.open_button.clicked.connect(self.on_open)
         self.save_button.clicked.connect(self.on_save)
         self.setFixedSize(
-            self.canvas.width() + 40,
-            self.canvas.height() + 100,
+            self.canvas.width() + self.reference_label.width() + 60,
+            max(self.canvas.height(), self.reference_label.height()) + 100,
         )
 
     # slots --------------------------------------------------------------
