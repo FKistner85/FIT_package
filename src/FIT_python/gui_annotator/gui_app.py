@@ -58,8 +58,9 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.rotate_button.setChecked(True)
         self.scale_label = QtWidgets.QLabel("Scale: n/a")
         self.stats_label = QtWidgets.QLabel("")
-        self.landmark_table = QtWidgets.QTableWidget(0, 3)
+        self.landmark_table = QtWidgets.QTableWidget(11, 3)
         self.landmark_table.setHorizontalHeaderLabels(["X", "Y", "Visible"])
+        self.landmark_table.setVerticalHeaderLabels([f"LM{i+1}" for i in range(11)])
         self.landmark_table.horizontalHeader().setSectionResizeMode(
             QtWidgets.QHeaderView.Stretch
         )
@@ -182,12 +183,23 @@ class AnnotatorApp(QtWidgets.QWidget):
             self.scale_label.setText(f"Scale: {factor:.2f} px/cm")
 
     def _update_landmark_table(self) -> None:
-        self.landmark_table.setRowCount(len(self.canvas.landmarks))
-        for row, lm in enumerate(self.canvas.landmarks):
-            x_item = QtWidgets.QTableWidgetItem(f"{lm.x:.3f}")
-            y_item = QtWidgets.QTableWidgetItem(f"{lm.y:.3f}")
+        """Refresh the landmark table to show up to 11 landmarks."""
+        row_count = 11
+        self.landmark_table.setRowCount(row_count)
+        for row in range(row_count):
+            if row < len(self.canvas.landmarks):
+                lm = self.canvas.landmarks[row]
+                x_text = f"{lm.x:.3f}"
+                y_text = f"{lm.y:.3f}"
+                checked = lm.visible
+            else:
+                x_text = ""
+                y_text = ""
+                checked = False
+            x_item = QtWidgets.QTableWidgetItem(x_text)
+            y_item = QtWidgets.QTableWidgetItem(y_text)
             chk = QtWidgets.QCheckBox()
-            chk.setChecked(lm.visible)
+            chk.setChecked(checked)
             chk.stateChanged.connect(
                 lambda state, r=row: self._on_visibility_changed(r, state)
             )
