@@ -123,5 +123,6 @@ SOFT_CONFIG = {
         "annotation_dir": "data/processed/annotations",
         "reference_image": "data/raw/reference_overlay.png",
         "default_scale": 1.0,
+        "display_size": [512, 512],
     },
 }

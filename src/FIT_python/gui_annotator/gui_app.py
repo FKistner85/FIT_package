@@ -21,6 +21,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         super().__init__()
         self.setWindowTitle("FIT Image Annotator")
         self.canvas = AnnotationCanvas()
+        self.canvas.setFixedSize(*image_manager.DISPLAY_SIZE)
         self.open_button = QtWidgets.QPushButton("Open Image")
         self.save_button = QtWidgets.QPushButton("Save Annotations")
         layout = QtWidgets.QVBoxLayout(self)
@@ -32,6 +33,10 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.current_id: str | None = None
         self.open_button.clicked.connect(self.on_open)
         self.save_button.clicked.connect(self.on_save)
+        self.setFixedSize(
+            self.canvas.width() + 40,
+            self.canvas.height() + 100,
+        )
 
     # slots --------------------------------------------------------------
     def on_open(self) -> None:
@@ -41,6 +46,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         image_id = Path(path).stem
         img, _ = image_manager.load_and_preprocess(image_id)
         img = img.convert("RGB")
+        img = img.resize(image_manager.DISPLAY_SIZE)
         w, h = img.size
         qimg = QtGui.QImage(img.tobytes(), w, h, w * 3, QtGui.QImage.Format_RGB888)
         pixmap = QtGui.QPixmap.fromImage(qimg)
