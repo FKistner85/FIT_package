@@ -27,5 +27,13 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 - `pairwise_defaults`: Voreinstellungen für Paar-Embedding-Pipelines.
 - `sequential_holdout_val_sizes`: Validierungsgrößen für die sequentiellen Holdouts.
 
+## gui_annotator
+- `raw_image_dir`: Ordner mit den Rohbildern der GUI.
+- `processed_image_dir`: Speicherort für bearbeitete Bilder.
+- `annotation_dir`: Verzeichnis zum Ablegen der Annotationen.
+- `reference_template_dir`: Ordner mit Overlay-Vorlagen.
+- `default_scale`: Standard-Skalierungsfaktor bei der Verarbeitung.
+- `display_size`: Auflösung der Zeichenfläche.
+
 ---
 Künftige Erweiterungen sollten auf diese Variablen Bezug nehmen, anstatt Werte direkt im Code zu hinterlegen.
