@@ -21,11 +21,22 @@ class AnnotatorApp(QtWidgets.QWidget):
         super().__init__()
         self.setWindowTitle("FIT Image Annotator")
         self.canvas = AnnotationCanvas()
-        self.canvas.setFixedSize(*image_manager.DISPLAY_SIZE)
+        self.canvas.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.open_button = QtWidgets.QPushButton("Open Image")
         self.save_button = QtWidgets.QPushButton("Save Annotations")
         self.next_button = QtWidgets.QPushButton("Next")
         self.back_button = QtWidgets.QPushButton("Back")
+        for btn in (
+            self.open_button,
+            self.save_button,
+            self.next_button,
+            self.back_button,
+        ):
+            btn.setSizePolicy(
+                QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
+            )
         self.opacity_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.opacity_slider.setRange(0, 100)
         self.opacity_slider.setValue(int(self.canvas.crossfade_opacity * 100))
@@ -39,6 +50,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         controls.addWidget(self.back_button)
         controls.addWidget(self.next_button)
         controls.addWidget(self.save_button)
+        controls.addStretch()
         layout.addLayout(controls)
         overlay_controls = QtWidgets.QHBoxLayout()
         overlay_controls.addWidget(QtWidgets.QLabel("Overlay:"))
@@ -57,10 +69,6 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.back_button.clicked.connect(self.on_back)
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.reference_combo.currentIndexChanged.connect(self._on_reference_changed)
-        self.setFixedSize(
-            self.canvas.width() + 40,
-            self.canvas.height() + 140,
-        )
 
     # slots --------------------------------------------------------------
     def on_open(self) -> None:
@@ -120,7 +128,6 @@ class AnnotatorApp(QtWidgets.QWidget):
         image_id = img_path.stem
         img, _ = image_manager.load_and_preprocess(image_id)
         img = img.convert("RGB")
-        img = img.resize(image_manager.DISPLAY_SIZE)
         w, h = img.size
         qimg = QtGui.QImage(img.tobytes(), w, h, w * 3, QtGui.QImage.Format_RGB888)
         pixmap = QtGui.QPixmap.fromImage(qimg)
@@ -139,7 +146,7 @@ class AnnotatorApp(QtWidgets.QWidget):
 def run() -> None:
     app = QtWidgets.QApplication([])
     win = AnnotatorApp()
-    win.show()
+    win.showMaximized()
     app.exec_()
 
 

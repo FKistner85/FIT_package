@@ -123,6 +123,9 @@ SOFT_CONFIG = {
         "annotation_dir": "data/processed/annotations",
         "reference_template_dir": "data/raw/reference_templates",
         "default_scale": 1.0,
-        "display_size": [512, 512],
+        # Default window size (w, h) in a widescreen ratio. The application
+        # will automatically constrain this based on the available screen
+        # resolution at runtime.
+        "display_size": [1280, 720],
     },
 }
