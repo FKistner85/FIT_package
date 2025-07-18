@@ -16,7 +16,9 @@ DISPLAY_SIZE = tuple(int(v) for v in CFG.get("display_size", [1280, 720]))
 
 
 class AnnotationCanvas(QtWidgets.QLabel):
-    """Simple canvas allowing placement of exactly 11 landmarks."""
+    """Interactive canvas allowing placement of landmarks and scale refs."""
+
+    scale_changed = QtCore.pyqtSignal(float, float)
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
@@ -40,6 +42,11 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.setMouseTracking(True)
         self.rotation_refs: list[Tuple[float, float]] = []
         self.rotation_matrix = QtGui.QTransform()
+        self.scale_mode = False
+        self.scale_pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
+        self._scale_tmp: list[tuple[float, float]] = []
+        self.pixels_per_cm: float | None = None
+        self.pixels_per_cm_sd: float | None = None
 
     # configuration slots -------------------------------------------------
     def set_crossfade_opacity(self, value: float) -> None:
@@ -52,12 +59,22 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self._reference_index = idx
             self.update()
 
+    def set_scale_mode(self, active: bool) -> None:
+        """Enable or disable selection of scale reference pairs."""
+        self.scale_mode = active
+        self._scale_tmp = []
+
     def load_pixmap(self, pixmap: QtGui.QPixmap) -> None:
         """Load ``pixmap`` and rescale to the current widget size."""
         self.original_pixmap = pixmap
         self.landmarks = []
         self.rotation_refs = []
         self.rotation_matrix = QtGui.QTransform()
+        self.scale_pairs = []
+        self._scale_tmp = []
+        self.pixels_per_cm = None
+        self.pixels_per_cm_sd = None
+        self.scale_changed.emit(float("nan"), float("nan"))
         self._rescale_pixmaps()
         self.update()
 
@@ -68,6 +85,15 @@ class AnnotationCanvas(QtWidgets.QLabel):
 
         w = max(self.width(), 1)
         h = max(self.height(), 1)
+
+        if self.scale_mode:
+            self._scale_tmp.append((event.x() / w, event.y() / h))
+            if len(self._scale_tmp) == 2:
+                self.scale_pairs.append((self._scale_tmp[0], self._scale_tmp[1]))
+                self._scale_tmp = []
+                self._update_scale()
+            self.update()
+            return
 
         if len(self.rotation_refs) < 2:
             self.rotation_refs.append((event.x() / w, event.y() / h))
@@ -98,6 +124,16 @@ class AnnotationCanvas(QtWidgets.QLabel):
             h = self.height()
             for x, y in self.landmarks:
                 painter.drawEllipse(QtCore.QPoint(int(x * w), int(y * h)), 4, 4)
+            painter.setPen(QtGui.QPen(QtCore.Qt.green, 2))
+            for (x1, y1), (x2, y2) in self.scale_pairs:
+                painter.drawLine(
+                    int(x1 * w), int(y1 * h), int(x2 * w), int(y2 * h)
+                )
+                painter.drawEllipse(QtCore.QPoint(int(x1 * w), int(y1 * h)), 3, 3)
+                painter.drawEllipse(QtCore.QPoint(int(x2 * w), int(y2 * h)), 3, 3)
+            if self.scale_mode and self._scale_tmp:
+                x, y = self._scale_tmp[0]
+                painter.drawEllipse(QtCore.QPoint(int(x * w), int(y * h)), 3, 3)
         painter.end()
 
     def sizeHint(self) -> QtCore.QSize:  # type: ignore[override]
@@ -135,9 +171,37 @@ class AnnotationCanvas(QtWidgets.QLabel):
             ]
         else:
             self.references = []
+        self._update_scale()
+
+    def _update_scale(self) -> None:
+        """Recompute pixels-per-cm from stored scale pairs."""
+        if len(self.scale_pairs) < 2:
+            self.pixels_per_cm = None
+            self.pixels_per_cm_sd = None
+            self.scale_changed.emit(float("nan"), float("nan"))
+            return
+
+        w = max(self.width(), 1)
+        h = max(self.height(), 1)
+        distances = []
+        for (x1, y1), (x2, y2) in self.scale_pairs:
+            dx = (x1 - x2) * w
+            dy = (y1 - y2) * h
+            distances.append(math.hypot(dx, dy))
+
+        mean = sum(distances) / len(distances)
+        sd = 0.0
+        if len(distances) > 1:
+            var = sum((d - mean) ** 2 for d in distances) / (len(distances) - 1)
+            sd = math.sqrt(var)
+
+        self.pixels_per_cm = mean
+        self.pixels_per_cm_sd = sd
+        self.scale_changed.emit(mean, sd)
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:  # type: ignore[override]
         self._rescale_pixmaps()
+        self._update_scale()
         super().resizeEvent(event)
 
     def _apply_rotation(self) -> None:
@@ -170,5 +234,10 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self.landmarks = new_pts
 
         self.rotation_refs = []
+        self.scale_pairs = []
+        self._scale_tmp = []
+        self.pixels_per_cm = None
+        self.pixels_per_cm_sd = None
+        self.scale_changed.emit(float("nan"), float("nan"))
         self._rescale_pixmaps()
         self.update()
