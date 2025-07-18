@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Sequence, Tuple
 import pandas as pd
 
 
@@ -40,10 +40,6 @@ def map_indices(
             raise KeyError(f"ID '{x}' not found in DataFrame")
         mapped.append(idx_to_id.iloc[idx])
     return mapped
-=======
-from typing import Sequence, Tuple
-
-import pandas as pd
 
 
 def prepare_base_df(
