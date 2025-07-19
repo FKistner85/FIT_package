@@ -1,1 +1,0 @@
-Fraction of footprints per split

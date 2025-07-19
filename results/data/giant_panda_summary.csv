@@ -1,7 +1,0 @@
-Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
-giant_panda Test,F,90,5,13,18.0,9.57,2.6,1.2,ailuropoda melanoleuca
-giant_panda Test,M,17,4,4,4.25,1.64,1.0,0.0,ailuropoda melanoleuca
-giant_panda Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,ailuropoda melanoleuca
-giant_panda Train,F,211,17,31,12.41,7.46,1.82,0.86,ailuropoda melanoleuca
-giant_panda Train,M,205,16,29,12.81,9.05,1.81,1.07,ailuropoda melanoleuca
-giant_panda Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,ailuropoda melanoleuca

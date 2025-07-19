@@ -1,7 +1,0 @@
-Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
-white_rhino Test,F,144,5,18,28.8,21.07,4.0,2.53,ceratotherium simum
-white_rhino Test,M,140,4,18,35.0,2.45,5.0,0.0,ceratotherium simum
-white_rhino Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,ceratotherium simum
-white_rhino Train,F,498,16,62,31.12,14.59,4.38,1.93,ceratotherium simum
-white_rhino Train,M,491,16,59,30.69,23.49,4.12,2.83,ceratotherium simum
-white_rhino Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,ceratotherium simum

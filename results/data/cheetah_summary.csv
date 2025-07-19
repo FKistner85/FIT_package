@@ -1,7 +1,0 @@
-Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
-cheetah Test,F,75,3,11,25.0,2.45,3.67,0.47,acinonyx jubatus
-cheetah Test,M,79,5,11,15.8,8.61,2.2,1.17,acinonyx jubatus
-cheetah Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,acinonyx jubatus
-cheetah Train,F,311,13,44,23.92,7.69,3.38,0.92,acinonyx jubatus
-cheetah Train,M,316,17,44,18.59,7.32,2.59,1.14,acinonyx jubatus
-cheetah Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,acinonyx jubatus
