@@ -62,6 +62,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.pixels_per_cm: float | None = None
         self.pixels_per_cm_sd: float | None = None
         self._zoom: float = 1.0
+        self.selected_idx: int | None = None
+        self._dragging: bool = False
 
     # configuration slots -------------------------------------------------
     def set_crossfade_opacity(self, value: float) -> None:
@@ -134,8 +136,73 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 self._apply_rotation()
             return
 
-        self._add_or_update_landmark(x_norm, y_norm, event.button() == QtCore.Qt.LeftButton)
+        # landmark interaction
+        threshold = 6
+        found_idx: int | None = None
+        for idx, lm in enumerate(self.landmarks):
+            if abs(lm.x - x_norm) * w < threshold and abs(lm.y - y_norm) * h < threshold:
+                found_idx = idx
+                break
+
+        if event.button() == QtCore.Qt.LeftButton:
+            if found_idx is not None:
+                self.selected_idx = found_idx
+                self._dragging = True
+                vis = self.landmarks[found_idx].visible
+                self.landmarks[found_idx] = Landmark(x_norm, y_norm, vis)
+                self.landmarks_changed.emit()
+            else:
+                self._dragging = False
+                self.selected_idx = None
+                self._add_or_update_landmark(x_norm, y_norm, True)
+            self.update()
+            return
+
+        # right button
+        self._dragging = False
+        self.selected_idx = found_idx
+        self._add_or_update_landmark(x_norm, y_norm, False)
         self.update()
+
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:  # type: ignore[override]
+        w = max(self.image.width() if self.image else self.width(), 1)
+        h = max(self.image.height() if self.image else self.height(), 1)
+        ox, oy = self._pixmap_offset
+        x = event.x() - ox
+        y = event.y() - oy
+        if x < 0 or y < 0 or x > w or y > h:
+            return
+        x_norm = x / w
+        y_norm = y / h
+
+        threshold = 6
+        found_idx: int | None = None
+        for idx, lm in enumerate(self.landmarks):
+            if abs(lm.x - x_norm) * w < threshold and abs(lm.y - y_norm) * h < threshold:
+                found_idx = idx
+                break
+
+        if self._dragging and self.selected_idx is not None and self.mode == "landmark":
+            vis = self.landmarks[self.selected_idx].visible
+            self.landmarks[self.selected_idx] = Landmark(x_norm, y_norm, vis)
+            self.landmarks_changed.emit()
+            self.update()
+        self.selected_idx = found_idx
+
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:  # type: ignore[override]
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging = False
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:  # type: ignore[override]
+        if event.key() == QtCore.Qt.Key_Delete and self.selected_idx is not None:
+            if 0 <= self.selected_idx < len(self.landmarks):
+                del self.landmarks[self.selected_idx]
+                self.selected_idx = None
+                self.landmarks_changed.emit()
+                self.update()
+            return
+        super().keyPressEvent(event)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:  # type: ignore[override]
         """Zoom the canvas in and out with the mouse wheel."""
@@ -166,12 +233,15 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if self.image:
             w = self.image.width()
             h = self.image.height()
-            for lm in self.landmarks:
+            for idx, lm in enumerate(self.landmarks):
                 if not lm.visible:
                     continue
-                painter.drawEllipse(
-                    QtCore.QPoint(ox + int(lm.x * w), oy + int(lm.y * h)), 4, 4
-                )
+                point = QtCore.QPoint(ox + int(lm.x * w), oy + int(lm.y * h))
+                if self._dragging and idx == self.selected_idx:
+                    painter.setPen(QtGui.QPen(QtCore.Qt.blue, 4))
+                    painter.drawEllipse(point, 6, 6)
+                    painter.setPen(QtGui.QPen(QtCore.Qt.red, 4))
+                painter.drawEllipse(point, 4, 4)
             painter.setPen(QtGui.QPen(QtCore.Qt.green, 2))
             for (x1, y1), (x2, y2) in self.scale_pairs:
                 painter.drawLine(
