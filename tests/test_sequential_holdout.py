@@ -1,5 +1,6 @@
 import pandas as pd
 from FIT_python.pipeline_individual_id.sequential_holdout import run
+from FIT_python.pipeline_individual_id.holdout_helper import generate_holdout_sets
 
 
 def build_df():
@@ -31,3 +32,18 @@ def test_run_produces_summary(tmp_path):
     assert 'true_count' in summary.columns
     assert 'ccc' in summary.columns
     assert (tmp_path / 'summary.csv').exists()
+
+
+def test_generate_holdout_sets(tmp_path):
+    df = build_df()
+    species_dir = tmp_path / "otter"
+    species_dir.mkdir()
+    df.to_parquet(species_dir / "train.parquet", index=False)
+
+    splits = generate_holdout_sets(tmp_path, val_sizes=[2], iterations=2, seed=0)
+    assert "otter" in splits
+    assert len(splits["otter"]) == 2
+    for split in splits["otter"]:
+        train_ids = set(split["train_df"]["individual_id"].unique())
+        val_ids = set(split["val_df"]["individual_id"].unique())
+        assert train_ids.isdisjoint(val_ids)
