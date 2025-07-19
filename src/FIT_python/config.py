@@ -1,9 +1,21 @@
 """Central configuration parameters and file paths used throughout the package."""
 
 from pathlib import Path
+import os
 
-# Project root directory (two levels up from this file)
-PROJECT_ROOT = Path(__file__).parents[2]
+# Determine the project root. When the package is installed, ``__file__`` points
+# inside ``site-packages`` which does not contain the project data.  In that
+# case we fall back to the current working directory or an explicit environment
+# variable ``FIT_PROJECT_ROOT``.
+PROJECT_ROOT = Path(os.environ.get("FIT_PROJECT_ROOT", Path(__file__).resolve().parents[2]))
+
+# If the computed path does not contain the ``data`` directory, assume the
+# current working directory is the project root.  This enables running the
+# package from a cloned repository without installation.
+if not (PROJECT_ROOT / "data").exists():
+    cwd = Path.cwd()
+    if (cwd / "data").exists():
+        PROJECT_ROOT = cwd
 
 # Data directories
 DATA_DIR = PROJECT_ROOT / "data"
