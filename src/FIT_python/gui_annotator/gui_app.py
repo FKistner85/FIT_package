@@ -8,6 +8,7 @@ from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import math
+import numpy as np
 
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.gui_annotator import image_manager
@@ -16,6 +17,95 @@ from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas, Landmar
 CFG = SOFT_CONFIG.get("gui_annotator", {})
 RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
 ANNOTATION_DIR = Path(CFG.get("annotation_dir", "data/processed/annotations"))
+
+# Reference template with measurement definitions
+REF_FILE = (
+    Path(CFG.get("reference_template_dir", "data/raw/reference_templates"))
+    / "landmarks_extended.json"
+)
+try:
+    with REF_FILE.open("r", encoding="utf-8") as fh:
+        _REF_DATA = json.load(fh)
+except Exception:
+    _REF_DATA = {}
+
+VARIABLES = _REF_DATA.get("variables", {})
+
+# Pairs of manual landmark indices (0-based) used for derived points
+_DERIVED_PAIRS = [
+    (0, 1),  # -> landmark 12
+    (1, 2),  # -> landmark 13
+    (2, 3),  # -> landmark 14
+    (3, 4),  # -> landmark 15
+    (5, 6),  # -> landmark 16
+    (6, 7),  # -> landmark 17
+]
+
+
+def _distance(a: tuple[float, float], b: tuple[float, float]) -> float:
+    ax, ay = a
+    bx, by = b
+    return math.hypot(ax - bx, ay - by)
+
+
+def _angle(
+    a: tuple[float, float],
+    b: tuple[float, float],
+    c: tuple[float, float],
+) -> float:
+    """Return angle ABC in degrees."""
+    ba = np.array(a) - np.array(b)
+    bc = np.array(c) - np.array(b)
+    norm_ba = math.hypot(*ba)
+    norm_bc = math.hypot(*bc)
+    if norm_ba == 0 or norm_bc == 0:
+        return float("nan")
+    cos = float(np.dot(ba, bc) / (norm_ba * norm_bc))
+    cos = max(-1.0, min(1.0, cos))
+    return math.degrees(math.acos(cos))
+
+
+def _triangle(
+    a: tuple[float, float],
+    b: tuple[float, float],
+    c: tuple[float, float],
+) -> float:
+    ax, ay = a
+    bx, by = b
+    cx, cy = c
+    return 0.5 * abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay))
+
+
+def _midpoint(p1: tuple[float, float], p2: tuple[float, float]) -> list[float]:
+    x1, y1 = p1
+    x2, y2 = p2
+    return [(x1 + x2) / 2.0, (y1 + y2) / 2.0]
+
+
+def _compute_derived(landmarks: list[list[float]]) -> list[list[float]]:
+    if len(landmarks) != 11:
+        raise ValueError(f"expected 11 manual landmarks, got {len(landmarks)}")
+    return [_midpoint(landmarks[i], landmarks[j]) for i, j in _DERIVED_PAIRS]
+
+
+def _compute_measurements(lms: list[list[float]]) -> dict[str, float]:
+    feats: dict[str, float] = {}
+    for name, spec in VARIABLES.items():
+        idxs = [i - 1 for i in spec.get("landmarks", [])]
+        if any(i >= len(lms) for i in idxs):
+            feats[name] = float("nan")
+            continue
+        pts = [tuple(lms[i]) for i in idxs]
+        if spec.get("type") == "distance":
+            feats[name] = _distance(pts[0], pts[1])
+        elif spec.get("type") == "angle":
+            feats[name] = _angle(pts[0], pts[1], pts[2])
+        elif spec.get("type") == "triangle":
+            feats[name] = _triangle(pts[0], pts[1], pts[2])
+        else:
+            feats[name] = float("nan")
+    return feats
+
 
 
 class AnnotatorApp(QtWidgets.QWidget):
@@ -137,13 +227,21 @@ class AnnotatorApp(QtWidgets.QWidget):
         ANNOTATION_DIR.mkdir(parents=True, exist_ok=True)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         out_path = ANNOTATION_DIR / f"{self.current_id}_{ts}.json"
+        manual_lms = self.canvas.get_unrotated_landmarks()
+        landmarks = [
+            {"x": lm.x, "y": lm.y, "visible": lm.visible} for lm in manual_lms
+        ]
+        coords = [[lm.x, lm.y] for lm in manual_lms]
+        if len(coords) == 11:
+            derived = _compute_derived(coords)
+            for x, y in derived:
+                landmarks.append({"x": x, "y": y, "visible": True})
+            coords += derived
         data = {
             "image_path": str(RAW_DIR / f"{self.current_id}.jpg"),
             "rotation_deg": math.degrees(self.canvas.rotation_angle),
-            "landmarks": [
-                {"x": lm.x, "y": lm.y, "visible": lm.visible}
-                for lm in self.canvas.get_unrotated_landmarks()
-            ],
+            "landmarks": landmarks,
+            "measurements": _compute_measurements(coords),
         }
         meta_path = RAW_DIR / f"{self.current_id}.jpg"
         data["metadata"] = image_manager.extract_metadata(meta_path)
