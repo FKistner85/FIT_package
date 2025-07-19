@@ -55,6 +55,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self._pixmap_offset: tuple[int, int] = (0, 0)
         self.rotation_refs: list[Tuple[float, float]] = []
         self.rotation_matrix = QtGui.QTransform()
+        self.rotation_angle: float = 0.0
         self.mode: str = "rotate"
         self.scale_pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
         self._scale_tmp: list[tuple[float, float]] = []
@@ -92,6 +93,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.landmarks_changed.emit()
         self.rotation_refs = []
         self.rotation_matrix = QtGui.QTransform()
+        self.rotation_angle = 0.0
         self.scale_pairs = []
         self._scale_tmp = []
         self.pixels_per_cm = None
@@ -284,6 +286,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         p2 = QtCore.QPointF(x2 * w, y2 * h)
 
         angle = math.atan2(p2.y() - p1.y(), p2.x() - p1.x())
+        self.rotation_angle = angle
         self.rotation_matrix = QtGui.QTransform().rotateRadians(-angle)
 
         rotated = self.original_pixmap.transformed(
@@ -312,3 +315,23 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.scale_changed.emit(float("nan"), float("nan"))
         self._rescale_pixmaps()
         self.update()
+
+    def get_unrotated_landmarks(self) -> list[Landmark]:
+        """Return landmarks transformed back to the original orientation."""
+        if not self.landmarks:
+            return []
+        if self.rotation_angle == 0.0:
+            return list(self.landmarks)
+
+        if not self.image:
+            return list(self.landmarks)
+
+        inverse = QtGui.QTransform().rotateRadians(self.rotation_angle)
+        w = self.image.width()
+        h = self.image.height()
+        pts: list[Landmark] = []
+        for lm in self.landmarks:
+            pt = QtCore.QPointF(lm.x * w, lm.y * h)
+            pt = inverse.map(pt)
+            pts.append(Landmark(pt.x() / w, pt.y() / h, lm.visible))
+        return pts
