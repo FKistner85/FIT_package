@@ -284,17 +284,23 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 (self.height() - self.image.height()) // 2,
             )
         else:
+            self.image = None
             self._pixmap_offset = (0, 0)
         if self._reference_pixmaps:
-            self.references = [
-                pm.scaled(
-                    self.image.width(),
-                    self.image.height(),
-                    QtCore.Qt.KeepAspectRatio,
-                    QtCore.Qt.SmoothTransformation,
-                )
-                for pm in self._reference_pixmaps
-            ]
+            if self.image:
+                self.references = [
+                    pm.scaled(
+                        self.image.width(),
+                        self.image.height(),
+                        QtCore.Qt.KeepAspectRatio,
+                        QtCore.Qt.SmoothTransformation,
+                    )
+                    for pm in self._reference_pixmaps
+                ]
+            else:
+                # Without a loaded image we cannot scale using its dimensions.
+                # Use the original reference pixmaps without scaling.
+                self.references = list(self._reference_pixmaps)
         else:
             self.references = []
         self._update_scale()
