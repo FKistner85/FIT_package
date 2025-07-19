@@ -23,6 +23,8 @@ from FIT_python.soft_config import SOFT_CONFIG
 CFG = SOFT_CONFIG.get("gui_annotator", {})
 REFERENCE_TEMPLATE_DIR = Path(CFG.get("reference_template_dir", ""))
 DISPLAY_SIZE = tuple(int(v) for v in CFG.get("display_size", [1280, 720]))
+# Filter for common image types when loading reference templates
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff"}
 
 
 class AnnotationCanvas(QtWidgets.QLabel):
@@ -44,10 +46,13 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self._reference_index: int | None = None
         if REFERENCE_TEMPLATE_DIR.exists():
             for p in sorted(REFERENCE_TEMPLATE_DIR.iterdir()):
-                if p.is_file():
-                    pm = QtGui.QPixmap(str(p))
-                    self._reference_pixmaps.append(pm)
-                    self.reference_names.append(p.stem)
+                if not p.is_file() or p.suffix.lower() not in IMAGE_EXTS:
+                    continue
+                pm = QtGui.QPixmap(str(p))
+                if pm.isNull():
+                    continue
+                self._reference_pixmaps.append(pm)
+                self.reference_names.append(p.stem)
             if self._reference_pixmaps:
                 self._reference_index = 0
         self.setMouseTracking(True)
