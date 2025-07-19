@@ -13,6 +13,7 @@ import numpy as np
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.gui_annotator import image_manager
 from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas, Landmark
+from FIT_python.utils.transformations import TransformationPipeline
 
 CFG = SOFT_CONFIG.get("gui_annotator", {})
 RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
@@ -264,6 +265,7 @@ class AnnotatorApp(QtWidgets.QWidget):
                 ]
                 for a, b in self.canvas.get_unrotated_scale_pairs()
             ],
+            "transforms": TransformationPipeline(self.canvas.transform_history).to_json(),
             "measurements": _compute_measurements(coords),
         }
         meta_path = RAW_DIR / f"{self.current_id}.jpg"
@@ -415,6 +417,12 @@ class AnnotatorApp(QtWidgets.QWidget):
                                 for p in scale_pts
                             ]
                             self.canvas._update_scale()
+                        tfms = first_data.get("transforms")
+                        if tfms:
+                            self.canvas.transform_history = [
+                                QtGui.QTransform(*vals) for vals in tfms
+                            ]
+                            self.canvas._last_logged_zoom = 1.0
                 if len(all_sets) > 1:
                     diffs: list[tuple[float, float]] = []
                     for idx in range(len(all_sets[0])):
