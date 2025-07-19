@@ -43,11 +43,13 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.reference_names: list[str] = []
         self._reference_index: int | None = None
         if REFERENCE_TEMPLATE_DIR.exists():
+            valid_ext = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
             for p in sorted(REFERENCE_TEMPLATE_DIR.iterdir()):
-                if p.is_file():
+                if p.is_file() and p.suffix.lower() in valid_ext:
                     pm = QtGui.QPixmap(str(p))
-                    self._reference_pixmaps.append(pm)
-                    self.reference_names.append(p.stem)
+                    if not pm.isNull():
+                        self._reference_pixmaps.append(pm)
+                        self.reference_names.append(p.stem)
             if self._reference_pixmaps:
                 self._reference_index = 0
         self.setMouseTracking(True)
