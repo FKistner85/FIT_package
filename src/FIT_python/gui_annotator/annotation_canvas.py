@@ -51,7 +51,11 @@ class AnnotationCanvas(QtWidgets.QLabel):
                         self._reference_pixmaps.append(pm)
                         self.reference_names.append(p.stem)
             if self._reference_pixmaps:
-                self._reference_index = 0
+                placeholder = "Leftfront drawing Placeholder"
+                if placeholder in self.reference_names:
+                    self._reference_index = self.reference_names.index(placeholder)
+                else:
+                    self._reference_index = 0
         self.setMouseTracking(True)
         self.setStyleSheet("background: white")
         self._pixmap_offset: tuple[int, int] = (0, 0)
@@ -72,6 +76,11 @@ class AnnotationCanvas(QtWidgets.QLabel):
         """Set overlay opacity between 0 and 1."""
         self.crossfade_opacity = max(0.0, min(1.0, value))
         self.update()
+
+    @property
+    def reference_pixmaps(self) -> list[QtGui.QPixmap]:
+        """Return the loaded reference templates."""
+        return list(self._reference_pixmaps)
 
     def set_reference_index(self, idx: int) -> None:
         if 0 <= idx < len(self.references):
