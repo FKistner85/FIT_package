@@ -243,8 +243,23 @@ class AnnotatorApp(QtWidgets.QWidget):
             coords += derived
         data = {
             "image_path": str(RAW_DIR / f"{self.current_id}.jpg"),
-            "rotation_deg": math.degrees(self.canvas.rotation_angle),
+            "rotation_deg_total": math.degrees(self.canvas.total_rotation_angle),
+            "rotation_deg": math.degrees(self.canvas.total_rotation_angle),
             "landmarks": landmarks,
+            "rotation_points": [
+                [
+                    {"x": a[0], "y": a[1]},
+                    {"x": b[0], "y": b[1]},
+                ]
+                for a, b in self.canvas.get_rotation_history()
+            ],
+            "scale_points": [
+                [
+                    {"x": a[0], "y": a[1]},
+                    {"x": b[0], "y": b[1]},
+                ]
+                for a, b in self.canvas.get_unrotated_scale_pairs()
+            ],
             "measurements": _compute_measurements(coords),
         }
         meta_path = RAW_DIR / f"{self.current_id}.jpg"
@@ -368,6 +383,20 @@ class AnnotatorApp(QtWidgets.QWidget):
                             self.canvas.pixels_per_cm,
                             self.canvas.pixels_per_cm_sd or float("nan"),
                         )
+                    if first_data:
+                        rot_pts = first_data.get("rotation_points")
+                        if rot_pts:
+                            self.canvas.rotation_history = [
+                                ((p[0]["x"], p[0]["y"]), (p[1]["x"], p[1]["y"]))
+                                for p in rot_pts
+                            ]
+                        scale_pts = first_data.get("scale_points")
+                        if scale_pts:
+                            self.canvas.scale_pairs = [
+                                ((p[0]["x"], p[0]["y"]), (p[1]["x"], p[1]["y"]))
+                                for p in scale_pts
+                            ]
+                            self.canvas._update_scale()
                 if len(all_sets) > 1:
                     diffs: list[tuple[float, float]] = []
                     for idx in range(len(all_sets[0])):

@@ -124,7 +124,7 @@ def build_records() -> list[Dict[str, Any]]:
         record: Dict[str, Any] = {
             "file": fp.name,
             "image_path": data.get("image_path"),
-            "rotation_deg": data.get("rotation_deg"),
+            "rotation_deg": data.get("rotation_deg_total") or data.get("rotation_deg"),
             "pixels_per_cm": data.get("pixels_per_cm"),
             "pixels_per_cm_sd": data.get("pixels_per_cm_sd"),
         }

@@ -62,6 +62,9 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.rotation_refs: list[Tuple[float, float]] = []
         self.rotation_matrix = QtGui.QTransform()
         self.rotation_angle: float = 0.0
+        self.total_rotation_angle: float = 0.0
+        self.base_size: tuple[int, int] = (0, 0)
+        self.rotation_history: list[tuple[tuple[float, float], tuple[float, float]]] = []
         self.mode: str = "rotate"
         self.scale_pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
         self._scale_tmp: list[tuple[float, float]] = []
@@ -107,6 +110,9 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.rotation_refs = []
         self.rotation_matrix = QtGui.QTransform()
         self.rotation_angle = 0.0
+        self.total_rotation_angle = 0.0
+        self.base_size = (pixmap.width(), pixmap.height())
+        self.rotation_history = []
         self.scale_pairs = []
         self._scale_tmp = []
         self.pixels_per_cm = None
@@ -260,6 +266,13 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 )
                 painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
                 painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
+            painter.setPen(QtGui.QPen(QtCore.Qt.darkYellow, 2))
+            for (x1, y1), (x2, y2) in self.rotation_history:
+                painter.drawLine(
+                    ox + int(x1 * w), oy + int(y1 * h), ox + int(x2 * w), oy + int(y2 * h)
+                )
+                painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
+                painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
             if self.mode == "scale" and self._scale_tmp:
                 x, y = self._scale_tmp[0]
                 painter.drawEllipse(QtCore.QPoint(ox + int(x * w), oy + int(y * h)), 3, 3)
@@ -376,10 +389,21 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.rotation_angle = angle
         self.rotation_matrix = QtGui.QTransform().rotateRadians(-angle)
 
+        # store reference points in original orientation
+        if self.base_size != (0, 0):
+            inv = QtGui.QTransform().rotateRadians(self.total_rotation_angle)
+            orig_p1 = inv.map(p1)
+            orig_p2 = inv.map(p2)
+            bw, bh = self.base_size
+            self.rotation_history.append(
+                ((orig_p1.x() / bw, orig_p1.y() / bh), (orig_p2.x() / bw, orig_p2.y() / bh))
+            )
+
         rotated = self.original_pixmap.transformed(
             self.rotation_matrix, QtCore.Qt.SmoothTransformation
         )
         self.original_pixmap = rotated
+        self.total_rotation_angle += angle
 
         if self.landmarks:
             rot_w = rotated.width()
@@ -407,18 +431,38 @@ class AnnotationCanvas(QtWidgets.QLabel):
         """Return landmarks transformed back to the original orientation."""
         if not self.landmarks:
             return []
-        if self.rotation_angle == 0.0:
+        if self.total_rotation_angle == 0.0 or not self.image or self.base_size == (0, 0):
             return list(self.landmarks)
 
-        if not self.image:
-            return list(self.landmarks)
-
-        inverse = QtGui.QTransform().rotateRadians(self.rotation_angle)
+        inverse = QtGui.QTransform().rotateRadians(self.total_rotation_angle)
         w = self.image.width()
         h = self.image.height()
+        bw, bh = self.base_size
         pts: list[Landmark] = []
         for lm in self.landmarks:
             pt = QtCore.QPointF(lm.x * w, lm.y * h)
             pt = inverse.map(pt)
-            pts.append(Landmark(pt.x() / w, pt.y() / h, lm.visible))
+            pts.append(Landmark(pt.x() / bw, pt.y() / bh, lm.visible))
         return pts
+
+    def get_unrotated_scale_pairs(self) -> list[tuple[tuple[float, float], tuple[float, float]]]:
+        """Return stored scale pairs transformed to the original orientation."""
+        if not self.scale_pairs or not self.image or self.base_size == (0, 0):
+            return list(self.scale_pairs)
+
+        inverse = QtGui.QTransform().rotateRadians(self.total_rotation_angle)
+        w = self.image.width()
+        h = self.image.height()
+        bw, bh = self.base_size
+        pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
+        for (x1, y1), (x2, y2) in self.scale_pairs:
+            p1 = QtCore.QPointF(x1 * w, y1 * h)
+            p2 = QtCore.QPointF(x2 * w, y2 * h)
+            p1 = inverse.map(p1)
+            p2 = inverse.map(p2)
+            pairs.append(((p1.x() / bw, p1.y() / bh), (p2.x() / bw, p2.y() / bh)))
+        return pairs
+
+    def get_rotation_history(self) -> list[tuple[tuple[float, float], tuple[float, float]]]:
+        """Return recorded rotation reference pairs in original orientation."""
+        return list(self.rotation_history)
