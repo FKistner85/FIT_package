@@ -104,4 +104,40 @@ SOFT_CONFIG = {
         # resolution at runtime.
         "display_size": [1280, 720],
     },
+    "dataset_summary": {
+        "species_labels": {
+            "amur_tiger": {
+                "common": "Amur Tiger",
+                "latin": "Panthera tigris altaica",
+            },
+            "bengal_tiger": {
+                "common": "Bengal Tiger",
+                "latin": "Panthera tigris tigris",
+            },
+            "cheetah": {
+                "common": "Cheetah",
+                "latin": "Acinonyx jubatus",
+            },
+            "eurasian_otter": {
+                "common": "Eurasian Otter",
+                "latin": "Lutra lutra",
+            },
+            "giant_panda": {
+                "common": "Giant Panda",
+                "latin": "Ailuropoda melanoleuca",
+            },
+            "lowlandtapir": {
+                "common": "Lowland Tapir",
+                "latin": "Tapirus terrestris",
+            },
+            "mountain_lion": {
+                "common": "Mountain Lion",
+                "latin": "Puma concolor",
+            },
+            "white_rhino": {
+                "common": "White Rhinoceros",
+                "latin": "Ceratotherium simum",
+            },
+        }
+    },
 }
