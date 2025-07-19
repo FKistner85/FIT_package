@@ -145,6 +145,8 @@ class AnnotatorApp(QtWidgets.QWidget):
                 for lm in self.canvas.get_unrotated_landmarks()
             ],
         }
+        meta_path = RAW_DIR / f"{self.current_id}.jpg"
+        data["metadata"] = image_manager.extract_metadata(meta_path)
         if self.canvas.pixels_per_cm is not None:
             data["pixels_per_cm"] = self.canvas.pixels_per_cm
             if self.canvas.pixels_per_cm_sd is not None:
