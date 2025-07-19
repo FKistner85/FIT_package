@@ -397,6 +397,17 @@ class AnnotatorApp(QtWidgets.QWidget):
                                 ((p[0]["x"], p[0]["y"]), (p[1]["x"], p[1]["y"]))
                                 for p in rot_pts
                             ]
+                            angle = first_data.get("rotation_deg_total")
+                            if angle is not None and self.canvas.rotation_history:
+                                ang_rad = math.radians(angle)
+                                p1, p2 = self.canvas.rotation_history[-1]
+                                t = QtGui.QTransform().rotateRadians(-ang_rad)
+                                q1 = t.map(QtCore.QPointF(p1[0] * w, p1[1] * h))
+                                q2 = t.map(QtCore.QPointF(p2[0] * w, p2[1] * h))
+                                self.canvas.orientation_points = [
+                                    (q1.x() / w, q1.y() / h),
+                                    (q2.x() / w, q2.y() / h),
+                                ]
                         scale_pts = first_data.get("scale_points")
                         if scale_pts:
                             self.canvas.scale_pairs = [
