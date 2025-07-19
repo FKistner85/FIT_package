@@ -134,7 +134,11 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.opacity_slider.setValue(int(self.canvas.crossfade_opacity * 100))
         self.reference_combo = QtWidgets.QComboBox()
         if self.canvas.reference_names:
-            self.reference_combo.addItems(self.canvas.reference_names)
+            for name, pm in zip(self.canvas.reference_names, self.canvas.reference_pixmaps):
+                icon = QtGui.QIcon(pm)
+                self.reference_combo.addItem(icon, name)
+            if self.canvas._reference_index is not None:
+                self.reference_combo.setCurrentIndex(self.canvas._reference_index)
         self.rotate_button = QtWidgets.QPushButton("Rotate")
         self.rotate_button.setCheckable(True)
         self.scale_button = QtWidgets.QPushButton("Scale")
