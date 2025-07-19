@@ -17,6 +17,7 @@ class Landmark:
 import math
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from FIT_python.utils.transformations import TransformationPipeline
 
 from FIT_python.soft_config import SOFT_CONFIG
 
@@ -65,6 +66,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.total_rotation_angle: float = 0.0
         self.base_size: tuple[int, int] = (0, 0)
         self.rotation_history: list[tuple[tuple[float, float], tuple[float, float]]] = []
+        self.transform_history: list[QtGui.QTransform] = []
+        self._last_logged_zoom: float = 1.0
         self.orientation_points: list[tuple[float, float]] = []
         self._dragging_orientation: bool = False
         self.selected_orientation_idx: int | None = None
@@ -117,6 +120,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.total_rotation_angle = 0.0
         self.base_size = (pixmap.width(), pixmap.height())
         self.rotation_history = []
+        self.transform_history = []
+        self._last_logged_zoom = 1.0
         self.orientation_points = []
         self.scale_pairs = []
         self._scale_tmp = []
@@ -372,6 +377,10 @@ class AnnotationCanvas(QtWidgets.QLabel):
     def _rescale_pixmaps(self) -> None:
         """Scale loaded pixmaps to the current widget size."""
         if self.original_pixmap:
+            if self._zoom != self._last_logged_zoom:
+                ratio = self._zoom / self._last_logged_zoom
+                self.transform_history.append(QtGui.QTransform().scale(ratio, ratio))
+                self._last_logged_zoom = self._zoom
             target_w = int(self.width() * self._zoom)
             target_h = int(self.height() * self._zoom)
             self.image = self.original_pixmap.scaled(
@@ -465,6 +474,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         angle = math.atan2(p2.y() - p1.y(), p2.x() - p1.x())
         self.rotation_angle = angle
         self.rotation_matrix = QtGui.QTransform().rotateRadians(-angle)
+        self.transform_history.append(self.rotation_matrix)
 
 
         # store reference points in original orientation
@@ -518,17 +528,19 @@ class AnnotationCanvas(QtWidgets.QLabel):
         """Return landmarks transformed back to the original orientation."""
         if not self.landmarks:
             return []
-        if self.total_rotation_angle == 0.0 or not self.image or self.base_size == (0, 0):
+        if not self.image or self.base_size == (0, 0):
             return list(self.landmarks)
 
-        inverse = QtGui.QTransform().rotateRadians(self.total_rotation_angle)
+        pipeline = TransformationPipeline(self.transform_history)
+        inverse = pipeline.inverted()
         w = self.image.width()
         h = self.image.height()
         bw, bh = self.base_size
         pts: list[Landmark] = []
         for lm in self.landmarks:
             pt = QtCore.QPointF(lm.x * w, lm.y * h)
-            pt = inverse.map(pt)
+            for t in inverse.transforms:
+                pt = t.map(pt)
             pts.append(Landmark(pt.x() / bw, pt.y() / bh, lm.visible))
         return pts
 
@@ -537,7 +549,8 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if not self.scale_pairs or not self.image or self.base_size == (0, 0):
             return list(self.scale_pairs)
 
-        inverse = QtGui.QTransform().rotateRadians(self.total_rotation_angle)
+        pipeline = TransformationPipeline(self.transform_history)
+        inverse = pipeline.inverted()
         w = self.image.width()
         h = self.image.height()
         bw, bh = self.base_size
@@ -545,8 +558,9 @@ class AnnotationCanvas(QtWidgets.QLabel):
         for (x1, y1), (x2, y2) in self.scale_pairs:
             p1 = QtCore.QPointF(x1 * w, y1 * h)
             p2 = QtCore.QPointF(x2 * w, y2 * h)
-            p1 = inverse.map(p1)
-            p2 = inverse.map(p2)
+            for t in inverse.transforms:
+                p1 = t.map(p1)
+                p2 = t.map(p2)
             pairs.append(((p1.x() / bw, p1.y() / bh), (p2.x() / bw, p2.y() / bh)))
         return pairs
 

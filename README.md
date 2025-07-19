@@ -45,3 +45,6 @@ pytest
 ```
 
 The unit tests located in `tests/` cover a small subset of the pipeline logic.
+
+Further details on coordinate reprojection can be found in
+`docs/coordinate_reprojection.md`.
