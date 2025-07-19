@@ -26,6 +26,11 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.canvas.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
         )
+        self.reference_label = QtWidgets.QLabel()
+        self.reference_label.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        self.reference_label.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed
+        )
         self.open_button = QtWidgets.QPushButton("Open Image")
         self.save_button = QtWidgets.QPushButton("Save Annotations")
         self.next_button = QtWidgets.QPushButton("Next")
@@ -45,6 +50,8 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.reference_combo = QtWidgets.QComboBox()
         if self.canvas.reference_names:
             self.reference_combo.addItems(self.canvas.reference_names)
+            if self.canvas._reference_index is not None:
+                self.reference_combo.setCurrentIndex(self.canvas._reference_index)
         self.rotate_button = QtWidgets.QPushButton("Rotate")
         self.rotate_button.setCheckable(True)
         self.scale_button = QtWidgets.QPushButton("Scale")
@@ -68,7 +75,10 @@ class AnnotatorApp(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
         )
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.canvas)
+        image_layout = QtWidgets.QHBoxLayout()
+        image_layout.addWidget(self.canvas)
+        image_layout.addWidget(self.reference_label)
+        layout.addLayout(image_layout)
         controls = QtWidgets.QHBoxLayout()
         controls.addWidget(self.open_button)
         controls.addWidget(self.back_button)
@@ -115,6 +125,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.canvas.landmarks_changed.connect(self._update_landmark_table)
 
         self._update_landmark_table()
+        self._update_reference_view()
 
     # slots --------------------------------------------------------------
     def on_open(self) -> None:
@@ -176,6 +187,7 @@ class AnnotatorApp(QtWidgets.QWidget):
 
     def _on_reference_changed(self, idx: int) -> None:
         self.canvas.set_reference_index(idx)
+        self._update_reference_view()
 
     def _on_scale_changed(self, factor: float, sd: float) -> None:
         if factor != factor or factor is None:  # NaN check
@@ -210,6 +222,15 @@ class AnnotatorApp(QtWidgets.QWidget):
             self.landmark_table.setItem(row, 1, y_item)
             self.landmark_table.setCellWidget(row, 2, chk)
 
+    def _update_reference_view(self) -> None:
+        """Display the currently selected reference image in the side window."""
+        pm = self.canvas.get_reference_pixmap()
+        if pm:
+            scaled = pm.scaled(300, 300, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+            self.reference_label.setPixmap(scaled)
+        else:
+            self.reference_label.clear()
+
     def _on_visibility_changed(self, idx: int, state: int) -> None:
         if 0 <= idx < len(self.canvas.landmarks):
             lm = self.canvas.landmarks[idx]
@@ -228,6 +249,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         qimg = QtGui.QImage(img.tobytes(), w, h, w * 3, QtGui.QImage.Format_RGB888)
         pixmap = QtGui.QPixmap.fromImage(qimg)
         self.canvas.load_pixmap(pixmap)
+        self._update_reference_view()
         self.canvas.set_mode("rotate")
         self.rotate_button.setChecked(True)
         self.current_id = image_id

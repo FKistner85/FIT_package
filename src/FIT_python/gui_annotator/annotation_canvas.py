@@ -43,13 +43,25 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.reference_names: list[str] = []
         self._reference_index: int | None = None
         if REFERENCE_TEMPLATE_DIR.exists():
-            for p in sorted(REFERENCE_TEMPLATE_DIR.iterdir()):
-                if p.is_file():
-                    pm = QtGui.QPixmap(str(p))
-                    self._reference_pixmaps.append(pm)
-                    self.reference_names.append(p.stem)
+            image_exts = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff"}
+            files = [
+                p
+                for p in REFERENCE_TEMPLATE_DIR.iterdir()
+                if p.is_file() and p.suffix.lower() in image_exts
+            ]
+            files = sorted(files)
+            for p in files:
+                pm = QtGui.QPixmap(str(p))
+                self._reference_pixmaps.append(pm)
+                self.reference_names.append(p.stem)
             if self._reference_pixmaps:
-                self._reference_index = 0
+                target = "Leftfront drawing Placeholder.png"
+                idx = 0
+                for i, p in enumerate(files):
+                    if p.name == target:
+                        idx = i
+                        break
+                self._reference_index = idx
         self.setMouseTracking(True)
         self.setStyleSheet("background: white")
         self._pixmap_offset: tuple[int, int] = (0, 0)
@@ -75,6 +87,16 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if 0 <= idx < len(self.references):
             self._reference_index = idx
             self.update()
+
+    def get_reference_pixmap(self, idx: int | None = None) -> QtGui.QPixmap | None:
+        """Return the unscaled reference pixmap at ``idx`` or current index."""
+        if idx is None:
+            idx = self._reference_index
+        if idx is None:
+            return None
+        if 0 <= idx < len(self._reference_pixmaps):
+            return self._reference_pixmaps[idx]
+        return None
 
 
     def set_mode(self, mode: str) -> None:
