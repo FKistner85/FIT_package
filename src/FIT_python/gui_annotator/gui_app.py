@@ -139,9 +139,10 @@ class AnnotatorApp(QtWidgets.QWidget):
         out_path = ANNOTATION_DIR / f"{self.current_id}_{ts}.json"
         data = {
             "image_path": str(RAW_DIR / f"{self.current_id}.jpg"),
+            "rotation_deg": math.degrees(self.canvas.rotation_angle),
             "landmarks": [
                 {"x": lm.x, "y": lm.y, "visible": lm.visible}
-                for lm in self.canvas.landmarks
+                for lm in self.canvas.get_unrotated_landmarks()
             ],
         }
         if self.canvas.pixels_per_cm is not None:
