@@ -15,7 +15,14 @@ from FIT_python.soft_config import SOFT_CONFIG
 
 # Paths ----------------------------------------------------------------------
 ANNOTATION_DIR = Path(SOFT_CONFIG.get("gui_annotator", {}).get("annotation_dir", "data/processed/annotations"))
-REF_FILE = Path("src/FIT_python/gui_annotator/Refererence_template/landmarks_extended.json")
+REF_FILE = (
+    Path(
+        SOFT_CONFIG.get("gui_annotator", {}).get(
+            "reference_template_dir", "data/raw/reference_templates"
+        )
+    )
+    / "landmarks_extended.json"
+)
 
 
 # Geometry helpers -----------------------------------------------------------

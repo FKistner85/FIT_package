@@ -31,7 +31,7 @@ This document defines all configurable values in the repository. **Any code gene
 - `raw_image_dir`: folder containing raw images shown in the GUI.
 - `processed_image_dir`: location for processed images.
 - `annotation_dir`: directory where annotations are written.
-- `reference_template_dir`: folder with overlay templates for reference.
+- `reference_template_dir`: folder with overlay templates for reference (default `data/raw/reference_templates`).
 - `default_scale`: default scaling factor when preprocessing images.
 - `display_size`: canvas display resolution.
 
