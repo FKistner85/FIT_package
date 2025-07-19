@@ -9,6 +9,25 @@ from IPython.display import display, Markdown, Image
 
 from FIT_python.Visualisations.plot_style import SEX_COLORS
 from FIT_python.caption_utils import save_caption
+from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
+from sklearn.feature_selection import SelectKBest, f_classif
+
+def select_top_features(df: pd.DataFrame, target: str, k: int = 4) -> list[str]:
+    """Return the ``k`` highest scoring feature names using ANOVA F-test."""
+
+    feature_cols = get_feature_cols(df)
+    if not feature_cols:
+        return []
+
+    X = df[feature_cols]
+    y = df[target]
+    if not pd.api.types.is_numeric_dtype(y):
+        y = pd.factorize(y)[0]
+
+    skb = SelectKBest(score_func=f_classif, k="all").fit(X, y)
+    scores = skb.scores_
+    ranked = sorted(zip(feature_cols, scores), key=lambda x: x[1], reverse=True)
+    return [feat for feat, _ in ranked[:k]]
 
 def plot_feature_correlation_matrix(
     df: pd.DataFrame,
