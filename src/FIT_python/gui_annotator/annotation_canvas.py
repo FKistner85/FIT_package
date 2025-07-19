@@ -71,6 +71,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.mode: str = "rotate"
         self.scale_pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
         self._scale_tmp: list[tuple[float, float]] = []
+        self._dragging_scale_handle: tuple[int, int] | None = None
         self.pixels_per_cm: float | None = None
         self.pixels_per_cm_sd: float | None = None
         self._zoom: float = 1.0
@@ -143,6 +144,14 @@ class AnnotationCanvas(QtWidgets.QLabel):
         y_norm = y / h
 
         if self.mode == "scale":
+            threshold = 6
+            for idx, (p1, p2) in enumerate(self.scale_pairs):
+                if abs(p1[0] - x_norm) * w < threshold and abs(p1[1] - y_norm) * h < threshold:
+                    self._dragging_scale_handle = (idx, 0)
+                    return
+                if abs(p2[0] - x_norm) * w < threshold and abs(p2[1] - y_norm) * h < threshold:
+                    self._dragging_scale_handle = (idx, 1)
+                    return
             self._scale_tmp.append((x_norm, y_norm))
             if len(self._scale_tmp) == 2:
                 self.scale_pairs.append((self._scale_tmp[0], self._scale_tmp[1]))
@@ -214,6 +223,18 @@ class AnnotationCanvas(QtWidgets.QLabel):
             self.update()
             return
 
+        if self._dragging_scale_handle is not None and self.mode == "scale":
+            pair_idx, handle_idx = self._dragging_scale_handle
+            if 0 <= pair_idx < len(self.scale_pairs):
+                p1, p2 = self.scale_pairs[pair_idx]
+                if handle_idx == 0:
+                    self.scale_pairs[pair_idx] = ((x_norm, y_norm), p2)
+                else:
+                    self.scale_pairs[pair_idx] = (p1, (x_norm, y_norm))
+                self._update_scale()
+                self.update()
+            return
+
         if self._dragging and self.selected_idx is not None and self.mode == "landmark":
             vis = self.landmarks[self.selected_idx].visible
             self.landmarks[self.selected_idx] = Landmark(x_norm, y_norm, vis)
@@ -225,6 +246,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         if event.button() == QtCore.Qt.LeftButton:
             self._dragging = False
             self._dragging_orientation = False
+            self._dragging_scale_handle = None
         super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:  # type: ignore[override]
@@ -293,6 +315,18 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 )
                 painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
                 painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
+            if self.mode == "rotate" and self.rotation_refs:
+                painter.setPen(QtGui.QPen(QtCore.Qt.darkYellow, 2))
+                if len(self.rotation_refs) == 2:
+                    (x1, y1), (x2, y2) = self.rotation_refs
+                    painter.drawLine(
+                        ox + int(x1 * w), oy + int(y1 * h), ox + int(x2 * w), oy + int(y2 * h)
+                    )
+                    painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
+                    painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
+                else:
+                    x, y = self.rotation_refs[0]
+                    painter.drawEllipse(QtCore.QPoint(ox + int(x * w), oy + int(y * h)), 3, 3)
             if len(self.orientation_points) == 2:
                 painter.setPen(QtGui.QPen(QtCore.Qt.magenta, 2))
                 (ox1, oy1), (ox2, oy2) = self.orientation_points
@@ -521,7 +555,23 @@ class AnnotationCanvas(QtWidgets.QLabel):
         return list(self.rotation_history)
 
     def undo_last(self) -> None:
-        """Remove the most recently added landmark."""
+        """Remove the most recently added item depending on the mode."""
+        if self.mode == "scale":
+            if self._scale_tmp:
+                self._scale_tmp.pop()
+                self.update()
+                return
+            if self.scale_pairs:
+                self.scale_pairs.pop()
+                self._update_scale()
+                self.update()
+                return
+
+        if self.mode == "rotate" and self.rotation_refs:
+            self.rotation_refs.pop()
+            self.update()
+            return
+
         if self.landmarks:
             self.landmarks.pop()
             self.landmarks_changed.emit()
