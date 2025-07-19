@@ -152,15 +152,15 @@ def _run_species_search(
         ("outlier", OutlierCleanerTransformer(method="clip")),
         ("scale", FeatureScalerTransformer(method="standard")),
         ("select", FeatureSelectionTransformer(method="forward", k=1)),
-        ("reduce_pre", DimensionalityReducerTransformer(method=None, n_components=1)),
-        ("reduce_post", DimensionalityReducerTransformer(method=None, n_components=1)),
         ("clf", MODELS["rf_small"]),
     ]
     pipe = Pipeline(steps)
 
     search = BayesSearchCV(
         estimator=pipe,
+
         search_spaces=SEARCH_SPACES,
+
         n_iter=n_iter,
         scoring=SCORING,
         refit=False,
@@ -304,6 +304,7 @@ def _run_species_search(
     plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
 
 
+
 def run_otter_search_sex(
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
     cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
@@ -316,10 +317,226 @@ def run_otter_search_sex(
         n_iter,
         cv,
         random_state,
+
+def _run_search_for_species(
+    species: str,
+    *,
+    n_iter: int,
+    cv: int,
+    random_state: int,
+) -> None:
+    """Internal helper executing ``RandomizedSearchCV`` for a single species."""
+
+    species_dir = SPLITS_DIR / species
+
+    df_train = (
+        pd.read_parquet(species_dir / "train.parquet")
+        .query("sex in ['f','m']")
+        .drop(columns=["Fold"], errors="ignore")
+    )
+    df_test = (
+        pd.read_parquet(species_dir / "test.parquet")
+        .query("sex in ['f','m']")
+        .drop(columns=["Fold"], errors="ignore")
+    )
+
+    meta_cols = [
+        "id",
+        "species",
+        "individual_id",
+        "date",
+        "location",
+        "dataorigin",
+        "substrate",
+        "sex",
+        "trail",
+        "Fold",
+    ]
+    feature_cols = [c for c in df_train.columns if c not in meta_cols]
+
+    # Simplify hyperparameter space for quick searches and to avoid invalid
+    # parameter combinations.
+    # Minimal hyperparameter space for notebook execution
+    param_distributions: dict[str, list] = {}
+
+    X_tr, y_tr, ids_tr = (
+        df_train[feature_cols],
+        df_train["sex"].map({"f": 0, "m": 1}).values,
+        df_train["individual_id"].values,
+    )
+    X_te, y_te, ids_te = (
+        df_test[feature_cols],
+        df_test["sex"].map({"f": 0, "m": 1}).values,
+        df_test["individual_id"].values,
+    )
+
+    steps = [
+        ("transform", NumericTransformer()),
+        ("outlier", OutlierCleanerTransformer(method="clip")),
+        ("scale", FeatureScalerTransformer(method="standard")),
+        ("select", FeatureSelectionTransformer(method="forward", k=1)),
+        ("clf", MODELS["rf_small"]),
+    ]
+    pipe = Pipeline(steps)
+
+    search = RandomizedSearchCV(
+        estimator=pipe,
+        param_distributions=param_distributions,
+        n_iter=n_iter,
+        scoring=SCORING,
+        refit=False,
+        cv=cv,
+        n_jobs=-1,
+        random_state=random_state,
+        verbose=1,
+    )
+
+    folds = (
+        search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
+    )
+    total_fits = search.n_iter * folds
+
+    base_dir = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
+    base_dir.mkdir(parents=True, exist_ok=True)
+    for m in METRICS:
+        (base_dir / f"best_{m}").mkdir(exist_ok=True)
+
+    raw_records: list[dict] = []
+    best_records: list[dict] = []
+
+    with tqdm_joblib(tqdm(desc=f"{species} RS-CV", total=total_fits, leave=False)):
+        with warnings.catch_warnings(record=True) as warn_list:
+            warnings.simplefilter("always", ConvergenceWarning)
+            warnings.filterwarnings(
+                "ignore",
+                category=UserWarning,
+                message="X does not have valid feature names.*",
+            )
+            search.fit(X_tr, y_tr)
+
+    conv_msgs = [str(w.message) for w in warn_list if issubclass(w.category, ConvergenceWarning)]
+
+    cv_res = search.cv_results_
+    for i, params in enumerate(cv_res["params"]):
+        record = {
+            "species": species,
+            "mean_test_accuracy": cv_res["mean_test_accuracy"][i],
+            "mean_test_balanced_accuracy": cv_res["mean_test_balanced_accuracy"][i],
+            "mean_test_neg_log_loss": cv_res["mean_test_neg_log_loss"][i],
+            **params,
+        }
+        mdl = clone(pipe).set_params(**params).fit(X_tr, y_tr)
+        y_tr_pred = mdl.predict(X_tr)
+        y_te_pred = mdl.predict(X_te)
+        y_all_true = np.concatenate([y_tr, y_te])
+        y_all_pred = np.concatenate([y_tr_pred, y_te_pred])
+        ids_all = np.concatenate([ids_tr, ids_te])
+
+        fem_tr, mal_tr, bal_tr = individual_accuracies(y_tr, y_tr_pred, ids_tr)
+        fem_te, mal_te, bal_te = individual_accuracies(y_te, y_te_pred, ids_te)
+        ct_tr, wr_tr, pct_tr = individual_majority_stats(y_tr, y_tr_pred, ids_tr)
+        ct_te, wr_te, pct_te = individual_majority_stats(y_te, y_te_pred, ids_te)
+        fem_all, mal_all, bal_all = individual_accuracies(y_all_true, y_all_pred, ids_all)
+        ct_all, wr_all, pct_all = individual_majority_stats(y_all_true, y_all_pred, ids_all)
+
+        acc_tr = accuracy_score(y_tr, y_tr_pred)
+        bal_tr_val = balanced_accuracy_score(y_tr, y_tr_pred)
+        acc_te = accuracy_score(y_te, y_te_pred)
+        bal_te_val = balanced_accuracy_score(y_te, y_te_pred)
+        acc_all = accuracy_score(y_all_true, y_all_pred)
+        bal_all_val = balanced_accuracy_score(y_all_true, y_all_pred)
+
+        record.update(
+            {
+                "female_train_acc": fem_tr,
+                "male_train_acc": mal_tr,
+                "balanced_train_acc": bal_tr_val,
+                "accuracy_train": acc_tr,
+                "female_test_acc": fem_te,
+                "male_test_acc": mal_te,
+                "balanced_test_acc": bal_te_val,
+                "accuracy_test": acc_te,
+                "female_full_acc": fem_all,
+                "male_full_acc": mal_all,
+                "balanced_full_acc": bal_all_val,
+                "accuracy_full": acc_all,
+                "maj_train_count": ct_tr,
+                "maj_train_wrong": wr_tr,
+                "maj_train_pct": pct_tr,
+                "maj_test_count": ct_te,
+                "maj_test_wrong": wr_te,
+                "maj_test_pct": pct_te,
+                "maj_full_count": ct_all,
+                "maj_full_wrong": wr_all,
+                "maj_full_pct": pct_all,
+            }
+        )
+
+        pid_parts: list[str] = []
+        for key in PIPELINE_ORDER:
+            val = params.get(key)
+            pid_parts.append(f"{key}={val if val is not None else 'None'}")
+        record["pipeline_id"] = ";".join(pid_parts)
+
+        for k, v in record.items():
+            if pd.isna(v):
+                record[k] = "None"
+        raw_records.append(record)
+
+    df_eval = pd.DataFrame([r for r in raw_records if r["species"] == species])
+    for metric in METRICS:
+        best_idx = df_eval[metric].idxmax()
+        best_params = cv_res["params"][best_idx]
+        best_record = df_eval.loc[best_idx].to_dict()
+        best_record["best_metric"] = metric
+
+        best_pipe = clone(pipe).set_params(**best_params).fit(X_tr, y_tr)
+        out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
+        joblib.dump(best_pipe, out_path)
+        print(
+            f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}"
+        )
+        best_records.append(best_record)
+
+    all_csv = base_dir / "all_results.csv"
+    best_csv = base_dir / "best_models.csv"
+    df_all = pd.DataFrame(raw_records).fillna("None")
+    df_best = pd.DataFrame(best_records).fillna("None")
+    df_all.to_csv(all_csv, index=False)
+    df_best.to_csv(best_csv, index=False)
+
+    if conv_msgs:
+        counts = Counter(conv_msgs)
+        for msg, cnt in counts.items():
+            print(f"⚠️ {msg} (occurred {cnt} times)")
+
+    df_heat = df_all.rename(
+        columns={
+            "select__method": "fs_method",
+            "reduce_pre__method": "reduce_pre_method",
+            "mean_test_balanced_accuracy": "cv_balanced_accuracy",
+        }
+    )
+    plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
+
+
+def run_otter_search_sex(
+    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
+) -> None:
+    """Wrapper for backward compatibility calling ``_run_search_for_species`` for the otter."""
+
+    _run_search_for_species(
+        "eurasian_otter",
+        n_iter=n_iter,
+        cv=cv,
+        random_state=random_state,
     )
 
 
 def run_other_species_search(
+
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
     cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
@@ -337,3 +554,24 @@ def run_other_species_search(
             cv,
             random_state,
         )
+
+    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
+) -> None:
+    """Run ``RandomizedSearchCV`` for all species except the Eurasian otter."""
+
+    for species_dir in SPLITS_DIR.iterdir():
+        if not species_dir.is_dir():
+            continue
+        species = species_dir.name
+        if species == "eurasian_otter":
+            continue
+        _run_search_for_species(
+            species,
+            n_iter=n_iter,
+            cv=cv,
+            random_state=random_state,
+        )
+
+

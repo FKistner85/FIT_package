@@ -22,6 +22,7 @@ dependencies:
   - scipy
   - umap-learn
   - pyarrow
+  - PyQt5
   - tqdm
 
   - pip
