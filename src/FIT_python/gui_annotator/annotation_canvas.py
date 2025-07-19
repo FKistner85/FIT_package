@@ -65,6 +65,9 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.total_rotation_angle: float = 0.0
         self.base_size: tuple[int, int] = (0, 0)
         self.rotation_history: list[tuple[tuple[float, float], tuple[float, float]]] = []
+        self.orientation_points: list[tuple[float, float]] = []
+        self._dragging_orientation: bool = False
+        self.selected_orientation_idx: int | None = None
         self.mode: str = "rotate"
         self.scale_pairs: list[tuple[tuple[float, float], tuple[float, float]]] = []
         self._scale_tmp: list[tuple[float, float]] = []
@@ -113,6 +116,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.total_rotation_angle = 0.0
         self.base_size = (pixmap.width(), pixmap.height())
         self.rotation_history = []
+        self.orientation_points = []
         self.scale_pairs = []
         self._scale_tmp = []
         self.pixels_per_cm = None
@@ -148,6 +152,12 @@ class AnnotationCanvas(QtWidgets.QLabel):
             return
 
         if self.mode == "rotate":
+            threshold = 6
+            for idx, (oxp, oyp) in enumerate(self.orientation_points):
+                if abs(oxp - x_norm) * w < threshold and abs(oyp - y_norm) * h < threshold:
+                    self.selected_orientation_idx = idx
+                    self._dragging_orientation = True
+                    return
             self.rotation_refs.append((x_norm, y_norm))
             if len(self.rotation_refs) == 2:
                 self._apply_rotation()
@@ -199,6 +209,11 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 found_idx = idx
                 break
 
+        if self._dragging_orientation and self.selected_orientation_idx is not None and self.mode == "rotate":
+            self.orientation_points[self.selected_orientation_idx] = (x_norm, y_norm)
+            self.update()
+            return
+
         if self._dragging and self.selected_idx is not None and self.mode == "landmark":
             vis = self.landmarks[self.selected_idx].visible
             self.landmarks[self.selected_idx] = Landmark(x_norm, y_norm, vis)
@@ -209,6 +224,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:  # type: ignore[override]
         if event.button() == QtCore.Qt.LeftButton:
             self._dragging = False
+            self._dragging_orientation = False
         super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:  # type: ignore[override]
@@ -247,6 +263,9 @@ class AnnotationCanvas(QtWidgets.QLabel):
             painter.drawPixmap(ox, oy, overlay)
             painter.setOpacity(1.0)
         painter.setPen(QtGui.QPen(QtCore.Qt.red, 4))
+        font = painter.font()
+        font.setPointSize(8)
+        painter.setFont(font)
         if self.image:
             w = self.image.width()
             h = self.image.height()
@@ -259,6 +278,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
                     painter.drawEllipse(point, 6, 6)
                     painter.setPen(QtGui.QPen(QtCore.Qt.red, 4))
                 painter.drawEllipse(point, 4, 4)
+                painter.drawText(point + QtCore.QPoint(5, -5), str(idx + 1))
             painter.setPen(QtGui.QPen(QtCore.Qt.green, 2))
             for (x1, y1), (x2, y2) in self.scale_pairs:
                 painter.drawLine(
@@ -273,6 +293,29 @@ class AnnotationCanvas(QtWidgets.QLabel):
                 )
                 painter.drawEllipse(QtCore.QPoint(ox + int(x1 * w), oy + int(y1 * h)), 3, 3)
                 painter.drawEllipse(QtCore.QPoint(ox + int(x2 * w), oy + int(y2 * h)), 3, 3)
+            if len(self.orientation_points) == 2:
+                painter.setPen(QtGui.QPen(QtCore.Qt.magenta, 2))
+                (ox1, oy1), (ox2, oy2) = self.orientation_points
+                px1 = ox + int(ox1 * w)
+                py1 = oy + int(oy1 * h)
+                px2 = ox + int(ox2 * w)
+                py2 = oy + int(oy2 * h)
+                painter.drawLine(px1, py1, px2, py2)
+                midx = (px1 + px2) / 2
+                midy = (py1 + py2) / 2
+                dx = px2 - px1
+                dy = py2 - py1
+                length = math.hypot(dx, dy)
+                if length:
+                    ux = -dy / length
+                    uy = dx / length
+                    px3 = int(midx - ux * length / 2)
+                    py3 = int(midy - uy * length / 2)
+                    px4 = int(midx + ux * length / 2)
+                    py4 = int(midy + uy * length / 2)
+                    painter.drawLine(px3, py3, px4, py4)
+                painter.drawEllipse(QtCore.QPoint(px1, py1), 3, 3)
+                painter.drawEllipse(QtCore.QPoint(px2, py2), 3, 3)
             if self.mode == "scale" and self._scale_tmp:
                 x, y = self._scale_tmp[0]
                 painter.drawEllipse(QtCore.QPoint(ox + int(x * w), oy + int(y * h)), 3, 3)
@@ -389,6 +432,7 @@ class AnnotationCanvas(QtWidgets.QLabel):
         self.rotation_angle = angle
         self.rotation_matrix = QtGui.QTransform().rotateRadians(-angle)
 
+
         # store reference points in original orientation
         if self.base_size != (0, 0):
             inv = QtGui.QTransform().rotateRadians(self.total_rotation_angle)
@@ -404,6 +448,15 @@ class AnnotationCanvas(QtWidgets.QLabel):
         )
         self.original_pixmap = rotated
         self.total_rotation_angle += angle
+
+        rot_w = rotated.width()
+        rot_h = rotated.height()
+        p1_rot = self.rotation_matrix.map(p1)
+        p2_rot = self.rotation_matrix.map(p2)
+        self.orientation_points = [
+            (p1_rot.x() / rot_w, p1_rot.y() / rot_h),
+            (p2_rot.x() / rot_w, p2_rot.y() / rot_h),
+        ]
 
         if self.landmarks:
             rot_w = rotated.width()
@@ -466,3 +519,10 @@ class AnnotationCanvas(QtWidgets.QLabel):
     def get_rotation_history(self) -> list[tuple[tuple[float, float], tuple[float, float]]]:
         """Return recorded rotation reference pairs in original orientation."""
         return list(self.rotation_history)
+
+    def undo_last(self) -> None:
+        """Remove the most recently added landmark."""
+        if self.landmarks:
+            self.landmarks.pop()
+            self.landmarks_changed.emit()
+            self.update()
