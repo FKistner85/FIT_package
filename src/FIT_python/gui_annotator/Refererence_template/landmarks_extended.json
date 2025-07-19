@@ -1,0 +1,1792 @@
+{
+    "landmarks": [
+        [
+            0.7665289256198347,
+            0.5801526717557252
+        ],
+        [
+            0.6942148760330579,
+            0.4217557251908397
+        ],
+        [
+            0.5578512396694215,
+            0.2881679389312977
+        ],
+        [
+            0.4049586776859504,
+            0.28053435114503816
+        ],
+        [
+            0.2665289256198347,
+            0.40458015267175573
+        ],
+        [
+            0.6632231404958677,
+            0.7767175572519084
+        ],
+        [
+            0.5723140495867769,
+            0.4866412213740458
+        ],
+        [
+            0.40702479338842973,
+            0.4713740458015267
+        ],
+        [
+            0.34917355371900827,
+            0.5591603053435115
+        ],
+        [
+            0.29338842975206614,
+            0.6603053435114504
+        ],
+        [
+            0.4380165289256198,
+            0.9064885496183206
+        ],
+        [
+            0.7665289256198347,
+            0.9064885496183206
+        ],
+        [
+            0.7665289256198347,
+            0.28053435114503816
+        ],
+        [
+            0.2665289256198347,
+            0.28053435114503816
+        ],
+        [
+            0.2665289256198347,
+            0.9064885496183206
+        ],
+        [
+            0.4834710743801653,
+            0.37786259541984735
+        ],
+        [
+            0.4524793388429752,
+            0.5248091603053435
+        ]
+    ],
+    "variables": {
+        "dist1.2": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                2
+            ],
+            "value": 90.07774419910837
+        },
+        "dist1.3": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                3
+            ],
+            "value": 183.3303030052588
+        },
+        "dist1.4": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                4
+            ],
+            "value": 235.10423220350586
+        },
+        "dist1.5": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                5
+            ],
+            "value": 258.897663179875
+        },
+        "dist1.6": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                6
+            ],
+            "value": 114.49454135459908
+        },
+        "dist1.7": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                7
+            ],
+            "value": 106.00471687618433
+        },
+        "dist1.8": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                8
+            ],
+            "value": 183.09833423600554
+        },
+        "dist1.9": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                9
+            ],
+            "value": 202.2992832414391
+        },
+        "dist1.10": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                10
+            ],
+            "value": 232.81967270830015
+        },
+        "dist1.11": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                11
+            ],
+            "value": 233.49946466748057
+        },
+        "dist1.12": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                12
+            ],
+            "value": 171.0
+        },
+        "dist1.13": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                13
+            ],
+            "value": 157.0
+        },
+        "dist1.14": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                14
+            ],
+            "value": 288.46663585239804
+        },
+        "dist1.15": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                15
+            ],
+            "value": 296.31908477180474
+        },
+        "dist1.16": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                16
+            ],
+            "value": 173.21951391226105
+        },
+        "dist1.17": {
+            "type": "distance",
+            "landmarks": [
+                1,
+                17
+            ],
+            "value": 154.74172029546526
+        },
+        "dist2.3": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                3
+            ],
+            "value": 96.20810776644555
+        },
+        "dist2.4": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                4
+            ],
+            "value": 158.35403373454054
+        },
+        "dist2.5": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                5
+            ],
+            "value": 207.1955597979841
+        },
+        "dist2.6": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                6
+            ],
+            "value": 186.60385848100785
+        },
+        "dist2.7": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                7
+            ],
+            "value": 68.09552114493287
+        },
+        "dist2.8": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                8
+            ],
+            "value": 141.41074923781431
+        },
+        "dist2.9": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                9
+            ],
+            "value": 181.8598361376145
+        },
+        "dist2.10": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                10
+            ],
+            "value": 230.7834482799839
+        },
+        "dist2.11": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                11
+            ],
+            "value": 282.65172916506276
+        },
+        "dist2.12": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                12
+            ],
+            "value": 256.40007800310826
+        },
+        "dist2.13": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                13
+            ],
+            "value": 81.85963596303125
+        },
+        "dist2.14": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                14
+            ],
+            "value": 219.82947936980608
+        },
+        "dist2.15": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                15
+            ],
+            "value": 327.6659884699662
+        },
+        "dist2.16": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                16
+            ],
+            "value": 104.5609869884557
+        },
+        "dist2.17": {
+            "type": "distance",
+            "landmarks": [
+                2,
+                17
+            ],
+            "value": 128.86038956948718
+        },
+        "dist3.4": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                4
+            ],
+            "value": 74.10802925459562
+        },
+        "dist3.5": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                5
+            ],
+            "value": 153.62942426501507
+        },
+        "dist3.6": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                6
+            ],
+            "value": 261.03064954139006
+        },
+        "dist3.7": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                7
+            ],
+            "value": 104.23531071570709
+        },
+        "dist3.8": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                8
+            ],
+            "value": 120.60265337047937
+        },
+        "dist3.9": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                9
+            ],
+            "value": 174.25555945220228
+        },
+        "dist3.10": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                10
+            ],
+            "value": 233.25736858671797
+        },
+        "dist3.11": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                11
+            ],
+            "value": 329.15042154006125
+        },
+        "dist3.12": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                12
+            ],
+            "value": 339.37737107827326
+        },
+        "dist3.13": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                13
+            ],
+            "value": 101.07917688624102
+        },
+        "dist3.14": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                14
+            ],
+            "value": 141.05672617780408
+        },
+        "dist3.15": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                15
+            ],
+            "value": 353.3511001822408
+        },
+        "dist3.16": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                16
+            ],
+            "value": 59.20304046246274
+        },
+        "dist3.17": {
+            "type": "distance",
+            "landmarks": [
+                3,
+                17
+            ],
+            "value": 134.07833531186162
+        },
+        "dist4.5": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                5
+            ],
+            "value": 93.34880824091971
+        },
+        "dist4.6": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                6
+            ],
+            "value": 288.4874347350331
+        },
+        "dist4.7": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                7
+            ],
+            "value": 135.0
+        },
+        "dist4.8": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                8
+            ],
+            "value": 100.00499987500625
+        },
+        "dist4.9": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                9
+            ],
+            "value": 148.47558721890948
+        },
+        "dist4.10": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                10
+            ],
+            "value": 206.196508214858
+        },
+        "dist4.11": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                11
+            ],
+            "value": 328.3900120283807
+        },
+        "dist4.12": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                12
+            ],
+            "value": 371.76471053611317
+        },
+        "dist4.13": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                13
+            ],
+            "value": 175.0
+        },
+        "dist4.14": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                14
+            ],
+            "value": 67.0
+        },
+        "dist4.15": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                15
+            ],
+            "value": 334.7730574583325
+        },
+        "dist4.16": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                16
+            ],
+            "value": 63.60031446463138
+        },
+        "dist4.17": {
+            "type": "distance",
+            "landmarks": [
+                4,
+                17
+            ],
+            "value": 130.04999038831184
+        },
+        "dist5.6": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                6
+            ],
+            "value": 273.65854636754904
+        },
+        "dist5.7": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                7
+            ],
+            "value": 154.12008305214476
+        },
+        "dist5.8": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                8
+            ],
+            "value": 76.47875521999558
+        },
+        "dist5.9": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                9
+            ],
+            "value": 90.33825324855468
+        },
+        "dist5.10": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                10
+            ],
+            "value": 134.6291201783626
+        },
+        "dist5.11": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                11
+            ],
+            "value": 275.7861490358064
+        },
+        "dist5.12": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                12
+            ],
+            "value": 357.39753776432207
+        },
+        "dist5.13": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                13
+            ],
+            "value": 250.57733337235433
+        },
+        "dist5.14": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                14
+            ],
+            "value": 65.0
+        },
+        "dist5.15": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                15
+            ],
+            "value": 263.0
+        },
+        "dist5.16": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                16
+            ],
+            "value": 105.92922165295089
+        },
+        "dist5.17": {
+            "type": "distance",
+            "landmarks": [
+                5,
+                17
+            ],
+            "value": 109.85900054160332
+        },
+        "dist6.7": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                7
+            ],
+            "value": 158.24032355881985
+        },
+        "dist6.8": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                8
+            ],
+            "value": 202.4252948620799
+        },
+        "dist6.9": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                9
+            ],
+            "value": 190.0
+        },
+        "dist6.10": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                10
+            ],
+            "value": 189.10843450253614
+        },
+        "dist6.11": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                11
+            ],
+            "value": 128.47178678604885
+        },
+        "dist6.12": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                12
+            ],
+            "value": 84.40379138403677
+        },
+        "dist6.13": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                13
+            ],
+            "value": 264.76404589747455
+        },
+        "dist6.14": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                14
+            ],
+            "value": 323.20891076825217
+        },
+        "dist6.15": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                15
+            ],
+            "value": 203.68603290358425
+        },
+        "dist6.16": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                16
+            ],
+            "value": 226.38462845343543
+        },
+        "dist6.17": {
+            "type": "distance",
+            "landmarks": [
+                6,
+                17
+            ],
+            "value": 166.81726529349413
+        },
+        "dist7.8": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                8
+            ],
+            "value": 80.39900496896712
+        },
+        "dist7.9": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                9
+            ],
+            "value": 114.49017425089369
+        },
+        "dist7.10": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                10
+            ],
+            "value": 162.8066337714775
+        },
+        "dist7.11": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                11
+            ],
+            "value": 229.40139493908924
+        },
+        "dist7.12": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                12
+            ],
+            "value": 239.240464804765
+        },
+        "dist7.13": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                13
+            ],
+            "value": 143.17821063276352
+        },
+        "dist7.14": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                14
+            ],
+            "value": 183.21571984958058
+        },
+        "dist7.15": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                15
+            ],
+            "value": 265.1490147068248
+        },
+        "dist7.16": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                16
+            ],
+            "value": 71.40028011149536
+        },
+        "dist7.17": {
+            "type": "distance",
+            "landmarks": [
+                7,
+                17
+            ],
+            "value": 61.35144660071187
+        },
+        "dist8.9": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                9
+            ],
+            "value": 53.85164807134504
+        },
+        "dist8.10": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                10
+            ],
+            "value": 113.25193155085701
+        },
+        "dist8.11": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                11
+            ],
+            "value": 228.49288829195538
+        },
+        "dist8.12": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                12
+            ],
+            "value": 286.81004166521086
+        },
+        "dist8.13": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                13
+            ],
+            "value": 200.6888138387389
+        },
+        "dist8.14": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                14
+            ],
+            "value": 120.9297316626478
+        },
+        "dist8.15": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                15
+            ],
+            "value": 237.92435772740882
+        },
+        "dist8.16": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                16
+            ],
+            "value": 61.40032573203501
+        },
+        "dist8.17": {
+            "type": "distance",
+            "landmarks": [
+                8,
+                17
+            ],
+            "value": 35.608987629529715
+        },
+        "dist9.10": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                10
+            ],
+            "value": 59.481089431852205
+        },
+        "dist9.11": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                11
+            ],
+            "value": 187.0106948813356
+        },
+        "dist9.12": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                12
+            ],
+            "value": 271.89703933658416
+        },
+        "dist9.13": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                13
+            ],
+            "value": 249.23884127479008
+        },
+        "dist9.14": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                14
+            ],
+            "value": 151.38031576133008
+        },
+        "dist9.15": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                15
+            ],
+            "value": 186.34376834227646
+        },
+        "dist9.16": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                16
+            ],
+            "value": 115.10864433221339
+        },
+        "dist9.17": {
+            "type": "distance",
+            "landmarks": [
+                9,
+                17
+            ],
+            "value": 53.14132102234569
+        },
+        "dist10.11": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                11
+            ],
+            "value": 146.76852523616907
+        },
+        "dist10.12": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                12
+            ],
+            "value": 262.8345487183905
+        },
+        "dist10.13": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                13
+            ],
+            "value": 303.38424481175684
+        },
+        "dist10.14": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                14
+            ],
+            "value": 199.42417105255822
+        },
+        "dist10.15": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                15
+            ],
+            "value": 129.65338406690356
+        },
+        "dist10.16": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                16
+            ],
+            "value": 174.26416728633572
+        },
+        "dist10.17": {
+            "type": "distance",
+            "landmarks": [
+                10,
+                17
+            ],
+            "value": 104.7377677822093
+        },
+        "dist11.12": {
+            "type": "distance",
+            "landmarks": [
+                11,
+                12
+            ],
+            "value": 159.0
+        },
+        "dist11.13": {
+            "type": "distance",
+            "landmarks": [
+                11,
+                13
+            ],
+            "value": 364.5065157167976
+        },
+        "dist11.14": {
+            "type": "distance",
+            "landmarks": [
+                11,
+                14
+            ],
+            "value": 338.33858780813046
+        },
+        "dist11.15": {
+            "type": "distance",
+            "landmarks": [
+                11,
+                15
+            ],
+            "value": 83.0
+        },
+        "dist11.16": {
+            "type": "distance",
+            "landmarks": [
+                11,
+                16
+            ],
+            "value": 277.8722728161268
+        },
+        "dist11.17": {
+            "type": "distance",
+            "landmarks": [
+                11,
+                17
+            ],
+            "value": 200.12246250733574
+        },
+        "dist12.13": {
+            "type": "distance",
+            "landmarks": [
+                12,
+                13
+            ],
+            "value": 328.0
+        },
+        "dist12.14": {
+            "type": "distance",
+            "landmarks": [
+                12,
+                14
+            ],
+            "value": 407.6125611410914
+        },
+        "dist12.15": {
+            "type": "distance",
+            "landmarks": [
+                12,
+                15
+            ],
+            "value": 242.0
+        },
+        "dist12.16": {
+            "type": "distance",
+            "landmarks": [
+                12,
+                16
+            ],
+            "value": 309.0275068662982
+        },
+        "dist12.17": {
+            "type": "distance",
+            "landmarks": [
+                12,
+                17
+            ],
+            "value": 251.20509548972132
+        },
+        "dist13.14": {
+            "type": "distance",
+            "landmarks": [
+                13,
+                14
+            ],
+            "value": 242.0
+        },
+        "dist13.15": {
+            "type": "distance",
+            "landmarks": [
+                13,
+                15
+            ],
+            "value": 407.6125611410914
+        },
+        "dist13.16": {
+            "type": "distance",
+            "landmarks": [
+                13,
+                16
+            ],
+            "value": 146.18481453283715
+        },
+        "dist13.17": {
+            "type": "distance",
+            "landmarks": [
+                13,
+                17
+            ],
+            "value": 198.71587757398754
+        },
+        "dist14.15": {
+            "type": "distance",
+            "landmarks": [
+                14,
+                15
+            ],
+            "value": 328.0
+        },
+        "dist14.16": {
+            "type": "distance",
+            "landmarks": [
+                14,
+                16
+            ],
+            "value": 116.73045875006231
+        },
+        "dist14.17": {
+            "type": "distance",
+            "landmarks": [
+                14,
+                17
+            ],
+            "value": 156.4736399525492
+        },
+        "dist15.16": {
+            "type": "distance",
+            "landmarks": [
+                15,
+                16
+            ],
+            "value": 296.23301639081353
+        },
+        "dist15.17": {
+            "type": "distance",
+            "landmarks": [
+                15,
+                17
+            ],
+            "value": 219.31712199461307
+        },
+        "dist16.17": {
+            "type": "distance",
+            "landmarks": [
+                16,
+                17
+            ],
+            "value": 78.44743462982075
+        },
+        "ang2.1.5": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                1,
+                5
+            ],
+            "value": 46.32042591173304
+        },
+        "ang3.1.5": {
+            "type": "angle",
+            "landmarks": [
+                3,
+                1,
+                5
+            ],
+            "value": 35.7549060815347
+        },
+        "ang4.1.5": {
+            "type": "angle",
+            "landmarks": [
+                4,
+                1,
+                5
+            ],
+            "value": 21.08157471188933
+        },
+        "ang1.2.5": {
+            "type": "angle",
+            "landmarks": [
+                1,
+                2,
+                5
+            ],
+            "value": 115.35406104389881
+        },
+        "ang3.2.5": {
+            "type": "angle",
+            "landmarks": [
+                3,
+                2,
+                5
+            ],
+            "value": 44.19513139589715
+        },
+        "ang4.2.5": {
+            "type": "angle",
+            "landmarks": [
+                4,
+                2,
+                5
+            ],
+            "value": 25.37009777324311
+        },
+        "ang1.3.5": {
+            "type": "angle",
+            "landmarks": [
+                1,
+                3,
+                5
+            ],
+            "value": 100.03555519473647
+        },
+        "ang2.3.5": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                3,
+                5
+            ],
+            "value": 109.92084292474219
+        },
+        "ang4.3.5": {
+            "type": "angle",
+            "landmarks": [
+                4,
+                3,
+                5
+            ],
+            "value": 26.48853081627862
+        },
+        "ang1.4.5": {
+            "type": "angle",
+            "landmarks": [
+                1,
+                4,
+                5
+            ],
+            "value": 93.97141077148892
+        },
+        "ang2.4.5": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                4,
+                5
+            ],
+            "value": 108.00840075450327
+        },
+        "ang3.4.5": {
+            "type": "angle",
+            "landmarks": [
+                3,
+                4,
+                5
+            ],
+            "value": 132.77399339082848
+        },
+        "ang2.1.4": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                1,
+                4
+            ],
+            "value": 25.238851199843726
+        },
+        "ang3.1.4": {
+            "type": "angle",
+            "landmarks": [
+                3,
+                1,
+                4
+            ],
+            "value": 14.673331369645377
+        },
+        "ang5.1.4": {
+            "type": "angle",
+            "landmarks": [
+                5,
+                1,
+                4
+            ],
+            "value": 21.08157471188933
+        },
+        "ang1.2.4": {
+            "type": "angle",
+            "landmarks": [
+                1,
+                2,
+                4
+            ],
+            "value": 140.7241588171419
+        },
+        "ang3.2.4": {
+            "type": "angle",
+            "landmarks": [
+                3,
+                2,
+                4
+            ],
+            "value": 18.825033622654026
+        },
+        "ang4.2.4": {
+            "type": "angle",
+            "landmarks": [
+                4,
+                2,
+                4
+            ],
+            "value": 0.0
+        },
+        "ang1.3.4": {
+            "type": "angle",
+            "landmarks": [
+                1,
+                3,
+                4
+            ],
+            "value": 126.52408601101511
+        },
+        "ang2.3.4": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                3,
+                4
+            ],
+            "value": 136.40937374102086
+        },
+        "ang5.3.4": {
+            "type": "angle",
+            "landmarks": [
+                5,
+                3,
+                4
+            ],
+            "value": 26.48853081627862
+        },
+        "ang1.4.3": {
+            "type": "angle",
+            "landmarks": [
+                1,
+                4,
+                3
+            ],
+            "value": 38.802582619339525
+        },
+        "ang2.4.3": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                4,
+                3
+            ],
+            "value": 24.765592636325135
+        },
+        "ang3.4.3": {
+            "type": "angle",
+            "landmarks": [
+                3,
+                4,
+                3
+            ],
+            "value": 0.0
+        },
+        "ang7.6.10": {
+            "type": "angle",
+            "landmarks": [
+                7,
+                6,
+                10
+            ],
+            "value": 55.03746875115976
+        },
+        "ang6.9.10": {
+            "type": "angle",
+            "landmarks": [
+                6,
+                9,
+                10
+            ],
+            "value": 80.1259407482426
+        },
+        "ang4.9.5": {
+            "type": "angle",
+            "landmarks": [
+                4,
+                9,
+                5
+            ],
+            "value": 36.75883461732504
+        },
+        "ang2.7.5": {
+            "type": "angle",
+            "landmarks": [
+                2,
+                7,
+                5
+            ],
+            "value": 133.84566883572606
+        },
+        "ang6.10.4": {
+            "type": "angle",
+            "landmarks": [
+                6,
+                10,
+                4
+            ],
+            "value": 93.63618616245518
+        },
+        "ang6.4.10": {
+            "type": "angle",
+            "landmarks": [
+                6,
+                4,
+                10
+            ],
+            "value": 40.858821987939805
+        },
+        "T1.2.7": {
+            "type": "triangle",
+            "landmarks": [
+                1,
+                2,
+                7
+            ],
+            "value": 3043.499999999998
+        },
+        "T2.3.7": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                3,
+                7
+            ],
+            "value": 3187.0000000000023
+        },
+        "T3.4.7": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                4,
+                7
+            ],
+            "value": 3834.0000000000023
+        },
+        "T3.7.16": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                7,
+                16
+            ],
+            "value": 2036.500000000002
+        },
+        "T4.7.8": {
+            "type": "triangle",
+            "landmarks": [
+                4,
+                7,
+                8
+            ],
+            "value": 3996.000000000001
+        },
+        "T3.4.16": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                4,
+                16
+            ],
+            "value": 1811.0000000000007
+        },
+        "T7.8.16": {
+            "type": "triangle",
+            "landmarks": [
+                7,
+                8,
+                16
+            ],
+            "value": 2108.0000000000005
+        },
+        "T4.5.8": {
+            "type": "triangle",
+            "landmarks": [
+                4,
+                5,
+                8
+            ],
+            "value": 3382.499999999999
+        },
+        "T5.8.9": {
+            "type": "triangle",
+            "landmarks": [
+                5,
+                8,
+                9
+            ],
+            "value": 2054.0
+        },
+        "T1.6.7": {
+            "type": "triangle",
+            "landmarks": [
+                1,
+                6,
+                7
+            ],
+            "value": 6066.000000000001
+        },
+        "T6.7.8": {
+            "type": "triangle",
+            "landmarks": [
+                6,
+                7,
+                8
+            ],
+            "value": 5903.999999999999
+        },
+        "T7.8.9": {
+            "type": "triangle",
+            "landmarks": [
+                7,
+                8,
+                9
+            ],
+            "value": 1951.9999999999998
+        },
+        "T6.7.9": {
+            "type": "triangle",
+            "landmarks": [
+                6,
+                7,
+                9
+            ],
+            "value": 9044.0
+        },
+        "T6.7.17": {
+            "type": "triangle",
+            "landmarks": [
+                6,
+                7,
+                17
+            ],
+            "value": 4848.000000000001
+        },
+        "T7.8.17": {
+            "type": "triangle",
+            "landmarks": [
+                7,
+                8,
+                17
+            ],
+            "value": 1031.999999999999
+        },
+        "T8.9.17": {
+            "type": "triangle",
+            "landmarks": [
+                8,
+                9,
+                17
+            ],
+            "value": 897.9999999999998
+        },
+        "T6.9.17": {
+            "type": "triangle",
+            "landmarks": [
+                6,
+                9,
+                17
+            ],
+            "value": 4218.000000000004
+        },
+        "T6.9.10": {
+            "type": "triangle",
+            "landmarks": [
+                6,
+                9,
+                10
+            ],
+            "value": 5567.000000000001
+        },
+        "T5.9.10": {
+            "type": "triangle",
+            "landmarks": [
+                5,
+                9,
+                10
+            ],
+            "value": 2153.5000000000036
+        },
+        "T6.10.11": {
+            "type": "triangle",
+            "landmarks": [
+                6,
+                10,
+                11
+            ],
+            "value": 9410.499999999993
+        },
+        "T1.3.5": {
+            "type": "triangle",
+            "landmarks": [
+                1,
+                3,
+                5
+            ],
+            "value": 13866.999999999996
+        },
+        "T2.3.5": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                3,
+                5
+            ],
+            "value": 6948.000000000005
+        },
+        "T2.4.5": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                4,
+                5
+            ],
+            "value": 7029.0
+        },
+        "T3.4.5": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                4,
+                5
+            ],
+            "value": 2539.000000000001
+        },
+        "T2.3.8": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                3,
+                8
+            ],
+            "value": 5723.0
+        },
+        "T2.4.8": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                4,
+                8
+            ],
+            "value": 6962.999999999996
+        },
+        "T2.4.7": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                4,
+                7
+            ],
+            "value": 4562.999999999999
+        },
+        "T3.5.7": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                5,
+                7
+            ],
+            "value": 7545.500000000002
+        },
+        "T2.5.9": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                5,
+                9
+            ],
+            "value": 8203.499999999995
+        },
+        "T2.5.6": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                5,
+                6
+            ],
+            "value": 19318.5
+        },
+        "T2.5.10": {
+            "type": "triangle",
+            "landmarks": [
+                2,
+                5,
+                10
+            ],
+            "value": 13810.5
+        },
+        "T3.5.10": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                5,
+                10
+            ],
+            "value": 9843.499999999993
+        },
+        "T3.6.10": {
+            "type": "triangle",
+            "landmarks": [
+                3,
+                6,
+                10
+            ],
+            "value": 21356.500000000015
+        },
+        "T4.6.10": {
+            "type": "triangle",
+            "landmarks": [
+                4,
+                6,
+                10
+            ],
+            "value": 19457.499999999996
+        },
+        "T5.6.10": {
+            "type": "triangle",
+            "landmarks": [
+                5,
+                6,
+                10
+            ],
+            "value": 11596.499999999987
+        },
+        "T12.13.15": {
+            "type": "triangle",
+            "landmarks": [
+                12,
+                13,
+                15
+            ],
+            "value": 39688.0
+        },
+        "T13.14.15": {
+            "type": "triangle",
+            "landmarks": [
+                13,
+                14,
+                15
+            ],
+            "value": 39688.0
+        },
+        "T13.14.17": {
+            "type": "triangle",
+            "landmarks": [
+                13,
+                14,
+                17
+            ],
+            "value": 15488.000000000002
+        },
+        "T12.15.17": {
+            "type": "triangle",
+            "landmarks": [
+                12,
+                15,
+                17
+            ],
+            "value": 24200.000000000004
+        },
+        "T13.14.16": {
+            "type": "triangle",
+            "landmarks": [
+                13,
+                14,
+                16
+            ],
+            "value": 6171.0
+        }
+    }
+}
