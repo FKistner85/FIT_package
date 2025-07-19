@@ -120,11 +120,13 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.save_button = QtWidgets.QPushButton("Save Annotations")
         self.next_button = QtWidgets.QPushButton("Next")
         self.back_button = QtWidgets.QPushButton("Back")
+        self.undo_button = QtWidgets.QPushButton("Undo")
         for btn in (
             self.open_button,
             self.save_button,
             self.next_button,
             self.back_button,
+            self.undo_button,
         ):
             btn.setSizePolicy(
                 QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
@@ -167,6 +169,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         controls.addWidget(self.open_button)
         controls.addWidget(self.back_button)
         controls.addWidget(self.next_button)
+        controls.addWidget(self.undo_button)
         controls.addWidget(self.save_button)
         controls.addStretch()
         layout.addLayout(controls)
@@ -194,6 +197,7 @@ class AnnotatorApp(QtWidgets.QWidget):
         self.save_button.clicked.connect(self.on_save)
         self.next_button.clicked.connect(self.on_next)
         self.back_button.clicked.connect(self.on_back)
+        self.undo_button.clicked.connect(self.on_undo)
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.reference_combo.currentIndexChanged.connect(self._on_reference_changed)
         self.rotate_button.toggled.connect(
@@ -287,6 +291,9 @@ class AnnotatorApp(QtWidgets.QWidget):
             self.current_index -= 1
             self._load_current()
         self._update_buttons()
+
+    def on_undo(self) -> None:
+        self.canvas.undo_last()
 
     def _on_opacity_changed(self, value: int) -> None:
         self.canvas.set_crossfade_opacity(value / 100.0)
