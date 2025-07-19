@@ -298,8 +298,9 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
         fig.tight_layout()
         caption = f"Counts for {code.replace('_', ' ')}"
+        file_code = code.replace(" ", "_")
         for ext in ("png", "svg"):
-            file = fig_dir / f"{code}_summary.{ext}"
+            file = fig_dir / f"{file_code}_summary.{ext}"
             fig.savefig(file)
             save_caption(file, caption)
     # plt.show()

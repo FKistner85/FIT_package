@@ -46,11 +46,11 @@
 
 ![**Summary**](results/figures/summary/white_rhino_summary.svg)
 
-![Counts for lutra lutra](results/data/eurasian_otter_fig/lutra lutra_summary.png)
+![Counts for lutra lutra](results/data/eurasian_otter_fig/lutra_lutra_summary.png)
 
 ![Summary counts for all species](results/data/eurasian_otter_fig/summary_all.png)
 
-![Counts for lutra lutra](results/data/eurasian_otter_fig/lutra lutra_summary.svg)
+![Counts for lutra lutra](results/data/eurasian_otter_fig/lutra_lutra_summary.svg)
 
 ![Summary counts for all species](results/data/eurasian_otter_fig/summary_all.svg)
 
