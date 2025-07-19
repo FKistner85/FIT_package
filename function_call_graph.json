@@ -778,7 +778,7 @@
     "run_summary",
     "to_parquet"
   ],
-  "run_otter_search": [
+  "run_otter_search_sex": [
     "Counter",
     "DataFrame",
     "DimensionalityReducerTransformer",

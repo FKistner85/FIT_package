@@ -12,7 +12,8 @@ from sklearn.exceptions import ConvergenceWarning
 from collections import Counter
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
-from sklearn.model_selection import RandomizedSearchCV
+from skopt import BayesSearchCV
+from skopt.space import Categorical
 from tqdm.auto import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
@@ -38,6 +39,7 @@ from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
     plot_hyperparam_heatmap,
 )
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
+from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from FIT_python.data_split_and_summary.split_utils import (
     create_train_test_split_otter,
     _make_folds,
@@ -56,8 +58,24 @@ PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
 
 MODEL_KEYS = PIPE_CFG["model_keys"]
 
-PARAM_DISTRIBUTIONS = PIPE_CFG["param_distributions"].copy()
-PARAM_DISTRIBUTIONS["clf"] = [MODELS[k] for k in MODEL_KEYS]
+SEARCH_SPACE_CFG = PIPE_CFG["search_spaces"].copy()
+SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
+
+SEARCH_SPACES = {
+    "outlier": Categorical([OutlierCleanerTransformer(method="clip")], transform="identity"),
+    "scale": Categorical([FeatureScalerTransformer(method="standard")], transform="identity"),
+    "select__method": Categorical(SEARCH_SPACE_CFG["select__method"]),
+    "select__k": Categorical(SEARCH_SPACE_CFG["select__k"]),
+    "reduce_pre": Categorical(
+        [DimensionalityReducerTransformer(method=None, n_components=1)],
+        transform="identity",
+    ),
+    "reduce_post": Categorical(
+        [DimensionalityReducerTransformer(method=None, n_components=1)],
+        transform="identity",
+    ),
+    "clf": Categorical([MODELS["rf_small"]], transform="identity"),
+}
 
 METRICS = PIPE_CFG["metrics"]
 
@@ -94,14 +112,15 @@ def prepare_eurasian_otter() -> None:
     )
 
 
-def run_otter_search(
-    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
+def _run_species_search(
+    species: str,
+    base_dir_suffix: str,
+    n_iter: int,
+    cv: int,
+    random_state: int,
 ) -> None:
-    """Run RandomizedSearchCV for the Eurasian otter dataset."""
+    """Run the hyperparameter search for a single species."""
 
-    species = "eurasian_otter"
     species_dir = SPLITS_DIR / species
 
     df_train = (
@@ -114,6 +133,8 @@ def run_otter_search(
         .query("sex in ['f','m']")
         .drop(columns=["Fold"], errors="ignore")
     )
+
+    feature_cols = get_feature_cols(df_train)
 
     X_tr, y_tr, ids_tr = (
         df_train[feature_cols],
@@ -135,9 +156,11 @@ def run_otter_search(
     ]
     pipe = Pipeline(steps)
 
-    search = RandomizedSearchCV(
+    search = BayesSearchCV(
         estimator=pipe,
-        param_distributions=param_distributions,
+
+        search_spaces=SEARCH_SPACES,
+
         n_iter=n_iter,
         scoring=SCORING,
         refit=False,
@@ -148,12 +171,10 @@ def run_otter_search(
     )
 
     folds = (
-        search.cv
-        if isinstance(search.cv, int)
-        else getattr(search.cv, "n_splits", len(list(search.cv)))
+        search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
     )
     total_fits = search.n_iter * folds
-    base_dir = RESULTS_DATA_DIR / "eurasian_otter_random_search_standard_metrics"
+    base_dir = RESULTS_DATA_DIR / base_dir_suffix
     base_dir.mkdir(parents=True, exist_ok=True)
     for m in METRICS:
         (base_dir / f"best_{m}").mkdir(exist_ok=True)
@@ -161,7 +182,7 @@ def run_otter_search(
     raw_records = []
     best_records = []
 
-    with tqdm_joblib(tqdm(desc=f"{species} RS-CV", total=total_fits, leave=False)):
+    with tqdm_joblib(tqdm(desc=f"{species} BS-CV", total=total_fits, leave=False)):
         with warnings.catch_warnings(record=True) as warn_list:
             warnings.simplefilter("always", ConvergenceWarning)
             warnings.filterwarnings(
@@ -282,6 +303,20 @@ def run_otter_search(
     )
     plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
 
+
+
+def run_otter_search_sex(
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
+) -> None:
+    """Run BayesSearchCV for the Eurasian otter dataset."""
+    _run_species_search(
+        "eurasian_otter",
+        "eurasian_otter_bayes_search_standard_metrics",
+        n_iter,
+        cv,
+        random_state,
 
 def _run_search_for_species(
     species: str,
@@ -501,6 +536,25 @@ def run_otter_search_sex(
 
 
 def run_other_species_search(
+
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
+) -> None:
+    """Run the search for all species except the Eurasian otter."""
+
+    for species_dir in sorted(SPLITS_DIR.iterdir()):
+        if not species_dir.is_dir() or species_dir.name == "eurasian_otter":
+            continue
+        species = species_dir.name
+        _run_species_search(
+            species,
+            f"{species}_bayes_search_standard_metrics",
+            n_iter,
+            cv,
+            random_state,
+        )
+
     n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
     cv: int = PIPE_CFG["run_otter_search"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
@@ -519,4 +573,5 @@ def run_other_species_search(
             cv=cv,
             random_state=random_state,
         )
+
 

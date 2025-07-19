@@ -17,11 +17,11 @@ This document defines all configurable values in the repository. **Any code gene
 
 ## pipeline_sex
 - `model_keys`: order of classifier keys available in `MODELS`.
-- `param_distributions`: search space for hyperparameter optimisation.
+- `search_spaces`: BayesSearchCV search spaces using `Categorical` objects where needed.
 - `metrics`: metrics recorded during search.
 - `scoring`: mapping of scoring identifiers used by sklearn.
 - `pipeline_order`: order of parameters in pipeline identifiers.
-- `run_otter_search`: defaults for the `run_otter_search` helper.
+- `run_otter_search_sex`: defaults for the `run_otter_search_sex` helper.
 
 ## pipeline_individual_id
 - `pairwise_defaults`: defaults for pairwise embedding pipelines.
