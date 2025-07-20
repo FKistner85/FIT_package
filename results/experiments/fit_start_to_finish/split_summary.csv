@@ -1,0 +1,31 @@
+Dataset,Sex,NumberOfFootprints,UniqueIndividuals,UniqueTrails,MeanFootprintsPerIndividual,SDFootprintsPerIndividual,MeanTrailsPerIndividual,SDTrailsPerIndividual,Species
+amur_tiger Test,Female,84,5,12,16.8,3.54,2.4,0.49,panthera tigris altaica
+amur_tiger Test,Male,45,4,7,11.25,2.38,1.75,0.83,panthera tigris altaica
+amur_tiger Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris altaica
+amur_tiger Train,Female,260,18,38,14.44,3.93,2.11,0.66,panthera tigris altaica
+amur_tiger Train,Male,216,17,31,12.71,3.69,1.88,0.76,panthera tigris altaica
+amur_tiger Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris altaica
+bengal_tiger Inference,Female,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+bengal_tiger Inference,Male,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+bengal_tiger Inference,Unknown,38,6,7,6.33,1.97,1.17,0.37,panthera tigris tigris
+bengal_tiger Test,Female,48,3,8,16.0,2.83,2.67,0.47,panthera tigris tigris
+bengal_tiger Test,Male,76,4,11,19.0,9.25,2.75,1.3,panthera tigris tigris
+bengal_tiger Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+bengal_tiger Train,Female,172,12,25,14.33,8.07,2.08,1.11,panthera tigris tigris
+bengal_tiger Train,Male,252,15,36,16.8,6.95,2.4,0.95,panthera tigris tigris
+bengal_tiger Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,panthera tigris tigris
+cheetah Test,Female,66,3,10,22.0,2.94,3.33,0.47,acinonyx jubatus
+cheetah Test,Male,92,5,13,18.4,6.02,2.6,1.02,acinonyx jubatus
+cheetah Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,acinonyx jubatus
+cheetah Train,Female,320,13,45,24.62,7.58,3.46,0.93,acinonyx jubatus
+cheetah Train,Male,303,17,42,17.82,8.15,2.47,1.19,acinonyx jubatus
+cheetah Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,acinonyx jubatus
+eurasian_otter Inference,Female,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+eurasian_otter Inference,Male,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+eurasian_otter Inference,Unknown,81,1,8,81.0,0.0,8.0,0.0,lutra lutra
+eurasian_otter Test,Female,86,7,12,12.29,5.34,2.29,0.7,lutra lutra
+eurasian_otter Test,Male,66,7,8,9.43,5.55,1.29,0.45,lutra lutra
+eurasian_otter Test,Unknown,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
+eurasian_otter Train,Female,220,13,29,16.92,7.33,2.85,1.1,lutra lutra
+eurasian_otter Train,Male,175,14,26,12.5,5.26,2.0,0.85,lutra lutra
+eurasian_otter Train,Unknown,0,0,0,0.0,0.0,0.0,0.0,lutra lutra
