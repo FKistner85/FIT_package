@@ -47,3 +47,50 @@ def test_generate_holdout_sets(tmp_path):
         train_ids = set(split["train_df"]["individual_id"].unique())
         val_ids = set(split["val_df"]["individual_id"].unique())
         assert train_ids.isdisjoint(val_ids)
+
+
+def test_k_features_influences_results(tmp_path):
+    """``run`` should yield different outcomes for different ``k_features``."""
+
+    df = build_df()
+    preds = pd.DataFrame({"p_f": 0.5, "p_m": 0.5}, index=df["id"])
+    from FIT_python.soft_config import SOFT_CONFIG
+
+    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+
+    out1 = tmp_path / "k1"
+    out2 = tmp_path / "k2"
+
+    summary1 = run(
+        df,
+        ["f1", "f2"],
+        preds,
+        val_sizes=[2],
+        iterations=1,
+        out_dir=out1,
+        n_jobs=1,
+        k_features=1,
+    )
+    summary2 = run(
+        df,
+        ["f1", "f2"],
+        preds,
+        val_sizes=[2],
+        iterations=1,
+        out_dir=out2,
+        n_jobs=1,
+        k_features=2,
+    )
+
+    assert not summary1.empty and not summary2.empty
+    if (out1 / "split_0.csv").exists() and (out2 / "split_0.csv").exists():
+        df1 = pd.read_csv(out1 / "split_0.csv")
+        df2 = pd.read_csv(out2 / "split_0.csv")
+        if not df1.empty and not df2.empty:
+            assert not df1.equals(df2)
+            return
+
+    assert (
+        summary1.loc[0, "n_pairs"] != summary2.loc[0, "n_pairs"]
+        or summary1.loc[0, "bcr"] != summary2.loc[0, "bcr"]
+    )
