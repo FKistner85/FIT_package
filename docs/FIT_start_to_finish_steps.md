@@ -20,3 +20,7 @@ Next, `SplitWrapper().split_all()` writes train/test splits for each species und
 ## Correlation Matrix
 
 Next, `plot_feature_correlation_matrix` creates a 2×2 grid of Pearson correlation heatmaps for all numeric features and for the subsets of distance, angle and triangle features. The figure is saved in the experiment directory with a shared colourbar.
+
+## Baseline Sex Classification
+
+The notebook then calls `run_simple_baseline_all_species(EXP_DIR)` to train stepwise LDA sex classifiers for each species. Accuracy and majority-vote comparison plots are produced and stored in the same experiment directory.
