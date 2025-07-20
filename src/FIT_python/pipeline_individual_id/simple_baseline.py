@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 
-"""Utility helpers for a simple ID baseline."""
+"""Utility helpers for a simple ID baseline.
+
+This module contains convenience functions for running sequential
+holdouts, comparing BCR across species and generating visual aids such
+as pair example plots and dendrograms.
+"""
 
 from pathlib import Path
 from typing import List, Dict, Any
