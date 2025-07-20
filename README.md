@@ -44,6 +44,13 @@ Install the requirements as shown above and then execute:
 pytest
 ```
 
+### Optional testing dependencies
+
+Before executing the test suite make sure that optional GUI/testing
+packages such as `pandas` and `PyQt5` are installed. Missing modules will
+prevent pytest from collecting the tests and you will see import errors
+like `ModuleNotFoundError: No module named pandas`.
+
 Running the tests requires `PyQt5`. If you encounter a
 `ModuleNotFoundError` when executing `pytest`, install the dependency via
 
