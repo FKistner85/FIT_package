@@ -300,12 +300,23 @@ class PipelineWrapper:
                             cv=cv,
                             n_jobs=self.n_jobs,
                         )
+                        y_pred_cv_proba = cross_val_predict(
+                            pipe,
+                            X_train,
+                            y_train,
+                            cv=cv,
+                            method="predict_proba",
+                            n_jobs=self.n_jobs,
+                        )
                         cv_bal_mean = float(bal.mean())
                     except Exception:
                         cv_bal_mean = None
                         y_pred_cv = np.full(len(y_train), np.nan)
+                        y_pred_cv_proba = np.full((len(y_train), 2), np.nan)
                     # store oof predictions
                     df_train[f"pred_{mk}_cv_sex"] = y_pred_cv
+                    df_train[f"pred_{mk}_cv_proba_f"] = y_pred_cv_proba[:, 0]
+                    df_train[f"pred_{mk}_cv_proba_m"] = y_pred_cv_proba[:, 1]
 
                     # fit & predict
                     t_start = perf_counter()

@@ -33,6 +33,17 @@ The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1, pro
 
 Finally, `predict_all('eurasian_otter')` applies the best otter classifier to the held-out test data. The subsequent calls to `plot_confusion_and_inference`, `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities` create confusion matrices, quality plots and individual-level probability charts. Each figure is saved to the experiment directory for later inspection.
 
+
 ## Sex Feature Experiment
 
 After benchmarking the baseline individual identification pipeline, the notebook calls `run_sex_prediction_experiment(EXP_DIR/'sex_feature')` to evaluate models with and without appended sex predictions. The resulting summary tables are loaded and passed to `plot_sex_feature_boxplots`, which compares BCR and count differences across setups. Example boxplots for the Eurasian otter and the aggregated results are displayed in the notebook.
+## Sequential Holdout and Individual-ID Baseline
+
+The notebook then runs `run_simple_baseline_otter` to determine the best feature
+count for sequential holdouts on otter data. The chosen `k` and per‑species Ward
+cut‑offs are passed to `run_baseline_all_species`, which evaluates all species.
+Pair‑example and dendrogram plots are produced for each otter split. Every
+species directory contains a `summary.csv`, the collected metrics are written to
+`raw_results.csv`, and the resulting BCR comparison plot is saved as
+`id_baseline/fig/bcr_comparison.png`.
+
