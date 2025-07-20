@@ -11,6 +11,8 @@ from joblib import dump
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import cross_val_score, PredefinedSplit
+from tqdm.auto import tqdm
+from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -31,7 +33,9 @@ def _load_split(fp: Path) -> pd.DataFrame:
     return df
 
 
-def run_simple_baseline_all_species(exp_dir: Path, n_jobs: int = -1) -> pd.DataFrame:
+def run_simple_baseline_all_species(
+    exp_dir: Path, n_jobs: int = -1, progress: bool = False
+) -> pd.DataFrame:
     """Train a simple LDA baseline for each species.
 
     Parameters
@@ -42,6 +46,9 @@ def run_simple_baseline_all_species(exp_dir: Path, n_jobs: int = -1) -> pd.DataF
     n_jobs:
         Number of CPU cores to use during cross-validation. ``-1``
         uses all available cores.
+
+    progress:
+        Show a progress bar for species and cross-validation when ``True``.
 
     Returns
     -------
@@ -57,8 +64,10 @@ def run_simple_baseline_all_species(exp_dir: Path, n_jobs: int = -1) -> pd.DataF
     if not species_dirs:
         raise FileNotFoundError(f"No split directories found in {SPLITS_DIR}")
 
+    iter_dirs = tqdm(species_dirs, desc="Species") if progress else species_dirs
+
     records: List[Dict[str, Any]] = []
-    for sdir in species_dirs:
+    for sdir in iter_dirs:
         train_fp = sdir / "train.parquet"
         test_fp = sdir / "test.parquet"
         if not train_fp.exists() or not test_fp.exists():
@@ -92,10 +101,22 @@ def run_simple_baseline_all_species(exp_dir: Path, n_jobs: int = -1) -> pd.DataF
             ("lda", LinearDiscriminantAnalysis()),
         ])
 
-        cv_scores = cross_val_score(
-            pipe, X_train, y_train, cv=cv, scoring="balanced_accuracy",
-            n_jobs=n_jobs
-        )
+        if progress:
+            folds = cv.get_n_splits() if hasattr(cv, "get_n_splits") else cv
+            with tqdm_joblib(tqdm(desc=f"{sdir.name} CV", total=folds, leave=False)):
+                cv_scores = cross_val_score(
+                    pipe,
+                    X_train,
+                    y_train,
+                    cv=cv,
+                    scoring="balanced_accuracy",
+                    n_jobs=n_jobs,
+                )
+        else:
+            cv_scores = cross_val_score(
+                pipe, X_train, y_train, cv=cv, scoring="balanced_accuracy",
+                n_jobs=n_jobs
+            )
         pipe.fit(X_train, y_train)
         y_pred = pipe.predict(X_test)
 
