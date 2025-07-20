@@ -333,9 +333,12 @@ class PipelineWrapper:
                     selected = getattr(fs_trans, "selected_features_", None)
                     ranking = getattr(fs_trans, "feature_ranking_", None)
 
+                    cv_bal_mean_str = (
+                        f"{cv_bal_mean:.3f}" if cv_bal_mean is not None else "NA"
+                    )
                     head_msg = (
                         f"* {key} – {mk}: "
-                        f"CV BA={cv_bal_mean:.3f if cv_bal_mean is not None else 'NA'}, "
+                        f"CV BA={cv_bal_mean_str}, "
                         f"Test BA={test_bal_acc:.3f}, "
                         f"n_feat={len(selected) if selected is not None else 'NA'}"
                     )
