@@ -349,6 +349,7 @@ def plot_quality(df):
     # previously annotated as "(trail)" or "(animal)" on the right side of
     # the plot. These labels caused visual artefacts in the heatmaps and have
     # been removed.
+    # Legends were intentionally removed to keep the focus on the heatmaps.
     plt.tight_layout()
     plt.show()
 
