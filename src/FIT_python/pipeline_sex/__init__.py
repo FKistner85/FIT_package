@@ -1,7 +1,12 @@
 """High-level API for the sex classification pipeline."""
 
 from .pipeline_wrapper_sex import PipelineWrapper, plot_pipeline_timings
-from .baseline_sex import run_baseline_all_species
+from .baseline_sex import (
+    run_baseline_all_species,
+    collect_best_metrics,
+    plot_accuracy_comparison,
+    plot_majority_comparison,
+)
 from .sex_predict_and_visualisation import (
     predict_all,
     plot_confusion,
@@ -28,6 +33,9 @@ __all__ = [
     "plot_model_quality_heatmaps",
     "plot_hyperparam_heatmap",
     "run_baseline_all_species",
+    "collect_best_metrics",
+    "plot_accuracy_comparison",
+    "plot_majority_comparison",
 ]
 
 
