@@ -1,0 +1,56 @@
+import pandas as pd
+import importlib
+
+
+def build_train_df():
+    return pd.DataFrame({
+        "f1": [0.0, 1.0, 0.1, 1.1],
+        "f2": [0.0, 1.0, 0.1, 1.1],
+        "sex": ["f", "m", "f", "m"],
+        "Fold": [0, 1, 0, 1],
+        "individual_id": ["A", "B", "A2", "B2"],
+    })
+
+
+def build_test_df():
+    return pd.DataFrame({
+        "f1": [0.2, 1.2],
+        "f2": [0.2, 1.2],
+        "sex": ["f", "m"],
+        "individual_id": ["A3", "B3"],
+    })
+
+
+def test_simple_baseline_runs(tmp_path, monkeypatch):
+    root = tmp_path
+    data_dir = root / "data" / "splits" / "otter"
+    data_dir.mkdir(parents=True)
+    build_train_df().to_parquet(data_dir / "train.parquet", index=False)
+    build_test_df().to_parquet(data_dir / "test.parquet", index=False)
+
+    monkeypatch.setenv("FIT_PROJECT_ROOT", str(root))
+    import FIT_python.config as cfg
+    importlib.reload(cfg)
+    import FIT_python.pipeline_sex.simple_baseline as sb
+    importlib.reload(sb)
+
+    out_dir = root / "exp"
+    df = sb.run_simple_baseline_all_species(out_dir)
+
+    assert (out_dir / "raw_results.csv").exists()
+    assert (out_dir / "models" / "otter.joblib").exists()
+    expected_cols = {
+        "species",
+        "accuracy",
+        "balanced_accuracy",
+        "precision",
+        "recall",
+        "f1",
+        "female_individual_acc",
+        "male_individual_acc",
+        "balanced_individual_acc",
+        "maj_correct",
+        "maj_wrong",
+        "maj_pct",
+    }
+    assert expected_cols.issubset(df.columns)

@@ -7,6 +7,7 @@ from .baseline_sex import (
     plot_accuracy_comparison,
     plot_majority_comparison,
 )
+from .simple_baseline import run_simple_baseline_all_species
 from .sex_predict_and_visualisation import (
     predict_all,
     plot_confusion,
@@ -33,6 +34,7 @@ __all__ = [
     "plot_model_quality_heatmaps",
     "plot_hyperparam_heatmap",
     "run_baseline_all_species",
+    "run_simple_baseline_all_species",
     "collect_best_metrics",
     "plot_accuracy_comparison",
     "plot_majority_comparison",
