@@ -270,6 +270,105 @@ def plot_sex_boxplots(
     return out
 
 
+def plot_sex_feature_boxplots(
+    df_dict: dict[str, pd.DataFrame],
+    fig_dir: Path,
+) -> list[Path]:
+    """Plot BCR and count difference boxplots for pipelines with/without sex.
+
+    Parameters
+    ----------
+    df_dict : dict[str, pandas.DataFrame]
+        Mapping ``"with_sex"`` and ``"without_sex"`` to summary tables. Each
+        table must contain the columns ``species``, ``bcr``, ``pred_count`` and
+        ``true_count``.
+    fig_dir : pathlib.Path
+        Directory to store the generated plots.
+
+    Returns
+    -------
+    list[pathlib.Path]
+        Paths of the generated images in the order
+        ``[bcr_species, bcr_all, count_species, count_all]``.
+    """
+
+    required_keys = {"with_sex", "without_sex"}
+    if not required_keys.issubset(df_dict):
+        raise KeyError("df_dict must contain 'with_sex' and 'without_sex'")
+
+    req_cols = {"species", "bcr", "pred_count", "true_count"}
+    dfs: list[pd.DataFrame] = []
+    for key, df in df_dict.items():
+        if not req_cols.issubset(df.columns):
+            raise KeyError(f"DataFrame for '{key}' missing required columns")
+        tmp = df[list(req_cols)].copy()
+        tmp["setup"] = key
+        dfs.append(tmp)
+
+    plot_df = pd.concat(dfs, ignore_index=True)
+    plot_df["count_diff"] = plot_df["pred_count"] - plot_df["true_count"]
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    paths: list[Path] = []
+
+    # --- BCR per species ---
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    sns.boxplot(data=plot_df, x="species", y="bcr", hue="setup", ax=ax)
+    ax.set_xlabel("Species")
+    ax.set_ylabel("BCR")
+    plt.xticks(rotation=45, ha="right")
+    fig.tight_layout()
+    out = fig_dir / "bcr_by_species.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, "BCR per species with and without sex features")
+    paths.append(out)
+
+    # --- BCR aggregated ---
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    sns.boxplot(data=plot_df, x="setup", y="bcr", ax=ax,
+                order=["with_sex", "without_sex"])
+    ax.set_xlabel("Feature set")
+    ax.set_ylabel("BCR")
+    fig.tight_layout()
+    out = fig_dir / "bcr_aggregated.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, "Aggregated BCR with and without sex features")
+    paths.append(out)
+
+    # --- Count difference per species ---
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    sns.boxplot(data=plot_df, x="species", y="count_diff", hue="setup", ax=ax)
+    ax.axhline(0, ls="--", c="gray")
+    ax.set_xlabel("Species")
+    ax.set_ylabel("pred_count - true_count")
+    plt.xticks(rotation=45, ha="right")
+    fig.tight_layout()
+    out = fig_dir / "countdiff_by_species.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, "Predicted minus true counts per species")
+    paths.append(out)
+
+    # --- Count difference aggregated ---
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    sns.boxplot(data=plot_df, x="setup", y="count_diff", ax=ax,
+                order=["with_sex", "without_sex"])
+    ax.axhline(0, ls="--", c="gray")
+    ax.set_xlabel("Feature set")
+    ax.set_ylabel("pred_count - true_count")
+    fig.tight_layout()
+    out = fig_dir / "countdiff_aggregated.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, "Aggregated predicted minus true counts")
+    paths.append(out)
+
+    return paths
+
+
 def plot_umap_scatter(
     df: pd.DataFrame,
     emb: pd.DataFrame,
