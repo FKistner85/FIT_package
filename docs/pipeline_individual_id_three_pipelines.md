@@ -13,8 +13,8 @@ This document translates the rough notes in `pipeline_individual_id_3_pipelines.
    - `morph_feature_cols = [c for c in df.columns if c.startswith(("dist","ang","t","v")) and c != "trail" and df_train[c].dtype.kind in "if"]`
    - Print the chosen column names.
 4. **Scale Features**
-   - Fit the scaler on the training set and apply it to train, test and inference data.
-   - Optionally create a correlation plot or heatmap for the scaled features.
+   - For every holdout split fit a `StandardScaler` on the training data and transform both the training and validation sets.
+   - Optionally create a correlation heatmap from the scaled training values.
 5. **Sex Model Predictions**
    - Use `predict_all` from the sex pipeline to obtain class and probability outputs.
    - For the training split the pre-computed cross-validation predictions are

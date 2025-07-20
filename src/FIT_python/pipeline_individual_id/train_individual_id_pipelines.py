@@ -62,8 +62,8 @@ def _load_splits(species: str) -> dict[str, pd.DataFrame]:
     return dfs
 
 
-def _select_and_scale_features(dfs: dict[str, pd.DataFrame]) -> tuple[List[str], dict[str, pd.DataFrame]]:
-    """Return morphometric columns and scaled copies of the splits."""
+def _select_features(dfs: dict[str, pd.DataFrame]) -> List[str]:
+    """Return the names of all morphometric feature columns."""
     df_train = dfs["train"]
     morph_cols = [
         c
@@ -74,31 +74,7 @@ def _select_and_scale_features(dfs: dict[str, pd.DataFrame]) -> tuple[List[str],
     ]
     print(f"[INFO] morphometric columns: {morph_cols}")
 
-    scaler = StandardScaler().fit(df_train[morph_cols])
-    scaled = {}
-    for name, df in dfs.items():
-        df2 = df.copy()
-        df2[morph_cols] = scaler.transform(df2[morph_cols])
-        scaled[name] = df2
-
-    # Plot correlation heatmap for the scaled morphometric features
-    corr = scaled["train"][morph_cols].corr()
-    apply_style()
-    fig, ax = plt.subplots(figsize=(6, 5))
-    sns.heatmap(corr, cmap="viridis", center=0, ax=ax)
-    ax.set_xlabel("Morphometric Features")
-    ax.set_ylabel("Morphometric Features")
-    fig.tight_layout()
-    out_dir = config.FIGURES_DIR / "individual_id"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir / "morph_corr_heatmap.png"
-    fig.savefig(out_file)
-    save_caption(out_file, "Correlation between scaled morphometric features")
-    plt.close(fig)
-
-    print(f"[INFO] correlation heatmap saved to {out_file}")
-
-    return morph_cols, scaled
+    return morph_cols
 
 
 def _add_sex_predictions(species: str, dfs: dict[str, pd.DataFrame]) -> None:
@@ -109,6 +85,27 @@ def _add_sex_predictions(species: str, dfs: dict[str, pd.DataFrame]) -> None:
         sub = pred_df[pred_df["__split__"] == name]
         if not sub.empty:
             dfs[name] = pd.concat([df.reset_index(drop=True), sub[sex_cols].reset_index(drop=True)], axis=1)
+
+
+def scale_holdout_split(
+    train_df: pd.DataFrame, val_df: pd.DataFrame, morph_cols: List[str]
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Scale ``morph_cols`` in ``train_df`` and ``val_df`` using ``StandardScaler``.
+
+    The scaler is fitted on the training dataframe and then applied to both
+    the training and validation dataframes. Copies of the inputs with the
+    transformed columns are returned.
+    """
+
+    scaler = StandardScaler().fit(train_df[morph_cols])
+
+    train_scaled = train_df.copy()
+    val_scaled = val_df.copy()
+
+    train_scaled[morph_cols] = scaler.transform(train_df[morph_cols])
+    val_scaled[morph_cols] = scaler.transform(val_df[morph_cols])
+
+    return train_scaled, val_scaled
 
 
 def _confusion_from_results(results: List[Dict]) -> list[list[int]]:
@@ -127,10 +124,10 @@ def main(species: str = "eurasian_otter") -> None:
     if not dfs_raw:
         raise RuntimeError(f"No split data available for {species}")
 
-    morph_cols, dfs = _select_and_scale_features(dfs_raw)
-    _add_sex_predictions(species, dfs)
+    _add_sex_predictions(species, dfs_raw)
+    morph_cols = _select_features(dfs_raw)
 
-    unique_ids = dfs["train"]["individual_id"].dropna().unique()
+    unique_ids = dfs_raw["train"]["individual_id"].dropna().unique()
     splits = sequential_holdout_ids(unique_ids, val_sizes=[2, 4, 6, 8], n_iter=1, random_state=0)
 
     out_dir = config.RESULTS_DATA_DIR / "individual_id_pipelines"
@@ -139,8 +136,25 @@ def main(species: str = "eurasian_otter") -> None:
     for split_idx, split in enumerate(splits):
         train_ids = split["train_ids"]
         val_ids = split["val_ids"]
-        df_train = dfs["train"].loc[dfs["train"].individual_id.isin(train_ids)]
-        df_val = dfs["train"].loc[dfs["train"].individual_id.isin(val_ids)]
+        df_train = dfs_raw["train"].loc[dfs_raw["train"].individual_id.isin(train_ids)]
+        df_val = dfs_raw["train"].loc[dfs_raw["train"].individual_id.isin(val_ids)]
+
+        df_train, df_val = scale_holdout_split(df_train, df_val, morph_cols)
+
+        # Optional correlation heatmap for the scaled morphometric features
+        corr = df_train[morph_cols].corr()
+        apply_style()
+        fig, ax = plt.subplots(figsize=(6, 5))
+        sns.heatmap(corr, cmap="viridis", center=0, ax=ax)
+        ax.set_xlabel("Morphometric Features")
+        ax.set_ylabel("Morphometric Features")
+        fig.tight_layout()
+        fig_dir = config.FIGURES_DIR / "individual_id"
+        fig_dir.mkdir(parents=True, exist_ok=True)
+        out_file = fig_dir / f"morph_corr_heatmap_split_{split_idx}.png"
+        fig.savefig(out_file)
+        save_caption(out_file, "Correlation between scaled morphometric features")
+        plt.close(fig)
 
         comps, _ = generate_pairwise_comparisons_from_df(df_val)
 
