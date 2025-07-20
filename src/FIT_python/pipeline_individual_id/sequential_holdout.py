@@ -54,6 +54,11 @@ def run(
     random_state: int | None = None,
     out_dir: Path | None = None,
     n_jobs: int = 1,
+    k_features: int | Sequence[int] = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["k_features"],
+    trail_col: str = "trail",
+    subsample: bool = False,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using sequential holdouts.
 
@@ -83,6 +88,15 @@ def run(
         ``RESULTS_DATA_DIR / 'individual_id'``.
     n_jobs:
         Parallel jobs for the pairwise projection step.
+    k_features:
+        ``k`` values for feature selection passed to
+        :func:`run_all_pairwise_projections_parallel`. Defaults to
+        ``SOFT_CONFIG['pipeline_individual_id']['pairwise_defaults']['k_features']``.
+    trail_col:
+        Column containing trail identifiers. Defaults to ``"trail"``.
+    subsample:
+        If ``True``, generate subsampled trails before creating pairwise
+        comparisons. Defaults to ``False``.
 
     Returns
     -------
@@ -112,7 +126,14 @@ def run(
         df_train = df_all[df_all[id_col].isin(train_ids)]
         df_val = df_all[df_all[id_col].isin(val_ids)]
 
-        comps, _ = generate_pairwise_comparisons_from_df(df_val)
+        comps, _ = generate_pairwise_comparisons_from_df(
+            df_val,
+            id_col=id_col,
+            trail_col=trail_col,
+            id_field=sample_col,
+            subsample=subsample,
+            random_state=random_state or 0,
+        )
         if not comps:
             continue
 
@@ -121,6 +142,8 @@ def run(
             comps,
             base_df,
             feature_cols=use_cols,
+            sample_col=sample_col,
+            k_features=k_features,
             n_jobs=n_jobs,
         )
         df_res = pd.DataFrame(res)
