@@ -22,5 +22,17 @@ def run_baseline_all_species(*args, **kwargs):
     return _impl(*args, **kwargs)
 
 
-__all__ = ["run_simple_baseline_otter", "run_baseline_all_species"]
+def run_sex_prediction_experiment(*args, **kwargs):
+    """Lazy wrapper around :func:`simple_baseline.run_sex_prediction_experiment`."""
+
+    from .simple_baseline import run_sex_prediction_experiment as _impl
+
+    return _impl(*args, **kwargs)
+
+
+__all__ = [
+    "run_simple_baseline_otter",
+    "run_baseline_all_species",
+    "run_sex_prediction_experiment",
+]
 

@@ -16,6 +16,13 @@ from .population_estimation import concordance_correlation_coefficient
 from FIT_python.config import SPLITS_DIR
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from . import sequential_holdout
+from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
+
+
+def load_sex_predictions(species: str) -> pd.DataFrame:
+    """Return sex-model predictions for ``species``."""
+
+    return predict_all(species, prefer_generic=True)
 
 
 def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
@@ -86,7 +93,10 @@ def plot_bcr_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
 
 
 def run_simple_baseline_otter(
-    exp_dir: Path, k_range: Iterable[int] = range(12, 21), iterations: int = 10
+    exp_dir: Path,
+    k_range: Iterable[int] = range(12, 21),
+    iterations: int = 10,
+    use_sex_predictions: bool = False,
 ) -> int:
     """Run sequential holdouts for the otter data across ``k_range`` values."""
 
@@ -98,14 +108,19 @@ def run_simple_baseline_otter(
     df = _load_splits(species_dir)
     feature_cols = get_feature_cols(df)
 
+    sex_preds = load_sex_predictions(species_dir.name) if use_sex_predictions else None
+
     best_k: int | None = None
     best_bcr = float("-inf")
+
+    best_summary: pd.DataFrame | None = None
 
     for k in k_range:
         k_dir = out_dir / f"k{k}"
         summary = sequential_holdout.run(
             df,
             feature_cols,
+            sex_predictions=sex_preds,
             iterations=iterations,
             out_dir=k_dir,
             k_features=k,
@@ -120,9 +135,14 @@ def run_simple_baseline_otter(
         if mean_bcr > best_bcr:
             best_bcr = mean_bcr
             best_k = k
+            best_summary = summary
 
     if best_k is None:
         raise RuntimeError("No valid results computed for otter baseline")
+
+    if use_sex_predictions and best_summary is not None:
+        best_summary.to_csv(out_dir / "summary_with_sex.csv", index=False)
+
     return best_k
 
 
@@ -153,6 +173,51 @@ def run_baseline_all_species(exp_dir: Path, best_k: int, cutoff: Dict[str, Any])
             feature_cols,
             iterations=1,
             out_dir=out_dir,
+            k_features=k,
+            trail_col="Trail",
+            subsample=False,
+            cutoff=ward,
+        )
+
+
+def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, Any]) -> None:
+    """Evaluate sequential holdouts with and without sex predictions."""
+
+    exp_dir = Path(exp_dir)
+    exp_dir.mkdir(parents=True, exist_ok=True)
+
+    for species_dir in sorted(SPLITS_DIR.iterdir()):
+        if not species_dir.is_dir():
+            continue
+
+        df = _load_splits(species_dir)
+        feature_cols = get_feature_cols(df)
+
+        spec_cfg = cutoff.get(species_dir.name, {})
+        k = spec_cfg.get("k", best_k)
+        ward = spec_cfg.get("ward")
+
+        preds = load_sex_predictions(species_dir.name)
+
+        out_with = exp_dir / species_dir.name / "with_sex"
+        sequential_holdout.run(
+            df,
+            feature_cols,
+            sex_predictions=preds,
+            iterations=1,
+            out_dir=out_with,
+            k_features=k,
+            trail_col="Trail",
+            subsample=False,
+            cutoff=ward,
+        )
+
+        out_without = exp_dir / species_dir.name / "without_sex"
+        sequential_holdout.run(
+            df,
+            feature_cols,
+            iterations=1,
+            out_dir=out_without,
             k_features=k,
             trail_col="Trail",
             subsample=False,
