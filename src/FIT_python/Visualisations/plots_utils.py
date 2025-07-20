@@ -485,8 +485,9 @@ def plot_umap_by_individual(
     legend_ind = ax.legend(
         handles=marker_handles,
         title="Individual",
-        loc="upper right",
-        bbox_to_anchor=(1.25, 1),
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1),  # place outside plot
+        borderaxespad=0,
     )
 
     color_handles = [
@@ -497,8 +498,9 @@ def plot_umap_by_individual(
     ax.legend(
         handles=color_handles,
         title="Sex",
-        loc="center right",
-        bbox_to_anchor=(1.25, 0.5),
+        loc="lower left",
+        bbox_to_anchor=(1.02, 0),  # align bottom right outside plot
+        borderaxespad=0,
     )
 
     fig.tight_layout(rect=[0, 0, 0.8, 1])
