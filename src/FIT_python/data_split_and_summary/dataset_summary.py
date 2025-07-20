@@ -35,13 +35,13 @@ def generate_dataset_overview(raw_dir: Path, out_csv: Path) -> pd.DataFrame:
 
     rows = []
     for name, df in dfs.items():
-        features = get_feature_cols(df)
+        feature_cols = get_feature_cols(df)
         row = {
             "Species": _species_label(name, df),
             "No. of footprints": len(df),
             "No. of known individuals": df.get("individual_id", pd.Series()).nunique(),
             "No. of trails": df.get("trail", pd.Series()).nunique(),
-            "No. of measurements": len(features),
+            "No. of measurements": len(feature_cols),
         }
         rows.append(row)
 
