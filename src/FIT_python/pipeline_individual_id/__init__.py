@@ -30,9 +30,27 @@ def run_sex_prediction_experiment(*args, **kwargs):
     return _impl(*args, **kwargs)
 
 
+def collect_id_metrics(*args, **kwargs):
+    """Lazy wrapper around :func:`simple_baseline.collect_id_metrics`."""
+
+    from .simple_baseline import collect_id_metrics as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def plot_bcr_comparison(*args, **kwargs):
+    """Lazy wrapper around :func:`simple_baseline.plot_bcr_comparison`."""
+
+    from .simple_baseline import plot_bcr_comparison as _impl
+
+    return _impl(*args, **kwargs)
+
+
 __all__ = [
     "run_simple_baseline_otter",
     "run_baseline_all_species",
     "run_sex_prediction_experiment",
+    "collect_id_metrics",
+    "plot_bcr_comparison",
 ]
 
