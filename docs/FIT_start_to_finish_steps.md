@@ -21,6 +21,14 @@ Next, `SplitWrapper().split_all()` writes train/test splits for each species und
 
 Next, `plot_feature_correlation_matrix` creates a 2×2 grid of Pearson correlation heatmaps for all numeric features and for the subsets of distance, angle and triangle features. The figure is saved in the experiment directory with a shared colourbar.
 
+## Top Features and UMAP Visualisation
+
+`select_top_features` is used twice to find the four most discriminative measurements for sex and for individual identification. `plot_sex_boxplots` and `plot_individual_boxplots` then produce box plots for these features. Afterwards a supervised `DimensionalityReducerTransformer` computes a UMAP embedding of the otter data and `plot_umap_by_individual` visualises it with markers for each individual. All plots are written to the experiment directory.
+
 ## Baseline Sex Classification
 
 The notebook then calls `run_simple_baseline_all_species(EXP_DIR)` to train stepwise LDA sex classifiers for each species. Accuracy and majority-vote comparison plots are produced and stored in the same experiment directory.
+
+## Baseline Evaluation
+
+Finally, `predict_all('eurasian_otter')` applies the best otter classifier to the held-out test data. The subsequent calls to `plot_confusion_and_inference`, `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities` create confusion matrices, quality plots and individual-level probability charts. Each figure is saved to the experiment directory for later inspection.
