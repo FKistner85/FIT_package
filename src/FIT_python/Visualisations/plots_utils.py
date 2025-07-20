@@ -535,37 +535,59 @@ def plot_umap_by_individual(
     ax.set_xlabel(xcol)
     ax.set_ylabel(ycol)
 
-    # Legend for individuals (markers)
-    marker_handles = [
-        Line2D([0], [0], marker=m, color="gray", linestyle="", label=str(ind), markersize=6)
-        for ind, m in marker_map.items()
-    ]
-    legend_ind = ax.legend(
-        handles=marker_handles,
-        title="Individual",
-        loc="center left",
-        bbox_to_anchor=(1.02, 0.5),
-        borderaxespad=0,
-        fontsize="small",
-        title_fontsize="medium",
-        ncol=1,
+    # Simplified legend showing individuals grouped by sex
+    female_ids = sorted(
+        df.loc[df["sex_mapped"] == "Female", "individual_id"].unique().tolist()
     )
-    ax.add_artist(legend_ind)
+    male_ids = sorted(
+        df.loc[df["sex_mapped"] == "Male", "individual_id"].unique().tolist()
+    )
 
-    # Legend for sex (colors)
-    color_handles = [
-        Patch(color=SEX_COLORS["Female"], label="Female"),
-        Patch(color=SEX_COLORS["Male"], label="Male"),
+    female_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker=marker_map.get(ind, "o"),
+            color=SEX_COLORS["Female"],
+            linestyle="",
+            markersize=6,
+            label=str(ind),
+        )
+        for ind in female_ids
     ]
-    ax.legend(
-        handles=color_handles,
-        title="Sex",
+    male_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker=marker_map.get(ind, "o"),
+            color=SEX_COLORS["Male"],
+            linestyle="",
+            markersize=6,
+            label=str(ind),
+        )
+        for ind in male_ids
+    ]
+
+    legend_f = ax.legend(
+        handles=female_handles,
+        title="Female",
         loc="upper left",
         bbox_to_anchor=(1.02, 1.0),
         borderaxespad=0,
         fontsize="small",
         title_fontsize="medium",
     )
+    legend_m = ax.legend(
+        handles=male_handles,
+        title="Male",
+        loc="upper left",
+        bbox_to_anchor=(1.20, 1.0),
+        borderaxespad=0,
+        fontsize="small",
+        title_fontsize="medium",
+    )
+    ax.add_artist(legend_f)
+    ax.add_artist(legend_m)
 
     fig.tight_layout(rect=[0, 0, 0.75, 1])  # mehr Platz für Plot, weniger für Legenden
 
