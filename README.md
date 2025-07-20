@@ -33,7 +33,7 @@ A minimal example running the sex-classification pipeline could look like:
 from FIT_python.pipeline_sex.pipeline_wrapper_sex import run_pipeline
 
 # prepare your training dataframe `df`
-res = run_pipeline(df, target_col="sex")
+res = run_pipeline(df, target_col="sex", n_jobs=-1)
 ```
 
 ## Running Tests

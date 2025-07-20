@@ -171,6 +171,7 @@ class PipelineWrapper:
         scaler_method: Optional[str] = None,
         reduce_pre_method: Optional[str] = None,
         reduce_post_method: Optional[str] = None,
+        n_jobs: int = -1,
     ):
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys = model_keys or list(MODELS.keys())
@@ -181,6 +182,7 @@ class PipelineWrapper:
         self.scaler_method = scaler_method
         self.reduce_pre_method = reduce_pre_method
         self.reduce_post_method = reduce_post_method
+        self.n_jobs = n_jobs
 
         self._model_dir = Path(RESULTS_DATA_DIR) / "sex_models"
         self._model_dir.mkdir(parents=True, exist_ok=True)
@@ -289,14 +291,14 @@ class PipelineWrapper:
                             y_train,
                             cv=cv,
                             scoring="balanced_accuracy",
-                            n_jobs=1,
+                            n_jobs=self.n_jobs,
                         )
                         y_pred_cv = cross_val_predict(
                             pipe,
                             X_train,
                             y_train,
                             cv=cv,
-                            n_jobs=1,
+                            n_jobs=self.n_jobs,
                         )
                         cv_bal_mean = float(bal.mean())
                     except Exception:

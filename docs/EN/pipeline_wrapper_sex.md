@@ -14,6 +14,10 @@ summaries, then `train()` to evaluate all configured models. The class relies on
 paths defined in the configuration module and writes fitted pipelines to disk.
 Running many model variants may require significant compute time and storage.
 
+The constructor accepts an optional `n_jobs` argument which is forwarded to
+`cross_val_score` and `cross_val_predict` for parallel execution. Use `-1` to
+utilise all available CPUs.
+
 ### get_pipeline_steps
 Helper that assembles the preprocessing steps according to the selected
 hyperparameters. It validates the supplied options and returns a list suitable
