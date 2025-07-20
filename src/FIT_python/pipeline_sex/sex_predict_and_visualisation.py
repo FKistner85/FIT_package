@@ -50,6 +50,7 @@ def predict_all(
     prefer_generic: bool = False,
     include_inference: bool = True,
     reuse_csv: bool = True,
+    use_cv_train_predictions: bool = False,
 ) -> pd.DataFrame:
     """Return dataframe with model predictions for ``species``.
 
@@ -65,6 +66,10 @@ def predict_all(
     reuse_csv:
         Load predictions from the existing CSV when available instead of
         recomputing them.
+    use_cv_train_predictions:
+        If ``True`` use out-of-fold predictions already stored in
+        ``train.parquet`` instead of computing new predictions for the
+        training split.
     """
     splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
 
@@ -87,7 +92,9 @@ def predict_all(
     # Vorhersagen pro Modell
     for key, subdir in MODELS.items():
         clf = load(models_dir / subdir / f"{species}.joblib")
-        for df in dfs.values():
+        for name, df in dfs.items():
+            if name == "train" and use_cv_train_predictions:
+                continue
             num_cols = df.select_dtypes(include=np.number).columns
             feature_cols = [
                 c for c in num_cols if not c.startswith("pred_") and c != "Fold"

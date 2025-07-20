@@ -16,7 +16,9 @@ This document translates the rough notes in `pipeline_individual_id_3_pipelines.
    - Fit the scaler on the training set and apply it to train, test and inference data.
    - Optionally create a correlation plot or heatmap for the scaled features.
 5. **Sex Model Predictions**
-   - Use `predict_all` from the sex pipeline to obtain class and probability outputs for each dataset.
+   - Use `predict_all` from the sex pipeline to obtain class and probability outputs.
+   - For the training split the pre-computed cross-validation predictions are
+     used so that the model only sees out-of-fold values.
    - Store these predictions as additional features `sex_features`.
 
 ## 2. Training Setup
