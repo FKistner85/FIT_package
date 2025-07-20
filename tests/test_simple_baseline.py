@@ -35,7 +35,7 @@ def test_simple_baseline_runs(tmp_path, monkeypatch):
     importlib.reload(sb)
 
     out_dir = root / "exp"
-    df = sb.run_simple_baseline_all_species(out_dir)
+    df = sb.run_simple_baseline_all_species(out_dir, n_jobs=1)
 
     assert (out_dir / "raw_results.csv").exists()
     assert (out_dir / "models" / "otter.joblib").exists()

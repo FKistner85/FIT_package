@@ -27,7 +27,7 @@ Next, `plot_feature_correlation_matrix` creates a 2×2 grid of Pearson correlati
 
 ## Baseline Sex Classification
 
-The notebook then calls `run_simple_baseline_all_species(EXP_DIR)` to train stepwise LDA sex classifiers for each species. Accuracy and majority-vote comparison plots are produced and stored in the same experiment directory.
+The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1)` to train stepwise LDA sex classifiers for each species. Accuracy and majority-vote comparison plots are produced and stored in the same experiment directory.
 
 ## Baseline Evaluation
 

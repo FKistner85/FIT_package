@@ -31,13 +31,17 @@ def _load_split(fp: Path) -> pd.DataFrame:
     return df
 
 
-def run_simple_baseline_all_species(exp_dir: Path) -> pd.DataFrame:
+def run_simple_baseline_all_species(exp_dir: Path, n_jobs: int = -1) -> pd.DataFrame:
     """Train a simple LDA baseline for each species.
 
     Parameters
     ----------
     exp_dir:
         Directory where ``raw_results.csv`` and models will be stored.
+
+    n_jobs:
+        Number of CPU cores to use during cross-validation. ``-1``
+        uses all available cores.
 
     Returns
     -------
@@ -89,7 +93,8 @@ def run_simple_baseline_all_species(exp_dir: Path) -> pd.DataFrame:
         ])
 
         cv_scores = cross_val_score(
-            pipe, X_train, y_train, cv=cv, scoring="balanced_accuracy"
+            pipe, X_train, y_train, cv=cv, scoring="balanced_accuracy",
+            n_jobs=n_jobs
         )
         pipe.fit(X_train, y_train)
         y_pred = pipe.predict(X_test)
