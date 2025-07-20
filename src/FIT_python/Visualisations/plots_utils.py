@@ -459,12 +459,14 @@ def plot_umap_by_individual(
     ycol: str = "UMAP2",
 ) -> Path:
     """Scatter UMAP coordinates coloured by sex with markers per individual."""
+
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
 
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    fig, ax = plt.subplots(figsize=(8, 6))  # etwas kompakter, aber gute Lesbarkeit
+
     for ind, subset in df.groupby("individual_id"):
         _scatter_points(
             ax,
@@ -478,32 +480,39 @@ def plot_umap_by_individual(
     ax.set_xlabel(xcol)
     ax.set_ylabel(ycol)
 
+    # Legend for individuals (markers)
     marker_handles = [
-        Line2D([0], [0], marker=m, color="gray", linestyle="", label=str(ind))
+        Line2D([0], [0], marker=m, color="gray", linestyle="", label=str(ind), markersize=6)
         for ind, m in marker_map.items()
     ]
     legend_ind = ax.legend(
         handles=marker_handles,
         title="Individual",
-        loc="upper left",
-        bbox_to_anchor=(1.02, 1),  # place outside plot
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
         borderaxespad=0,
+        fontsize="small",
+        title_fontsize="medium",
+        ncol=1,
     )
+    ax.add_artist(legend_ind)
 
+    # Legend for sex (colors)
     color_handles = [
         Patch(color=SEX_COLORS["Female"], label="Female"),
         Patch(color=SEX_COLORS["Male"], label="Male"),
     ]
-    ax.add_artist(legend_ind)
     ax.legend(
         handles=color_handles,
         title="Sex",
-        loc="lower left",
-        bbox_to_anchor=(1.02, 0),  # align bottom right outside plot
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1.0),
         borderaxespad=0,
+        fontsize="small",
+        title_fontsize="medium",
     )
 
-    fig.tight_layout(rect=[0, 0, 0.8, 1])
+    fig.tight_layout(rect=[0, 0, 0.75, 1])  # mehr Platz für Plot, weniger für Legenden
 
     out = fig_dir / filename
     fig.savefig(out, dpi=150)
