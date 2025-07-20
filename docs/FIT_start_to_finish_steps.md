@@ -32,3 +32,7 @@ The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1, pro
 ## Baseline Evaluation
 
 Finally, `predict_all('eurasian_otter')` applies the best otter classifier to the held-out test data. The subsequent calls to `plot_confusion_and_inference`, `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities` create confusion matrices, quality plots and individual-level probability charts. Each figure is saved to the experiment directory for later inspection.
+
+## Sequential Holdouts with Sex Features
+
+Predicted sex probabilities from the baseline models are appended to each footprint as two new columns. The notebook runs the sequential holdout baseline twice: once using only morphometric measurements and again with these sex-model features included. For every iteration the resulting BCR and population-size metrics are written to summary tables. The helper `plot_sex_feature_boxplots` then visualises both setups via four boxplots: BCR by species, aggregated BCR, predicted minus true count difference by species and the aggregated count difference.
