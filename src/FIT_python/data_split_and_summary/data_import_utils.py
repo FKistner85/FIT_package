@@ -115,26 +115,23 @@ def load_and_prep_df_individual(species: str, splits_dir: Path) -> pd.DataFrame:
 
 
 def get_feature_cols(df: pd.DataFrame) -> list[str]:
+    """Return the numeric feature columns of ``df``.
+
+    Feature columns are detected either by common prefixes or, if no
+    such columns exist, by selecting all numeric columns starting from
+    column index 5.
     """
-    Wählt automatisch die numerischen Feature-Spalten:
-    - Wenn Spalten mit Prefix 'dist', 'ang' oder 't' vorhanden sind,
-      werden nur diese numerischen Spalten genommen.
-    - Sonst alle numerischen Spalten ab dem 6. Column-Index.
-    """
-    # Check: gibt es spezialisierte Prefix-Spalten?
-    prefixes = ("dist", "ang", "t")
-    has_prefix_cols = any(col.startswith(prefixes) for col in df.columns)
+
+    prefixes = ("v", "area", "dist", "ang", "t")
+    has_prefix_cols = any(col.lower().startswith(prefixes) for col in df.columns)
 
     if has_prefix_cols:
-        # Spezialfall: nimm nur Prefix-Spalten
         return [
             c
             for c in df.columns
-            if c.startswith(prefixes) and pd.api.types.is_numeric_dtype(df[c])
+            if c.lower().startswith(prefixes) and pd.api.types.is_numeric_dtype(df[c])
         ]
-    else:
-        # Standardfall: alle numerischen ab Index 5
-        return [c for c in df.columns[5:] if pd.api.types.is_numeric_dtype(df[c])]
+    return [c for c in df.columns[5:] if pd.api.types.is_numeric_dtype(df[c])]
 
 
 import pandas as pd

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from ast import literal_eval
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.spatial.distance import squareform
+from scipy.stats import chi2
 from IPython.display import Image, Markdown, display
 from sklearn.feature_selection import SelectKBest, f_classif
 
@@ -381,6 +385,109 @@ def plot_umap_centroid_outliers(df, title, cols=6):
     fig.legend(handles=handles, loc="upper right")
     plt.tight_layout(rect=[0, 0, 0.95, 1])
     return fig
+
+
+def _parse_coords(val) -> np.ndarray:
+    """Return ``val`` as a 1D float array.
+
+    ``val`` may either be a sequence of numbers or a string representation
+    of such a sequence. Invalid inputs yield an empty array.
+    """
+
+    if isinstance(val, str):
+        try:
+            arr = np.asarray(literal_eval(val), dtype=float)
+        except Exception:
+            return np.empty(0, dtype=float)
+    else:
+        arr = np.asarray(val, dtype=float)
+    return arr
+
+
+def _circle_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float], float] | tuple[None, None]:
+    """Return center and radius for the ``prefix`` coordinates in ``row``."""
+
+    x = _parse_coords(row.get(f"coords_{prefix}_x"))
+    y = _parse_coords(row.get(f"coords_{prefix}_y"))
+    if x.size == 0 or y.size == 0 or x.size != y.size:
+        return None, None
+    pts = np.column_stack([x, y])
+    center = pts.mean(axis=0)
+    dist = np.linalg.norm(pts - center, axis=1)
+    std = dist.std(ddof=1) if dist.size > 1 else 0.0
+    radius = np.sqrt(chi2.ppf(0.5, df=2)) * std
+    return (float(center[0]), float(center[1])), float(radius)
+
+
+def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path) -> Path:
+    """Plot example 50% confidence circles for TP/FP/FN/TN categories."""
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    mapping = {"True": True, "False": False, True: True, False: False}
+    df = df_res.copy()
+    df["_gt"] = df["same_individual"].map(mapping)
+    df["_pred"] = df["pred"].map(mapping)
+
+    cats = {
+        "TP": (True, True),
+        "FP": (False, True),
+        "FN": (True, False),
+        "TN": (False, False),
+    }
+
+    examples: dict[str, pd.Series] = {}
+    for name, (gt, pr) in cats.items():
+        sel = df[(df["_gt"] == gt) & (df["_pred"] == pr)]
+        if not sel.empty:
+            examples[name] = sel.iloc[0]
+
+    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    order = ["TP", "FP", "FN", "TN"]
+    for ax, key in zip(axes.flat, order):
+        row = examples.get(key)
+        if row is None:
+            ax.axis("off")
+            continue
+
+        c_a, r_a = _circle_from_row(row, "a")
+        c_b, r_b = _circle_from_row(row, "b")
+
+        if c_a is not None:
+            ax.add_patch(plt.Circle(c_a, r_a, fill=False, color="blue", lw=2))
+        if c_b is not None:
+            ax.add_patch(plt.Circle(c_b, r_b, fill=False, color="orange", lw=2))
+
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(key)
+
+    plt.tight_layout()
+    out_path = out_dir / "pair_examples.png"
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    save_caption(out_path, "50% confidence circles for example pairs (TP/FP/FN/TN).")
+    return out_path
+
+
+def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) -> Path:
+    """Save a dendrogram based on ``dist_matrix`` with a cutoff line."""
+
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    condensed = squareform(dist_matrix.to_numpy(), checks=False)
+    link = linkage(condensed, method="ward")
+
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    dendrogram(link, labels=dist_matrix.index.astype(str).tolist(), ax=ax)
+    ax.axhline(cutoff, color="red", linestyle="--")
+    ax.set_ylabel("Ward distance")
+    ax.set_xlabel("Sample")
+    plt.tight_layout()
+    fig.savefig(out_file, dpi=150)
+    plt.close(fig)
+    save_caption(out_file, "Ward dendrogram with distance cutoff line.")
+    return out_file
 
 
 FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}
