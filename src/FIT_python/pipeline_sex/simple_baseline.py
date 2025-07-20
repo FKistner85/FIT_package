@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 import pandas as pd
-from joblib import dump
+from joblib import dump, load
 
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -19,7 +19,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from FIT_python.config import SPLITS_DIR
+from FIT_python.config import SPLITS_DIR, DATA_DIR
 from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
     FeatureSelectionTransformer,
 )
@@ -158,3 +158,73 @@ def run_simple_baseline_all_species(
     df = pd.DataFrame(records)
     df.to_csv(exp_dir / "raw_results.csv", index=False)
     return df
+
+
+def predict_simple_baseline(
+    species: str,
+    exp_dir: Path,
+    *,
+    include_inference: bool = True,
+    reuse_csv: bool = True,
+) -> pd.DataFrame:
+    """Return predictions of the simple baseline model for ``species``.
+
+    Parameters
+    ----------
+    species:
+        Species folder under ``data/splits``.
+    exp_dir:
+        Directory containing the trained models produced by
+        :func:`run_simple_baseline_all_species`.
+    include_inference:
+        Include the ``inference`` split when it exists.
+    reuse_csv:
+        Load predictions from the existing CSV when ``True``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with the original splits and three additional columns:
+        ``pred_baseline_sex``, ``pred_baseline_proba_f`` and
+        ``pred_baseline_proba_m``.
+    """
+
+    exp_dir = Path(exp_dir)
+    splits_dir = DATA_DIR / "splits" / species
+    csv_path = exp_dir / f"{species}_baseline_predictions.csv"
+
+    if reuse_csv and csv_path.exists():
+        return pd.read_csv(csv_path)
+
+    model_path = exp_dir / "models" / f"{species}.joblib"
+    clf = load(model_path)
+
+    split_names = ["train", "test"]
+    if include_inference and (splits_dir / "inference.parquet").exists():
+        split_names.append("inference")
+
+    dfs: list[pd.DataFrame] = []
+    for name in split_names:
+        df = _load_split(splits_dir / f"{name}.parquet")
+
+        drop_cols = ["sex"]
+        if "individual_id" in df.columns:
+            drop_cols.append("individual_id")
+        X = df.drop(columns=[c for c in drop_cols if c in df.columns])
+        X = X.select_dtypes(include=["number"]).copy()
+        if "Fold" in X.columns:
+            X = X.drop(columns=["Fold"])
+
+        df["__split__"] = name
+        df["pred_baseline_sex"] = clf.predict(X)
+        proba = clf.predict_proba(X)
+        df["pred_baseline_proba_f"] = proba[:, 0]
+        df["pred_baseline_proba_m"] = proba[:, 1]
+        dfs.append(df)
+
+    all_df = pd.concat(dfs, ignore_index=True)
+
+    if not reuse_csv:
+        all_df.to_csv(csv_path, index=False)
+
+    return all_df
