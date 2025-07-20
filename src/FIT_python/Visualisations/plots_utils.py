@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-from IPython.display import display, Markdown, Image
+from IPython.display import Image, Markdown, display
+from sklearn.feature_selection import SelectKBest, f_classif
 
-from FIT_python.Visualisations.plot_style import SEX_COLORS
 from FIT_python.caption_utils import save_caption
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
-from sklearn.feature_selection import SelectKBest, f_classif
+from FIT_python.Visualisations.plot_style import SEX_COLORS
+
 
 def select_top_features(df: pd.DataFrame, target: str, k: int = 4) -> list[str]:
     """Return the ``k`` highest scoring feature names using ANOVA F-test."""
@@ -29,10 +31,9 @@ def select_top_features(df: pd.DataFrame, target: str, k: int = 4) -> list[str]:
     ranked = sorted(zip(feature_cols, scores), key=lambda x: x[1], reverse=True)
     return [feat for feat, _ in ranked[:k]]
 
+
 def plot_feature_correlation_matrix(
-    df: pd.DataFrame,
-    fig_dir: Path,
-    filename: str = "feature_corr_matrix_2x2.png"
+    df: pd.DataFrame, fig_dir: Path, filename: str = "feature_corr_matrix_2x2.png"
 ) -> Path:
     """
     Create and save a 2×2 panel of correlation heatmaps with a single, external colorbar:
@@ -49,21 +50,30 @@ def plot_feature_correlation_matrix(
     num_df = df.select_dtypes(include="number")
     groups = {
         "distance": [c for c in num_df.columns if c.lower().startswith(("d", "dist"))],
-        "angle":    [c for c in num_df.columns if c.lower().startswith("ang")],
-        "triangles":[c for c in num_df.columns if c.lower().startswith("t") and not c.lower().startswith("trail")]
+        "angle": [c for c in num_df.columns if c.lower().startswith("ang")],
+        "triangles": [
+            c
+            for c in num_df.columns
+            if c.lower().startswith("t") and not c.lower().startswith("trail")
+        ],
     }
 
     sel = sorted({c for cols in groups.values() for c in cols})
     corr_full = num_df[sel].corr()
 
-    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
+    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams["figure.figsize"])
     cmap = "RdBu_r"
 
     # a) full correlation, no internal colorbar
     ax = axes[0, 0]
     sns.heatmap(
-        corr_full, cmap=cmap, center=0, ax=ax,
-        xticklabels=False, yticklabels=False, cbar=False
+        corr_full,
+        cmap=cmap,
+        center=0,
+        ax=ax,
+        xticklabels=False,
+        yticklabels=False,
+        cbar=False,
     )
     ordered = corr_full.columns.tolist()
     positions, labels = [], []
@@ -84,8 +94,13 @@ def plot_feature_correlation_matrix(
     def single(ax, grp, cols, title):
         corr = num_df[cols].corr()
         sns.heatmap(
-            corr, cmap=cmap, center=0, ax=ax,
-            xticklabels=False, yticklabels=False, cbar=False
+            corr,
+            cmap=cmap,
+            center=0,
+            ax=ax,
+            xticklabels=False,
+            yticklabels=False,
+            cbar=False,
         )
         n = len(cols)
         mid = (n - 1) / 2
@@ -95,9 +110,9 @@ def plot_feature_correlation_matrix(
         ax.set_yticklabels([f"{grp} ({n})"], rotation=0, fontsize="small")
         ax.set_title(title, loc="left")
 
-    single(axes[0,1], "distance",  groups["distance"],  "b)")
-    single(axes[1,0], "angle",     groups["angle"],     "c)")
-    single(axes[1,1], "triangles", groups["triangles"], "d)")
+    single(axes[0, 1], "distance", groups["distance"], "b)")
+    single(axes[1, 0], "angle", groups["angle"], "c)")
+    single(axes[1, 1], "triangles", groups["triangles"], "d)")
 
     plt.tight_layout()
 
@@ -113,8 +128,7 @@ def plot_feature_correlation_matrix(
     plt.close(fig)
 
     save_caption(
-        out,
-        "2×2 panel of correlation heatmaps a)–d) with a single external colorbar."
+        out, "2×2 panel of correlation heatmaps a)–d) with a single external colorbar."
     )
     return out
 
@@ -127,24 +141,26 @@ def plot_individual_boxplots(df, top4_feats, fig_dir, filename):
     ohne x-Ticks und ohne Legende, speichert das Bild und gibt den Pfad zurück.
     """
     # Bestimme Reihenfolge der individual_id nach Sex
-    female_ids = df.loc[df['sex_mapped']=='Female', 'individual_id'].unique().tolist()
-    male_ids   = df.loc[df['sex_mapped']=='Male',   'individual_id'].unique().tolist()
-    ind_order  = female_ids + male_ids
+    female_ids = df.loc[df["sex_mapped"] == "Female", "individual_id"].unique().tolist()
+    male_ids = df.loc[df["sex_mapped"] == "Male", "individual_id"].unique().tolist()
+    ind_order = female_ids + male_ids
 
     display(Markdown(f"**{filename.replace('.png','')}**"))
-    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
+    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams["figure.figsize"])
     for ax, feat in zip(axes.flat, top4_feats):
         sns.boxplot(
             data=df,
-            x='individual_id', y=feat, ax=ax,
-            hue='sex_mapped',
+            x="individual_id",
+            y=feat,
+            ax=ax,
+            hue="sex_mapped",
             palette=SEX_COLORS,
             dodge=False,
             order=ind_order,
             hue_order=["Female", "Male"],
-            legend=False
+            legend=False,
         )
-        ax.set_xlabel('')
+        ax.set_xlabel("")
         ax.set_xticks([])
         ax.set_ylabel(feat)
     plt.tight_layout()
@@ -170,12 +186,19 @@ def plot_sex_boxplots(
     fig_dir.mkdir(parents=True, exist_ok=True)
     plot_df = df[df["sex_mapped"].isin(order)]
 
-    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams['figure.figsize'])
+    fig, axes = plt.subplots(2, 2, figsize=plt.rcParams["figure.figsize"])
     for ax, feat in zip(axes.flat, features):
         sns.boxplot(
-            x="sex_mapped", y=feat, data=plot_df, ax=ax,
-            hue="sex_mapped", palette={k: SEX_COLORS[k] for k in order},
-            order=order, hue_order=order, legend=False, dodge=False
+            x="sex_mapped",
+            y=feat,
+            data=plot_df,
+            ax=ax,
+            hue="sex_mapped",
+            palette={k: SEX_COLORS[k] for k in order},
+            order=order,
+            hue_order=order,
+            legend=False,
+            dodge=False,
         )
         ax.set_xlabel("Sex")
         ax.set_ylabel(feat)
@@ -184,11 +207,9 @@ def plot_sex_boxplots(
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
-    save_caption(
-        out,
-        f"Boxplots of features {features} by sex (Female, Male)."
-    )
+    save_caption(out, f"Boxplots of features {features} by sex (Female, Male).")
     return out
+
 
 def plot_umap_scatter(
     df: pd.DataFrame,
@@ -214,7 +235,7 @@ def plot_umap_scatter(
         Path to the saved image file.
     """
     fig_dir.mkdir(parents=True, exist_ok=True)
-    fig, ax = plt.subplots(figsize=plt.rcParams['figure.figsize'])
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     sns.scatterplot(
         data=emb,
         x="UMAP1",
@@ -232,63 +253,80 @@ def plot_umap_scatter(
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
-    save_caption(
-        out,
-        "2D UMAP projection colored by sex (Female, Male)."
-    )
+    save_caption(out, "2D UMAP projection colored by sex (Female, Male).")
     return out
+
 
 # --- 2) Small‑Multiples‑Visualisierung mit Centroid‑Outliern ---
 def plot_umap_centroid_outliers(df, title, cols=6):
-    n_ind = df['individual_id'].nunique()
-    rows  = int(np.ceil(n_ind / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(cols*3, rows*3),
-                             sharex=False, sharey=False)
+    n_ind = df["individual_id"].nunique()
+    rows = int(np.ceil(n_ind / cols))
+    fig, axes = plt.subplots(
+        rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False
+    )
     axes = axes.flatten()
 
     display(Markdown(f"**{title}**"))
-    for ax, (ind, subset) in zip(axes, df.groupby('individual_id')):
+    for ax, (ind, subset) in zip(axes, df.groupby("individual_id")):
         # a) KDE-Heatmap der echten Punkte
         sns.kdeplot(
             data=subset,
-            x='UMAP1', y='UMAP2',
-            fill=True, thresh=0.05, levels=5, alpha=0.4,
+            x="UMAP1",
+            y="UMAP2",
+            fill=True,
+            thresh=0.05,
+            levels=5,
+            alpha=0.4,
             ax=ax,
-            color=SEX_COLORS[subset['sex_mapped'].iloc[0]]
+            color=SEX_COLORS[subset["sex_mapped"].iloc[0]],
         )
         # b) Alle Punkte
         ax.scatter(
-            subset['UMAP1'], subset['UMAP2'],
-            s=20, edgecolor='w', linewidth=0.5,
-            c=SEX_COLORS[subset['sex_mapped'].iloc[0]]
+            subset["UMAP1"],
+            subset["UMAP2"],
+            s=20,
+            edgecolor="w",
+            linewidth=0.5,
+            c=SEX_COLORS[subset["sex_mapped"].iloc[0]],
         )
         # c) Centroid‑Outlier als rote Kreuze
-        out = subset[subset['is_outlier_centroid']]
+        out = subset[subset["is_outlier_centroid"]]
         if not out.empty:
             ax.scatter(
-                out['UMAP1'], out['UMAP2'],
-                marker='x', c='red', s=40,
-                label='Outlier (Centroid)'
+                out["UMAP1"],
+                out["UMAP2"],
+                marker="x",
+                c="red",
+                s=40,
+                label="Outlier (Centroid)",
             )
         ax.set_title(ind)
-        ax.set_xlabel('UMAP1')
-        ax.set_ylabel('UMAP2')
+        ax.set_xlabel("UMAP1")
+        ax.set_ylabel("UMAP2")
 
     # Leere Plots abschalten
     for ax in axes[n_ind:]:
-        ax.axis('off')
+        ax.axis("off")
 
     # Gemeinsame Legende
     handles = [
-        plt.Line2D([0],[0], marker='o', color='w',
-                   markerfacecolor='gray', markersize=8,
-                   label='Inlier'),
-        plt.Line2D([0],[0], marker='x', color='red',
-                   markersize=8, label='Outlier (Centroid)')
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="gray",
+            markersize=8,
+            label="Inlier",
+        ),
+        plt.Line2D(
+            [0], [0], marker="x", color="red", markersize=8, label="Outlier (Centroid)"
+        ),
     ]
-    fig.legend(handles=handles, loc='upper right')
-    plt.tight_layout(rect=[0,0,0.95,1])
+    fig.legend(handles=handles, loc="upper right")
+    plt.tight_layout(rect=[0, 0, 0.95, 1])
     return fig
+
 
 FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}
 
@@ -305,7 +343,24 @@ def make_marker_map(ids) -> dict:
     """Assign a distinct marker to each ID."""
     from itertools import cycle
 
-    base = ["o", "s", "^", "v", "P", "X", "D", "*", "h", "+", "x", "1", "2", "3", "4", "8"]
+    base = [
+        "o",
+        "s",
+        "^",
+        "v",
+        "P",
+        "X",
+        "D",
+        "*",
+        "h",
+        "+",
+        "x",
+        "1",
+        "2",
+        "3",
+        "4",
+        "8",
+    ]
     return {i: m for i, m in zip(ids, cycle(base))}
 
 
@@ -380,7 +435,12 @@ def plot_embedding_by_individual(
         Patch(color=SEX_COLORS["Female"], label="Female"),
         Patch(color=SEX_COLORS["Male"], label="Male"),
     ]
-    fig.legend(handles=legend_elems, loc="center right", bbox_to_anchor=(1.15, 0.5), title="Sex")
+    fig.legend(
+        handles=legend_elems,
+        loc="center right",
+        bbox_to_anchor=(1.15, 0.5),
+        title="Sex",
+    )
     fig.tight_layout(rect=[0, 0, 0.85, 1])
 
     out = fig_dir / filename
@@ -390,14 +450,75 @@ def plot_embedding_by_individual(
     return out
 
 
+def plot_umap_by_individual(
+    df: pd.DataFrame,
+    marker_map: dict,
+    fig_dir: Path,
+    filename: str,
+    xcol: str = "UMAP1",
+    ycol: str = "UMAP2",
+) -> Path:
+    """Scatter UMAP coordinates coloured by sex with markers per individual."""
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    for ind, subset in df.groupby("individual_id"):
+        _scatter_points(
+            ax,
+            subset[xcol],
+            subset[ycol],
+            SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            marker_map.get(ind, "o"),
+            label=str(ind),
+        )
+
+    ax.set_xlabel(xcol)
+    ax.set_ylabel(ycol)
+
+    marker_handles = [
+        Line2D([0], [0], marker=m, color="gray", linestyle="", label=str(ind))
+        for ind, m in marker_map.items()
+    ]
+    legend_ind = ax.legend(
+        handles=marker_handles,
+        title="Individual",
+        loc="upper right",
+        bbox_to_anchor=(1.25, 1),
+    )
+
+    color_handles = [
+        Patch(color=SEX_COLORS["Female"], label="Female"),
+        Patch(color=SEX_COLORS["Male"], label="Male"),
+    ]
+    ax.add_artist(legend_ind)
+    ax.legend(
+        handles=color_handles,
+        title="Sex",
+        loc="center right",
+        bbox_to_anchor=(1.25, 0.5),
+    )
+
+    fig.tight_layout(rect=[0, 0, 0.8, 1])
+
+    out = fig_dir / filename
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, f"{xcol}/{ycol} UMAP by individual and sex")
+    return out
 
 
-
-def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> plt.Figure:
+def plot_umap_centroid_outliers(
+    df: pd.DataFrame, title: str, cols: int = 6
+) -> plt.Figure:
     """Small-multiple plots of UMAP points with centroid-based outliers."""
     n_ind = df["individual_id"].nunique()
     rows = int(np.ceil(n_ind / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False)
+    fig, axes = plt.subplots(
+        rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False
+    )
     axes = axes.flatten()
 
     for ax, (ind, subset) in zip(axes, df.groupby("individual_id")):
@@ -421,7 +542,14 @@ def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> 
         )
         out = subset[subset["is_outlier_centroid"]]
         if not out.empty:
-            ax.scatter(out["UMAP1"], out["UMAP2"], marker="x", c="red", s=40, label="Outlier (Centroid)")
+            ax.scatter(
+                out["UMAP1"],
+                out["UMAP2"],
+                marker="x",
+                c="red",
+                s=40,
+                label="Outlier (Centroid)",
+            )
         ax.set_title(ind)
         ax.set_xlabel("UMAP1")
         ax.set_ylabel("UMAP2")
@@ -430,15 +558,27 @@ def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> 
         ax.axis("off")
 
     handles = [
-        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="gray", markersize=8, label="Inlier"),
-        plt.Line2D([0], [0], marker="x", color="red", markersize=8, label="Outlier (Centroid)"),
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="gray",
+            markersize=8,
+            label="Inlier",
+        ),
+        plt.Line2D(
+            [0], [0], marker="x", color="red", markersize=8, label="Outlier (Centroid)"
+        ),
     ]
     fig.legend(handles=handles, loc="upper right")
     plt.tight_layout(rect=[0, 0, 0.95, 1])
     return fig
 
 
-def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> plt.Figure:
+def plot_umap_centroid_outliers(
+    df: pd.DataFrame, title: str, cols: int = 6
+) -> plt.Figure:
     """
     Small‑multiple UMAP plots with KDE background and optional centroid‑based outlier markers.
 
@@ -459,7 +599,9 @@ def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> 
     """
     n_ind = df["individual_id"].nunique()
     rows = int(np.ceil(n_ind / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False)
+    fig, axes = plt.subplots(
+        rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False
+    )
     axes = axes.flatten()
 
     display(Markdown(f"**{title}**"))
@@ -515,8 +657,23 @@ def plot_umap_centroid_outliers(df: pd.DataFrame, title: str, cols: int = 6) -> 
     # Add a global legend if outliers are shown
     if has_outliers:
         handles = [
-            plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="gray", markersize=8, label="Inlier"),
-            plt.Line2D([0], [0], marker="x", color="red", markersize=8, label="Outlier (Centroid)"),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="gray",
+                markersize=8,
+                label="Inlier",
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="x",
+                color="red",
+                markersize=8,
+                label="Outlier (Centroid)",
+            ),
         ]
         fig.legend(handles=handles, loc="upper right")
 
