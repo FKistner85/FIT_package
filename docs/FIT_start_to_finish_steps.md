@@ -32,3 +32,18 @@ The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1)` to
 ## Baseline Evaluation
 
 Finally, `predict_all('eurasian_otter')` applies the best otter classifier to the held-out test data. The subsequent calls to `plot_confusion_and_inference`, `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities` create confusion matrices, quality plots and individual-level probability charts. Each figure is saved to the experiment directory for later inspection.
+
+## Individual Identification Baseline
+
+`run_simple_baseline_otter` evaluates the otter splits with different numbers of
+selected features. For each value in the provided ``k_range`` the helper
+`sequential_holdout.run` performs several iterations and writes a
+``summary_k<k>.csv`` file. The ``k`` yielding the highest mean BCR is returned
+as the optimal feature count【F:src/FIT_python/pipeline_individual_id/simple_baseline.py†L88-L126】.
+
+`run_baseline_all_species` then runs one sequential holdout for every species
+using this ``best_k`` (or species-specific overrides) and stores a
+``summary.csv`` in each subdirectory【F:src/FIT_python/pipeline_individual_id/simple_baseline.py†L129-L160】【F:src/FIT_python/pipeline_individual_id/sequential_holdout.py†L189-L198】.
+
+Example pair plots and Ward dendrograms can be produced from the resulting CSV
+files via `plot_pair_examples` and `plot_dendrogram`【F:src/FIT_python/Visualisations/plots_utils.py†L422-L490】.
