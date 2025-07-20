@@ -175,3 +175,38 @@ def _load_splits(species_dir: Path) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)
 
 
+def load_sex_predictions(species: str, prefer_generic: bool = True) -> pd.DataFrame:
+    """Return sex-model predictions for ``species``.
+
+    This is a thin wrapper around :func:`predict_all` from the sex
+    classification pipeline.  The helper simply forwards the parameters and
+    returns the resulting DataFrame so that the individual ID baseline can load
+    the predictions without importing the full sex pipeline here.
+    """
+
+    from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
+
+    return predict_all(species, prefer_generic=prefer_generic)
+
+
+def add_sex_features(df: pd.DataFrame, pred_df: pd.DataFrame) -> pd.DataFrame:
+    """Append sex probabilities to ``df`` and compute trail-level aggregates."""
+
+    if "id" not in df.columns:
+        raise KeyError("DataFrame must contain an 'id' column")
+
+    prob_cols = [c for c in pred_df.columns if c.startswith("pred_") and c.endswith("proba_f")]
+    if not prob_cols:
+        return df
+
+    pred_sub = pred_df.set_index("id")[prob_cols]
+    out = df.set_index("id").join(pred_sub, how="left").reset_index()
+
+    if "Trail" in out.columns:
+        out["trail_proba_f"] = (
+            out.groupby("Trail")[prob_cols].transform("mean").mean(axis=1)
+        )
+
+    return out
+
+
