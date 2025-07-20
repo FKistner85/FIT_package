@@ -11,6 +11,7 @@ from FIT_python.data_split_and_summary.data_import_utils import (
     sanitize_labels,
 )
 from FIT_python.data_split_and_summary.transform_utils import convert_numeric
+from tqdm.auto import tqdm
 import FIT_python.config as config
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
 import sys
@@ -36,7 +37,7 @@ class DataImporter:
     def load(self) -> Dict[str, pd.DataFrame]:
         """Load raw files into DataFrames with cleaned columns and IDs."""
         dfs = load_raw_files(self.raw_dir, add_id=False)
-        for name, df in dfs.items():
+        for name, df in tqdm(dfs.items(), desc="Loading", leave=False):
             n = len(df)
             # inserting repeatedly can lead to fragmentation; assign instead
             df = df.copy()
@@ -52,7 +53,7 @@ class DataImporter:
     def clean(self, dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
         """Apply label cleaning to each DataFrame's target columns."""
         cleaned = {}
-        for name, df in dfs.items():
+        for name, df in tqdm(dfs.items(), desc="Cleaning", leave=False):
             df_clean = sanitize_labels(
                 df,
                 target_cols=self.target_cols,
@@ -67,7 +68,7 @@ class DataImporter:
     def convert(self, dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
         """Convert feature columns to float (comma→dot) for numeric pipeline steps."""
         converted = {}
-        for name, df in dfs.items():
+        for name, df in tqdm(dfs.items(), desc="Converting", leave=False):
             df_copy = df.copy()
             # determine feature columns: exclude meta and target columns
             if "otter" in name.lower():
@@ -123,7 +124,7 @@ class DataImportWrapper:
         if config.DEBUG_MODE:
             print("[DEBUG] saving cleaned datasets")
 
-        for name, df in dfs.items():
+        for name, df in tqdm(dfs.items(), desc="Datasets"):
             out = config.CLEANED_DIR / f"{name}.parquet"
             df.to_parquet(out, index=False)
             print(f"[REPORT] cleaned {name}: shape={df.shape}")

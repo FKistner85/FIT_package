@@ -7,6 +7,7 @@ import pandas as pd
 
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
+from tqdm.auto import tqdm
 from FIT_python.config import DEFAULT_TARGETS
 from FIT_python.soft_config import SOFT_CONFIG
 
@@ -34,7 +35,7 @@ def generate_dataset_overview(raw_dir: Path, out_csv: Path) -> pd.DataFrame:
     dfs = importer.run()
 
     rows = []
-    for name, df in dfs.items():
+    for name, df in tqdm(dfs.items(), desc="Datasets"):
         feature_cols = get_feature_cols(df)
         row = {
             "Species": _species_label(name, df),
