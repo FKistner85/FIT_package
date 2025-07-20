@@ -133,6 +133,61 @@ def plot_feature_correlation_matrix(
     return out
 
 
+def plot_feature_correlations(
+    df: pd.DataFrame, fig_dir: Path, filename: str = "feature_corr_matrix_2x2.png"
+) -> Path:
+    """Backward compatible wrapper for :func:`plot_feature_correlation_matrix`."""
+
+    return plot_feature_correlation_matrix(df, fig_dir, filename)
+
+
+def plot_feature_distributions(
+    raw_df: pd.DataFrame,
+    cleaned_df: pd.DataFrame,
+    fig_dir: Path,
+    bins: int = 30,
+) -> list[Path]:
+    """Plot histograms of numeric features before and after cleaning.
+
+    Parameters
+    ----------
+    raw_df : pandas.DataFrame
+        Data prior to cleaning.
+    cleaned_df : pandas.DataFrame
+        Data after cleaning.
+    fig_dir : pathlib.Path
+        Directory to store the generated plots.
+    bins : int, default=30
+        Number of histogram bins.
+
+    Returns
+    -------
+    list[pathlib.Path]
+        Paths of the saved plot images.
+    """
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    feature_cols = get_feature_cols(cleaned_df)
+    saved: list[Path] = []
+    for col in feature_cols:
+        fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+        sns.histplot(raw_df[col].dropna(), bins=bins, color="grey", alpha=0.5, label="raw", ax=ax)
+        sns.histplot(cleaned_df[col].dropna(), bins=bins, color="blue", alpha=0.5, label="cleaned", ax=ax)
+        ax.set_title(col)
+        ax.set_xlabel(col)
+        ax.set_ylabel("count")
+        ax.legend()
+
+        out = fig_dir / f"{col}.png"
+        fig.savefig(out, dpi=150)
+        plt.close(fig)
+        save_caption(out, f"Histogram of {col} before and after cleaning.")
+        saved.append(out)
+
+    return saved
+
+
 # --- Helper-Funktion für Individual-Boxplots ---
 def plot_individual_boxplots(df, top4_feats, fig_dir, filename):
     """
