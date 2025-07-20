@@ -49,6 +49,7 @@ def predict_all(
     species: str = DEFAULT_SPECIES,
     prefer_generic: bool = False,
     include_inference: bool = True,
+    reuse_csv: bool = True,
 ) -> pd.DataFrame:
     """Return dataframe with model predictions for ``species``.
 
@@ -61,8 +62,14 @@ def predict_all(
         ``random_search_standard_metrics`` directory when present.
     include_inference:
         Include the ``inference`` split if the corresponding parquet exists.
+    reuse_csv:
+        Load predictions from the existing CSV when available instead of
+        recomputing them.
     """
     splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
+
+    if reuse_csv and csv_path.exists():
+        return pd.read_csv(csv_path)
 
     split_names = ["train", "test"]
     if include_inference and (splits_dir / "inference.parquet").exists():
