@@ -32,3 +32,17 @@ The notebook then calls `run_simple_baseline_all_species(EXP_DIR)` to train step
 ## Baseline Evaluation
 
 Finally, `predict_all('eurasian_otter')` applies the best otter classifier to the held-out test data. The subsequent calls to `plot_confusion_and_inference`, `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities` create confusion matrices, quality plots and individual-level probability charts. Each figure is saved to the experiment directory for later inspection.
+
+## Baseline Individual Identification
+
+`run_simple_baseline_otter` first determines the optimal number of morphometric
+features for Eurasian otters. It loops through a configurable range of `k`
+values, performs sequential holdouts via `sequential_holdout.run` and writes the
+aggregated metrics for each `k` to `summary_k{k}.csv`. The `k` value with the
+highest mean BCR across iterations is returned.
+
+`run_baseline_all_species` then evaluates the ID baseline for every species. It
+uses the selected `k` for otters and optional per-species overrides for other
+datasets. Each call to `sequential_holdout.run` produces a `summary.csv` inside
+the species directory along with the per-split result tables. Additional helper
+functions generate pair example plots and Ward dendrograms for visual analysis.
