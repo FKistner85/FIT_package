@@ -132,7 +132,7 @@ class DataImportWrapper:
             if raw_df is not None:
                 fig_dir = config.FIGURES_DIR / "feature_distributions" / name
                 try:
-                    from FIT_python.general_pipeline_steps.outlier_wrapper2 import (
+                    from FIT_python.Visualisations.plots_utils import (
                         plot_feature_distributions,
                     )
 
