@@ -1,0 +1,1 @@
+Histogram of area5 before and after cleaning.
