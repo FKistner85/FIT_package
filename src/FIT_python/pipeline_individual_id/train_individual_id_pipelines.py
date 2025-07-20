@@ -57,6 +57,10 @@ def _load_splits(species: str) -> dict[str, pd.DataFrame]:
         fp = splits_dir / f"{name}.parquet"
         if fp.exists():
             df = pd.read_parquet(fp)
+            if "Fold" in df.columns and "fold" not in df.columns:
+                df = df.rename(columns={"Fold": "fold"})
+            if "trail" in df.columns and "Trail" not in df.columns:
+                df = df.rename(columns={"trail": "Trail"})
             dfs[name] = df
             compute_summary(df, species, name)
     return dfs

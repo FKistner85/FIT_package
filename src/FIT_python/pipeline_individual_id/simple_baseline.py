@@ -238,7 +238,16 @@ def _load_splits(species_dir: Path) -> pd.DataFrame:
         parts.append(pd.read_parquet(test_fp))
     if not parts:
         raise FileNotFoundError(f"No train/test splits found in {species_dir}")
-    return pd.concat(parts, ignore_index=True)
+
+    df = pd.concat(parts, ignore_index=True)
+
+    if "Fold" in df.columns and "fold" not in df.columns:
+        df = df.rename(columns={"Fold": "fold"})
+
+    if "trail" in df.columns and "Trail" not in df.columns:
+        df = df.rename(columns={"trail": "Trail"})
+
+    return df
 
 
 def load_sex_predictions(species: str, prefer_generic: bool = True) -> pd.DataFrame:
