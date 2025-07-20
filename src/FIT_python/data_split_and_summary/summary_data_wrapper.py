@@ -13,6 +13,7 @@ from FIT_python.data_split_and_summary.summary_data_utils import (
     plot_split_proportions,
 )
 import FIT_python.config as config
+from tqdm.auto import tqdm
 
 
 def run_summary(
@@ -30,8 +31,8 @@ def run_summary(
 
     rows: list[pd.DataFrame] = []
 
-    for dataset, parts in splits.items():
-        for origin, path in parts.items():
+    for dataset, parts in tqdm(splits.items(), desc="Datasets"):
+        for origin, path in tqdm(parts.items(), desc="Splits", leave=False):
             df = load_split_data(path)
             # skip empty splits entirely
             summary_df = compute_summary(df, dataset, origin)

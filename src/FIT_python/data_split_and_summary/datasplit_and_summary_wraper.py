@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 import pandas as pd
+from tqdm.auto import tqdm
 
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.split_utils import (
@@ -37,7 +38,7 @@ class SplitWrapper:
             print(f"❌ Keine Rohdaten gefunden in {self.input_dir}")
             return 1
 
-        for name, df in dfs.items():
+        for name, df in tqdm(dfs.items(), desc="Splitting datasets"):
             dataset = name.lower().replace("_cleaned", "")
             species_col = df.get("Species") or df.get("species")
             is_otter = (

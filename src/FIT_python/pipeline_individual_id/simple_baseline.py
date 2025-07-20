@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable, List, Dict, Any
+from tqdm.auto import tqdm
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -152,7 +153,7 @@ def run_baseline_all_species(exp_dir: Path, best_k: int, cutoff: Dict[str, Any])
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
 
-    for species_dir in sorted(SPLITS_DIR.iterdir()):
+    for species_dir in tqdm(sorted(SPLITS_DIR.iterdir()), desc="Species"):
         if not species_dir.is_dir():
             continue
 
@@ -186,7 +187,7 @@ def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, 
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
 
-    for species_dir in sorted(SPLITS_DIR.iterdir()):
+    for species_dir in tqdm(sorted(SPLITS_DIR.iterdir()), desc="Species"):
         if not species_dir.is_dir():
             continue
 
