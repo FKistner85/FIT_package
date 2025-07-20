@@ -8,7 +8,10 @@ The notebook first calls `generate_dataset_overview` to build a CSV table descri
 
 ## Data Cleaning
 
-`DataImportWrapper().clean_all()` converts the raw CSV files into cleaned Parquet tables under `data/cleaned`. Run this step before any analysis that loads files from the cleaned directory.
+`DataImportWrapper().clean_all()` converts the raw CSV files into cleaned Parquet
+tables under `data/cleaned`. The notebook creates the files
+`data/cleaned/*.parquet` before any of the subsequent plotting steps are
+executed.
 
 ## Data Splits
 
