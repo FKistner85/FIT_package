@@ -4,6 +4,8 @@
 Orchestriert Import, Splitting, Zusammenfassung und Modelltraining für die Geschlechtsklassifikation.
 Der Wrapper bildet den gesamten Workflow von der Datenaufbereitung bis zum gespeicherten Modell ab. Er ermöglicht reproduzierbare Experimente und verpackt gängige Schritte in einer Funktion. Nachteil ist, dass ungewöhnliche Pipelines nur schwer abzubilden sind.
 
+Über das optionale Argument `n_jobs` lässt sich steuern, wie viele Prozesse für die Cross-Validation verwendet werden. `-1` nutzt alle verfügbaren Kerne.
+
 ## Wichtige Bestandteile
 - PipelineWrapper
 - get_pipeline_steps

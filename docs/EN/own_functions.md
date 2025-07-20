@@ -264,6 +264,8 @@ z_thresh : float
 ## FIT_python.pipeline_sex.pipeline_wrapper_sex.PipelineWrapper
 Wraps one-time preparation (import, split, summary) and
 training/evaluation of all model variants.
+Accepts an optional `n_jobs` parameter forwarded to scikit-learn's
+cross-validation helpers.
 
 ## FIT_python.pipeline_sex.pipeline_wrapper_sex.get_pipeline_steps
 Construct the list of ``(name, transformer)`` steps based on the chosen hyperparameters.
