@@ -44,6 +44,13 @@ Install the requirements as shown above and then execute:
 pytest
 ```
 
+Running the tests requires `PyQt5`. If you encounter a
+`ModuleNotFoundError` when executing `pytest`, install the dependency via
+
+```bash
+pip install PyQt5
+```
+
 The unit tests located in `tests/` cover a small subset of the pipeline logic.
 
 Further details on coordinate reprojection can be found in
