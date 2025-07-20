@@ -198,8 +198,20 @@ def plot_umap_scatter(
     order: list[str] = ["Female", "Male"],
 ) -> Path:
     """
-    Plot and save a UMAP scatter colored by sex mapped.
-    emb: DataFrame with columns ['UMAP1','UMAP2'].
+    Plot and save a UMAP scatter colored by ``sex_mapped``.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Unused placeholder for API compatibility.
+    emb : pandas.DataFrame
+        Must contain the columns ``UMAP1`` and ``UMAP2`` for the coordinates
+        as well as ``sex_mapped`` for coloring.
+
+    Returns
+    -------
+    pathlib.Path
+        Path to the saved image file.
     """
     fig_dir.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=plt.rcParams['figure.figsize'])
