@@ -54,6 +54,10 @@ def run(
     random_state: int | None = None,
     out_dir: Path | None = None,
     n_jobs: int = 1,
+    k_features: int | None = None,
+    trail_col: str = "trail",
+    subsample: bool = False,
+    cutoff: float | None = None,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using sequential holdouts.
 
@@ -83,6 +87,16 @@ def run(
         ``RESULTS_DATA_DIR / 'individual_id'``.
     n_jobs:
         Parallel jobs for the pairwise projection step.
+    k_features:
+        Number of morphometric features to select. ``None`` uses the default
+        from :func:`run_all_pairwise_projections_parallel`.
+    trail_col:
+        Column name containing trail identifiers.
+    subsample:
+        Whether to generate sub-trails when creating comparisons.
+    cutoff:
+        Optional Ward distance used for population clustering. When ``None`` the
+        cutoff is determined via :func:`optimal_cutoff` for each split.
 
     Returns
     -------
@@ -112,17 +126,19 @@ def run(
         df_train = df_all[df_all[id_col].isin(train_ids)]
         df_val = df_all[df_all[id_col].isin(val_ids)]
 
-        comps, _ = generate_pairwise_comparisons_from_df(df_val)
+        comps, _ = generate_pairwise_comparisons_from_df(
+            df_val,
+            trail_col=trail_col,
+            subsample=subsample,
+        )
         if not comps:
             continue
 
         base_df = pd.concat([df_train, df_val], ignore_index=True)
-        res = run_all_pairwise_projections_parallel(
-            comps,
-            base_df,
-            feature_cols=use_cols,
-            n_jobs=n_jobs,
-        )
+        kwargs = {"n_jobs": n_jobs, "feature_cols": use_cols}
+        if k_features is not None:
+            kwargs["k_features"] = k_features
+        res = run_all_pairwise_projections_parallel(comps, base_df, **kwargs)
         df_res = pd.DataFrame(res)
         if df_res.empty:
             continue
@@ -146,8 +162,11 @@ def run(
         dist_mat = dist_mat.fillna(max_d)
 
         true_n = len(val_ids)
-        cutoff, _ = optimal_cutoff(dist_mat, true_n)
-        pred_n = cluster_population(dist_mat, cutoff)
+        if cutoff is None:
+            cut, _ = optimal_cutoff(dist_mat, true_n)
+        else:
+            cut = float(cutoff)
+        pred_n = cluster_population(dist_mat, cut)
         erd = compute_erd(pred_n, true_n)
         summaries.append(
             {
