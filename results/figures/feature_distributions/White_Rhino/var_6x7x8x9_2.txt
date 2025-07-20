@@ -1,1 +1,0 @@
-Histogram of var_6x7x8x9_2 before and after cleaning.

@@ -1,1 +1,0 @@
-Histogram of v117 before and after cleaning.

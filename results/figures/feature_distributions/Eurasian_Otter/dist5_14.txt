@@ -1,1 +1,0 @@
-Histogram of dist5_14 before and after cleaning.

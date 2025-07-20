@@ -1,1 +1,0 @@
-Histogram of var_24 before and after cleaning.

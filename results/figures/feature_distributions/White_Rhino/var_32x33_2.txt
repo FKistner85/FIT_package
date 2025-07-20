@@ -1,1 +1,0 @@
-Histogram of var_32x33_2 before and after cleaning.

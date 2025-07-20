@@ -1,1 +1,0 @@
-Histogram of v16 before and after cleaning.

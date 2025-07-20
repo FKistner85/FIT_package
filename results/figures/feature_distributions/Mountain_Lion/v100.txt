@@ -1,1 +1,0 @@
-Histogram of v100 before and after cleaning.

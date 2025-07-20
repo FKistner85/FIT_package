@@ -1,1 +1,0 @@
-Histogram of dist1_8 before and after cleaning.

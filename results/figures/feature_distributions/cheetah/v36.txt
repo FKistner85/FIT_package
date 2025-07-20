@@ -1,1 +1,0 @@
-Histogram of v36 before and after cleaning.
