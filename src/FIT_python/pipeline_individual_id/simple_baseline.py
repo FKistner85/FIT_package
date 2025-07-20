@@ -4,7 +4,7 @@ from __future__ import annotations
 """Utility helpers for a simple ID baseline."""
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Iterable, List, Dict, Any
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,6 +13,9 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
+from FIT_python.config import SPLITS_DIR
+from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
+from . import sequential_holdout
 
 
 def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
@@ -80,33 +83,6 @@ def plot_bcr_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
     plt.close(fig)
     save_caption(out, "Baseline BCR per species")
     return out
-=======
-"""Convenience utilities for a lightweight individual ID baseline."""
-
-from pathlib import Path
-from typing import Iterable, Dict, Any
-
-import pandas as pd
-
-from FIT_python.config import SPLITS_DIR
-from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
-
-from . import sequential_holdout
-
-
-def _load_splits(species_dir: Path) -> pd.DataFrame:
-    """Return concatenated train and test tables for ``species_dir``."""
-
-    train_fp = species_dir / "train.parquet"
-    test_fp = species_dir / "test.parquet"
-    parts = []
-    if train_fp.exists():
-        parts.append(pd.read_parquet(train_fp))
-    if test_fp.exists():
-        parts.append(pd.read_parquet(test_fp))
-    if not parts:
-        raise FileNotFoundError(f"No train/test splits found in {species_dir}")
-    return pd.concat(parts, ignore_index=True)
 
 
 def run_simple_baseline_otter(
@@ -182,5 +158,20 @@ def run_baseline_all_species(exp_dir: Path, best_k: int, cutoff: Dict[str, Any])
             subsample=False,
             cutoff=ward,
         )
+
+
+def _load_splits(species_dir: Path) -> pd.DataFrame:
+    """Return concatenated train and test tables for ``species_dir``."""
+
+    train_fp = species_dir / "train.parquet"
+    test_fp = species_dir / "test.parquet"
+    parts = []
+    if train_fp.exists():
+        parts.append(pd.read_parquet(train_fp))
+    if test_fp.exists():
+        parts.append(pd.read_parquet(test_fp))
+    if not parts:
+        raise FileNotFoundError(f"No train/test splits found in {species_dir}")
+    return pd.concat(parts, ignore_index=True)
 
 
