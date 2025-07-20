@@ -95,7 +95,15 @@ def collect_best_metrics(exp_dir: Path) -> pd.DataFrame:
 
 
 def plot_accuracy_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
-    """Plot a bar chart comparing accuracy across species."""
+    """Plot a bar chart comparing accuracy across species.
+
+    The function accepts data frames using either the ``*_test`` suffix as
+    produced by :func:`collect_best_metrics` or the shorter ``accuracy`` / ``f1``
+    naming used by :func:`run_simple_baseline_all_species`.
+    """
+
+    col_map = {"accuracy": "accuracy_test", "f1": "f1_test"}
+    df = df.rename(columns={k: v for k, v in col_map.items() if k in df.columns})
 
     if "species" not in df.columns or "accuracy_test" not in df.columns:
         raise KeyError("DataFrame must contain 'species' and 'accuracy_test'")
@@ -141,7 +149,14 @@ def plot_accuracy_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
 
 
 def plot_majority_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
-    """Plot the fraction of majority-correct individuals per species."""
+    """Plot the fraction of majority-correct individuals per species.
+
+    Accepts both ``maj_test_pct`` and the abbreviated ``maj_pct`` column names
+    as produced by :func:`run_simple_baseline_all_species`.
+    """
+
+    col_map = {"maj_pct": "maj_test_pct"}
+    df = df.rename(columns={k: v for k, v in col_map.items() if k in df.columns})
 
     if "species" not in df.columns or "maj_test_pct" not in df.columns:
         raise KeyError("DataFrame must contain 'species' and 'maj_test_pct'")
