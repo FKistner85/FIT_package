@@ -19,6 +19,8 @@ Alternatively you can create a conda environment via `environment.yml`:
 conda env create -f environment.yml
 ```
 
+Before executing any of the notebooks or running the test suite, make sure that all dependencies are installed via `pip install -r requirements.txt` or `pip install -e .`. Missing packages such as `pandas` will otherwise cause a `ModuleNotFoundError` in the first code cell of `notebooks/FIT_start_to_finish.ipynb`.
+
 The annotation GUI relies on `PyQt5`, which is listed in the main
 dependencies.
 
