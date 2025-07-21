@@ -193,4 +193,89 @@ def run_simple_baseline_all_species(
     return df
 
 
+def predict_simple_baseline(
+    species: str,
+    exp_dir: Path,
+    *,
+    include_inference: bool = True,
+    reuse_csv: bool = True,
+) -> pd.DataFrame:
+    """Return predictions of the simple baseline model for ``species``.
 
+    Parameters
+    ----------
+    species:
+        Species folder under ``data/splits``.
+    exp_dir:
+        Directory containing the trained models produced by
+        :func:`run_simple_baseline_all_species`.
+    include_inference:
+        Include the ``inference`` split when it exists.
+    reuse_csv:
+        When ``True`` the function expects ``{species}_baseline_predictions.csv``
+        to exist in ``exp_dir``. If the file is missing a ``FileNotFoundError``
+        is raised. Set to ``False`` to recompute the predictions.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with the original splits and three additional columns:
+        ``pred_baseline_sex``, ``pred_baseline_proba_f`` and
+        ``pred_baseline_proba_m``.
+    """
+
+    exp_dir = Path(exp_dir)
+    splits_dir = DATA_DIR / "splits" / species
+    csv_path = exp_dir / f"{species}_baseline_predictions.csv"
+
+    if reuse_csv:
+        if csv_path.exists():
+            return pd.read_csv(csv_path)
+        raise FileNotFoundError(
+            f"Predictions CSV not found: {csv_path}. "
+            "Set reuse_csv=False to recompute predictions."
+        )
+
+    model_path = exp_dir / "models" / f"{species}.joblib"
+    clf = load(model_path)
+
+    split_names = ["train", "test"]
+    if include_inference and (splits_dir / "inference.parquet").exists():
+        split_names.append("inference")
+
+    dfs: list[pd.DataFrame] = []
+    for name in split_names:
+        df = _load_split(splits_dir / f"{name}.parquet")
+
+        if df.empty:
+            continue
+
+        drop_cols = ["sex"]
+        if "individual_id" in df.columns:
+            drop_cols.append("individual_id")
+        X = df.drop(columns=[c for c in drop_cols if c in df.columns])
+        X = X.select_dtypes(include=["number"]).copy()
+        if "Fold" in X.columns:
+            X = X.drop(columns=["Fold"])
+
+        if X.empty:
+            continue
+
+        df["__split__"] = name
+        if X.empty:
+            df["pred_baseline_sex"] = []
+            df["pred_baseline_proba_f"] = []
+            df["pred_baseline_proba_m"] = []
+        else:
+            df["pred_baseline_sex"] = clf.predict(X)
+            proba = clf.predict_proba(X)
+            df["pred_baseline_proba_f"] = proba[:, 0]
+            df["pred_baseline_proba_m"] = proba[:, 1]
+        dfs.append(df)
+
+    all_df = pd.concat(dfs, ignore_index=True)
+
+    if not reuse_csv:
+        all_df.to_csv(csv_path, index=False)
+
+    return all_df
