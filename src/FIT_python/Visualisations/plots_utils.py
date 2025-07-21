@@ -177,8 +177,17 @@ def plot_feature_distributions(
     saved: list[Path] = []
     for col in feature_cols:
         fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
-        sns.histplot(raw_df[col].dropna(), bins=bins, color="grey", alpha=0.5, label="raw", ax=ax)
-        sns.histplot(cleaned_df[col].dropna(), bins=bins, color="blue", alpha=0.5, label="cleaned", ax=ax)
+        sns.histplot(
+            raw_df[col].dropna(), bins=bins, color="grey", alpha=0.5, label="raw", ax=ax
+        )
+        sns.histplot(
+            cleaned_df[col].dropna(),
+            bins=bins,
+            color="blue",
+            alpha=0.5,
+            label="cleaned",
+            ax=ax,
+        )
         ax.set_title(col)
         ax.set_xlabel(col)
         ax.set_ylabel("count")
@@ -328,8 +337,9 @@ def plot_sex_feature_boxplots(
 
     # --- BCR aggregated ---
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
-    sns.boxplot(data=plot_df, x="setup", y="bcr", ax=ax,
-                order=["with_sex", "without_sex"])
+    sns.boxplot(
+        data=plot_df, x="setup", y="bcr", ax=ax, order=["with_sex", "without_sex"]
+    )
     ax.set_xlabel("Feature set")
     ax.set_ylabel("BCR")
     fig.tight_layout()
@@ -355,8 +365,13 @@ def plot_sex_feature_boxplots(
 
     # --- Count difference aggregated ---
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
-    sns.boxplot(data=plot_df, x="setup", y="count_diff", ax=ax,
-                order=["with_sex", "without_sex"])
+    sns.boxplot(
+        data=plot_df,
+        x="setup",
+        y="count_diff",
+        ax=ax,
+        order=["with_sex", "without_sex"],
+    )
     ax.axhline(0, ls="--", c="gray")
     ax.set_xlabel("Feature set")
     ax.set_ylabel("pred_count - true_count")
@@ -504,7 +519,9 @@ def _parse_coords(val) -> np.ndarray:
     return arr
 
 
-def _circle_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float], float] | tuple[None, None]:
+def _circle_from_row(
+    row: pd.Series, prefix: str
+) -> tuple[tuple[float, float], float] | tuple[None, None]:
     """Return center and radius for the ``prefix`` coordinates in ``row``."""
 
     x = _parse_coords(row.get(f"coords_{prefix}_x"))
@@ -519,7 +536,9 @@ def _circle_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float], 
     return (float(center[0]), float(center[1])), float(radius)
 
 
-def _rhombus_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float], float] | tuple[None, None]:
+def _rhombus_from_row(
+    row: pd.Series, prefix: str
+) -> tuple[tuple[float, float], float] | tuple[None, None]:
     """Return center and L1-based radius for the ``prefix`` coordinates in ``row``."""
 
     x = _parse_coords(row.get(f"coords_{prefix}_x"))
@@ -534,7 +553,9 @@ def _rhombus_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float],
     return (float(center[0]), float(center[1])), float(radius)
 
 
-def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path, *, rhombus: bool = False) -> Path:
+def plot_pair_examples(
+    df_res: pd.DataFrame, out_dir: Path, *, rhombus: bool = False
+) -> list[Path]:
     """Plot example 50% confidence areas for TP/FP/FN/TN categories.
 
     Parameters
@@ -568,61 +589,63 @@ def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path, *, rhombus: bool = F
         if not sel.empty:
             examples[name] = sel.iloc[0]
 
-    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-    order = ["TP", "FP", "FN", "TN"]
-    for ax, key in zip(axes.flat, order):
+    paths: list[Path] = []
+    for key in ("TP", "FP", "FN", "TN"):
+        fig, ax = plt.subplots(figsize=(4, 4))
         row = examples.get(key)
         if row is None:
             ax.axis("off")
-            continue
-
-        if rhombus:
-            c_a, r_a = _rhombus_from_row(row, "a")
-            c_b, r_b = _rhombus_from_row(row, "b")
         else:
-            c_a, r_a = _circle_from_row(row, "a")
-            c_b, r_b = _circle_from_row(row, "b")
+            if rhombus:
+                c_a, r_a = _rhombus_from_row(row, "a")
+                c_b, r_b = _rhombus_from_row(row, "b")
+            else:
+                c_a, r_a = _circle_from_row(row, "a")
+                c_b, r_b = _circle_from_row(row, "b")
 
-        if c_a is not None:
-            if rhombus:
-                coords = [
-                    (c_a[0] + r_a, c_a[1]),
-                    (c_a[0], c_a[1] + r_a),
-                    (c_a[0] - r_a, c_a[1]),
-                    (c_a[0], c_a[1] - r_a),
-                ]
-                ax.add_patch(Polygon(coords, fill=False, color="blue", lw=2))
-            else:
-                ax.add_patch(plt.Circle(c_a, r_a, fill=False, color="blue", lw=2))
-        if c_b is not None:
-            if rhombus:
-                coords = [
-                    (c_b[0] + r_b, c_b[1]),
-                    (c_b[0], c_b[1] + r_b),
-                    (c_b[0] - r_b, c_b[1]),
-                    (c_b[0], c_b[1] - r_b),
-                ]
-                ax.add_patch(Polygon(coords, fill=False, color="orange", lw=2))
-            else:
-                ax.add_patch(plt.Circle(c_b, r_b, fill=False, color="orange", lw=2))
+            if c_a is not None:
+                if rhombus:
+                    coords = [
+                        (c_a[0] + r_a, c_a[1]),
+                        (c_a[0], c_a[1] + r_a),
+                        (c_a[0] - r_a, c_a[1]),
+                        (c_a[0], c_a[1] - r_a),
+                    ]
+                    ax.add_patch(Polygon(coords, fill=False, color="blue", lw=2))
+                else:
+                    ax.add_patch(plt.Circle(c_a, r_a, fill=False, color="blue", lw=2))
+            if c_b is not None:
+                if rhombus:
+                    coords = [
+                        (c_b[0] + r_b, c_b[1]),
+                        (c_b[0], c_b[1] + r_b),
+                        (c_b[0] - r_b, c_b[1]),
+                        (c_b[0], c_b[1] - r_b),
+                    ]
+                    ax.add_patch(Polygon(coords, fill=False, color="orange", lw=2))
+                else:
+                    ax.add_patch(plt.Circle(c_b, r_b, fill=False, color="orange", lw=2))
 
         ax.set_aspect("equal")
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_title(key)
+        fig.tight_layout()
 
-    plt.tight_layout()
-    fname = "pair_examples_rhombus.png" if rhombus else "pair_examples.png"
-    out_path = out_dir / fname
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
-    caption = (
-        "50% confidence rhombuses for example pairs (TP/FP/FN/TN)."
-        if rhombus
-        else "50% confidence circles for example pairs (TP/FP/FN/TN)."
-    )
-    save_caption(out_path, caption)
-    return out_path
+        suffix = "_rhombus" if rhombus else ""
+        out_path = out_dir / f"pair_example_{key}{suffix}.png"
+        fig.savefig(out_path, dpi=150)
+        plt.close(fig)
+
+        caption = (
+            f"50% confidence rhombus for {key} example pair."
+            if rhombus
+            else f"50% confidence circle for {key} example pair."
+        )
+        save_caption(out_path, caption)
+        paths.append(out_path)
+
+    return paths
 
 
 def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) -> Path:

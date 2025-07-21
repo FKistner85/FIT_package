@@ -9,38 +9,46 @@ from FIT_python.Visualisations.plots_utils import (
 
 
 def test_plot_pair_examples(tmp_path: Path):
-    df = pd.DataFrame({
-        'same_individual': [True, True, False, False],
-        'pred': [True, False, True, False],
-        'coords_a_x': [[0.0, 1.0]] * 4,
-        'coords_a_y': [[0.0, 0.0]] * 4,
-        'coords_b_x': [[1.0, 2.0]] * 4,
-        'coords_b_y': [[0.0, 0.0]] * 4,
-    })
-    out = plot_pair_examples(df, tmp_path)
-    assert out.exists()
+    df = pd.DataFrame(
+        {
+            "same_individual": [True, True, False, False],
+            "pred": [True, False, True, False],
+            "coords_a_x": [[0.0, 1.0]] * 4,
+            "coords_a_y": [[0.0, 0.0]] * 4,
+            "coords_b_x": [[1.0, 2.0]] * 4,
+            "coords_b_y": [[0.0, 0.0]] * 4,
+        }
+    )
+    out_paths = plot_pair_examples(df, tmp_path)
+    assert len(out_paths) == 4
+    for p in out_paths:
+        assert p.exists()
 
 
 def test_plot_pair_examples_rhombus(tmp_path: Path):
-    df = pd.DataFrame({
-        'same_individual': [True, True, False, False],
-        'pred': [True, False, True, False],
-        'coords_a_x': [[0.0, 1.0]] * 4,
-        'coords_a_y': [[0.0, 0.0]] * 4,
-        'coords_b_x': [[1.0, 2.0]] * 4,
-        'coords_b_y': [[0.0, 0.0]] * 4,
-    })
-    out = plot_pair_examples(df, tmp_path, rhombus=True)
-    assert out.exists()
+    df = pd.DataFrame(
+        {
+            "same_individual": [True, True, False, False],
+            "pred": [True, False, True, False],
+            "coords_a_x": [[0.0, 1.0]] * 4,
+            "coords_a_y": [[0.0, 0.0]] * 4,
+            "coords_b_x": [[1.0, 2.0]] * 4,
+            "coords_b_y": [[0.0, 0.0]] * 4,
+        }
+    )
+    out_paths = plot_pair_examples(df, tmp_path, rhombus=True)
+    assert len(out_paths) == 4
+    for p in out_paths:
+        assert p.exists()
 
 
 def test_plot_dendrogram(tmp_path: Path):
     dist = pd.DataFrame(
         [[0.0, 1.0, 2.0], [1.0, 0.0, 3.0], [2.0, 3.0, 0.0]],
-        index=list('ABC'),
-        columns=list('ABC'),
+        index=list("ABC"),
+        columns=list("ABC"),
     )
-    out_file = tmp_path / 'den.png'
+    out_file = tmp_path / "den.png"
     out = plot_dendrogram(dist, 1.5, out_file)
     assert out.exists()
 
