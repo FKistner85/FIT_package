@@ -715,6 +715,73 @@ def make_marker_map(ids) -> dict:
     return {i: m for i, m in zip(ids, cycle(base))}
 
 
+def plot_pred_true_counts(results: dict[str, pd.DataFrame], out_file: Path) -> Path:
+    """Scatter predicted vs true counts for different result variants.
+
+    Parameters
+    ----------
+    results : dict[str, pandas.DataFrame]
+        Mapping of variant name to DataFrame containing ``pred_count`` and
+        ``true_count`` columns.
+    out_file : pathlib.Path
+        Destination path for the image.
+
+    Returns
+    -------
+    pathlib.Path
+        The saved file path.
+    """
+
+    req_cols = {"pred_count", "true_count"}
+    for key, df in results.items():
+        if not req_cols.issubset(df.columns):
+            raise KeyError(f"DataFrame for '{key}' missing required columns")
+
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
+    palette = sns.color_palette("tab10", n_colors=len(results))
+    markers = [
+        "o",
+        "s",
+        "D",
+        "^",
+        "v",
+        "P",
+        "X",
+        "*",
+        "h",
+    ]
+
+    for (name, df), color, marker in zip(results.items(), palette, markers):
+        _scatter_points(
+            ax,
+            df["pred_count"],
+            df["true_count"],
+            color,
+            marker,
+            label=name,
+        )
+
+    min_val = min(
+        float(df[["pred_count", "true_count"]].min().min()) for df in results.values()
+    )
+    max_val = max(
+        float(df[["pred_count", "true_count"]].max().max()) for df in results.values()
+    )
+    ax.plot([min_val, max_val], [min_val, max_val], "--", color="gray", label="1:1")
+
+    ax.set_xlabel("pred_count")
+    ax.set_ylabel("true_count")
+    ax.legend(title="variant")
+    fig.tight_layout()
+
+    fig.savefig(out_file, dpi=150)
+    plt.close(fig)
+    save_caption(out_file, "Scatter of predicted vs. true counts")
+    return out_file
+
+
 def plot_individual_boxplots(
     df: pd.DataFrame,
     top4_feats: list[str],

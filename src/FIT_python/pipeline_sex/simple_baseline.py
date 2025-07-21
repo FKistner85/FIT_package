@@ -26,6 +26,17 @@ from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
 from . import grouped_metrics
 
 
+def predict_simple_baseline(species: str, exp_dir: Path, **kwargs) -> pd.DataFrame:
+    """Delegate to :func:`sex_predict_and_visualisation.predict_simple_baseline`."""
+
+    from importlib import reload
+    from . import sex_predict_and_visualisation as sp
+
+    sp = reload(sp)
+    sp._load_split = _load_split
+    return sp.predict_simple_baseline(species, exp_dir, **kwargs)
+
+
 def _load_split(fp: Path) -> pd.DataFrame:
     df = pd.read_parquet(fp)
     df = df.dropna(subset=["sex"])
