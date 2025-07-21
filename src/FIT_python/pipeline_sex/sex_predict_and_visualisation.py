@@ -8,7 +8,7 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
-from FIT_python.Visualisations.plot_style import SEX_COLORS
+from FIT_python.Visualisations.plot_style import SEX_COLORS, map_sex
 from FIT_python.Visualisations.plot_style import apply_style
 
 
@@ -53,6 +53,15 @@ MODELS = {
     "neg_log_loss": "best_mean_test_neg_log_loss",
     "accuracy": "best_accuracy_test",
 }
+
+
+def _load_split(fp: Path) -> pd.DataFrame:
+    """Read and clean a parquet split file."""
+    df = pd.read_parquet(fp)
+    df = df.dropna(subset=["sex"])
+    df = df.query("sex in ['f','m']").reset_index(drop=True)
+    return df
+
 
 def predict_simple_baseline(
     species: str,
@@ -492,16 +501,10 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     agg = {c: "mean" for c in proba_cols}
     agg["sex"] = "first"
     grouped = df.groupby("individual_id").agg(agg).reset_index()
-    grouped["sex_std"] = grouped["sex"].map(
-        lambda s: (
-            "Female"
-            if str(s).lower().startswith("f")
-            else "Male" if str(s).lower().startswith("m") else "Unknown"
-        )
-    )
+    grouped["sex_std"] = map_sex(grouped["sex"])
     palette = {
-        "Female": SEX_COLORS["F"],
-        "Male": SEX_COLORS["M"],
+        "Female": SEX_COLORS["Female"],
+        "Male": SEX_COLORS["Male"],
         "Unknown": SEX_COLORS.get("Unknown", "#333333"),
     }
     for col in proba_cols:
