@@ -62,6 +62,10 @@ Distances between all individual points are also summarised **after dimensionali
 
 The projection of each pair is handled by `process_pair`, and the top-level function parallelises these calls using `joblib.Parallel` with a `tqdm` progress bar.  After processing all batches the nested lists are flattened into a single result list.【F:src/FIT_python/pipeline_individual_id/pairwise_individual_id_pipeline.py†L363-L370】
 
+### Checkpointing
+
+Long-running experiments can be resumed by passing a `checkpoint_path` and setting `resume=True`.  When enabled, the routine writes the current pair index and processed results to the given file after each pair.  If the checkpoint exists on the next run the saved state is loaded and processing continues from where it left off.
+
 ## 5. Output Structure
 
 Each result dictionary returned by `run_all_pairwise_projections_parallel` contains the trail IDs, lists of `id` values for both trails, individual identifiers, fold number and whether the trails belong to the same individual.  It also includes the chosen preprocessing options (`pipeline`), the selected features with their scores, the computed distances and—if a sex classifier is used—the average predicted probabilities for each group.  Coordinates for each trail and the RCV set are stored under `coords_*` fields, along with their centroids.

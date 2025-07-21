@@ -11,7 +11,7 @@ from pathlib import Path
 # Third-party
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed, load
+from joblib import Parallel, delayed, load, dump
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from tqdm import tqdm
@@ -62,6 +62,8 @@ def run_all_pairwise_projections_parallel(
     sexmodel_path: str = None,
     debug: bool = False,
     n_jobs: int = -1,
+    checkpoint_path: str | None = None,
+    resume: bool = False,
 ) -> List[Dict]:
     """Process all pairwise projections.
 
@@ -78,6 +80,11 @@ def run_all_pairwise_projections_parallel(
        - apply the dimensionality reduction
        - compute distances
        - record results including average probabilities for A/B/R
+
+    Parameters ``checkpoint_path`` and ``resume`` allow long runs to be continued.
+    When ``checkpoint_path`` is given the current index and partial results are
+    written to that file after each pair. Setting ``resume=True`` loads the
+    checkpoint if it exists and processing continues from the saved index.
     """
 
     # --- 0) load sex model if requested ---
@@ -348,13 +355,33 @@ def run_all_pairwise_projections_parallel(
         return out
 
     # --- 6) parallel execution ---
-    with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(comparisons))):
-        nested = Parallel(n_jobs=n_jobs)(
-            delayed(process_pair)(i, comp) for i, comp in enumerate(comparisons)
-        )
+    if checkpoint_path or resume:
+        results = []
+        start_idx = 0
+        if resume and checkpoint_path and Path(checkpoint_path).is_file():
+            state = load(checkpoint_path)
+            results = state.get("results", [])
+            start_idx = state.get("index", 0)
 
-    # flatten nested list and return
-    return [row for group in nested for row in group]
+        pbar = tqdm(desc="Processing Pairs", total=len(comparisons))
+        pbar.update(start_idx)
+        with Parallel(n_jobs=n_jobs) as parallel:
+            for idx in range(start_idx, len(comparisons)):
+                chunk = parallel([delayed(process_pair)(idx, comparisons[idx])])
+                results.extend(chunk[0])
+                if checkpoint_path:
+                    dump({"index": idx + 1, "results": results}, checkpoint_path)
+                pbar.update(1)
+        pbar.close()
+        return results
+    else:
+        with tqdm_joblib(tqdm(desc="Processing Pairs", total=len(comparisons))):
+            nested = Parallel(n_jobs=n_jobs)(
+                delayed(process_pair)(i, comp) for i, comp in enumerate(comparisons)
+            )
+
+        # flatten nested list and return
+        return [row for group in nested for row in group]
 
 
 def run_embedding_once_pipeline(
@@ -374,8 +401,14 @@ def run_embedding_once_pipeline(
     use_sexmodel_prediction: bool = False,
     sexmodel_path: str | None = None,
     debug: bool = False,
+    checkpoint_path: str | None = None,
+    resume: bool = False,
 ) -> List[Dict]:
-    """Convenience wrapper that processes comparisons sequentially."""
+    """Convenience wrapper that processes comparisons sequentially.
+
+    Parameters ``checkpoint_path`` and ``resume`` mirror the arguments of
+    :func:`run_all_pairwise_projections_parallel`.
+    """
 
     return run_all_pairwise_projections_parallel(
         comparisons,
@@ -392,4 +425,6 @@ def run_embedding_once_pipeline(
         sexmodel_path=sexmodel_path,
         debug=debug,
         n_jobs=1,
+        checkpoint_path=checkpoint_path,
+        resume=resume,
     )
