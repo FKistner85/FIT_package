@@ -89,7 +89,7 @@ for comparison in comparisons:
         # ggf. sex features ergänzen und reduzierer ausprobieren
 ```
 
-Nach der Distanzberechnung kann `compute_overlap_jsl_style` prüfen, ob sich die Ellipsen überlappen.
+Nach der Distanzberechnung kann `compute_overlap_jsl_style` prüfen, ob sich die Ellipsen überlappen. Dabei steuert das Argument ``p`` (Standard ``0.5``) den Chi-Quadrat-Radius.
 
 ## 6. Auswertung
 1. Für jede Pipeline werden Konfusionsmatrizen erstellt.

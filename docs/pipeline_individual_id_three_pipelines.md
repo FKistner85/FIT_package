@@ -98,8 +98,8 @@ for each comparison in comparisons:
                     # store results including centroid coords and distances
 ```
 After distances are computed you may run `compute_overlap_jsl_style` on each
-result row to check whether the two ellipses overlap based on a chi-square
-radius estimate.
+result row to check whether the two ellipses overlap.  The function accepts a
+probability ``p`` (default ``0.5``) used for the chi-square radius estimate.
 
 ## 6. Evaluation
 1. For each pipeline compute confusion matrices on the validation pairs.
