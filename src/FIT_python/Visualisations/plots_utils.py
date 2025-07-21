@@ -626,18 +626,30 @@ def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path, *, rhombus: bool = F
 
 
 def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) -> Path:
-    """Save a dendrogram based on ``dist_matrix`` with a cutoff line."""
+    """Save a dendrogram based on ``dist_matrix`` with a cutoff line.
+
+    Samples originating from the same individual are coloured consistently and
+    the x tick labels are rotated to avoid overlaps.
+    """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
     condensed = squareform(dist_matrix.to_numpy(), checks=False)
     link = linkage(condensed, method="ward")
 
+    labels = dist_matrix.index.astype(str).tolist()
+    ids = [lab.split("_")[0] for lab in labels]
+    palette = sns.color_palette("husl", len(set(ids)))
+    id_colors = {i: c for i, c in zip(sorted(set(ids)), palette)}
+
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
-    dendrogram(link, labels=dist_matrix.index.astype(str).tolist(), ax=ax)
+    dendrogram(link, labels=labels, ax=ax)
     ax.axhline(cutoff, color="red", linestyle="--")
     ax.set_ylabel("Ward distance")
     ax.set_xlabel("Sample")
-    plt.tight_layout()
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+    for label, ind in zip(ax.get_xticklabels(), ids):
+        label.set_color(id_colors.get(ind))
+    fig.tight_layout()
     fig.savefig(out_file, dpi=150)
     plt.close(fig)
     save_caption(out_file, "Ward dendrogram with distance cutoff line.")
