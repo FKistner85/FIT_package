@@ -66,3 +66,29 @@ number of clusters that maximises the silhouette score:
         """Return the Ward cluster count with the highest silhouette score."""
 ```
 【F:src/FIT_python/pipeline_individual_id/population_estimation.py†L127-L162】
+
+## Ward cut-off statistics
+
+Sequential holdouts write a ``summary.csv`` for every species.  Each row stores
+the Ward distance estimated by ``optimal_cutoff`` along with a confidence
+interval:
+
+``ward_cutoff``
+    Midpoint of the valid distance range.
+
+``cutoff_low`` / ``cutoff_high``
+    Lower and upper bounds (25 % and 75 % percentiles).
+
+Aggregating these values across all splits yields:
+
+* the mean of ``ward_cutoff``,
+* the median,
+* and the mean of the confidence bounds to get an averaged interval.
+
+``evaluate_with_cutoff()`` reads the summary table, computes these statistics and
+re-runs the evaluation with the averaged cut-off.  A scatter plot of predicted
+versus true population sizes is saved next to the summary.
+
+```python
+evaluate_with_cutoff(Path("results/experiments/fit_start_to_finish/id_baseline"))
+```
