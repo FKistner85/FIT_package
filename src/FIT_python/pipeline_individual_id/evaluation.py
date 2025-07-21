@@ -102,6 +102,49 @@ def compute_overlap_jsl_style(row, p: float = 0.5) -> bool:
     return center_dist <= (r1 + r2)
 
 
+def compute_overlap_rhombus(row, p: float = 0.5) -> bool:
+    """Return ``True`` if two rhombus confidence areas overlap.
+
+    Parameters
+    ----------
+    row : pandas.Series
+        Must contain ``coords_a_x``, ``coords_a_y``, ``coords_b_x`` and
+        ``coords_b_y`` columns with list-like coordinate values (or string
+        representations).
+    p : float, default=0.5
+        Probability mass used for the chi-square radius calculation.
+
+    The function computes Manhattan (L1) distances of each point from its
+    centroid, estimates a radius using ``chi2.ppf(p, df=2)`` and returns
+    ``True`` if the distance between centroids does not exceed the sum of the
+    two radii.
+    """
+
+    xa = parse_list(row["coords_a_x"])
+    ya = parse_list(row["coords_a_y"])
+    xb = parse_list(row["coords_b_x"])
+    yb = parse_list(row["coords_b_y"])
+
+    if len(xa) < 2 or len(xb) < 2 or len(xa) != len(ya) or len(xb) != len(yb):
+        return False
+
+    pts_a = np.column_stack([xa, ya])
+    pts_b = np.column_stack([xb, yb])
+    mu_a = pts_a.mean(axis=0)
+    mu_b = pts_b.mean(axis=0)
+
+    dist_a = np.abs(pts_a - mu_a).sum(axis=1)
+    dist_b = np.abs(pts_b - mu_b).sum(axis=1)
+
+    std_a = dist_a.std(ddof=1)
+    std_b = dist_b.std(ddof=1)
+    chi_val = chi2.ppf(p, df=2)
+    r1 = chi_val * std_a
+    r2 = chi_val * std_b
+    center_dist = np.linalg.norm(mu_a - mu_b)
+    return center_dist <= (r1 + r2)
+
+
 def compute_confusion(
     results_df: pd.DataFrame,
     *,
