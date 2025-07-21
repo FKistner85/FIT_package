@@ -648,11 +648,17 @@ def plot_pair_examples(
     return paths
 
 
-def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) -> Path:
-    """Save a dendrogram based on ``dist_matrix`` with a cutoff line.
+def plot_dendrogram(
+    dist_matrix: pd.DataFrame,
+    out_file: Path,
+    cutoff_low: float | None = None,
+    cutoff_high: float | None = None,
+) -> Path:
+    """Save a dendrogram based on ``dist_matrix``.
 
     Samples originating from the same individual are coloured consistently and
-    the x tick labels are rotated to avoid overlaps.
+    the x tick labels are rotated to avoid overlaps. Optional horizontal cut-off
+    lines can be drawn via ``cutoff_low`` and ``cutoff_high``.
     """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -666,7 +672,10 @@ def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) ->
 
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     dendrogram(link, labels=labels, ax=ax)
-    ax.axhline(cutoff, color="red", linestyle="--")
+    if cutoff_low is not None:
+        ax.axhline(cutoff_low, color="red", linestyle="--")
+    if cutoff_high is not None:
+        ax.axhline(cutoff_high, color="red", linestyle="--")
     ax.set_ylabel("Ward distance")
     ax.set_xlabel("Sample")
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
@@ -675,7 +684,7 @@ def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) ->
     fig.tight_layout()
     fig.savefig(out_file, dpi=150)
     plt.close(fig)
-    save_caption(out_file, "Ward dendrogram with distance cutoff line.")
+    save_caption(out_file, "Ward dendrogram with distance cutoff line(s).")
     return out_file
 
 
