@@ -16,7 +16,9 @@ This document translates the rough notes in `pipeline_individual_id_3_pipelines.
    - For every holdout split fit a `StandardScaler` on the training data and transform both the training and validation sets.
    - Optionally create a correlation heatmap from the scaled training values.
 5. **Sex Model Predictions**
-   - Use `predict_all` from the sex pipeline to obtain class and probability outputs.
+   - Run `predict_all('<species>', reuse_csv=False)` once after training to
+     generate `{species}_all_predictions.csv` under `results/data/`. Future
+     executions can pass `reuse_csv=True` to reuse this CSV.
    - For the training split the pre-computed cross-validation predictions are
      used so that the model only sees out-of-fold values.
    - Store these predictions as additional features `sex_features`.
