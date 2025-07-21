@@ -83,7 +83,12 @@ def _select_features(dfs: dict[str, pd.DataFrame]) -> List[str]:
 
 def _add_sex_predictions(species: str, dfs: dict[str, pd.DataFrame]) -> None:
     """Append sex model predictions as additional features."""
-    pred_df = predict_all(species, prefer_generic=True, use_cv_train_predictions=True)
+    pred_df = predict_all(
+        species,
+        prefer_generic=True,
+        models_dir=config.RESULTS_DATA_DIR / "random_search_standard_metrics",
+        use_cv_train_predictions=True,
+    )
     sex_cols = [c for c in pred_df.columns if c.startswith("pred_")]
     for name, df in dfs.items():
         sub = pred_df[pred_df["__split__"] == name]

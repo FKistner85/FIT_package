@@ -17,13 +17,14 @@ def test_predict_all_reuse_csv(tmp_path, monkeypatch):
     import FIT_python.pipeline_sex.sex_predict_and_visualisation as sp
     importlib.reload(sp)
 
-    df = sp.predict_all('otter', reuse_csv=True)
+    df = sp.predict_all('otter', models_dir=csv_dir, reuse_csv=True)
     pd.testing.assert_frame_equal(df, data)
 
 
 def test_predict_all_missing_csv(tmp_path, monkeypatch):
     root = tmp_path
-    (root / 'results' / 'data' / 'random_search_standard_metrics').mkdir(parents=True)
+    csv_dir = root / 'results' / 'data' / 'random_search_standard_metrics'
+    csv_dir.mkdir(parents=True)
     (root / 'data').mkdir()
 
     monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
@@ -33,4 +34,4 @@ def test_predict_all_missing_csv(tmp_path, monkeypatch):
     importlib.reload(sp)
 
     with pytest.raises(FileNotFoundError):
-        sp.predict_all('otter', reuse_csv=True)
+        sp.predict_all('otter', models_dir=csv_dir, reuse_csv=True)
