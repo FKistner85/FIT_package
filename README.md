@@ -36,6 +36,25 @@ from FIT_python.pipeline_sex.pipeline_wrapper_sex import run_pipeline
 res = run_pipeline(df, target_col="sex", n_jobs=-1)
 ```
 
+## Experiment root
+
+Most paths used by the pipelines are built relative to
+`FIT_python.config.EXPERIMENT_ROOT`.  The value of this variable is obtained
+from the environment variable `FIT_EXPERIMENT_ROOT` and defaults to the current
+working directory if not set.  Directories such as `data/` and `results/` are
+therefore resolved inside the configured experiment root.
+
+After training has completed you can point the environment variable to the
+experiment directory and run predictions:
+
+```python
+import os
+os.environ["FIT_EXPERIMENT_ROOT"] = "/path/to/my_experiment"
+
+from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
+predict_all('eurasian_otter', reuse_csv=False)
+```
+
 ## Running Tests
 
 Install the requirements as shown above and then execute:
