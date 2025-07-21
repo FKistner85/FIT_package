@@ -28,7 +28,7 @@ def test_simple_baseline_runs(tmp_path, monkeypatch):
     build_train_df().to_parquet(data_dir / "train.parquet", index=False)
     build_test_df().to_parquet(data_dir / "test.parquet", index=False)
 
-    monkeypatch.setenv("FIT_PROJECT_ROOT", str(root))
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.simple_baseline as sb
@@ -68,7 +68,7 @@ def test_simple_baseline_reuse_results(tmp_path, monkeypatch):
     (model_dir / "otter.joblib").write_bytes(b"0")
     (root / "data").mkdir()
 
-    monkeypatch.setenv("FIT_PROJECT_ROOT", str(root))
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.simple_baseline as sb

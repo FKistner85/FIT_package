@@ -11,7 +11,7 @@ def test_predict_all_reuse_csv(tmp_path, monkeypatch):
     data = pd.DataFrame({'a':[1], 'b':[2]})
     data.to_csv(csv_file, index=False)
 
-    monkeypatch.setenv('FIT_PROJECT_ROOT', str(root))
+    monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.sex_predict_and_visualisation as sp
@@ -26,7 +26,7 @@ def test_predict_all_missing_csv(tmp_path, monkeypatch):
     (root / 'results' / 'data' / 'random_search_standard_metrics').mkdir(parents=True)
     (root / 'data').mkdir()
 
-    monkeypatch.setenv('FIT_PROJECT_ROOT', str(root))
+    monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.sex_predict_and_visualisation as sp
