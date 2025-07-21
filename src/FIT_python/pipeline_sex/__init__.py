@@ -7,9 +7,10 @@ from .baseline_sex import (
     plot_accuracy_comparison,
     plot_majority_comparison,
 )
-from .simple_baseline import run_simple_baseline_all_species, predict_simple_baseline
+from .simple_baseline import run_simple_baseline_all_species
 from .sex_predict_and_visualisation import (
     predict_all,
+    predict_simple_baseline,
     plot_confusion,
     plot_inference,
     plot_confusion_and_inference,
