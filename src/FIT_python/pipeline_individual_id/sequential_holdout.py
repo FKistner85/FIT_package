@@ -290,3 +290,67 @@ def evaluate_with_cutoff(result_dir: Path, cutoff: float) -> pd.DataFrame:
         )
 
     return pd.DataFrame(summaries)
+
+
+def compute_global_cutoffs(all_splits_path: Path) -> dict[str, float]:
+    """Return aggregate Ward cut-off statistics across splits.
+
+    Parameters
+    ----------
+    all_splits_path:
+        CSV file created by :func:`run` containing the pairwise
+        results of all splits.
+
+    Returns
+    -------
+    dict
+        Dictionary with the mean and median Ward cut-off as well as
+        the mean lower and upper 25% bounds across splits.
+    """
+
+    all_splits_path = Path(all_splits_path)
+    if not all_splits_path.exists():
+        raise FileNotFoundError(all_splits_path)
+
+    df_all = pd.read_csv(all_splits_path)
+    if df_all.empty:
+        return {
+            "mean_cutoff": float("nan"),
+            "median_cutoff": float("nan"),
+            "mean_low": float("nan"),
+            "mean_high": float("nan"),
+        }
+
+    cutoffs: list[float] = []
+    lows: list[float] = []
+    highs: list[float] = []
+
+    for _, part in df_all.groupby("split"):
+        trails = sorted(set(part["trail_a_id"]) | set(part["trail_b_id"]))
+        dist_mat = pd.DataFrame(np.nan, index=trails, columns=trails)
+        for a, b, val in zip(part["trail_a_id"], part["trail_b_id"], part["dist_euclidean"]):
+            try:
+                v = float(val)
+            except Exception:
+                continue
+            dist_mat.at[a, b] = v
+            dist_mat.at[b, a] = v
+
+        np.fill_diagonal(dist_mat.values, 0.0)
+        max_d = np.nanmax(dist_mat.values)
+        dist_mat = dist_mat.fillna(max_d)
+
+        ids = set(part["ind_a"].astype(str)) | set(part["ind_b"].astype(str))
+        true_n = len(ids)
+
+        cutoff, (low, high) = optimal_cutoff(dist_mat, true_n)
+        cutoffs.append(cutoff)
+        lows.append(low)
+        highs.append(high)
+
+    return {
+        "mean_cutoff": float(np.mean(cutoffs)),
+        "median_cutoff": float(np.median(cutoffs)),
+        "mean_low": float(np.mean(lows)),
+        "mean_high": float(np.mean(highs)),
+    }
