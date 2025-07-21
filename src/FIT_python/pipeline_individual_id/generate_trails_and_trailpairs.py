@@ -1,5 +1,5 @@
 from itertools import combinations
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Tuple, Union, Optional, Any, Iterable
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,16 @@ __all__ = [
     "generate_subsamples",
     "generate_pairs",
 ]
+
+
+def _mode(values: Iterable[Any]) -> Any:
+    """Return the first mode of ``values`` or ``pd.NA`` when empty."""
+    ser = pd.Series(list(values)).dropna()
+    if ser.empty:
+        return pd.NA
+    modes = ser.mode()
+    return modes.iloc[0] if not modes.empty else pd.NA
+
 
 
 
