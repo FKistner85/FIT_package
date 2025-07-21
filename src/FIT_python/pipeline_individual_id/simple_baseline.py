@@ -98,8 +98,24 @@ def run_simple_baseline_otter(
     k_range: Iterable[int] = range(12, 21),
     iterations: int = 10,
     use_sex_predictions: bool = False,
+    *,
+    n_jobs: int = 1,
 ) -> int:
-    """Run sequential holdouts for the otter data across ``k_range`` values."""
+    """Run sequential holdouts for the otter data across ``k_range`` values.
+
+    Parameters
+    ----------
+    exp_dir:
+        Experiment output directory.
+    k_range:
+        Range of ``k`` values evaluated for feature selection.
+    iterations:
+        Number of sequential holdout iterations.
+    use_sex_predictions:
+        Whether to append sex model probabilities to the features.
+    n_jobs:
+        Parallel jobs forwarded to :func:`sequential_holdout.run`.
+    """
 
     exp_dir = Path(exp_dir)
     out_dir = exp_dir / "otter"
@@ -127,6 +143,7 @@ def run_simple_baseline_otter(
             k_features=k,
             trail_col="Trail",
             subsample=False,
+            n_jobs=n_jobs,
         )
 
         agg = summary[["bcr", "pred_count", "true_count", "erd", "ccc"]].mean()

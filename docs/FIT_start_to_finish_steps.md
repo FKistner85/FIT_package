@@ -40,7 +40,9 @@ After benchmarking the baseline individual identification pipeline, the notebook
 ## Sequential Holdout and Individual-ID Baseline
 
 The notebook then runs `run_simple_baseline_otter` to determine the best feature
-count for sequential holdouts on otter data. The chosen `k` and per‑species Ward
+count for sequential holdouts on otter data. The helper accepts an optional
+`n_jobs` argument which is forwarded to the underlying evaluation and enables
+parallel processing. The chosen `k` and per‑species Ward
 cut‑offs are passed to `run_baseline_all_species`, which evaluates all species.
 Pair‑example and dendrogram plots are produced for each otter split. Every
 species directory contains a `summary.csv`, the collected metrics are written to
