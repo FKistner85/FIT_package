@@ -45,7 +45,7 @@ def _ensure_splits(species: str) -> Path:
     splits_dir = config.SPLITS_DIR / species
     if not splits_dir.exists() or not (splits_dir / "train.parquet").exists():
         print(f"[INFO] Splits for {species!r} not found – creating via SplitWrapper")
-        SplitWrapper().split_all()
+        SplitWrapper().split_all(reuse_splits=True)
     return splits_dir
 
 

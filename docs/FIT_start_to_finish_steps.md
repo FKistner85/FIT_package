@@ -15,7 +15,7 @@ executed.
 
 ## Data Splits
 
-Next, `SplitWrapper().split_all()` writes train/test splits for each species under `data/splits`. Afterwards `run_summary(SPLITS_DIR, EXP_DIR/'split_summary.csv', EXP_DIR/'split_fig')` generates a CSV with split statistics and saves bar charts. Only the Eurasian otter summary and the overall footprint fraction plots are shown in the notebook output.
+Next, `SplitWrapper().split_all(reuse_splits=True)` writes train/test splits for each species under `data/splits`. When the files already exist they are reused. Afterwards `run_summary(SPLITS_DIR, EXP_DIR/'split_summary.csv', EXP_DIR/'split_fig')` generates a CSV with split statistics and saves bar charts. Only the Eurasian otter summary and the overall footprint fraction plots are shown in the notebook output.
 
 ## Correlation Matrix
 
