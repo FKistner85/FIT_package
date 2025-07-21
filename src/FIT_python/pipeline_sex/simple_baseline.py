@@ -256,10 +256,15 @@ def predict_simple_baseline(
             X = X.drop(columns=["Fold"])
 
         df["__split__"] = name
-        df["pred_baseline_sex"] = clf.predict(X)
-        proba = clf.predict_proba(X)
-        df["pred_baseline_proba_f"] = proba[:, 0]
-        df["pred_baseline_proba_m"] = proba[:, 1]
+        if X.empty:
+            df["pred_baseline_sex"] = []
+            df["pred_baseline_proba_f"] = []
+            df["pred_baseline_proba_m"] = []
+        else:
+            df["pred_baseline_sex"] = clf.predict(X)
+            proba = clf.predict_proba(X)
+            df["pred_baseline_proba_f"] = proba[:, 0]
+            df["pred_baseline_proba_m"] = proba[:, 1]
         dfs.append(df)
 
     all_df = pd.concat(dfs, ignore_index=True)
