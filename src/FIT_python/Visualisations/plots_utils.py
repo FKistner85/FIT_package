@@ -724,7 +724,9 @@ def make_marker_map(ids) -> dict:
     return {i: m for i, m in zip(ids, cycle(base))}
 
 
-def plot_pred_true_counts(results: dict[str, pd.DataFrame], out_file: Path) -> Path:
+def plot_pred_true_counts(
+    results: dict[str, pd.DataFrame], out_file: Path, regression: bool = False
+) -> Path:
     """Scatter predicted vs true counts for different result variants.
 
     Parameters
@@ -735,6 +737,10 @@ def plot_pred_true_counts(results: dict[str, pd.DataFrame], out_file: Path) -> P
     out_file : pathlib.Path
         Destination path for the image.
 
+    regression : bool, optional
+        If ``True``, plot a simple linear regression for each variant in
+        addition to the scatter points.
+    
     Returns
     -------
     pathlib.Path
@@ -771,6 +777,14 @@ def plot_pred_true_counts(results: dict[str, pd.DataFrame], out_file: Path) -> P
             marker,
             label=name,
         )
+        if regression:
+            x = df["pred_count"].astype(float)
+            y = df["true_count"].astype(float)
+            if len(x) >= 2:
+                coeffs = np.polyfit(x, y, 1)
+                xs = np.linspace(x.min(), x.max(), 100)
+                ys = np.polyval(coeffs, xs)
+                ax.plot(xs, ys, color=color, linestyle="--", alpha=0.7)
 
     min_val = min(
         float(df[["pred_count", "true_count"]].min().min()) for df in results.values()
