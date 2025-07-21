@@ -29,8 +29,25 @@ def _species_label(name: str, df: pd.DataFrame) -> str:
     return f"{common} ({latin})"
 
 
-def generate_dataset_overview(raw_dir: Path, out_csv: Path) -> pd.DataFrame:
-    """Create a CSV summary of all raw datasets and return it as a DataFrame."""
+def generate_dataset_overview(
+    raw_dir: Path, out_csv: Path, reuse_csv: bool = True
+) -> pd.DataFrame:
+    """Create a CSV summary of all raw datasets and return it as a DataFrame.
+
+    Parameters
+    ----------
+    raw_dir:
+        Directory containing the raw CSV footprint tables.
+    out_csv:
+        Destination of the generated overview table.
+    reuse_csv:
+        When ``True`` and ``out_csv`` already exists, the CSV is loaded and
+        returned instead of recomputing the statistics.
+    """
+
+    if reuse_csv and out_csv.exists():
+        return pd.read_csv(out_csv)
+
     importer = DataImporter(raw_dir, target_cols=DEFAULT_TARGETS)
     dfs = importer.run()
 
