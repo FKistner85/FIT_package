@@ -16,23 +16,34 @@ DEFAULT_SPECIES = "eurasian_otter"
 
 
 def _base_paths(
-    species: str = DEFAULT_SPECIES, prefer_generic: bool = False
+    species: str = DEFAULT_SPECIES,
+    prefer_generic: bool = False,
+    models_dir: str | Path | None = None,
 ) -> tuple[Path, Path, Path]:
-    """Return split dir, model dir and output csv for a species.
+    """Return split dir, model dir and output CSV for ``species``.
 
-    If ``prefer_generic`` is ``True`` or a species specific directory does
-    not exist, fall back to ``random_search_standard_metrics``. This enables
-    notebooks that work on a single species to load custom models while the
-    all-species notebook can still rely on the generic directory.
+    If ``models_dir`` is provided, it is used directly.  Otherwise the function
+    falls back to the species-specific directory under
+    ``results/data``. When ``prefer_generic`` is ``True`` or the species
+    directory does not exist, ``random_search_standard_metrics`` is used
+    instead.  This enables notebooks that work on a single species to load
+    custom models while the all-species notebook can still rely on the generic
+    directory.
     """
+
     splits = DATA_DIR / "splits" / species
-    specific = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
-    generic = RESULTS_DATA_DIR / "random_search_standard_metrics"
-    models = generic if prefer_generic else specific
-    if not models.exists():
-        models = specific if prefer_generic else generic
-    csv = models / f"{species}_all_predictions.csv"
-    return splits, models, csv
+
+    if models_dir is not None:
+        models = Path(models_dir)
+    else:
+        specific = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
+        generic = RESULTS_DATA_DIR / "random_search_standard_metrics"
+        models = generic if prefer_generic else specific
+        if not models.exists():
+            models = specific if prefer_generic else generic
+
+    csv = Path(models) / f"{species}_all_predictions.csv"
+    return splits, Path(models), csv
 
 
 # === Modelle definieren ===
@@ -48,6 +59,7 @@ MODELS = {
 def predict_all(
     species: str = DEFAULT_SPECIES,
     prefer_generic: bool = False,
+    models_dir: str | Path | None = None,
     include_inference: bool = True,
     reuse_csv: bool = True,
     use_cv_train_predictions: bool = False,
@@ -60,7 +72,13 @@ def predict_all(
         The species folder under ``data/splits``.
     prefer_generic:
         If ``True``, models are loaded from the shared
-        ``random_search_standard_metrics`` directory when present.
+        ``random_search_standard_metrics`` directory when present. Ignored when
+        ``models_dir`` is given.
+    models_dir:
+        Custom directory containing the trained models. The predictions CSV is
+        also written to this directory. When ``None`` (default) the directory is
+        determined automatically based on ``prefer_generic`` and the existence of
+        a species-specific directory.
     include_inference:
         Include the ``inference`` split if the corresponding parquet exists.
     reuse_csv:
@@ -72,7 +90,9 @@ def predict_all(
         ``train.parquet`` instead of computing new predictions for the
         training split.
     """
-    splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
+    splits_dir, models_dir, csv_path = _base_paths(
+        species, prefer_generic, models_dir
+    )
 
     if reuse_csv:
         if csv_path.exists():
