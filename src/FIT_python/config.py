@@ -3,22 +3,24 @@
 from pathlib import Path
 import os
 
-# Determine the project root. When the package is installed, ``__file__`` points
-# inside ``site-packages`` which does not contain the project data.  In that
-# case we fall back to the current working directory or an explicit environment
-# variable ``FIT_PROJECT_ROOT``.
-PROJECT_ROOT = Path(os.environ.get("FIT_PROJECT_ROOT", Path(__file__).resolve().parents[2]))
+# Determine the experiment root. When the package is installed, ``__file__``
+# points inside ``site-packages`` which does not contain the project data.  In
+# that case we fall back to the current working directory or an explicit
+# environment variable ``FIT_EXPERIMENT_ROOT``.
+EXPERIMENT_ROOT = Path(
+    os.environ.get("FIT_EXPERIMENT_ROOT", Path(__file__).resolve().parents[2])
+)
 
 # If the computed path does not contain the ``data`` directory, assume the
-# current working directory is the project root.  This enables running the
+# current working directory is the experiment root.  This enables running the
 # package from a cloned repository without installation.
-if not (PROJECT_ROOT / "data").exists():
+if not (EXPERIMENT_ROOT / "data").exists():
     cwd = Path.cwd()
     if (cwd / "data").exists():
-        PROJECT_ROOT = cwd
+        EXPERIMENT_ROOT = cwd
 
 # Data directories
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = EXPERIMENT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 CLEANED_DIR = DATA_DIR / "cleaned"
 SPLITS_DIR = DATA_DIR / "splits"
@@ -37,13 +39,13 @@ OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
 OTTER_POINT_MAP_PATH = PROCESSED_DIR / "otter_point_map.json"
 
 # Results directories
-RESULTS_DIR = PROJECT_ROOT / "results"
+RESULTS_DIR = EXPERIMENT_ROOT / "results"
 RESULTS_DATA_DIR = RESULTS_DIR / "data"
 FIGURES_DIR = RESULTS_DIR / "figures"
 
 # Scripts and notebooks
-SCRIPTS_DIR = PROJECT_ROOT / "scripts"
-NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
+SCRIPTS_DIR = EXPERIMENT_ROOT / "scripts"
+NOTEBOOKS_DIR = EXPERIMENT_ROOT / "notebooks"
 
 # Default column configurations
 OTTER_META_COLS = ["id", "date", "location", "dataorigin", "substrate"]
