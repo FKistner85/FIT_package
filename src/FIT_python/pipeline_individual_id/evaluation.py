@@ -61,12 +61,34 @@ def sequential_holdout_ids(
             )
     return results
 
-def parse_list(s: str) -> np.ndarray:
-    """Safely parse a list representation to a NumPy array."""
-    try:
-        return np.asarray(literal_eval(s), dtype=float)
-    except Exception:
-        return np.empty(0, dtype=float)
+def parse_list(value) -> np.ndarray:
+    """Return ``value`` as a NumPy ``float`` array if possible.
+
+    Parameters
+    ----------
+    value:
+        Either a string representation of a list or an actual sequence
+        of numeric values.
+
+    This helper previously only accepted strings and returned an empty
+    array when called with list objects.  During the sequential holdout
+    evaluation the coordinate lists are still Python ``list`` instances,
+    which resulted in failed parsing and consequently ``False``
+    predictions.  By accepting lists and arrays directly the overlap
+    logic works correctly regardless of whether results are read from a
+    CSV file or computed on the fly.
+    """
+
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return np.asarray(value, dtype=float)
+
+    if isinstance(value, str):
+        try:
+            return np.asarray(literal_eval(value), dtype=float)
+        except Exception:
+            return np.empty(0, dtype=float)
+
+    return np.empty(0, dtype=float)
 
 
 def compute_overlap_jsl_style(row, p: float = 0.5) -> bool:
