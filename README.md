@@ -85,11 +85,12 @@ Further details on coordinate reprojection can be found in
 
 ### Overlap evaluation
 
-The `scripts/evaluate_overlap.py` utility searches experiment directories for
-`all_splits.csv` files, determines the chi-square probability `p` that maximises
-F1 for the ellipse-overlap classifier and stores a confusion matrix plot next to
-each CSV.
+The helper `FIT_python.pipeline_individual_id.overlap_evaluation` searches
+experiment directories for `all_splits.csv` files, determines the chi-square
+probability `p` that maximises F1 for the ellipse-overlap classifier and stores
+a confusion matrix plot next to each CSV.
 
 ```bash
-python scripts/evaluate_overlap.py results/experiments/fit_start_to_finish/id_baseline
+python -m FIT_python.pipeline_individual_id.overlap_evaluation \
+    results/experiments/fit_start_to_finish/id_baseline
 ```

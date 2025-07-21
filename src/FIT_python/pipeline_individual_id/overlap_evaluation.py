@@ -18,12 +18,12 @@ from FIT_python.pipeline_individual_id.evaluation import (
 from FIT_python.Visualisations.plot_style import apply_style
 from sklearn.metrics import precision_recall_fscore_support
 
-
+# Probability grid to search
 P_VALUES = np.linspace(0.5, 0.99, 10)
-DEFAULT_ROOT = Path("results/experiments/fit_start_to_finish/id_baseline")
 
 
 def _plot_confusion(cm: pd.DataFrame, out_path: Path) -> None:
+    """Save a normalised confusion matrix heatmap to ``out_path``."""
     apply_style()
     fig, ax = plt.subplots(figsize=(4, 4))
     sns.heatmap(
@@ -42,7 +42,8 @@ def _plot_confusion(cm: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
-def evaluate(csv_path: Path, p_values: np.ndarray = P_VALUES) -> None:
+def evaluate(csv_path: Path, p_values: np.ndarray = P_VALUES) -> float:
+    """Evaluate ``csv_path`` and store a confusion matrix plot next to it."""
     df = pd.read_csv(csv_path)
 
     metrics: list[tuple[float, float, float, float]] = []
@@ -58,7 +59,10 @@ def evaluate(csv_path: Path, p_values: np.ndarray = P_VALUES) -> None:
     cm = compute_confusion(df, true_col="same_individual", pred_col="pred")
     out_png = csv_path.with_name("confusion_matrix.png")
     _plot_confusion(cm, out_png)
-    print(f"{csv_path}: p={best_p:.3f} prec={best_prec:.3f} rec={best_rec:.3f} f1={best_f1:.3f}")
+    print(
+        f"{csv_path}: p={best_p:.3f} prec={best_prec:.3f} rec={best_rec:.3f} f1={best_f1:.3f}"
+    )
+    return best_f1
 
 
 def main() -> None:
@@ -67,7 +71,7 @@ def main() -> None:
         "root",
         type=Path,
         nargs="?",
-        default=DEFAULT_ROOT,
+        default=Path("results/experiments/fit_start_to_finish/id_baseline"),
         help="Directory containing experiment results",
     )
     args = ap.parse_args()
@@ -78,4 +82,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
