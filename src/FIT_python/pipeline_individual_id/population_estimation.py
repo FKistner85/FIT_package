@@ -8,6 +8,15 @@ import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
+from sklearn.metrics import silhouette_score
+
+__all__ = [
+    "cluster_population",
+    "compute_erd",
+    "optimal_cutoff",
+    "concordance_correlation_coefficient",
+    "silhouette_cluster_count",
+]
 
 
 def cluster_population(dist_matrix: pd.DataFrame, cutoff: float) -> int:
@@ -122,3 +131,39 @@ def concordance_correlation_coefficient(x: Sequence[float], y: Sequence[float]) 
     if denominator == 0:
         return np.nan
     return float(numerator / denominator)
+
+
+def silhouette_cluster_count(dist_matrix: pd.DataFrame) -> int:
+    """Return the Ward cluster count with the highest silhouette score.
+
+    ``k`` values from ``2`` to ``len(dist_matrix) - 1`` are evaluated and the
+    number of clusters yielding the best silhouette score is returned.
+
+    Parameters
+    ----------
+    dist_matrix : pd.DataFrame
+        Square pairwise distance matrix.
+
+    Returns
+    -------
+    int
+        Cluster count maximising the silhouette score.
+    """
+
+    n_obs = dist_matrix.shape[0]
+    if n_obs < 3:
+        raise ValueError("dist_matrix must contain at least 3 observations")
+
+    condensed = squareform(dist_matrix.to_numpy(), checks=False)
+    link = linkage(condensed, method="ward")
+
+    best_k = 2
+    best_score = -1.0
+    for k in range(2, n_obs):
+        labels = fcluster(link, t=k, criterion="maxclust")
+        score = silhouette_score(squareform(condensed, checks=False), labels, metric="precomputed")
+        if score > best_score:
+            best_score = score
+            best_k = k
+
+    return best_k

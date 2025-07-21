@@ -57,3 +57,12 @@ two measurements:
         """Return Lin's concordance correlation coefficient between ``x`` and ``y``."""
 ```
 【F:src/FIT_python/pipeline_individual_id/population_estimation.py†L106-L124】
+
+`silhouette_cluster_count()` scans a range of ``k`` values and selects the
+number of clusters that maximises the silhouette score:
+
+```python
+    def silhouette_cluster_count(dist_matrix: pd.DataFrame) -> int:
+        """Return the Ward cluster count with the highest silhouette score."""
+```
+【F:src/FIT_python/pipeline_individual_id/population_estimation.py†L127-L162】

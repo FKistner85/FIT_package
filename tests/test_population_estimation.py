@@ -6,6 +6,7 @@ from FIT_python.pipeline_individual_id.population_estimation import (
     compute_erd,
     optimal_cutoff,
     concordance_correlation_coefficient,
+    silhouette_cluster_count,
 )
 
 
@@ -41,3 +42,8 @@ def test_optimal_cutoff_simple():
 def test_concordance_correlation_coefficient():
     assert concordance_correlation_coefficient([1, 2, 3], [1, 2, 3]) == 1.0
     assert concordance_correlation_coefficient([1, 1, 1], [2, 2, 2]) == 0.0
+
+
+def test_silhouette_cluster_count():
+    df = _build_matrix()
+    assert silhouette_cluster_count(df) == 2
