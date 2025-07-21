@@ -381,7 +381,6 @@ def run_all_pairwise_projections_parallel(
                         "dist_chebyshev": distances["chebyshev"],
                         "dist_canberra": distances["canberra"],
                         "dist_braycurtis": distances["braycurtis"],
-                        "dist_mahalanobis": distances["mahalanobis"],
 
                         "min_observations": min(len(idx_a), len(idx_b)),
                         "max_observations": max(len(idx_a), len(idx_b)),

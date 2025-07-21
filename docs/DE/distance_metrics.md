@@ -11,4 +11,3 @@ Die Funktion berechnet mehrere Distanzwerte gleichzeitig und gibt sie als Dictio
 - https://docs.scipy.org/doc/scipy/reference/spatial.distance.html
 
 ## Annahmen und Einschränkungen
-Die Mahalanobis-Distanz benötigt eine inverse Kovarianzmatrix.

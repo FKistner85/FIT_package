@@ -22,7 +22,7 @@ Each generated pair dictionary includes the indexes of both trails, unique trail
 
 ## 2. Distance Metrics
 
-`distance_metrics.py` defines `compute_distances`, which returns several distances between two vectors. Supported metrics include Euclidean, Manhattan, cosine, Chebyshev, Canberra, Bray‑Curtis and optionally Mahalanobis if an inverse covariance matrix is supplied.
+`distance_metrics.py` defines `compute_distances`, which returns several distances between two vectors. Supported metrics include Euclidean, Manhattan, cosine, Chebyshev, Canberra and Bray‑Curtis.
 
 ```python
     distances = {

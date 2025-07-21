@@ -312,7 +312,7 @@ def run_all_pairwise_projections_parallel(
                             for m, v in dists.items():
                                 res[f"dist_{m}"] = float(v)
 
-                                # if distance could not be computed (e.g. Mahalanobis without covariance)
+                                # if distance could not be computed
                                 if np.isnan(v):
                                     res[f"mean_{m}_between"] = None
                                     res[f"median_{m}_between"] = None
