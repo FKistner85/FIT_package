@@ -188,7 +188,9 @@ def predict_simple_baseline(
     include_inference:
         Include the ``inference`` split when it exists.
     reuse_csv:
-        Load predictions from the existing CSV when ``True``.
+        When ``True`` the function expects ``{species}_baseline_predictions.csv``
+        to exist in ``exp_dir``. If the file is missing a ``FileNotFoundError``
+        is raised. Set to ``False`` to recompute the predictions.
 
     Returns
     -------
@@ -202,8 +204,13 @@ def predict_simple_baseline(
     splits_dir = DATA_DIR / "splits" / species
     csv_path = exp_dir / f"{species}_baseline_predictions.csv"
 
-    if reuse_csv and csv_path.exists():
-        return pd.read_csv(csv_path)
+    if reuse_csv:
+        if csv_path.exists():
+            return pd.read_csv(csv_path)
+        raise FileNotFoundError(
+            f"Predictions CSV not found: {csv_path}. "
+            "Set reuse_csv=False to recompute predictions."
+        )
 
     model_path = exp_dir / "models" / f"{species}.joblib"
     clf = load(model_path)
