@@ -39,6 +39,7 @@ def run_simple_baseline_all_species(
     progress: bool = False,
     max_features: int = 10,
     reuse_results: bool = True,
+    save_predictions: bool = True,
 ) -> pd.DataFrame:
     """Train a simple LDA baseline for each species.
 
@@ -60,6 +61,10 @@ def run_simple_baseline_all_species(
     reuse_results:
         When ``True`` existing ``raw_results.csv`` and model files in
         ``exp_dir`` are loaded and returned instead of training new models.
+
+    save_predictions:
+        When ``True`` baseline predictions for each species are written to
+        ``{exp_dir}/{species}_baseline_predictions.csv`` after training.
 
     Returns
     -------
@@ -159,6 +164,11 @@ def run_simple_baseline_all_species(
             )
 
         dump(pipe, model_dir / f"{sdir.name}.joblib")
+
+        if save_predictions:
+            predict_simple_baseline(
+                sdir.name, exp_dir, include_inference=True, reuse_csv=False
+            )
 
         records.append(
             {
