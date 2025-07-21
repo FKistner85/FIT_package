@@ -81,3 +81,15 @@ The unit tests located in `tests/` cover a small subset of the pipeline logic.
 
 Further details on coordinate reprojection can be found in
 `docs/coordinate_reprojection.md`.
+
+
+### Overlap evaluation
+
+The `scripts/evaluate_overlap.py` utility searches experiment directories for
+`all_splits.csv` files, determines the chi-square probability `p` that maximises
+F1 for the ellipse-overlap classifier and stores a confusion matrix plot next to
+each CSV.
+
+```bash
+python scripts/evaluate_overlap.py results/experiments/fit_start_to_finish/id_baseline
+```
