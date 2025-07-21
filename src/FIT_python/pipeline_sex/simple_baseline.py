@@ -34,7 +34,10 @@ def _load_split(fp: Path) -> pd.DataFrame:
 
 
 def run_simple_baseline_all_species(
-    exp_dir: Path, n_jobs: int = -1, progress: bool = False
+    exp_dir: Path,
+    n_jobs: int = -1,
+    progress: bool = False,
+    max_features: int = 10,
 ) -> pd.DataFrame:
     """Train a simple LDA baseline for each species.
 
@@ -49,6 +52,9 @@ def run_simple_baseline_all_species(
 
     progress:
         Show a progress bar for species and cross-validation when ``True``.
+
+    max_features:
+        Maximum number of features to select during forward selection.
 
     Returns
     -------
@@ -97,7 +103,10 @@ def run_simple_baseline_all_species(
             X_test = X_test.drop(columns=["Fold"])
 
         pipe = Pipeline([
-            ("select", FeatureSelectionTransformer(method="forward")),
+            (
+                "select",
+                FeatureSelectionTransformer(method="forward", k=max_features),
+            ),
             ("lda", LinearDiscriminantAnalysis()),
         ])
 
