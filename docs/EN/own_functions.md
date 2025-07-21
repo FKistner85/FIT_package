@@ -116,8 +116,6 @@ Parameters
 ----------
 a, b : array-like
     Input vectors.
-VI : array-like, optional
-    Inverse covariance matrix for Mahalanobis distance.
 
 ## FIT_python.pipeline_individual_id.feature_scaler_wrapper.FeatureScalerTransformer
 Scale numerical features using either a standard or robust approach.

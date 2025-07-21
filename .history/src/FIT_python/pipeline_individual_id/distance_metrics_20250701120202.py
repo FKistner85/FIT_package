@@ -1,13 +1,12 @@
 import numpy as np
 from scipy.spatial.distance import (
-    euclidean, cityblock, cosine, mahalanobis,
+    euclidean, cityblock, cosine,
     chebyshev, canberra, braycurtis
 )
 
-def compute_distances(a, b, VI=None):
+def compute_distances(a, b):
     """
     Berechnet verschiedene Distanzen zwischen zwei Vektoren a und b.
-    Optional: Mahalanobis-Inverse-Covariance-Matrix (VI) übergeben.
     """
     distances = {
         "euclidean": euclidean(a, b),
@@ -17,11 +16,4 @@ def compute_distances(a, b, VI=None):
         "canberra": canberra(a, b),
         "braycurtis": braycurtis(a, b),
     }
-    if VI is not None:
-        try:
-            distances["mahalanobis"] = mahalanobis(a, b, VI)
-        except Exception:
-            distances["mahalanobis"] = np.nan
-    else:
-        distances["mahalanobis"] = np.nan
     return distances
