@@ -83,3 +83,4 @@ def test_plot_pred_true_counts(tmp_path: Path):
     df_med = pd.DataFrame({"pred_count": [2, 3], "true_count": [2, 2]})
     out = plot_pred_true_counts({"mean": df_mean, "median": df_med}, tmp_path / "scatter.png")
     assert out.exists()
+    assert out.stat().st_size > 0
