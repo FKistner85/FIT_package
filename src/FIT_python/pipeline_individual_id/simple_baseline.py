@@ -106,7 +106,7 @@ def run_simple_baseline_otter(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     species_dir = SPLITS_DIR / "eurasian_otter"
-    df = _load_splits(species_dir)
+    df = _load_splits(species_dir, include_test=False)
     feature_cols = get_feature_cols(df)
 
     sex_preds = load_sex_predictions(species_dir.name) if use_sex_predictions else None
@@ -259,15 +259,25 @@ def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, 
         )
 
 
-def _load_splits(species_dir: Path) -> pd.DataFrame:
-    """Return concatenated train and test tables for ``species_dir``."""
+def _load_splits(species_dir: Path, *, include_test: bool = True) -> pd.DataFrame:
+    """Return concatenated train and optionally test tables for ``species_dir``.
+
+    Parameters
+    ----------
+    species_dir:
+        Path pointing to the directory containing ``train.parquet`` and
+        optionally ``test.parquet`` files.
+    include_test:
+        When ``True`` (default) the ``test.parquet`` file is loaded as well.
+        Set to ``False`` to work exclusively with the training split.
+    """
 
     train_fp = species_dir / "train.parquet"
     test_fp = species_dir / "test.parquet"
     parts = []
     if train_fp.exists():
         parts.append(pd.read_parquet(train_fp))
-    if test_fp.exists():
+    if include_test and test_fp.exists():
         parts.append(pd.read_parquet(test_fp))
     if not parts:
         raise FileNotFoundError(f"No train/test splits found in {species_dir}")

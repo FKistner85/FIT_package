@@ -59,6 +59,6 @@ def test_load_splits_filters_unknown(tmp_path):
 
     from FIT_python.pipeline_individual_id.simple_baseline import _load_splits
 
-    df = _load_splits(sp)
+    df = _load_splits(sp, include_test=True)
     assert df["Trail"].notna().all()
     assert not df["Trail"].str.lower().eq("unknown").any()
