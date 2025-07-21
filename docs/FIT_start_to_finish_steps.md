@@ -52,10 +52,11 @@ species directory contains a `summary.csv`, the collected metrics are written to
 The notebook concludes with an evaluation of the distance metrics computed for
 each pair. Besides the centroid distance, it stores the mean and median values
 across all projected points of both trails. The function
-`compute_overlap_jsl_style` classifies pairs whose 50 % chi-square ellipses
-overlap. Ward clustering is applied with metric-specific cut-offs selected by
-`optimal_cutoff` to estimate population sizes. For Manhattan distances the
-alternative `compute_overlap_rhombus` compares rhombus confidence regions. The
+`compute_overlap_jsl_style` classifies pairs whose chi-square ellipses overlap
+based on a probability ``p`` (default ``0.5``). Ward clustering is applied with
+metric-specific cut-offs selected by `optimal_cutoff` to estimate population
+sizes. For Manhattan distances the alternative `compute_overlap_rhombus`
+compares rhombus confidence regions. The
 resulting figures include a BCR bar chart, a scatter plot of predicted versus
 true population size and example pair visualisations.
 

@@ -59,6 +59,7 @@ def run(
     trail_col: str = "trail",
     subsample: bool = False,
     cutoff: float | None = None,
+    overlap_prob: float = 0.5,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using sequential holdouts.
 
@@ -101,6 +102,9 @@ def run(
     cutoff:
         Optional Ward distance used for population clustering. When ``None`` the
         cutoff is determined via :func:`optimal_cutoff` for each split.
+    overlap_prob:
+        Probability mass for :func:`compute_overlap_jsl_style` when predicting
+        whether two trails belong to the same individual.
 
     Returns
     -------
@@ -150,7 +154,9 @@ def run(
         if df_res.empty:
             continue
 
-        df_res["pred"] = df_res.apply(compute_overlap_jsl_style, axis=1)
+        df_res["pred"] = df_res.apply(
+            compute_overlap_jsl_style, axis=1, p=overlap_prob
+        )
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
         bcr = compute_bcr(cm)
 
