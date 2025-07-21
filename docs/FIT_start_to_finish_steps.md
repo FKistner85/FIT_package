@@ -27,7 +27,7 @@ Next, `plot_feature_correlation_matrix` creates a 2×2 grid of Pearson correlati
 
 ## Baseline Sex Classification
 
-The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1, progress=True)` to train stepwise LDA sex classifiers for each species. Accuracy and majority-vote comparison plots are produced and stored in the same experiment directory. The optional `progress=True` argument displays progress bars during cross-validation. After training, `predict_simple_baseline('eurasian_otter', EXP_DIR)` loads the saved model and writes baseline predictions for the otter splits.
+The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1, progress=True, max_features=10)` to train stepwise LDA sex classifiers for each species. Accuracy and majority-vote comparison plots are produced and stored in the same experiment directory. The optional `progress=True` argument displays progress bars during cross-validation and `max_features` sets the number of features selected during forward selection. After training, `predict_simple_baseline('eurasian_otter', EXP_DIR)` loads the saved model and writes baseline predictions for the otter splits.
 
 ## Baseline Evaluation
 
