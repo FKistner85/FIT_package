@@ -69,3 +69,53 @@ def test_embedding_once_matches_pairwise():
     dist_pw = {(r['trail_a_id'], r['trail_b_id']): r['dist_euclidean'] for r in res_pw}
     dist_emb = {(r['trail_a_id'], r['trail_b_id']): r['dist_euclidean'] for r in res_emb}
     assert dist_pw == dist_emb
+
+
+def test_resume_checkpoint(tmp_path):
+    df = build_data()
+    comps = build_comparisons()
+
+    full = run_all_pairwise_projections_parallel(
+        comps,
+        df,
+        feature_cols=['f1', 'f2'],
+        k_features=2,
+        reducers=['pca'],
+        selection_method='forward',
+        n_components=2,
+        outlier_methods=None,
+        scaler_methods='standard',
+        n_jobs=1,
+    )
+
+    ckpt = tmp_path / "state.joblib"
+    run_all_pairwise_projections_parallel(
+        comps[:1],
+        df,
+        feature_cols=['f1', 'f2'],
+        k_features=2,
+        reducers=['pca'],
+        selection_method='forward',
+        n_components=2,
+        outlier_methods=None,
+        scaler_methods='standard',
+        n_jobs=1,
+        checkpoint_path=str(ckpt),
+    )
+
+    resumed = run_all_pairwise_projections_parallel(
+        comps,
+        df,
+        feature_cols=['f1', 'f2'],
+        k_features=2,
+        reducers=['pca'],
+        selection_method='forward',
+        n_components=2,
+        outlier_methods=None,
+        scaler_methods='standard',
+        n_jobs=1,
+        checkpoint_path=str(ckpt),
+        resume=True,
+    )
+
+    assert resumed == full
