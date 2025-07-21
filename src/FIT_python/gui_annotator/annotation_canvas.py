@@ -20,9 +20,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from FIT_python.utils.transformations import TransformationPipeline
 
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python import config
 
 CFG = SOFT_CONFIG.get("gui_annotator", {})
-REFERENCE_TEMPLATE_DIR = Path(CFG.get("reference_template_dir", ""))
+REFERENCE_TEMPLATE_DIR = config.RAW_DIR / "reference_templates"
 DISPLAY_SIZE = tuple(int(v) for v in CFG.get("display_size", [1280, 720]))
 
 

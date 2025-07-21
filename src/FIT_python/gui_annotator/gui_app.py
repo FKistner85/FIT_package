@@ -11,19 +11,17 @@ import math
 import numpy as np
 
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python import config
 from FIT_python.gui_annotator import image_manager
 from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas, Landmark
 from FIT_python.utils.transformations import TransformationPipeline
 
 CFG = SOFT_CONFIG.get("gui_annotator", {})
-RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
-ANNOTATION_DIR = Path(CFG.get("annotation_dir", "data/processed/annotations"))
+RAW_DIR = config.RAW_DIR / "images"
+ANNOTATION_DIR = config.PROCESSED_DIR / "annotations"
 
 # Reference template with measurement definitions
-REF_FILE = (
-    Path(CFG.get("reference_template_dir", "data/raw/reference_templates"))
-    / "landmarks_extended.json"
-)
+REF_FILE = (config.RAW_DIR / "reference_templates") / "landmarks_extended.json"
 try:
     with REF_FILE.open("r", encoding="utf-8") as fh:
         _REF_DATA = json.load(fh)
