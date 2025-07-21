@@ -4,7 +4,7 @@ This file records the sequence of operations executed in `FIT_start_to_finish.ip
 
 ## Dataset Summary
 
-The notebook first calls `generate_dataset_overview` to build a CSV table describing all raw datasets. The function loops through each species, counts footprints, individuals and trails, and stores the results in `dataset_overview.csv`.
+The notebook first calls `generate_dataset_overview` to build a CSV table describing all raw datasets. The function loops through each species, counts footprints, individuals and trails, and stores the results in `dataset_overview.csv`. If the CSV already exists it is loaded instead of recomputed.
 
 ## Data Cleaning
 
