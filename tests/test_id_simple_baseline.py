@@ -33,3 +33,32 @@ def test_plot_bcr_comparison(tmp_path):
     df = pd.DataFrame({"species": ["a", "b"], "bcr": [0.5, 0.6]})
     out = plot_bcr_comparison(df, tmp_path)
     assert out.exists()
+
+
+def test_load_splits_filters_unknown(tmp_path):
+    sp = tmp_path / "sp"
+    sp.mkdir()
+    train = pd.DataFrame(
+        {
+            "Trail": ["t1", "unknown", None],
+            "Fold": [0, 1, 1],
+            "individual_id": ["A", "B", "C"],
+            "sex": ["m", "f", "m"],
+        }
+    )
+    train.to_parquet(sp / "train.parquet", index=False)
+    test = pd.DataFrame(
+        {
+            "Trail": ["t2"],
+            "Fold": [0],
+            "individual_id": ["D"],
+            "sex": ["m"],
+        }
+    )
+    test.to_parquet(sp / "test.parquet", index=False)
+
+    from FIT_python.pipeline_individual_id.simple_baseline import _load_splits
+
+    df = _load_splits(sp)
+    assert df["Trail"].notna().all()
+    assert not df["Trail"].str.lower().eq("unknown").any()
