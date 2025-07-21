@@ -280,6 +280,10 @@ def _load_splits(species_dir: Path) -> pd.DataFrame:
     if "trail" in df.columns and "Trail" not in df.columns:
         df = df.rename(columns={"trail": "Trail"})
 
+    if "Trail" in df.columns:
+        df = df.dropna(subset=["Trail"])
+        df = df[df["Trail"].astype(str).str.lower() != "unknown"]
+
     return df
 
 
