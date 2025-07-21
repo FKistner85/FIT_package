@@ -5,6 +5,7 @@ from FIT_python.Visualisations.plots_utils import (
     plot_pair_examples,
     plot_dendrogram,
     plot_sex_feature_boxplots,
+    plot_pred_true_counts,
 )
 
 
@@ -75,3 +76,10 @@ def test_plot_sex_feature_boxplots(tmp_path: Path):
     )
     for p in paths:
         assert p.exists()
+
+
+def test_plot_pred_true_counts(tmp_path: Path):
+    df_mean = pd.DataFrame({"pred_count": [1, 2], "true_count": [1, 1]})
+    df_med = pd.DataFrame({"pred_count": [2, 3], "true_count": [2, 2]})
+    out = plot_pred_true_counts({"mean": df_mean, "median": df_med}, tmp_path / "scatter.png")
+    assert out.exists()
