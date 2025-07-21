@@ -64,8 +64,9 @@ def predict_all(
     include_inference:
         Include the ``inference`` split if the corresponding parquet exists.
     reuse_csv:
-        Load predictions from the existing CSV when available instead of
-        recomputing them.
+        When ``True`` the existing prediction CSV must be present, otherwise a
+        ``FileNotFoundError`` is raised. Set to ``False`` to recompute the
+        predictions if the file is missing.
     use_cv_train_predictions:
         If ``True`` use out-of-fold predictions already stored in
         ``train.parquet`` instead of computing new predictions for the
@@ -73,8 +74,13 @@ def predict_all(
     """
     splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic)
 
-    if reuse_csv and csv_path.exists():
-        return pd.read_csv(csv_path)
+    if reuse_csv:
+        if csv_path.exists():
+            return pd.read_csv(csv_path)
+        raise FileNotFoundError(
+            f"Predictions CSV not found: {csv_path}. "
+            "Set reuse_csv=False to recompute predictions."
+        )
 
     split_names = ["train", "test"]
     if include_inference and (splits_dir / "inference.parquet").exists():
