@@ -94,3 +94,32 @@ def test_k_features_influences_results(tmp_path):
         summary1.loc[0, "n_pairs"] != summary2.loc[0, "n_pairs"]
         or summary1.loc[0, "bcr"] != summary2.loc[0, "bcr"]
     )
+
+
+def test_reuse_summary(tmp_path):
+    df = build_df()
+    from FIT_python.soft_config import SOFT_CONFIG
+
+    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
+        "sample_size"
+    ] = 1
+
+    summary1 = run(
+        df,
+        ["f1", "f2"],
+        val_sizes=[2],
+        iterations=1,
+        out_dir=tmp_path,
+        n_jobs=1,
+    )
+    summary2 = run(
+        df,
+        ["f1", "f2"],
+        val_sizes=[2],
+        iterations=1,
+        out_dir=tmp_path,
+        n_jobs=1,
+        reuse_summary=True,
+    )
+
+    pd.testing.assert_frame_equal(summary1, summary2)

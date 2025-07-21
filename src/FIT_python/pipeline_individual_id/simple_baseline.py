@@ -147,14 +147,46 @@ def run_simple_baseline_otter(
     return best_k
 
 
-def run_baseline_all_species(exp_dir: Path, best_k: int, cutoff: Dict[str, Any]) -> None:
-    """Evaluate the baseline for every species using sequential holdouts."""
+def run_baseline_all_species(
+    exp_dir: Path,
+    best_k: int,
+    cutoff: Dict[str, Any],
+    *,
+    reuse_summary: bool = True,
+    n_jobs: int = -1,
+) -> None:
+    """Evaluate the baseline for every species using sequential holdouts.
+
+    Parameters
+    ----------
+    exp_dir:
+        Root directory for all results. One subdirectory per species will be
+        created underneath this path.
+    best_k:
+        Number of features for the otter experiments and the default for the
+        benchmark species.
+    cutoff:
+        Mapping of species name to parameter dictionary with keys ``k`` and
+        ``ward`` specifying deviations from ``best_k`` and the Ward cut-off
+        distance.
+    reuse_summary:
+        When ``True`` and ``exp_dir/<species>/summary.csv`` exists, the
+        computation for that species is skipped.
+    n_jobs:
+        Parallel jobs forwarded to :func:`sequential_holdout.run`. ``-1`` uses
+        all available CPU cores.
+    """
 
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
 
     for species_dir in tqdm(sorted(SPLITS_DIR.iterdir()), desc="Species"):
         if not species_dir.is_dir():
+            continue
+
+        out_dir = exp_dir / species_dir.name
+        summary_fp = out_dir / "summary.csv"
+        if reuse_summary and summary_fp.exists():
             continue
 
         df = _load_splits(species_dir)
@@ -168,7 +200,6 @@ def run_baseline_all_species(exp_dir: Path, best_k: int, cutoff: Dict[str, Any])
             k = spec_cfg.get("k", best_k)
             ward = spec_cfg.get("ward")
 
-        out_dir = exp_dir / species_dir.name
         sequential_holdout.run(
             df,
             feature_cols,
@@ -178,6 +209,8 @@ def run_baseline_all_species(exp_dir: Path, best_k: int, cutoff: Dict[str, Any])
             trail_col="Trail",
             subsample=False,
             cutoff=ward,
+            reuse_summary=reuse_summary,
+            n_jobs=n_jobs,
         )
 
 

@@ -53,7 +53,8 @@ def run(
     val_sizes: Iterable[int] | None = None,
     random_state: int | None = None,
     out_dir: Path | None = None,
-    n_jobs: int = 1,
+    n_jobs: int = -1,
+    reuse_summary: bool = True,
     k_features: int | None = None,
     trail_col: str = "trail",
     subsample: bool = False,
@@ -86,7 +87,10 @@ def run(
         Directory to write per-split CSV results. Defaults to
         ``RESULTS_DATA_DIR / 'individual_id'``.
     n_jobs:
-        Parallel jobs for the pairwise projection step.
+        Parallel jobs for the pairwise projection step.  ``-1`` uses all cores.
+    reuse_summary:
+        When ``True`` and ``out_dir/summary.csv`` exists, load that table instead
+        of recomputing the sequential holdout.
     k_features:
         Number of morphometric features to select. ``None`` uses the default
         from :func:`run_all_pairwise_projections_parallel`.
@@ -112,6 +116,9 @@ def run(
     )
     out_dir = Path(out_dir or RESULTS_DATA_DIR / "individual_id")
     out_dir.mkdir(parents=True, exist_ok=True)
+    summary_fp = out_dir / "summary.csv"
+    if reuse_summary and summary_fp.exists():
+        return pd.read_csv(summary_fp)
 
     df_all, pred_cols = _merge_predictions(df, sex_predictions, sample_col=sample_col)
     use_cols = list(feature_cols) + pred_cols
@@ -194,5 +201,5 @@ def run(
         summary_df["ccc"] = ccc
     else:
         summary_df["ccc"] = float("nan")
-    summary_df.to_csv(out_dir / "summary.csv", index=False)
+    summary_df.to_csv(summary_fp, index=False)
     return summary_df
