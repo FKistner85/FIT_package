@@ -312,15 +312,16 @@ def run_all_pairwise_projections_parallel(
                                     continue
 
                                 # additional metrics: pairwise distances between A and B
-                                A = da.to_numpy()
-                                B = db.to_numpy()
+                                # using the coordinates after dimensionality reduction
+                                A = ca
+                                B = cb
                                 metric_name = "cityblock" if m == "manhattan" else m
                                 d_ab = cdist(A, B, metric=metric_name)
                                 flat_ab = d_ab.ravel()
                                 res[f"mean_{m}_between"] = float(np.mean(flat_ab))
                                 res[f"median_{m}_between"] = float(np.median(flat_ab))
 
-                                # within A
+                                # within A (reduced coordinates)
                                 if len(A) > 1:
                                     d_aa = cdist(A, A, metric=metric_name)
                                     iu = np.triu_indices(len(A), k=1)
@@ -331,7 +332,7 @@ def run_all_pairwise_projections_parallel(
                                     res[f"mean_{m}_within_a"] = None
                                     res[f"median_{m}_within_a"] = None
 
-                                # within B
+                                # within B (reduced coordinates)
                                 if len(B) > 1:
                                     d_bb = cdist(B, B, metric=metric_name)
                                     iu = np.triu_indices(len(B), k=1)
