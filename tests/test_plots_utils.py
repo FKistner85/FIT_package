@@ -21,6 +21,19 @@ def test_plot_pair_examples(tmp_path: Path):
     assert out.exists()
 
 
+def test_plot_pair_examples_rhombus(tmp_path: Path):
+    df = pd.DataFrame({
+        'same_individual': [True, True, False, False],
+        'pred': [True, False, True, False],
+        'coords_a_x': [[0.0, 1.0]] * 4,
+        'coords_a_y': [[0.0, 0.0]] * 4,
+        'coords_b_x': [[1.0, 2.0]] * 4,
+        'coords_b_y': [[0.0, 0.0]] * 4,
+    })
+    out = plot_pair_examples(df, tmp_path, rhombus=True)
+    assert out.exists()
+
+
 def test_plot_dendrogram(tmp_path: Path):
     dist = pd.DataFrame(
         [[0.0, 1.0, 2.0], [1.0, 0.0, 3.0], [2.0, 3.0, 0.0]],

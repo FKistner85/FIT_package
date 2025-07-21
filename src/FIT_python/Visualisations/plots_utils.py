@@ -4,6 +4,7 @@ from pathlib import Path
 from ast import literal_eval
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -518,8 +519,34 @@ def _circle_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float], 
     return (float(center[0]), float(center[1])), float(radius)
 
 
-def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path) -> Path:
-    """Plot example 50% confidence circles for TP/FP/FN/TN categories."""
+def _rhombus_from_row(row: pd.Series, prefix: str) -> tuple[tuple[float, float], float] | tuple[None, None]:
+    """Return center and L1-based radius for the ``prefix`` coordinates in ``row``."""
+
+    x = _parse_coords(row.get(f"coords_{prefix}_x"))
+    y = _parse_coords(row.get(f"coords_{prefix}_y"))
+    if x.size == 0 or y.size == 0 or x.size != y.size:
+        return None, None
+    pts = np.column_stack([x, y])
+    center = pts.mean(axis=0)
+    dist = np.abs(pts - center).sum(axis=1)
+    std = dist.std(ddof=1) if dist.size > 1 else 0.0
+    radius = chi2.ppf(0.5, df=2) * std
+    return (float(center[0]), float(center[1])), float(radius)
+
+
+def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path, *, rhombus: bool = False) -> Path:
+    """Plot example 50% confidence areas for TP/FP/FN/TN categories.
+
+    Parameters
+    ----------
+    df_res : pandas.DataFrame
+        Result rows containing coordinate columns.
+    out_dir : pathlib.Path
+        Directory where the output image is written.
+    rhombus : bool, default=False
+        If ``True``, draw rhombus confidence regions based on Manhattan
+        distances instead of circular ones.
+    """
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -549,13 +576,35 @@ def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path) -> Path:
             ax.axis("off")
             continue
 
-        c_a, r_a = _circle_from_row(row, "a")
-        c_b, r_b = _circle_from_row(row, "b")
+        if rhombus:
+            c_a, r_a = _rhombus_from_row(row, "a")
+            c_b, r_b = _rhombus_from_row(row, "b")
+        else:
+            c_a, r_a = _circle_from_row(row, "a")
+            c_b, r_b = _circle_from_row(row, "b")
 
         if c_a is not None:
-            ax.add_patch(plt.Circle(c_a, r_a, fill=False, color="blue", lw=2))
+            if rhombus:
+                coords = [
+                    (c_a[0] + r_a, c_a[1]),
+                    (c_a[0], c_a[1] + r_a),
+                    (c_a[0] - r_a, c_a[1]),
+                    (c_a[0], c_a[1] - r_a),
+                ]
+                ax.add_patch(Polygon(coords, fill=False, color="blue", lw=2))
+            else:
+                ax.add_patch(plt.Circle(c_a, r_a, fill=False, color="blue", lw=2))
         if c_b is not None:
-            ax.add_patch(plt.Circle(c_b, r_b, fill=False, color="orange", lw=2))
+            if rhombus:
+                coords = [
+                    (c_b[0] + r_b, c_b[1]),
+                    (c_b[0], c_b[1] + r_b),
+                    (c_b[0] - r_b, c_b[1]),
+                    (c_b[0], c_b[1] - r_b),
+                ]
+                ax.add_patch(Polygon(coords, fill=False, color="orange", lw=2))
+            else:
+                ax.add_patch(plt.Circle(c_b, r_b, fill=False, color="orange", lw=2))
 
         ax.set_aspect("equal")
         ax.set_xticks([])
@@ -563,10 +612,16 @@ def plot_pair_examples(df_res: pd.DataFrame, out_dir: Path) -> Path:
         ax.set_title(key)
 
     plt.tight_layout()
-    out_path = out_dir / "pair_examples.png"
+    fname = "pair_examples_rhombus.png" if rhombus else "pair_examples.png"
+    out_path = out_dir / fname
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
-    save_caption(out_path, "50% confidence circles for example pairs (TP/FP/FN/TN).")
+    caption = (
+        "50% confidence rhombuses for example pairs (TP/FP/FN/TN)."
+        if rhombus
+        else "50% confidence circles for example pairs (TP/FP/FN/TN)."
+    )
+    save_caption(out_path, caption)
     return out_path
 
 
