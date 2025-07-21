@@ -109,9 +109,11 @@ def run(
     Returns
     -------
     pd.DataFrame
-        Summary table with one row per split containing the BCR. In addition
-        to the per-split ``split_*.csv`` files, a combined ``all_splits.csv``
-        containing all pairwise results is written to ``out_dir``.
+        Summary table with one row per split containing the BCR, ERD, predicted
+        and true population sizes as well as the Ward cut-off statistics
+        (``ward_cutoff``, ``cutoff_low``, ``cutoff_high``).  In addition to the
+        per-split ``split_*.csv`` files, a combined ``all_splits.csv`` containing
+        all pairwise results is written to ``out_dir``.
     """
     val_sizes = (
         tuple(val_sizes)
@@ -184,9 +186,13 @@ def run(
 
         true_n = len(val_ids)
         if cutoff is None:
-            cut, _ = optimal_cutoff(dist_mat, true_n)
+            ward_cutoff, ci = optimal_cutoff(dist_mat, true_n)
+            cutoff_low, cutoff_high = ci
         else:
-            cut = float(cutoff)
+            ward_cutoff = float(cutoff)
+            cutoff_low = ward_cutoff
+            cutoff_high = ward_cutoff
+        cut = ward_cutoff
         pred_n = cluster_population(dist_mat, cut)
         erd = compute_erd(pred_n, true_n)
         summaries.append(
@@ -198,6 +204,9 @@ def run(
                 "pred_count": pred_n,
                 "true_count": true_n,
                 "erd": erd,
+                "ward_cutoff": ward_cutoff,
+                "cutoff_low": cutoff_low,
+                "cutoff_high": cutoff_high,
                 "tp": int(cm.loc["true_same", "pred_same"]),
                 "fp": int(cm.loc["true_diff", "pred_same"]),
                 "tn": int(cm.loc["true_diff", "pred_diff"]),
