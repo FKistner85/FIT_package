@@ -123,3 +123,32 @@ def test_reuse_summary(tmp_path):
     )
 
     pd.testing.assert_frame_equal(summary1, summary2)
+
+
+def test_all_splits_csv(tmp_path):
+    df = build_df()
+    preds = pd.DataFrame({"p_f": 0.5, "p_m": 0.5}, index=df["id"])
+    from FIT_python.soft_config import SOFT_CONFIG
+
+    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
+        "sample_size"
+    ] = 1
+
+    run(
+        df,
+        ["f1", "f2"],
+        preds,
+        val_sizes=[2],
+        iterations=2,
+        out_dir=tmp_path,
+        n_jobs=1,
+    )
+
+    all_csv = tmp_path / "all_splits.csv"
+    assert all_csv.exists()
+    df_all = pd.read_csv(all_csv)
+    assert {"split", "iteration", "n_val"}.issubset(df_all.columns)
+
+    csv_files = sorted(tmp_path.glob("split_*.csv"))
+    total_rows = sum(len(pd.read_csv(fp)) for fp in csv_files)
+    assert len(df_all) == total_rows

@@ -109,7 +109,9 @@ def run(
     Returns
     -------
     pd.DataFrame
-        Summary table with one row per split containing the BCR.
+        Summary table with one row per split containing the BCR. In addition
+        to the per-split ``split_*.csv`` files, a combined ``all_splits.csv``
+        containing all pairwise results is written to ``out_dir``.
     """
     val_sizes = (
         tuple(val_sizes)
@@ -131,6 +133,7 @@ def run(
     splits = sequential_holdout_ids(unique_ids, val_sizes=val_sizes, n_iter=iterations, random_state=random_state)
 
     summaries = []
+    all_parts: list[pd.DataFrame] = []
     for idx, split in enumerate(splits):
         train_ids = split["train_ids"]
         val_ids = split["val_ids"]
@@ -153,6 +156,11 @@ def run(
         df_res = pd.DataFrame(res)
         if df_res.empty:
             continue
+
+        df_res["split"] = idx
+        df_res["iteration"] = split["iteration"]
+        df_res["n_val"] = split["n_val"]
+        all_parts.append(df_res.copy())
 
         df_res["pred"] = df_res.apply(
             compute_overlap_jsl_style, axis=1, p=overlap_prob
@@ -198,6 +206,10 @@ def run(
             }
         )
         df_res.to_csv(out_dir / f"split_{idx}.csv", index=False)
+
+    if all_parts:
+        df_all = pd.concat(all_parts, ignore_index=True)
+        df_all.to_csv(out_dir / "all_splits.csv", index=False)
 
     summary_df = pd.DataFrame(summaries)
     if not summary_df.empty:
