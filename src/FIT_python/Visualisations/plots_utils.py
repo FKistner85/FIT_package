@@ -648,11 +648,18 @@ def plot_pair_examples(
     return paths
 
 
-def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) -> Path:
-    """Save a dendrogram based on ``dist_matrix`` with a cutoff line.
+def plot_dendrogram(
+    dist_matrix: pd.DataFrame,
+    cutoff: float,
+    out_file: Path,
+    bounds: tuple[float, float] | None = None,
+) -> Path:
+    """Save a dendrogram based on ``dist_matrix`` with cutoff and optional bounds.
 
     Samples originating from the same individual are coloured consistently and
-    the x tick labels are rotated to avoid overlaps.
+    the x tick labels are rotated to avoid overlaps. When ``bounds`` are
+    provided, additional dotted lines are drawn to visualise the confidence
+    interval around ``cutoff``.
     """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -667,6 +674,10 @@ def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) ->
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     dendrogram(link, labels=labels, ax=ax)
     ax.axhline(cutoff, color="red", linestyle="--")
+    if bounds is not None:
+        low, high = bounds
+        ax.axhline(low, color="gray", linestyle=":")
+        ax.axhline(high, color="gray", linestyle=":")
     ax.set_ylabel("Ward distance")
     ax.set_xlabel("Sample")
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
@@ -675,7 +686,10 @@ def plot_dendrogram(dist_matrix: pd.DataFrame, cutoff: float, out_file: Path) ->
     fig.tight_layout()
     fig.savefig(out_file, dpi=150)
     plt.close(fig)
-    save_caption(out_file, "Ward dendrogram with distance cutoff line.")
+    caption = "Ward dendrogram with distance cutoff line."
+    if bounds is not None:
+        caption = "Ward dendrogram with distance cutoff line and confidence bounds."
+    save_caption(out_file, caption)
     return out_file
 
 
@@ -762,6 +776,13 @@ def plot_pred_true_counts(results: dict[str, pd.DataFrame], out_file: Path) -> P
             marker,
             label=name,
         )
+        if len(df) > 1:
+            x = df["pred_count"].astype(float)
+            y = df["true_count"].astype(float)
+            coef = np.polyfit(x, y, 1)
+            x_line = np.array([x.min(), x.max()])
+            y_line = coef[0] * x_line + coef[1]
+            ax.plot(x_line, y_line, color=color, linestyle="-")
 
     min_val = min(
         float(df[["pred_count", "true_count"]].min().min()) for df in results.values()
