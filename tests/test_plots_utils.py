@@ -50,7 +50,7 @@ def test_plot_dendrogram(tmp_path: Path):
         columns=list("ABC"),
     )
     out_file = tmp_path / "den.png"
-    out = plot_dendrogram(dist, 1.5, out_file)
+    out = plot_dendrogram(dist, out_file, cutoff_low=1.0, cutoff_high=2.0)
     assert out.exists()
 
 
