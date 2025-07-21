@@ -54,6 +54,14 @@ MODELS = {
     "accuracy": "best_accuracy_test",
 }
 
+
+def _load_split(fp: Path) -> pd.DataFrame:
+    """Load a parquet split and filter invalid sex labels."""
+    df = pd.read_parquet(fp)
+    df = df.dropna(subset=["sex"])
+    df = df.query("sex in ['f','m']").reset_index(drop=True)
+    return df
+
 def predict_simple_baseline(
     species: str,
     exp_dir: Path,

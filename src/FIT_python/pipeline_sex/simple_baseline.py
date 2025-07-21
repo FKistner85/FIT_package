@@ -26,6 +26,19 @@ from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
 from . import grouped_metrics
 
 
+def predict_simple_baseline(*args, **kwargs):
+    """Lazy wrapper around :func:`sex_predict_and_visualisation.predict_simple_baseline`.
+
+    Reloads the target module to honour a potentially changed
+    ``FIT_EXPERIMENT_ROOT`` environment variable.
+    """
+    import importlib
+    from . import sex_predict_and_visualisation as sp
+
+    importlib.reload(sp)
+    return sp.predict_simple_baseline(*args, **kwargs)
+
+
 def _load_split(fp: Path) -> pd.DataFrame:
     df = pd.read_parquet(fp)
     df = df.dropna(subset=["sex"])

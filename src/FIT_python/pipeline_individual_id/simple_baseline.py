@@ -14,7 +14,7 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
-from FIT_python.config import SPLITS_DIR
+from FIT_python.config import SPLITS_DIR, DEBUG_MODE
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from . import sequential_holdout
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
@@ -189,7 +189,14 @@ def run_baseline_all_species(
         if reuse_summary and summary_fp.exists():
             continue
 
-        df = _load_splits(species_dir)
+        try:
+            df = _load_splits(species_dir)
+        except FileNotFoundError:
+            if DEBUG_MODE:
+                raise
+            print(f"[WARN] No train/test splits found for {species_dir.name!r} – skipping")
+            continue
+
         feature_cols = get_feature_cols(df)
 
         if species_dir.name == "eurasian_otter":
@@ -224,7 +231,14 @@ def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, 
         if not species_dir.is_dir():
             continue
 
-        df = _load_splits(species_dir)
+        try:
+            df = _load_splits(species_dir)
+        except FileNotFoundError:
+            if DEBUG_MODE:
+                raise
+            print(f"[WARN] No train/test splits found for {species_dir.name!r} – skipping")
+            continue
+
         feature_cols = get_feature_cols(df)
 
         spec_cfg = cutoff.get(species_dir.name, {})
