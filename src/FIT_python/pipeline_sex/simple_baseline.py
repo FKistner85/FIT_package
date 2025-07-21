@@ -247,6 +247,9 @@ def predict_simple_baseline(
     for name in split_names:
         df = _load_split(splits_dir / f"{name}.parquet")
 
+        if df.empty:
+            continue
+
         drop_cols = ["sex"]
         if "individual_id" in df.columns:
             drop_cols.append("individual_id")
@@ -254,6 +257,9 @@ def predict_simple_baseline(
         X = X.select_dtypes(include=["number"]).copy()
         if "Fold" in X.columns:
             X = X.drop(columns=["Fold"])
+
+        if X.empty:
+            continue
 
         df["__split__"] = name
         df["pred_baseline_sex"] = clf.predict(X)
