@@ -152,3 +152,23 @@ def test_all_splits_csv(tmp_path):
     csv_files = sorted(tmp_path.glob("split_*.csv"))
     total_rows = sum(len(pd.read_csv(fp)) for fp in csv_files)
     assert len(df_all) == total_rows
+
+
+def test_evaluate_with_cutoff(tmp_path):
+    from FIT_python.pipeline_individual_id.sequential_holdout import evaluate_with_cutoff
+
+    rows = [
+        {"trail_a_id": "t1", "trail_b_id": "t2", "ind_a": "A", "ind_b": "A", "dist_euclidean": 0.1, "split": 0},
+        {"trail_a_id": "t1", "trail_b_id": "t3", "ind_a": "A", "ind_b": "B", "dist_euclidean": 0.9, "split": 0},
+        {"trail_a_id": "t2", "trail_b_id": "t3", "ind_a": "A", "ind_b": "B", "dist_euclidean": 0.8, "split": 0},
+        {"trail_a_id": "t4", "trail_b_id": "t5", "ind_a": "C", "ind_b": "C", "dist_euclidean": 0.2, "split": 1},
+        {"trail_a_id": "t4", "trail_b_id": "t6", "ind_a": "C", "ind_b": "D", "dist_euclidean": 0.9, "split": 1},
+        {"trail_a_id": "t5", "trail_b_id": "t6", "ind_a": "C", "ind_b": "D", "dist_euclidean": 0.8, "split": 1},
+    ]
+    df = pd.DataFrame(rows)
+    df.to_csv(tmp_path / "all_splits.csv", index=False)
+
+    res = evaluate_with_cutoff(tmp_path, cutoff=0.5)
+    assert list(res["pred_count"]) == [2, 2]
+    assert list(res["true_count"]) == [2, 2]
+    assert list(res["erd"]) == [0.0, 0.0]

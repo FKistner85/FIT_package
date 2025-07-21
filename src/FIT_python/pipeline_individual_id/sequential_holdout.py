@@ -221,3 +221,63 @@ def run(
         summary_df["ccc"] = float("nan")
     summary_df.to_csv(summary_fp, index=False)
     return summary_df
+
+
+def evaluate_with_cutoff(result_dir: Path, cutoff: float) -> pd.DataFrame:
+    """Re-evaluate splits with a fixed Ward cut-off.
+
+    Parameters
+    ----------
+    result_dir:
+        Directory containing ``all_splits.csv`` produced by :func:`run`.
+    cutoff:
+        Ward distance passed to :func:`cluster_population`.
+
+    Returns
+    -------
+    pd.DataFrame
+        Data frame with one row per split containing ``pred_count``,
+        ``true_count`` and ``erd``.
+    """
+
+    result_dir = Path(result_dir)
+    all_fp = result_dir / "all_splits.csv"
+    if not all_fp.exists():
+        raise FileNotFoundError(all_fp)
+
+    df_all = pd.read_csv(all_fp)
+    if df_all.empty:
+        return pd.DataFrame(
+            columns=["split", "pred_count", "true_count", "erd"], dtype=float
+        )
+
+    summaries = []
+    for split, part in df_all.groupby("split"):
+        trails = sorted(set(part["trail_a_id"]) | set(part["trail_b_id"]))
+        dist_mat = pd.DataFrame(np.nan, index=trails, columns=trails)
+        for a, b, val in zip(part["trail_a_id"], part["trail_b_id"], part["dist_euclidean"]):
+            try:
+                v = float(val)
+            except Exception:
+                continue
+            dist_mat.at[a, b] = v
+            dist_mat.at[b, a] = v
+
+        np.fill_diagonal(dist_mat.values, 0.0)
+        max_d = np.nanmax(dist_mat.values)
+        dist_mat = dist_mat.fillna(max_d)
+
+        pred_n = cluster_population(dist_mat, float(cutoff))
+        ids = set(part["ind_a"].astype(str)) | set(part["ind_b"].astype(str))
+        true_n = len(ids)
+        erd = compute_erd(pred_n, true_n)
+        summaries.append(
+            {
+                "split": int(split),
+                "pred_count": pred_n,
+                "true_count": true_n,
+                "erd": erd,
+            }
+        )
+
+    return pd.DataFrame(summaries)
