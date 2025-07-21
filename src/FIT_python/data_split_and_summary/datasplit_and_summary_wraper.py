@@ -31,7 +31,7 @@ class SplitWrapper:
         print(f"\n📊 {name} – {n_rows} Zeilen | {n_individuals} Individuen | {n_trails} Trails")
         print(sex_counts.to_string())
 
-    def split_all(self, as_csv: bool = True) -> int:
+    def split_all(self, as_csv: bool = True, reuse_splits: bool = True) -> int:
         importer = DataImporter(raw_dir=self.input_dir, target_cols=DEFAULT_TARGETS)
         dfs = importer.run()
         if not dfs:
@@ -40,6 +40,11 @@ class SplitWrapper:
 
         for name, df in tqdm(dfs.items(), desc="Splitting datasets"):
             dataset = name.lower().replace("_cleaned", "")
+            out_dir = self.output_dir / dataset
+
+            if reuse_splits and all((out_dir / f"{s}.parquet").exists() for s in ["train", "test", "inference"]):
+                print(f"↪️  Verwende bestehende Splits für {dataset}")
+                continue
             species_col = df.get("Species") or df.get("species")
             is_otter = (
                 species_col.astype(str)

@@ -194,7 +194,7 @@ class PipelineWrapper:
         print("\n📥 Schritt 1: Datenimport & Cleaning")
         DataImportWrapper().clean_all()
         print("\n✂️ Schritt 2: Splitting & Fold-Zuordnung")
-        SplitWrapper().split_all()
+        SplitWrapper().split_all(reuse_splits=True)
         print("\n📊 Schritt 3: Zusammenfassung der Splits")
         SummaryWrapper().summarize_all()
         ensure_valid_splits()
