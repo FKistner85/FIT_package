@@ -221,3 +221,58 @@ def run(
         summary_df["ccc"] = float("nan")
     summary_df.to_csv(summary_fp, index=False)
     return summary_df
+
+
+def compute_global_cutoffs(all_splits_path: Path) -> dict[str, float]:
+    """Return aggregated Ward cut-offs from ``all_splits.csv``.
+
+    Parameters
+    ----------
+    all_splits_path:
+        Path to the CSV file containing pairwise distances for all splits.
+
+    Returns
+    -------
+    dict[str, float]
+        Dictionary with the mean and median Ward distance as well as the
+        averaged confidence interval.
+    """
+
+    df_all = pd.read_csv(all_splits_path)
+    cutoffs: list[float] = []
+    lows: list[float] = []
+    highs: list[float] = []
+    for _, grp in df_all.groupby("split"):
+        trails = sorted(set(grp["trail_a_id"]) | set(grp["trail_b_id"]))
+        dist_mat = pd.DataFrame(np.nan, index=trails, columns=trails)
+        for a, b, val in zip(grp["trail_a_id"], grp["trail_b_id"], grp["dist_euclidean"]):
+            try:
+                v = float(val)
+            except Exception:
+                continue
+            dist_mat.at[a, b] = v
+            dist_mat.at[b, a] = v
+        np.fill_diagonal(dist_mat.values, 0.0)
+        max_d = np.nanmax(dist_mat.values)
+        dist_mat = dist_mat.fillna(max_d)
+
+        true_n = int(grp["n_val"].iloc[0])
+        cutoff, (low, high) = optimal_cutoff(dist_mat, true_n)
+        cutoffs.append(cutoff)
+        lows.append(low)
+        highs.append(high)
+
+    if not cutoffs:
+        return {
+            "cutoff_mean": float("nan"),
+            "cutoff_median": float("nan"),
+            "cutoff_low": float("nan"),
+            "cutoff_high": float("nan"),
+        }
+
+    return {
+        "cutoff_mean": float(np.mean(cutoffs)),
+        "cutoff_median": float(np.median(cutoffs)),
+        "cutoff_low": float(np.mean(lows)),
+        "cutoff_high": float(np.mean(highs)),
+    }
