@@ -30,6 +30,9 @@ def test_run_produces_summary(tmp_path):
     assert 'erd' in summary.columns
     assert 'pred_count' in summary.columns
     assert 'true_count' in summary.columns
+    assert 'ward_cutoff' in summary.columns
+    assert 'cutoff_low' in summary.columns
+    assert 'cutoff_high' in summary.columns
     assert 'ccc' in summary.columns
     assert (tmp_path / 'summary.csv').exists()
 
