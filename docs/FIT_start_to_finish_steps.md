@@ -31,7 +31,13 @@ The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1, pro
 
 ## Baseline Evaluation
 
-Finally, `predict_all('eurasian_otter')` applies the best otter classifier to the held-out test data. The subsequent calls to `plot_confusion_and_inference`, `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities` create confusion matrices, quality plots and individual-level probability charts. Each figure is saved to the experiment directory for later inspection.
+Finally, call `predict_all('eurasian_otter', reuse_csv=False)` once after training to create
+`eurasian_otter_all_predictions.csv` under `results/data/`. Subsequent
+notebook runs can set `reuse_csv=True` to load this file instead of recomputing
+predictions. The following calls to `plot_confusion_and_inference`,
+`plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities`
+produce confusion matrices, quality plots and individual‑level probability
+charts. Each figure is saved to the experiment directory for later inspection.
 
 
 ## Sex Feature Experiment

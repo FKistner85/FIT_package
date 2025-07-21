@@ -16,7 +16,9 @@ Dieses Dokument fasst die Notizen in `pipeline_individual_id_3_pipelines.txt` zu
    - Der Skalierer wird auf dem Trainingssatz fit und auf alle Sätze angewendet.
    - Optional entsteht eine Korrelationsgrafik der skalierten Merkmale.
 5. **Vorhersagen des Sex-Modells**
-   - Über `predict_all` werden Klassen und Wahrscheinlichkeiten erzeugt.
+   - `predict_all('<species>', reuse_csv=False)` erzeugt einmalig
+     `{species}_all_predictions.csv` unter `results/data/`. Spätere Aufrufe
+     können `reuse_csv=True` verwenden, um die Datei erneut zu laden.
    - Für den Trainingssatz werden die bereits gespeicherten
      Kreuzvalidierungs‑Vorhersagen verwendet, um nur Out‑of‑Fold‑Werte zu
      nutzen.
