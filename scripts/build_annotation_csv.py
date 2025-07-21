@@ -12,17 +12,11 @@ import pandas as pd
 import numpy as np
 
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python import config
 
 # Paths ----------------------------------------------------------------------
-ANNOTATION_DIR = Path(SOFT_CONFIG.get("gui_annotator", {}).get("annotation_dir", "data/processed/annotations"))
-REF_FILE = (
-    Path(
-        SOFT_CONFIG.get("gui_annotator", {}).get(
-            "reference_template_dir", "data/raw/reference_templates"
-        )
-    )
-    / "landmarks_extended.json"
-)
+ANNOTATION_DIR = config.PROCESSED_DIR / "annotations"
+REF_FILE = config.RAW_DIR / "reference_templates" / "landmarks_extended.json"
 
 
 # Geometry helpers -----------------------------------------------------------
@@ -140,7 +134,7 @@ def build_records() -> list[Dict[str, Any]]:
 def main() -> None:
     records = build_records()
     df = pd.DataFrame(records)
-    out_path = Path("data/processed/annotations.csv")
+    out_path = config.PROCESSED_DIR / "annotations.csv"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_path, index=False)
     print(f"[INFO] wrote {len(df)} rows to {out_path}")
