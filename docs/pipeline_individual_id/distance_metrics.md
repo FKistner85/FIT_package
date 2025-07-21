@@ -11,12 +11,8 @@
         "canberra": canberra(a, b),
         "braycurtis": braycurtis(a, b),
     }
-    if VI is not None:
-        distances["mahalanobis"] = mahalanobis(a, b, VI)
-    else:
-        distances["mahalanobis"] = np.nan
 ```
-【F:src/FIT_python/pipeline_individual_id/distance_metrics.py†L12-L23】
+【F:src/FIT_python/pipeline_individual_id/distance_metrics.py†L14-L29】
 
 * **Euclidean** and **Manhattan** are the familiar $\ell_2$ and $\ell_1$ distances from classical geometry. They are easy to interpret and are the basis for many optimisation algorithms, but Euclidean distance in particular can be dominated by overall scale when features are not standardised.
 
@@ -26,11 +22,8 @@
 
 * **Canberra** and **Bray‑Curtis** normalise the differences by the absolute values of the components. They are particularly popular in ecology and compositional data analysis (e.g. *Bray & Curtis, 1957*). Their sensitivity to small changes around zero can be both a strength and a weakness depending on noise levels.
 
-* **Mahalanobis** distance (introduced by *Mahalanobis, 1936*) takes into account the covariance between features. When a reliable covariance matrix is available, it provides scale‑invariant comparisons that respect feature correlations. Obtaining a stable estimate of the covariance, however, can be challenging in high dimensions.
-
 The helper function returns all metrics simultaneously as a dictionary for easy downstream consumption.
 
 **References**
-* Mahalanobis, P. C. (1936). "On the generalized distance in statistics." *Proceedings of the National Institute of Sciences of India*.
 * Bray, J. R., & Curtis, J. T. (1957). "An ordination of the upland forest communities of southern Wisconsin." *Ecological Monographs*.
 * Salton, G., & McGill, M. J. (1983). *Introduction to Modern Information Retrieval*. McGraw‑Hill.

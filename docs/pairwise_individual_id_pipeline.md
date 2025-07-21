@@ -22,7 +22,7 @@ Each generated pair dictionary includes the indexes of both trails, unique trail
 
 ## 2. Distance Metrics
 
-`distance_metrics.py` defines `compute_distances`, which returns several distances between two vectors. Supported metrics include Euclidean, Manhattan, cosine, Chebyshev, Canberra, Bray‑Curtis and optionally Mahalanobis if an inverse covariance matrix is supplied.
+`distance_metrics.py` defines `compute_distances`, which returns several distances between two vectors. Supported metrics include Euclidean, Manhattan, cosine, Chebyshev, Canberra and Bray‑Curtis.
 
 ```python
     distances = {
@@ -56,7 +56,7 @@ The main computation takes place in `run_all_pairwise_projections_parallel` with
 
 After optionally loading a pre-trained sex classifier, the function converts the selected feature columns to numeric values (lines 85‑88) and precomputes `predict_proba` values if requested (lines 90‑94).  For each pair the pipeline iterates over outlier cleaning and scaling choices, applies forward feature selection, and then reduces the dimension with either LDA, PCA or UMAP.  The results include the projected coordinates of both trails and of an RCV reference set, as well as multiple distance metrics computed between the trail centroids.
 
-Distances between all individual points are also summarised to provide mean and median values both between and within the two trails.  This happens at lines 324‑357 of the same file.
+Distances between all individual points are also summarised to provide mean and median values both between and within the two trails.  This happens at lines 324‑357 of the same file. The `mean_*` and `median_*` values are calculated using the projected coordinates, i.e. the same space as the centroid distances.
 
 ## 4. Parallel Execution
 
