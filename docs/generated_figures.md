@@ -115,3 +115,7 @@
 ![**Heatmap**](results/figures/plots otter/heatmaps_majority_classification_trail_and_individual_level_ALL_fixed.png)
 
 ![**Prediction**](results/figures/plots otter/prediction_qality_single_print.png)
+
+## Population size estimation
+
+![Predicted vs true counts](results/figures/population_estimation/example_scatter.png)
