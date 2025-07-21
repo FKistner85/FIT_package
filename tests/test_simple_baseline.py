@@ -39,6 +39,8 @@ def test_simple_baseline_runs(tmp_path, monkeypatch):
 
     assert (out_dir / "raw_results.csv").exists()
     assert (out_dir / "models" / "otter.joblib").exists()
+    assert (out_dir / "otter_baseline_predictions.csv").exists()
+    pd.read_csv(out_dir / "otter_baseline_predictions.csv")
     expected_cols = {
         "species",
         "accuracy",
