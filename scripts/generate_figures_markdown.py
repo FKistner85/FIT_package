@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable
 
+import FIT_python.config as config
+
 PLOT_TYPES: dict[str, str] = {
     'boxplot': 'Boxplot',
     'heatmap': 'Heatmap',
@@ -15,30 +17,30 @@ PLOT_TYPES: dict[str, str] = {
     'stepimpact': 'Step impact',
 }
 
-OUTPUT_FILE = Path('docs/generated_figures.md')
+OUTPUT_FILE = config.EXPERIMENT_ROOT / 'docs' / 'generated_figures.md'
 
 # Mapping of figure categories to the directories or files containing images
 CATEGORIES: list[tuple[str, list[Path]]] = [
     (
         'Data loading and split',
         [
-            Path('results/figures/summary'),
-            Path('results/data/eurasian_otter_fig'),
+            config.RESULTS_DIR / 'figures' / 'summary',
+            config.RESULTS_DIR / 'data' / 'eurasian_otter_fig',
         ],
     ),
     (
         'Sex model Evaluation',
         [
-            Path('results/figures/sex_model'),
-            Path('results/data/eurasian_otter_random_search_standard_metrics'),
-            Path('results/figures/raw_balanced_acc_heatmap_min_max_highlight.png'),
+            config.RESULTS_DIR / 'figures' / 'sex_model',
+            config.RESULTS_DIR / 'data' / 'eurasian_otter_random_search_standard_metrics',
+            config.RESULTS_DIR / 'figures' / 'raw_balanced_acc_heatmap_min_max_highlight.png',
         ],
     ),
     (
         'Individual ID',
         [
-            Path('results/figures/plots_otter'),
-            Path('results/figures/plots otter'),
+            config.RESULTS_DIR / 'figures' / 'plots_otter',
+            config.RESULTS_DIR / 'figures' / 'plots otter',
         ],
     ),
 ]
