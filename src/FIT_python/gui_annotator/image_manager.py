@@ -8,10 +8,11 @@ from typing import Optional
 from PIL import Image
 
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python import config
 
 CFG = SOFT_CONFIG.get("gui_annotator", {})
-RAW_DIR = Path(CFG.get("raw_image_dir", "data/raw/images"))
-PROCESSED_DIR = Path(CFG.get("processed_image_dir", "data/processed/images"))
+RAW_DIR = config.RAW_DIR / "images"
+PROCESSED_DIR = config.PROCESSED_DIR / "images"
 DEFAULT_SCALE = float(CFG.get("default_scale", 1.0))
 DISPLAY_SIZE = tuple(int(v) for v in CFG.get("display_size", [1280, 720]))
 

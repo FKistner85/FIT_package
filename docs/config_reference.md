@@ -28,10 +28,11 @@ This document defines all configurable values in the repository. **Any code gene
 - `sequential_holdout_val_sizes`: validation sizes for sequential holdouts.
 
 ## gui_annotator
-- `raw_image_dir`: folder containing raw images shown in the GUI.
-- `processed_image_dir`: location for processed images.
-- `annotation_dir`: directory where annotations are written.
-- `reference_template_dir`: folder with overlay templates for reference (default `data/raw/reference_templates`).
+Paths used by the annotation tools are derived from :mod:`FIT_python.config`:
+- raw images: ``config.RAW_DIR / "images"``
+- processed images: ``config.PROCESSED_DIR / "images"``
+- annotations: ``config.PROCESSED_DIR / "annotations"``
+- reference templates: ``config.RAW_DIR / "reference_templates"``
 - `default_scale`: default scaling factor when preprocessing images.
 - `display_size`: canvas display resolution.
 

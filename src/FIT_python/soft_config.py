@@ -94,10 +94,6 @@ SOFT_CONFIG = {
         "sequential_holdout_val_sizes": [2, 4, 6, 8],
     },
     "gui_annotator": {
-        "raw_image_dir": "data/raw/images",
-        "processed_image_dir": "data/processed/images",
-        "annotation_dir": "data/processed/annotations",
-        "reference_template_dir": "data/raw/reference_templates",
         "default_scale": 1.0,
         # Default window size (w, h) in a widescreen ratio. The application
         # will automatically constrain this based on the available screen
