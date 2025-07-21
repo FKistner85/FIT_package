@@ -38,6 +38,7 @@ def run_simple_baseline_all_species(
     n_jobs: int = -1,
     progress: bool = False,
     max_features: int = 10,
+    reuse_results: bool = True,
 ) -> pd.DataFrame:
     """Train a simple LDA baseline for each species.
 
@@ -56,12 +57,25 @@ def run_simple_baseline_all_species(
     max_features:
         Maximum number of features to select during forward selection.
 
+    reuse_results:
+        When ``True`` existing ``raw_results.csv`` and model files in
+        ``exp_dir`` are loaded and returned instead of training new models.
+
     Returns
     -------
     pandas.DataFrame
         Table with one row per species containing the evaluation metrics.
     """
     exp_dir = Path(exp_dir)
+
+    if reuse_results:
+        csv_path = exp_dir / "raw_results.csv"
+        model_dir = exp_dir / "models"
+        if csv_path.exists() and model_dir.is_dir():
+            df = pd.read_csv(csv_path)
+            if not df.empty and all((model_dir / f"{sp}.joblib").exists() for sp in df["species"]):
+                return df
+
     exp_dir.mkdir(parents=True, exist_ok=True)
     model_dir = exp_dir / "models"
     model_dir.mkdir(exist_ok=True)

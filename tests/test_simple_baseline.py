@@ -54,3 +54,23 @@ def test_simple_baseline_runs(tmp_path, monkeypatch):
         "maj_pct",
     }
     assert expected_cols.issubset(df.columns)
+
+
+def test_simple_baseline_reuse_results(tmp_path, monkeypatch):
+    root = tmp_path
+    exp_dir = root / "exp"
+    model_dir = exp_dir / "models"
+    model_dir.mkdir(parents=True)
+    data = pd.DataFrame({"species": ["otter"], "accuracy": [1.0]})
+    data.to_csv(exp_dir / "raw_results.csv", index=False)
+    (model_dir / "otter.joblib").write_bytes(b"0")
+    (root / "data").mkdir()
+
+    monkeypatch.setenv("FIT_PROJECT_ROOT", str(root))
+    import FIT_python.config as cfg
+    importlib.reload(cfg)
+    import FIT_python.pipeline_sex.simple_baseline as sb
+    importlib.reload(sb)
+
+    df = sb.run_simple_baseline_all_species(exp_dir, n_jobs=1, reuse_results=True)
+    pd.testing.assert_frame_equal(df, data)
