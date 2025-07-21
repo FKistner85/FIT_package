@@ -5,6 +5,20 @@ from typing import Iterable
 
 import FIT_python.config as config
 
+
+def _species_dirs(species: str, base: Path) -> Path | None:
+    """Return the directory for ``species`` under ``base`` if it exists."""
+    candidates = [
+        species.replace("_", " ").title().replace(" ", "_"),
+        species.capitalize(),
+        species,
+    ]
+    for cand in candidates:
+        path = base / cand
+        if path.is_dir():
+            return path
+    return None
+
 PLOT_TYPES: dict[str, str] = {
     'boxplot': 'Boxplot',
     'heatmap': 'Heatmap',
@@ -19,31 +33,57 @@ PLOT_TYPES: dict[str, str] = {
 
 OUTPUT_FILE = config.EXPERIMENT_ROOT / 'docs' / 'generated_figures.md'
 
-# Mapping of figure categories to the directories or files containing images
-CATEGORIES: list[tuple[str, list[Path]]] = [
-    (
-        'Data loading and split',
-        [
-            config.RESULTS_DIR / 'figures' / 'summary',
-            config.RESULTS_DIR / 'data' / 'eurasian_otter_fig',
-        ],
-    ),
-    (
-        'Sex model Evaluation',
-        [
-            config.RESULTS_DIR / 'figures' / 'sex_model',
-            config.RESULTS_DIR / 'data' / 'eurasian_otter_random_search_standard_metrics',
-            config.RESULTS_DIR / 'figures' / 'raw_balanced_acc_heatmap_min_max_highlight.png',
-        ],
-    ),
-    (
-        'Individual ID',
-        [
-            config.RESULTS_DIR / 'figures' / 'plots_otter',
-            config.RESULTS_DIR / 'figures' / 'plots otter',
-        ],
-    ),
-]
+
+def _build_categories() -> list[tuple[str, list[Path]]]:
+    """Assemble figure categories dynamically for all available species."""
+    categories: list[tuple[str, list[Path]]] = []
+
+    # Generic experiment level figures
+    split_dir = (
+        config.RESULTS_DIR / 'experiments' / 'fit_start_to_finish' / 'split_fig'
+    )
+    if split_dir.exists():
+        categories.append(('Data loading and split', [split_dir]))
+
+    sex_boxplot = (
+        config.RESULTS_DIR / 'experiments' / 'fit_start_to_finish' / 'sex_boxplots.png'
+    )
+    if sex_boxplot.exists():
+        categories.append(('Sex model Evaluation', [sex_boxplot]))
+
+    # Species specific figures
+    splits_root = config.DATA_DIR / 'splits'
+    species_list = sorted(p.name for p in splits_root.iterdir() if p.is_dir())
+    for species in species_list:
+        paths: list[Path] = []
+
+        dist_dir = _species_dirs(
+            species, config.RESULTS_DIR / 'figures' / 'feature_distributions'
+        )
+        if dist_dir:
+            paths.append(dist_dir)
+
+        corr_dir = _species_dirs(
+            species, config.RESULTS_DIR / 'figures' / 'feature_correlations'
+        )
+        if corr_dir:
+            paths.append(corr_dir)
+
+        id_dir = (
+            config.RESULTS_DIR
+            / 'experiments'
+            / 'fit_start_to_finish'
+            / 'id_baseline'
+            / species
+        )
+        if id_dir.is_dir():
+            paths.append(id_dir)
+
+        if paths:
+            title = species.replace('_', ' ').title()
+            categories.append((title, paths))
+
+    return categories
 
 def _iter_images(paths: Iterable[Path]):
     for p in paths:
@@ -69,7 +109,7 @@ def _caption_for(img: Path) -> str:
 
 def main() -> None:
     lines = ['# Generated Figures', '']
-    for title, paths in CATEGORIES:
+    for title, paths in _build_categories():
         images = list(_iter_images(paths))
         if not images:
             continue
