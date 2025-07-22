@@ -53,6 +53,15 @@ species directory contains a `summary.csv`, the collected metrics are written to
 `raw_results.csv`, and the resulting BCR comparison plot is saved as
 `id_baseline/fig/bcr_comparison.png`.
 
+## Global Cut-off Evaluation
+
+After determining the best feature count the notebook now loops over every
+tested `k`. For each `k` it loads `all_splits.csv`, computes the global Ward
+cut-offs via `compute_global_cutoffs` and re-evaluates the splits with
+`evaluate_with_cutoff`. The results for the mean, median and quartile cut-offs
+are saved as `eval_mean.csv`, `eval_median.csv`, `eval_mean_low.csv` and
+`eval_mean_high.csv` inside the respective `k` directory.
+
 ## Distance Metric Comparison
 
 The notebook concludes with an evaluation of the distance metrics computed for
