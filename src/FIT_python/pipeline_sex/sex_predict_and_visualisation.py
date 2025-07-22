@@ -9,7 +9,7 @@ from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
 from FIT_python.Visualisations.plot_style import SEX_COLORS
-from FIT_python.Visualisations.plot_style import apply_style
+from FIT_python.Visualisations.plot_style import apply_style, map_sex
 
 
 DEFAULT_SPECIES = "eurasian_otter"
@@ -492,16 +492,10 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     agg = {c: "mean" for c in proba_cols}
     agg["sex"] = "first"
     grouped = df.groupby("individual_id").agg(agg).reset_index()
-    grouped["sex_std"] = grouped["sex"].map(
-        lambda s: (
-            "Female"
-            if str(s).lower().startswith("f")
-            else "Male" if str(s).lower().startswith("m") else "Unknown"
-        )
-    )
+    grouped["sex_std"] = map_sex(grouped["sex"])
     palette = {
-        "Female": SEX_COLORS["F"],
-        "Male": SEX_COLORS["M"],
+        "Female": SEX_COLORS["Female"],
+        "Male": SEX_COLORS["Male"],
         "Unknown": SEX_COLORS.get("Unknown", "#333333"),
     }
     for col in proba_cols:
