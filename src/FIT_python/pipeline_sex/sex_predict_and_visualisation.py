@@ -445,7 +445,7 @@ def plot_quality(df):
 
     # Erstelle Heatmaps a) und b) nebeneinander
     cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=plt.rcParams["figure.figsize"], sharey=True)
     for ax, (tag, cols) in zip(
         axes,
         [
@@ -503,6 +503,7 @@ def plot_quality(df):
 
 def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     """Plot distribution of predicted sex probabilities for each individual."""
+    apply_style()
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
     proba_cols = [c for c in df if c.startswith("pred_") and c.endswith("_proba_m")]
@@ -521,7 +522,7 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     }
     for col in proba_cols:
         model = col.split("_")[1]
-        plt.figure(figsize=(5, 3))
+        plt.figure(figsize=plt.rcParams["figure.figsize"])
         sns.histplot(
             grouped,
             x=col,
@@ -587,7 +588,7 @@ def _plot_quality_heatmaps_single(
     green_cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
     red_cmap = LinearSegmentedColormap.from_list("red", ["white", "crimson"])
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=plt.rcParams["figure.figsize"], sharey=True)
     sns.heatmap(
         normed.xs(True, level="Correct"),
         annot=annot_corr,
@@ -615,7 +616,7 @@ def _plot_quality_heatmaps_single(
         cbar=True,
     )
     axes[1].set_title("b)", loc="left", fontweight="bold")
-    axes[1].set()
+    axes[1].set(ylabel="")
     for ax in axes:
         ax.set_xlabel("Prediction Quality")
         ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
