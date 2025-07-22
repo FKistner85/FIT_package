@@ -72,6 +72,37 @@ def test_plot_dendrogram(tmp_path: Path, monkeypatch):
     assert colors == ["red", "blue", "red"]
 
 
+def test_plot_dendrogram_display_trail(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    dist = pd.DataFrame(
+        [[0.0, 1.0], [1.0, 0.0]],
+        index=["t1", "t2"],
+        columns=["t1", "t2"],
+    )
+    dist["display_trail"] = ["d1", "d2"]
+
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red", "B": "green"})
+    monkeypatch.setattr(pu, "TRAIL_TO_ID", {"t1": "A", "t2": "B"})
+
+    captured = []
+
+    def fake_close(fig=None):
+        captured.append(fig)
+
+    monkeypatch.setattr(pu.plt, "close", fake_close)
+
+    out_file = tmp_path / "den.png"
+    out = pu.plot_dendrogram(dist, out_file)
+    assert out.exists()
+    fig = captured[0]
+    xticks = fig.axes[0].get_xticklabels()
+    labels = [lab.get_text() for lab in xticks]
+    colors = [lab.get_color() for lab in xticks]
+    assert labels == ["d1", "d2"]
+    assert colors == ["red", "green"]
+
+
 def test_plot_sex_feature_boxplots(tmp_path: Path):
     df_with = pd.DataFrame(
         {
