@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from ast import literal_eval
+import warnings
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
@@ -887,14 +888,35 @@ def plot_embedding_by_individual(
 
 def plot_umap_by_individual(
     df: pd.DataFrame,
-    fig_dir: Path,
-    filename: str,
+    fig_dir: Path | dict,
+    filename: str | Path,
     xcol: str = "UMAP1",
     ycol: str = "UMAP2",
+    marker_map: dict | None = None,
 ) -> Path:
-    """Scatter UMAP coordinates coloured and marked per individual."""
+    """Scatter UMAP coordinates coloured and marked per individual.
+
+    ``marker_map`` was a positional parameter in older versions.  When a ``dict``
+    is passed as ``fig_dir`` this function assumes the old calling convention
+    ``(df, marker_map, fig_dir, filename)`` and adjusts parameters
+    accordingly.
+    """
 
     from matplotlib.lines import Line2D
+
+    # --- Backwards compatibility with old positional ``marker_map`` argument ---
+    if isinstance(fig_dir, dict) and isinstance(filename, Path):
+        warnings.warn(
+            "`plot_umap_by_individual` now expects the figure directory as the "
+            "second argument. Pass custom markers via the `marker_map` keyword.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        marker_map, fig_dir, filename = fig_dir, filename, xcol
+        xcol, ycol = "UMAP1", "UMAP2"
+
+    if marker_map is None:
+        marker_map = ID_MARKERS
 
     fig_dir.mkdir(parents=True, exist_ok=True)
 
@@ -906,7 +928,7 @@ def plot_umap_by_individual(
             subset[xcol],
             subset[ycol],
             ID_COLORS.get(ind, "black"),
-            ID_MARKERS.get(ind, "o"),
+            marker_map.get(ind, "o"),
             label=str(ind),
         )
 
