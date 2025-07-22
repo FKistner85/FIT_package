@@ -677,11 +677,17 @@ def plot_dendrogram(
     """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
-    condensed = squareform(dist_matrix.to_numpy(), checks=False)
+
+    matrix = dist_matrix.loc[dist_matrix.index, dist_matrix.index]
+    condensed = squareform(matrix.to_numpy(), checks=False)
     link = linkage(condensed, method="ward")
 
-    labels = dist_matrix.index.astype(str).tolist()
-    ids = [TRAIL_TO_ID.get(lab, lab.split("_")[0]) for lab in labels]
+    labels = (
+        dist_matrix["display_trail"].astype(str).tolist()
+        if "display_trail" in dist_matrix.columns
+        else dist_matrix.index.astype(str).tolist()
+    )
+    ids = [TRAIL_TO_ID.get(str(idx), str(idx).split("_")[0]) for idx in dist_matrix.index]
 
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     dendrogram(link, labels=labels, ax=ax)
