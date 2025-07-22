@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pandas as pd
 
+from FIT_python.config import RESULTS_DIR
 from FIT_python.data_split_and_summary.data_import_utils import sanitize_labels
 
-BASE_DIR = Path(__file__).resolve().parents[2] / "results" / "experiments" / "fit_start_to_finish"
+BASE_DIR = RESULTS_DIR / "experiments" / "fit_start_to_finish"
 CSV_GLOB = "*_baseline_predictions.csv"
 
 FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}
@@ -43,6 +44,8 @@ def sanitize_id_trail(df: pd.DataFrame, id_col: str = "individual_id", trail_col
 
 
 def _load_unique() -> tuple[list[str], list[str], dict[str, str]]:
+    if not BASE_DIR.exists():
+        return [], [], {}
     ids: set[str] = set()
     trails: set[str] = set()
     trail_to_id: dict[str, str] = {}
