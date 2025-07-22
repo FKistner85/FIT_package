@@ -288,11 +288,32 @@ def plot_hyperparam_heatmap(df: pd.DataFrame, out_dir: Path) -> Path:
 
 
 def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
-    """Predict sex for all species and combine into a single CSV."""
+    """Predict sex for all species and combine into a single CSV.
+
+    Parameters
+    ----------
+    species_list:
+        Optional list of species names. When ``None`` the function iterates over
+        the sub-directories of ``data/splits``.
+    """
+
     if species_list is None:
         species_list = [p.name for p in (DATA_DIR / "splits").iterdir() if p.is_dir()]
 
-    dfs = [predict_all(species, prefer_generic=True) for species in species_list]
+    valid_species: list[str] = []
+    for species in species_list:
+        if (DATA_DIR / "splits" / species).is_dir():
+            valid_species.append(species)
+        else:
+            warnings.warn(
+                f"Split directory for {species!r} not found – skipping.",
+                UserWarning,
+            )
+
+    dfs = [predict_all(sp, prefer_generic=True) for sp in valid_species]
+    if not dfs:
+        return pd.DataFrame()
+
     all_df = pd.concat(dfs, ignore_index=True)
     out_csv = RESULTS_DATA_DIR / "all_species_all_predictions.csv"
     all_df.to_csv(out_csv, index=False)
