@@ -18,7 +18,11 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from FIT_python.caption_utils import save_caption
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from FIT_python.Visualisations.plot_style import SEX_COLORS
-from FIT_python.Visualisations.id_style import ID_COLORS, ID_MARKERS
+from FIT_python.Visualisations.id_style import (
+    ID_COLORS,
+    ID_MARKERS,
+    TRAIL_TO_ID,
+)
 
 
 def select_top_features(df: pd.DataFrame, target: str, k: int = 4) -> list[str]:
@@ -659,10 +663,11 @@ def plot_dendrogram(
     """Save a dendrogram based on ``dist_matrix``.
 
     Samples originating from the same individual are coloured consistently using
-    :data:`~FIT_python.Visualisations.id_style.ID_COLORS`. Tick labels fall back
-    to black when an ID is missing from the mapping. Labels are rotated to avoid
-    overlaps. Optional horizontal cut-off lines can be drawn via ``cutoff_low``
-    and ``cutoff_high``.
+    :data:`~FIT_python.Visualisations.id_style.ID_COLORS`. Trail labels are
+    mapped via :data:`~FIT_python.Visualisations.id_style.TRAIL_TO_ID` to obtain
+    the parent ID. Tick labels fall back to black when an ID is missing from the
+    mapping. Labels are rotated to avoid overlaps. Optional horizontal cut-off
+    lines can be drawn via ``cutoff_low`` and ``cutoff_high``.
     """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -670,7 +675,7 @@ def plot_dendrogram(
     link = linkage(condensed, method="ward")
 
     labels = dist_matrix.index.astype(str).tolist()
-    ids = [lab.split("_")[0] for lab in labels]
+    ids = [TRAIL_TO_ID.get(lab, lab.split("_")[0]) for lab in labels]
 
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     dendrogram(link, labels=labels, ax=ax)

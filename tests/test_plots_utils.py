@@ -45,15 +45,31 @@ def test_plot_pair_examples_rhombus(tmp_path: Path):
         assert p.exists()
 
 
-def test_plot_dendrogram(tmp_path: Path):
+def test_plot_dendrogram(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
     dist = pd.DataFrame(
         [[0.0, 1.0, 2.0], [1.0, 0.0, 3.0], [2.0, 3.0, 0.0]],
-        index=list("ABC"),
-        columns=list("ABC"),
+        index=["t1", "t2", "t3"],
+        columns=["t1", "t2", "t3"],
     )
+
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red", "B": "blue"})
+    monkeypatch.setattr(pu, "TRAIL_TO_ID", {"t1": "A", "t2": "B", "t3": "A"})
+
+    captured = []
+
+    def fake_close(fig=None):
+        captured.append(fig)
+
+    monkeypatch.setattr(pu.plt, "close", fake_close)
+
     out_file = tmp_path / "den.png"
-    out = plot_dendrogram(dist, out_file, cutoff_low=1.0, cutoff_high=2.0)
+    out = pu.plot_dendrogram(dist, out_file, cutoff_low=1.0, cutoff_high=2.0)
     assert out.exists()
+    fig = captured[0]
+    colors = [lab.get_color() for lab in fig.axes[0].get_xticklabels()]
+    assert colors == ["red", "blue", "red"]
 
 
 def test_plot_sex_feature_boxplots(tmp_path: Path):
