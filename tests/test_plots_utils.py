@@ -128,6 +128,52 @@ def test_umap_colors_use_id_palette(tmp_path: Path, monkeypatch):
     assert captured == [("red", "o"), ("blue", "s")]
 
 
+def test_umap_scatter_legend_flag(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+    import matplotlib.axes
+
+    calls = []
+
+    orig_legend = matplotlib.axes.Axes.legend
+
+    def fake_legend(self, *args, **kwargs):
+        calls.append(True)
+        return orig_legend(self, *args, **kwargs)
+
+    monkeypatch.setattr(matplotlib.axes.Axes, "legend", fake_legend)
+
+    emb = pd.DataFrame({"UMAP1": [0, 1], "UMAP2": [1, 2], "sex_mapped": ["Female", "Male"]})
+
+    pu.plot_umap_scatter(pd.DataFrame(), emb, tmp_path, "a.png", legend=False)
+    assert calls == []
+
+    pu.plot_umap_scatter(pd.DataFrame(), emb, tmp_path, "b.png", legend=True)
+    assert len(calls) >= 1
+
+
+def test_umap_by_individual_legend_flag(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+    import matplotlib.axes
+
+    calls = []
+
+    orig_legend = matplotlib.axes.Axes.legend
+
+    def fake_legend(self, *args, **kwargs):
+        calls.append(True)
+        return orig_legend(self, *args, **kwargs)
+
+    monkeypatch.setattr(matplotlib.axes.Axes, "legend", fake_legend)
+
+    df = pd.DataFrame({"individual_id": ["A", "B"], "UMAP1": [0, 1], "UMAP2": [1, 2]})
+
+    pu.plot_umap_by_individual(df, tmp_path, "c.png", legend=False)
+    assert calls == []
+
+    pu.plot_umap_by_individual(df, tmp_path, "d.png", legend=True)
+    assert calls[-1:] == [True]
+
+
 def test_embedding_colors_use_id_palette(tmp_path: Path, monkeypatch):
     from FIT_python.Visualisations import plots_utils as pu
 

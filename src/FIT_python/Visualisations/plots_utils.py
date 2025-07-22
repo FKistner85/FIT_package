@@ -397,6 +397,8 @@ def plot_umap_scatter(
     fig_dir: Path,
     filename: str = "umap_projection.png",
     order: list[str] = ["Female", "Male"],
+    *,
+    legend: bool = True,
 ) -> Path:
     """
     Plot and save a UMAP scatter colored by ``sex_mapped``.
@@ -408,6 +410,8 @@ def plot_umap_scatter(
     emb : pandas.DataFrame
         Must contain the columns ``UMAP1`` and ``UMAP2`` for the coordinates
         as well as ``sex_mapped`` for coloring.
+    legend : bool, optional
+        If ``True`` (default), draw a legend for the sex categories.
 
     Returns
     -------
@@ -426,8 +430,10 @@ def plot_umap_scatter(
         alpha=0.7,
         edgecolor="none",
         ax=ax,
+        legend=legend,
     )
-    ax.legend(title="Sex")
+    if legend:
+        ax.legend(title="Sex")
     plt.tight_layout()
     out = fig_dir / filename
     fig.savefig(out, dpi=150)
@@ -898,6 +904,8 @@ def plot_umap_by_individual(
     xcol: str = "UMAP1",
     ycol: str = "UMAP2",
     marker_map: dict | None = None,
+    *,
+    legend: bool = True,
 ) -> Path:
     """Scatter UMAP coordinates coloured and marked per individual.
 
@@ -905,6 +913,11 @@ def plot_umap_by_individual(
     is passed as ``fig_dir`` this function assumes the old calling convention
     ``(df, marker_map, fig_dir, filename)`` and adjusts parameters
     accordingly.
+
+    Parameters
+    ----------
+    legend : bool, optional
+        If ``True`` (default), draw a legend showing the individuals.
     """
 
     from matplotlib.lines import Line2D
@@ -952,7 +965,8 @@ def plot_umap_by_individual(
         )
         for ind in sorted(df["individual_id"].unique())
     ]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize="small")
+    if legend:
+        ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize="small")
 
     fig.tight_layout(rect=[0, 0, 0.75, 1])  # mehr Platz für Plot, weniger für Legenden
 
