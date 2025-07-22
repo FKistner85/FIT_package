@@ -367,7 +367,13 @@ def plot_confusion(df: pd.DataFrame) -> None:
         cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
         if y_pred_train is not None:
             cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
-            fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+            height = plt.rcParams["figure.figsize"][1] * 0.6
+            fig, axes = plt.subplots(
+                1,
+                2,
+                figsize=(8, height),
+                sharey=True,
+            )
             mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
         else:
             fig, axes = plt.subplots(1, 1, figsize=(4, 4))
@@ -385,12 +391,14 @@ def plot_confusion(df: pd.DataFrame) -> None:
                 ax=ax,
             )
             ax.set_title(title)
-            ax.set_xlabel("Predicted")
+            ax.set_xlabel("Predicted Sex")
             if ax is axes[0]:
-                ax.set_ylabel("True")
+                ax.set_ylabel("True Sex")
             else:
                 ax.set_ylabel("")
                 ax.tick_params(axis="y", labelleft=False)
+            ax.set_xticklabels(["Female", "Male"], rotation=0)
+            ax.set_yticklabels(["Female", "Male"], rotation=0)
 
         plt.tight_layout()
         plt.show()
@@ -459,7 +467,13 @@ def plot_quality(df):
 
     # Erstelle Heatmaps a) und b) nebeneinander
     cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
-    fig, axes = plt.subplots(1, 2, figsize=plt.rcParams["figure.figsize"], sharey=True)
+    height = plt.rcParams["figure.figsize"][1] * 0.75
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(plt.rcParams["figure.figsize"][0], height),
+        sharey=True,
+    )
     for ax, (tag, cols) in zip(
         axes,
         [
@@ -499,6 +513,8 @@ def plot_quality(df):
             linecolor="gray",
             ax=ax,
         )
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
         ax.set_title(tag, loc="left", fontweight="bold")
         ax.set_xlabel("Quality")
         if ax is axes[0]:
@@ -536,7 +552,8 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
     }
     for col in proba_cols:
         model = col.split("_")[1]
-        plt.figure(figsize=plt.rcParams["figure.figsize"])
+        height = plt.rcParams["figure.figsize"][1] * 0.75
+        plt.figure(figsize=(plt.rcParams["figure.figsize"][0], height))
         sns.histplot(
             grouped,
             x=col,
@@ -546,6 +563,7 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
             common_norm=False,
             palette=palette,
         )
+        plt.xticks(rotation=0)
         plt.xlabel("Predicted probability male")
         plt.ylabel("Density")
         from FIT_python.caption_utils import save_caption
@@ -602,7 +620,13 @@ def _plot_quality_heatmaps_single(
     green_cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
     red_cmap = LinearSegmentedColormap.from_list("red", ["white", "crimson"])
 
-    fig, axes = plt.subplots(1, 2, figsize=plt.rcParams["figure.figsize"], sharey=True)
+    height = plt.rcParams["figure.figsize"][1] * 0.75
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(plt.rcParams["figure.figsize"][0], height),
+        sharey=True,
+    )
     sns.heatmap(
         normed.xs(True, level="Correct"),
         annot=annot_corr,
