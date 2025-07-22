@@ -231,3 +231,49 @@ def test_embedding_colors_use_id_palette(tmp_path: Path, monkeypatch):
     )
     assert out.exists()
     assert captured == [("red", "o"), ("blue", "s")]
+
+
+def test_umap_by_individual_display_labels(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red"})
+    monkeypatch.setattr(pu, "ID_MARKERS", {"A": "o"})
+
+    labels = []
+
+    def fake_scatter(ax, x, y, color, marker, label=""):
+        labels.append(label)
+
+    monkeypatch.setattr(pu, "_scatter_points", fake_scatter)
+
+    df = pd.DataFrame({"individual_id": ["A"], "UMAP1": [0], "UMAP2": [1]})
+    pu.plot_umap_by_individual(df, tmp_path, "out_map.png", mapping={"A": "Ind_1"})
+    assert labels == ["Ind_1"]
+
+
+def test_embedding_display_labels(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red"})
+    monkeypatch.setattr(pu, "ID_MARKERS", {"A": "o"})
+
+    labels = []
+
+    def fake_scatter(ax, x, y, color, marker, label=""):
+        labels.append(label)
+
+    monkeypatch.setattr(pu, "_scatter_points", fake_scatter)
+
+    train_df = pd.DataFrame({"individual_id": ["A"], "x": [0], "y": [0]})
+    test_df = pd.DataFrame({"individual_id": ["A"], "x": [1], "y": [1]})
+    pu.plot_embedding_by_individual(
+        train_df,
+        test_df,
+        tmp_path,
+        "emb2.png",
+        "x",
+        "y",
+        ("Train", "Test"),
+        mapping={"A": "Ind_1"},
+    )
+    assert labels[-1] == "Ind_1"
