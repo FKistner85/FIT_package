@@ -294,3 +294,6 @@ Steps
 
 Target columns (``DEFAULT_TARGETS``) remain untouched and should be
 extracted outside of this transformer.
+
+## FIT_python.pipeline_sex.baseline_sex.plot_accuracy_by_sex
+Plot bar chart of female vs. male individual accuracy per species.

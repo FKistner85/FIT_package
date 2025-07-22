@@ -6,6 +6,7 @@ from .baseline_sex import (
     collect_best_metrics,
     plot_accuracy_comparison,
     plot_majority_comparison,
+    plot_accuracy_by_sex,
 )
 from .simple_baseline import run_simple_baseline_all_species
 from .sex_predict_and_visualisation import (
@@ -40,6 +41,7 @@ __all__ = [
     "collect_best_metrics",
     "plot_accuracy_comparison",
     "plot_majority_comparison",
+    "plot_accuracy_by_sex",
 ]
 
 
