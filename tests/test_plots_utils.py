@@ -6,6 +6,8 @@ from FIT_python.Visualisations.plots_utils import (
     plot_dendrogram,
     plot_sex_feature_boxplots,
     plot_pred_true_counts,
+    plot_umap_by_individual,
+    plot_embedding_by_individual,
 )
 
 
@@ -89,3 +91,50 @@ def test_plot_pred_true_counts(tmp_path: Path):
     )
     assert out.exists()
     assert out.stat().st_size > 0
+
+
+def test_umap_colors_use_id_palette(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red", "B": "blue"})
+    monkeypatch.setattr(pu, "ID_MARKERS", {"A": "o", "B": "s"})
+
+    captured = []
+
+    def fake_scatter(ax, x, y, color, marker, label=""):
+        captured.append((color, marker))
+
+    monkeypatch.setattr(pu, "_scatter_points", fake_scatter)
+
+    df = pd.DataFrame({"individual_id": ["A", "B"], "UMAP1": [0, 1], "UMAP2": [1, 2]})
+    out = pu.plot_umap_by_individual(df, tmp_path, "out.png")
+    assert out.exists()
+    assert captured == [("red", "o"), ("blue", "s")]
+
+
+def test_embedding_colors_use_id_palette(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red", "B": "blue"})
+    monkeypatch.setattr(pu, "ID_MARKERS", {"A": "o", "B": "s"})
+
+    captured = []
+
+    def fake_scatter(ax, x, y, color, marker, label=""):
+        captured.append((color, marker))
+
+    monkeypatch.setattr(pu, "_scatter_points", fake_scatter)
+
+    train_df = pd.DataFrame({"individual_id": ["A"], "x": [0], "y": [0]})
+    test_df = pd.DataFrame({"individual_id": ["B"], "x": [1], "y": [1]})
+    out = pu.plot_embedding_by_individual(
+        train_df,
+        test_df,
+        tmp_path,
+        "emb.png",
+        "x",
+        "y",
+        ("Train", "Test"),
+    )
+    assert out.exists()
+    assert captured == [("red", "o"), ("blue", "s")]
