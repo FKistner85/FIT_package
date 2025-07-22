@@ -23,6 +23,7 @@ from FIT_python.Visualisations.id_style import (
     ID_MARKERS,
     TRAIL_TO_ID,
 )
+from FIT_python.Visualisations.display_mapping import apply_display_mapping
 
 
 def select_top_features(df: pd.DataFrame, target: str, k: int = 4) -> list[str]:
@@ -209,15 +210,21 @@ def plot_feature_distributions(
 
 
 # --- Helper-Funktion für Individual-Boxplots ---
-def plot_individual_boxplots(df, top4_feats, fig_dir, filename):
+def plot_individual_boxplots(df, top4_feats, fig_dir, filename, mapping=None):
     """
     Zeichnet 2×2 Boxplots der vier Features in top4_feats,
     geordnet nach sex_mapped (erst alle 'Female', dann 'Male'),
     ohne x-Ticks und ohne Legende, speichert das Bild und gibt den Pfad zurück.
     """
+    if mapping is not None:
+        df = apply_display_mapping(df, mapping)
+        id_col = "display_id"
+    else:
+        id_col = "individual_id"
+
     # Bestimme Reihenfolge der individual_id nach Sex
-    female_ids = df.loc[df["sex_mapped"] == "Female", "individual_id"].unique().tolist()
-    male_ids = df.loc[df["sex_mapped"] == "Male", "individual_id"].unique().tolist()
+    female_ids = df.loc[df["sex_mapped"] == "Female", id_col].unique().tolist()
+    male_ids = df.loc[df["sex_mapped"] == "Male", id_col].unique().tolist()
     ind_order = female_ids + male_ids
 
     display(Markdown(f"**{filename.replace('.png','')}**"))
@@ -225,7 +232,7 @@ def plot_individual_boxplots(df, top4_feats, fig_dir, filename):
     for ax, feat in zip(axes.flat, top4_feats):
         sns.boxplot(
             data=df,
-            x="individual_id",
+            x=id_col,
             y=feat,
             ax=ax,
             hue="sex_mapped",
@@ -822,19 +829,26 @@ def plot_individual_boxplots(
     top4_feats: list[str],
     fig_dir: Path,
     filename: str,
+    mapping: dict | None = None,
 ) -> Path:
     """Plot 2×2 boxplots grouped by individual and sex."""
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    female_ids = df.loc[df["sex_mapped"] == "Female", "individual_id"].unique().tolist()
-    male_ids = df.loc[df["sex_mapped"] == "Male", "individual_id"].unique().tolist()
+    if mapping is not None:
+        df = apply_display_mapping(df, mapping)
+        id_col = "display_id"
+    else:
+        id_col = "individual_id"
+
+    female_ids = df.loc[df["sex_mapped"] == "Female", id_col].unique().tolist()
+    male_ids = df.loc[df["sex_mapped"] == "Male", id_col].unique().tolist()
     ind_order = female_ids + male_ids
 
     fig, axes = plt.subplots(2, 2, figsize=plt.rcParams["figure.figsize"])
     for ax, feat in zip(axes.flat, top4_feats):
         sns.boxplot(
             data=df,
-            x="individual_id",
+            x=id_col,
             y=feat,
             hue="sex_mapped",
             palette=SEX_COLORS,
@@ -864,8 +878,18 @@ def plot_embedding_by_individual(
     xcol: str,
     ycol: str,
     titles: tuple[str, str],
+    mapping: dict | None = None,
 ) -> Path:
     """Scatter embeddings for train/test splits grouped by individual."""
+
+    if mapping is not None:
+        train_df = apply_display_mapping(train_df, mapping)
+        test_df = apply_display_mapping(test_df, mapping)
+        label_map = mapping
+        id_col = "display_id"
+    else:
+        label_map = {}
+        id_col = "individual_id"
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
     for ax, df, title in zip(axes, (train_df, test_df), titles):
@@ -876,7 +900,7 @@ def plot_embedding_by_individual(
                 subset[ycol],
                 ID_COLORS.get(ind, "black"),
                 ID_MARKERS.get(ind, "o"),
-                ind if ax is axes[1] else "",
+                label_map.get(ind, ind) if ax is axes[1] else "",
             )
         ax.set_title(title, loc="left")
         ax.set_xlabel(xcol)
@@ -889,7 +913,7 @@ def plot_embedding_by_individual(
             marker=ID_MARKERS.get(ind, "o"),
             color=ID_COLORS.get(ind, "black"),
             linestyle="",
-            label=str(ind),
+            label=label_map.get(ind, ind),
         )
         for ind in sorted(set(train_df["individual_id"]).union(test_df["individual_id"]))
     ]
@@ -910,6 +934,7 @@ def plot_umap_by_individual(
     xcol: str = "UMAP1",
     ycol: str = "UMAP2",
     marker_map: dict | None = None,
+    mapping: dict | None = None,
     *,
     legend: bool = True,
 ) -> Path:
@@ -942,6 +967,14 @@ def plot_umap_by_individual(
     if marker_map is None:
         marker_map = ID_MARKERS
 
+    if mapping is not None:
+        df = apply_display_mapping(df, mapping)
+        label_map = mapping
+        id_col = "display_id"
+    else:
+        label_map = {}
+        id_col = "individual_id"
+
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(8, 6))  # etwas kompakter, aber gute Lesbarkeit
@@ -953,7 +986,7 @@ def plot_umap_by_individual(
             subset[ycol],
             ID_COLORS.get(ind, "black"),
             marker_map.get(ind, "o"),
-            label=str(ind),
+            label=label_map.get(ind, ind),
         )
 
     ax.set_xlabel(xcol)
@@ -967,7 +1000,7 @@ def plot_umap_by_individual(
             color=ID_COLORS.get(ind, "black"),
             linestyle="",
             markersize=6,
-            label=str(ind),
+            label=label_map.get(ind, ind),
         )
         for ind in sorted(df["individual_id"].unique())
     ]
@@ -984,10 +1017,19 @@ def plot_umap_by_individual(
 
 
 def plot_umap_centroid_outliers(
-    df: pd.DataFrame, title: str, cols: int = 6
+    df: pd.DataFrame,
+    title: str,
+    cols: int = 6,
+    mapping: dict | None = None,
 ) -> plt.Figure:
     """Small-multiple plots of UMAP points with centroid-based outliers."""
-    n_ind = df["individual_id"].nunique()
+    if mapping is not None:
+        df = apply_display_mapping(df, mapping)
+        id_col = "display_id"
+    else:
+        id_col = "individual_id"
+
+    n_ind = df[id_col].nunique()
     rows = int(np.ceil(n_ind / cols))
     fig, axes = plt.subplots(
         rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False
@@ -1023,7 +1065,7 @@ def plot_umap_centroid_outliers(
                 s=40,
                 label="Outlier (Centroid)",
             )
-        ax.set_title(ind)
+        ax.set_title(mapping.get(ind, ind) if mapping else ind)
         ax.set_xlabel("UMAP1")
         ax.set_ylabel("UMAP2")
 
@@ -1050,7 +1092,10 @@ def plot_umap_centroid_outliers(
 
 
 def plot_umap_centroid_outliers(
-    df: pd.DataFrame, title: str, cols: int = 6
+    df: pd.DataFrame,
+    title: str,
+    cols: int = 6,
+    mapping: dict | None = None,
 ) -> plt.Figure:
     """
     Small‑multiple UMAP plots with KDE background and optional centroid‑based outlier markers.
@@ -1070,7 +1115,13 @@ def plot_umap_centroid_outliers(
     fig : plt.Figure
         The matplotlib Figure object containing the small multiples.
     """
-    n_ind = df["individual_id"].nunique()
+    if mapping is not None:
+        df = apply_display_mapping(df, mapping)
+        id_col = "display_id"
+    else:
+        id_col = "individual_id"
+
+    n_ind = df[id_col].nunique()
     rows = int(np.ceil(n_ind / cols))
     fig, axes = plt.subplots(
         rows, cols, figsize=(cols * 3, rows * 3), sharex=False, sharey=False
@@ -1119,7 +1170,7 @@ def plot_umap_centroid_outliers(
                     label="Outlier (Centroid)",
                 )
 
-        ax.set_title(ind)
+        ax.set_title(mapping.get(ind, ind) if mapping else ind)
         ax.set_xlabel("UMAP1")
         ax.set_ylabel("UMAP2")
 
