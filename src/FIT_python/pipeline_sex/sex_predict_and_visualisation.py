@@ -514,7 +514,7 @@ def plot_quality(df):
             ax=ax,
         )
         ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
-        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+        ax.set_yticklabels(["Female", "Male"], rotation=0)
         ax.set_title(tag, loc="left", fontweight="bold")
         ax.set_xlabel("Quality")
         if ax is axes[0]:
