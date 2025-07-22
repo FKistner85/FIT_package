@@ -177,8 +177,9 @@ def run_simple_baseline_all_species(
         dump(pipe, model_dir / f"{sdir.name}.joblib")
 
         if save_predictions:
+            # generate predictions only for the train and test splits
             predict_simple_baseline(
-                sdir.name, exp_dir, include_inference=True, reuse_csv=False
+                sdir.name, exp_dir, include_inference=False, reuse_csv=False
             )
 
         records.append(

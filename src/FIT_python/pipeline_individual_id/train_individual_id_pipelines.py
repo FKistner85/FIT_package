@@ -50,10 +50,12 @@ def _ensure_splits(species: str) -> Path:
 
 
 def _load_splits(species: str) -> dict[str, pd.DataFrame]:
-    """Load train/test/inference dataframes and print a short summary."""
+    """Load train and test dataframes and print a short summary."""
     splits_dir = _ensure_splits(species)
     dfs = {}
-    for name in ["train", "test", "inference"]:
+    # only consider the train and test splits for model development and
+    # evaluation. The optional inference split is ignored here on purpose.
+    for name in ["train", "test"]:
         fp = splits_dir / f"{name}.parquet"
         if fp.exists():
             df = pd.read_parquet(fp)
