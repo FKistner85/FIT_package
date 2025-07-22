@@ -17,6 +17,7 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from FIT_python.caption_utils import save_caption
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from FIT_python.Visualisations.plot_style import SEX_COLORS
+from FIT_python.Visualisations.id_style import ID_COLORS, ID_MARKERS
 
 
 def select_top_features(df: pd.DataFrame, target: str, k: int = 4) -> list[str]:
@@ -656,10 +657,11 @@ def plot_dendrogram(
 ) -> Path:
     """Save a dendrogram based on ``dist_matrix``.
 
-    Samples originating from the same individual are coloured consistently. Each
-    unique ID is assigned a distinct colour which is applied to the x tick
-    labels.  Tick labels are rotated to avoid overlaps. Optional horizontal
-    cut-off lines can be drawn via ``cutoff_low`` and ``cutoff_high``.
+    Samples originating from the same individual are coloured consistently using
+    :data:`~FIT_python.Visualisations.id_style.ID_COLORS`. Tick labels fall back
+    to black when an ID is missing from the mapping. Labels are rotated to avoid
+    overlaps. Optional horizontal cut-off lines can be drawn via ``cutoff_low``
+    and ``cutoff_high``.
     """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -668,12 +670,6 @@ def plot_dendrogram(
 
     labels = dist_matrix.index.astype(str).tolist()
     ids = [lab.split("_")[0] for lab in labels]
-
-    # Use a distinct colour for each individual ID and reuse colours if the
-    # number of IDs exceeds the default palette size.
-    unique_ids = sorted(set(ids))
-    palette = sns.color_palette("tab20", n_colors=len(unique_ids))
-    id_colors = {i: c for i, c in zip(unique_ids, palette)}
 
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     dendrogram(link, labels=labels, ax=ax)
@@ -685,7 +681,7 @@ def plot_dendrogram(
     ax.set_xlabel("Sample")
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
     for label, ind in zip(ax.get_xticklabels(), ids):
-        label.set_color(id_colors.get(ind))
+        label.set_color(ID_COLORS.get(ind, "black"))
     fig.tight_layout()
     fig.savefig(out_file, dpi=150)
     plt.close(fig)
@@ -705,28 +701,9 @@ def _scatter_points(ax, x, y, color, marker, label="") -> None:
 
 
 def make_marker_map(ids) -> dict:
-    """Assign a distinct marker to each ID."""
-    from itertools import cycle
+    """Return marker mapping from :data:`ID_MARKERS`."""
 
-    base = [
-        "o",
-        "s",
-        "^",
-        "v",
-        "P",
-        "X",
-        "D",
-        "*",
-        "h",
-        "+",
-        "x",
-        "1",
-        "2",
-        "3",
-        "4",
-        "8",
-    ]
-    return {i: m for i, m in zip(ids, cycle(base))}
+    return {i: ID_MARKERS.get(i, "o") for i in ids}
 
 
 def plot_pred_true_counts(
@@ -864,7 +841,6 @@ def plot_individual_boxplots(
 def plot_embedding_by_individual(
     train_df: pd.DataFrame,
     test_df: pd.DataFrame,
-    marker_map: dict,
     fig_dir: Path,
     filename: str,
     xcol: str,
@@ -872,7 +848,6 @@ def plot_embedding_by_individual(
     titles: tuple[str, str],
 ) -> Path:
     """Scatter embeddings for train/test splits grouped by individual."""
-    from matplotlib.patches import Patch
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
     for ax, df, title in zip(axes, (train_df, test_df), titles):
@@ -881,24 +856,26 @@ def plot_embedding_by_individual(
                 ax,
                 subset[xcol],
                 subset[ycol],
-                SEX_COLORS[subset["sex_mapped"].iloc[0]],
-                marker_map.get(ind, "o"),
+                ID_COLORS.get(ind, "black"),
+                ID_MARKERS.get(ind, "o"),
                 ind if ax is axes[1] else "",
             )
         ax.set_title(title, loc="left")
         ax.set_xlabel(xcol)
         ax.set_ylabel(ycol)
 
-    legend_elems = [
-        Patch(color=SEX_COLORS["Female"], label="Female"),
-        Patch(color=SEX_COLORS["Male"], label="Male"),
+    handles = [
+        plt.Line2D(
+            [0],
+            [0],
+            marker=ID_MARKERS.get(ind, "o"),
+            color=ID_COLORS.get(ind, "black"),
+            linestyle="",
+            label=str(ind),
+        )
+        for ind in sorted(set(train_df["individual_id"]).union(test_df["individual_id"]))
     ]
-    fig.legend(
-        handles=legend_elems,
-        loc="center right",
-        bbox_to_anchor=(1.15, 0.5),
-        title="Sex",
-    )
+    fig.legend(handles=handles, loc="center right", bbox_to_anchor=(1.15, 0.5))
     fig.tight_layout(rect=[0, 0, 0.85, 1])
 
     out = fig_dir / filename
@@ -910,16 +887,14 @@ def plot_embedding_by_individual(
 
 def plot_umap_by_individual(
     df: pd.DataFrame,
-    marker_map: dict,
     fig_dir: Path,
     filename: str,
     xcol: str = "UMAP1",
     ycol: str = "UMAP2",
 ) -> Path:
-    """Scatter UMAP coordinates coloured by sex with markers per individual."""
+    """Scatter UMAP coordinates coloured and marked per individual."""
 
     from matplotlib.lines import Line2D
-    from matplotlib.patches import Patch
 
     fig_dir.mkdir(parents=True, exist_ok=True)
 
@@ -930,74 +905,34 @@ def plot_umap_by_individual(
             ax,
             subset[xcol],
             subset[ycol],
-            SEX_COLORS[subset["sex_mapped"].iloc[0]],
-            marker_map.get(ind, "o"),
+            ID_COLORS.get(ind, "black"),
+            ID_MARKERS.get(ind, "o"),
             label=str(ind),
         )
 
     ax.set_xlabel(xcol)
     ax.set_ylabel(ycol)
 
-    # Simplified legend showing individuals grouped by sex
-    female_ids = sorted(
-        df.loc[df["sex_mapped"] == "Female", "individual_id"].unique().tolist()
-    )
-    male_ids = sorted(
-        df.loc[df["sex_mapped"] == "Male", "individual_id"].unique().tolist()
-    )
-
-    female_handles = [
+    handles = [
         Line2D(
             [0],
             [0],
-            marker=marker_map.get(ind, "o"),
-            color=SEX_COLORS["Female"],
+            marker=ID_MARKERS.get(ind, "o"),
+            color=ID_COLORS.get(ind, "black"),
             linestyle="",
             markersize=6,
             label=str(ind),
         )
-        for ind in female_ids
+        for ind in sorted(df["individual_id"].unique())
     ]
-    male_handles = [
-        Line2D(
-            [0],
-            [0],
-            marker=marker_map.get(ind, "o"),
-            color=SEX_COLORS["Male"],
-            linestyle="",
-            markersize=6,
-            label=str(ind),
-        )
-        for ind in male_ids
-    ]
-
-    legend_f = ax.legend(
-        handles=female_handles,
-        title="Female",
-        loc="upper left",
-        bbox_to_anchor=(1.02, 1.0),
-        borderaxespad=0,
-        fontsize="small",
-        title_fontsize="medium",
-    )
-    legend_m = ax.legend(
-        handles=male_handles,
-        title="Male",
-        loc="upper left",
-        bbox_to_anchor=(1.20, 1.0),
-        borderaxespad=0,
-        fontsize="small",
-        title_fontsize="medium",
-    )
-    ax.add_artist(legend_f)
-    ax.add_artist(legend_m)
+    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize="small")
 
     fig.tight_layout(rect=[0, 0, 0.75, 1])  # mehr Platz für Plot, weniger für Legenden
 
     out = fig_dir / filename
     fig.savefig(out, dpi=150)
     plt.close(fig)
-    save_caption(out, f"{xcol}/{ycol} UMAP by individual and sex")
+    save_caption(out, f"{xcol}/{ycol} UMAP by individual")
     return out
 
 
