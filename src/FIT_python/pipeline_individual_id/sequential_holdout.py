@@ -354,3 +354,44 @@ def compute_global_cutoffs(all_splits_path: Path) -> dict[str, float]:
         "mean_low": float(np.mean(lows)),
         "mean_high": float(np.mean(highs)),
     }
+
+
+def evaluate_k_dir(result_dir: Path) -> None:
+    """Compute evaluation tables for one ``k`` directory."""
+
+    result_dir = Path(result_dir)
+    all_csv = result_dir / "all_splits.csv"
+    if not all_csv.exists():
+        raise FileNotFoundError(all_csv)
+
+    cutoffs = compute_global_cutoffs(all_csv)
+
+    eval_mean = evaluate_with_cutoff(result_dir, cutoff=cutoffs["mean_cutoff"])
+    eval_median = evaluate_with_cutoff(result_dir, cutoff=cutoffs["median_cutoff"])
+    eval_low = evaluate_with_cutoff(result_dir, cutoff=cutoffs["mean_low"])
+    eval_high = evaluate_with_cutoff(result_dir, cutoff=cutoffs["mean_high"])
+
+    eval_mean.to_csv(result_dir / "eval_mean.csv", index=False)
+    eval_median.to_csv(result_dir / "eval_median.csv", index=False)
+    eval_low.to_csv(result_dir / "eval_mean_low.csv", index=False)
+    eval_high.to_csv(result_dir / "eval_mean_high.csv", index=False)
+
+
+def evaluate_all_k(base_dir: Path, k_values: Iterable[int] | None = None) -> None:
+    """Evaluate sequential holdout results for multiple ``k`` values."""
+
+    base_dir = Path(base_dir)
+    if k_values is None:
+        k_values = [
+            int(p.name[1:])
+            for p in base_dir.glob("k*")
+            if p.is_dir() and p.name[1:].isdigit()
+        ]
+        k_values.sort()
+
+    for k in k_values:
+        dir_path = base_dir / f"k{k}"
+        if not dir_path.exists():
+            continue
+        evaluate_k_dir(dir_path)
+

@@ -201,3 +201,28 @@ def test_compute_global_cutoffs(tmp_path):
     assert stats["median_cutoff"] == pytest.approx(0.56447084, rel=1e-6)
     assert stats["mean_low"] == pytest.approx(0.35723542, rel=1e-6)
     assert stats["mean_high"] == pytest.approx(0.77170626, rel=1e-6)
+
+
+def test_evaluate_all_k(tmp_path):
+    from FIT_python.pipeline_individual_id.sequential_holdout import evaluate_all_k
+
+    rows = [
+        {"trail_a_id": "t1", "trail_b_id": "t2", "ind_a": "A", "ind_b": "A", "dist_euclidean": 0.1, "split": 0},
+        {"trail_a_id": "t1", "trail_b_id": "t3", "ind_a": "A", "ind_b": "B", "dist_euclidean": 0.9, "split": 0},
+        {"trail_a_id": "t2", "trail_b_id": "t3", "ind_a": "A", "ind_b": "B", "dist_euclidean": 0.8, "split": 0},
+    ]
+
+    df = pd.DataFrame(rows)
+    for k in [1, 2]:
+        kdir = tmp_path / f"k{k}"
+        kdir.mkdir()
+        df.to_csv(kdir / "all_splits.csv", index=False)
+
+    evaluate_all_k(tmp_path, [1, 2])
+
+    for k in [1, 2]:
+        dirp = tmp_path / f"k{k}"
+        assert (dirp / "eval_mean.csv").exists()
+        assert (dirp / "eval_median.csv").exists()
+        assert (dirp / "eval_mean_low.csv").exists()
+        assert (dirp / "eval_mean_high.csv").exists()
