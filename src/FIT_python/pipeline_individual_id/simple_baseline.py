@@ -189,7 +189,8 @@ def run_baseline_all_species(
         if reuse_summary and summary_fp.exists():
             continue
 
-        df = _load_splits(species_dir)
+        # only use the training split to derive sequential holdouts
+        df = _load_splits(species_dir, include_test=False)
         feature_cols = get_feature_cols(df)
 
         if species_dir.name == "eurasian_otter":
