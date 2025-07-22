@@ -656,9 +656,10 @@ def plot_dendrogram(
 ) -> Path:
     """Save a dendrogram based on ``dist_matrix``.
 
-    Samples originating from the same individual are coloured consistently and
-    the x tick labels are rotated to avoid overlaps. Optional horizontal cut-off
-    lines can be drawn via ``cutoff_low`` and ``cutoff_high``.
+    Samples originating from the same individual are coloured consistently. Each
+    unique ID is assigned a distinct colour which is applied to the x tick
+    labels.  Tick labels are rotated to avoid overlaps. Optional horizontal
+    cut-off lines can be drawn via ``cutoff_low`` and ``cutoff_high``.
     """
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -667,8 +668,12 @@ def plot_dendrogram(
 
     labels = dist_matrix.index.astype(str).tolist()
     ids = [lab.split("_")[0] for lab in labels]
-    palette = sns.color_palette("husl", len(set(ids)))
-    id_colors = {i: c for i, c in zip(sorted(set(ids)), palette)}
+
+    # Use a distinct colour for each individual ID and reuse colours if the
+    # number of IDs exceeds the default palette size.
+    unique_ids = sorted(set(ids))
+    palette = sns.color_palette("tab20", n_colors=len(unique_ids))
+    id_colors = {i: c for i, c in zip(unique_ids, palette)}
 
     fig, ax = plt.subplots(figsize=plt.rcParams["figure.figsize"])
     dendrogram(link, labels=labels, ax=ax)
