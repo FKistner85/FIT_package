@@ -97,6 +97,13 @@ def predict_simple_baseline(
             "Set reuse_csv=False to recompute predictions."
         )
 
+    if not splits_dir.is_dir():
+        warnings.warn(
+            f"Split directory for {species!r} not found – skipping.",
+            UserWarning,
+        )
+        return pd.DataFrame()
+
     model_path = exp_dir / "models" / f"{species}.joblib"
     clf = load(model_path)
 
@@ -187,6 +194,13 @@ def predict_all(
             f"Predictions CSV not found: {csv_path}. "
             "Set reuse_csv=False to recompute predictions."
         )
+
+    if not splits_dir.is_dir():
+        warnings.warn(
+            f"Split directory for {species!r} not found – skipping.",
+            UserWarning,
+        )
+        return pd.DataFrame()
 
     split_names = ["train", "test"]
     if include_inference and (splits_dir / "inference.parquet").exists():
