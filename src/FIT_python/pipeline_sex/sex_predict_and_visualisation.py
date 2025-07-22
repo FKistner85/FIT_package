@@ -417,12 +417,12 @@ def plot_quality(df):
     # true_label
     df = df.copy()
     df = df[df["sex"].isin(["f", "m"])]
-    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+    df["true_label"] = map_sex(df["sex"])
     # pred_label & Correct pro Modell
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     for col in pred_cols:
         key = col.split("_")[1]
-        df[f"pred_label_{key}"] = df[col].map({0: "F", 1: "M"})
+        df[f"pred_label_{key}"] = df[col].map({0: "Female", 1: "Male"})
 
     # True wenn irgendein Modell richtig war
 
@@ -488,7 +488,7 @@ def plot_quality(df):
         ax.set_title(tag, loc="left", fontweight="bold")
         ax.set_xlabel("Quality")
         if ax is axes[0]:
-            ax.set_ylabel("True Sex")
+            ax.set_ylabel("Sex")
         else:
             ax.set_ylabel("")
             ax.tick_params(axis="y", labelleft=False)
@@ -551,7 +551,7 @@ def _plot_quality_heatmaps_single(
     """Plot prediction quality heatmaps for a single model and split."""
 
     df = df_sub.copy()
-    df["pred_label"] = df[pred_col].map({0: "F", 1: "M"})
+    df["pred_label"] = df[pred_col].map({0: "Female", 1: "Male"})
     df["Correct"] = df["pred_label"] == df["true_label"]
     df["Max_Prob"] = df[proba_cols].max(axis=1)
     df["Quality"] = df["Max_Prob"].apply(
@@ -559,7 +559,7 @@ def _plot_quality_heatmaps_single(
     )
 
     idx = pd.MultiIndex.from_product(
-        [["F", "M"], [True, False]], names=["true_label", "Correct"]
+        [["Female", "Male"], [True, False]], names=["true_label", "Correct"]
     )
     counts = (
         df.groupby(["true_label", "Correct", "Quality"]).size().unstack(fill_value=0)
@@ -600,7 +600,8 @@ def _plot_quality_heatmaps_single(
         ax=axes[0],
         cbar=True,
     )
-    axes[0].set(ylabel="True Label")
+    axes[0].set_title("a)", loc="left", fontweight="bold")
+    axes[0].set(ylabel="Sex")
     sns.heatmap(
         normed.xs(False, level="Correct"),
         annot=annot_incorr,
@@ -613,6 +614,7 @@ def _plot_quality_heatmaps_single(
         ax=axes[1],
         cbar=True,
     )
+    axes[1].set_title("b)", loc="left", fontweight="bold")
     axes[1].set()
     for ax in axes:
         ax.set_xlabel("Prediction Quality")
@@ -641,13 +643,13 @@ def plot_quality_heatmaps(
 
     if pred_col is not None and proba_cols is not None:
         df_sub = df.copy()
-        df_sub["true_label"] = df_sub["sex"].map({"f": "F", "m": "M"})
+        df_sub["true_label"] = map_sex(df_sub["sex"])
         _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title)
         return
 
     # Automatic generation for all models and splits
     df = df.copy()
-    df["true_label"] = df["sex"].map({"f": "F", "m": "M"})
+    df["true_label"] = map_sex(df["sex"])
 
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
