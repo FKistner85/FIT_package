@@ -730,7 +730,11 @@ def plot_pred_true_counts(
     regression: bool = False,
     n_train: int | None = None,
 ) -> Path:
-    """Scatter predicted vs true counts for different result variants.
+    """Scatter true vs predicted counts for different result variants.
+
+    The x-axis displays ``true_count`` values while the y-axis shows
+    ``pred_count``.  When ``n_train`` is provided it will be appended to
+    the ``true_count`` label.
 
     Parameters
     ----------
