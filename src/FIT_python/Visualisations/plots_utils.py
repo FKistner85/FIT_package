@@ -725,7 +725,10 @@ def make_marker_map(ids) -> dict:
 
 
 def plot_pred_true_counts(
-    results: dict[str, pd.DataFrame], out_file: Path, regression: bool = False
+    results: dict[str, pd.DataFrame],
+    out_file: Path,
+    regression: bool = False,
+    n_train: int | None = None,
 ) -> Path:
     """Scatter predicted vs true counts for different result variants.
 
@@ -740,6 +743,10 @@ def plot_pred_true_counts(
     regression : bool, optional
         If ``True``, plot a simple linear regression for each variant in
         addition to the scatter points.
+    n_train : int, optional
+        Number of unique training individuals used for the sequential holdout
+        run. When provided the value is appended to the ``true_count`` axis
+        label.
     
     Returns
     -------
@@ -771,15 +778,15 @@ def plot_pred_true_counts(
     for (name, df), color, marker in zip(results.items(), palette, markers):
         _scatter_points(
             ax,
-            df["pred_count"],
             df["true_count"],
+            df["pred_count"],
             color,
             marker,
             label=name,
         )
         if regression:
-            x = df["pred_count"].astype(float)
-            y = df["true_count"].astype(float)
+            x = df["true_count"].astype(float)
+            y = df["pred_count"].astype(float)
             if len(x) >= 2:
                 coeffs = np.polyfit(x, y, 1)
                 xs = np.linspace(x.min(), x.max(), 100)
@@ -794,8 +801,9 @@ def plot_pred_true_counts(
     )
     ax.plot([min_val, max_val], [min_val, max_val], "--", color="gray", label="1:1")
 
-    ax.set_xlabel("pred_count")
-    ax.set_ylabel("true_count")
+    xlabel = "true_count" if n_train is None else f"true_count (n_train={n_train})"
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("pred_count")
     ax.legend(title="variant")
     fig.tight_layout()
 
