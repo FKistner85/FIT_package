@@ -10,7 +10,7 @@ import seaborn as sns
 
 from FIT_python.config import SPLITS_DIR
 from FIT_python.caption_utils import save_caption
-from FIT_python.Visualisations.plot_style import apply_style
+from FIT_python.Visualisations.plot_style import SEX_COLORS, apply_style
 from .pipeline_wrapper_sex import PipelineWrapper
 
 
@@ -186,4 +186,57 @@ def plot_majority_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
     fig.savefig(out, dpi=150)
     plt.close(fig)
     save_caption(out, "Majority correct individuals per species")
+    return out
+
+
+def plot_accuracy_by_sex(df: pd.DataFrame, fig_dir: Path) -> Path:
+    """Plot female vs. male individual accuracy for each species."""
+
+    required = {"species", "female_individual_acc", "male_individual_acc"}
+    if not required.issubset(df.columns):
+        missing = required.difference(df.columns)
+        raise KeyError(f"Missing columns: {', '.join(missing)}")
+
+    apply_style()
+    fig_dir = Path(fig_dir)
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    plot_df = df.melt(
+        id_vars="species",
+        value_vars=["female_individual_acc", "male_individual_acc"],
+        var_name="sex",
+        value_name="accuracy",
+    )
+    plot_df["sex"] = plot_df["sex"].map(
+        {
+            "female_individual_acc": "Female",
+            "male_individual_acc": "Male",
+        }
+    )
+
+    order = (
+        df.assign(bal=lambda d: (d["female_individual_acc"] + d["male_individual_acc"]) / 2)
+        .sort_values("bal", ascending=False)["species"]
+    )
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.barplot(
+        data=plot_df,
+        x="species",
+        y="accuracy",
+        hue="sex",
+        order=order,
+        palette={k: SEX_COLORS[k] for k in ["Female", "Male"]},
+        ax=ax,
+    )
+    ax.set_xlabel("Species")
+    ax.set_ylabel("Accuracy")
+    plt.xticks(rotation=45, ha="right")
+    ax.legend(title="Sex")
+    fig.tight_layout()
+
+    out = fig_dir / "accuracy_by_sex.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, "Individual accuracy by sex")
     return out
