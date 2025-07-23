@@ -580,8 +580,15 @@ def _plot_quality_heatmaps_single(
     pred_col: str,
     proba_cols: list[str],
     title: str | None = None,
+    group_by: str | None = None,
 ) -> None:
-    """Plot prediction quality heatmaps for a single model and split."""
+    """Plot prediction quality heatmaps for a single model and split.
+
+    When ``group_by`` is provided, predictions are aggregated by this column
+    (e.g. ``"trail"`` or ``"individual_id"``) before computing the quality
+    categories.  This ensures each group is counted only once using a majority
+    vote across its predictions.
+    """
 
     df = df_sub.copy()
     df["pred_label"] = df[pred_col].map({0: "Female", 1: "Male"})
@@ -591,12 +598,29 @@ def _plot_quality_heatmaps_single(
         lambda p: "High" if p > 0.9 else ("Moderate" if p > 0.7 else "Low")
     )
 
+    if group_by is not None:
+        grouped = df.groupby([group_by, "true_label"])
+        df = grouped.agg(
+            correct_rate=("Correct", "mean"),
+        ).reset_index()
+        df["Correct"] = df["correct_rate"] > 0.5
+        df["Quality"] = df["correct_rate"].apply(
+            lambda p: (
+                "High"
+                if p > 0.9
+                else ("Moderate" if p > 0.7 else ("Low" if p > 0.5 else "Misclassified"))
+            )
+        )
+
     idx = pd.MultiIndex.from_product(
         [["Female", "Male"], [True, False]], names=["true_label", "Correct"]
     )
+    columns = ["High", "Moderate", "Low"]
+    if group_by is not None:
+        columns.append("Misclassified")
     counts = (
         df.groupby(["true_label", "Correct", "Quality"]).size().unstack(fill_value=0)
-    ).reindex(index=idx, columns=["High", "Moderate", "Low"], fill_value=0)
+    ).reindex(index=idx, columns=columns, fill_value=0)
 
     if counts.values.sum() == 0:
         print("    → No data to plot")
@@ -657,7 +681,10 @@ def _plot_quality_heatmaps_single(
     axes[1].set(ylabel="")
     for ax in axes:
         ax.set_xlabel("Prediction Quality")
-        ax.set_xticklabels(["High", "Moderate", "Low"], rotation=0)
+        labels = ["High", "Moderate", "Low"]
+        if group_by is not None:
+            labels.append("Misclassified")
+        ax.set_xticklabels(labels, rotation=0)
         ax.set_yticklabels(["Female", "Male"], rotation=0)
     # no super title so subfigures can be labelled externally
     plt.tight_layout()
@@ -669,6 +696,7 @@ def plot_quality_heatmaps(
     pred_col: str | None = None,
     proba_cols: list[str] | None = None,
     title: str | None = None,
+    group_by: str | None = None,
 ) -> None:
     """Plot prediction-quality heatmaps.
 
@@ -676,6 +704,8 @@ def plot_quality_heatmaps(
     heatmap for a specific model and split.  When they are omitted, the
     function behaves like the other plotting helpers and iterates over all
     available models and the ``train``/``test`` splits automatically.
+    If ``group_by`` is provided, predictions are aggregated per group before
+    counting cells in the heatmap.
     """
 
     apply_style()
@@ -683,7 +713,7 @@ def plot_quality_heatmaps(
     if pred_col is not None and proba_cols is not None:
         df_sub = df.copy()
         df_sub["true_label"] = map_sex(df_sub["sex"])
-        _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title)
+        _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title, group_by)
         return
 
     # Automatic generation for all models and splits
@@ -709,6 +739,7 @@ def plot_quality_heatmaps(
                 col,
                 probs,
                 title=f"{model} — {split}",
+                group_by=group_by,
             )
 
 
