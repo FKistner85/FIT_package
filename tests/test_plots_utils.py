@@ -159,6 +159,33 @@ def test_umap_colors_use_id_palette(tmp_path: Path, monkeypatch):
     assert captured == [("red", "o"), ("blue", "s")]
 
 
+def test_umap_colors_use_sex_palette(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    monkeypatch.setattr(pu, "SEX_COLORS", {"Female": "pink", "Male": "cyan"})
+    monkeypatch.setattr(pu, "ID_COLORS", {"A": "red", "B": "blue"})
+    monkeypatch.setattr(pu, "ID_MARKERS", {"A": "o", "B": "s"})
+
+    captured = []
+
+    def fake_scatter(ax, x, y, color, marker, label=""):
+        captured.append((color, marker))
+
+    monkeypatch.setattr(pu, "_scatter_points", fake_scatter)
+
+    df = pd.DataFrame(
+        {
+            "individual_id": ["A", "B"],
+            "sex_mapped": ["Female", "Male"],
+            "UMAP1": [0, 1],
+            "UMAP2": [1, 2],
+        }
+    )
+    out = pu.plot_umap_by_individual(df, tmp_path, "sex.png", use_sex_colors=True)
+    assert out.exists()
+    assert captured == [("pink", "o"), ("cyan", "s")]
+
+
 def test_umap_scatter_legend_flag(tmp_path: Path, monkeypatch):
     from FIT_python.Visualisations import plots_utils as pu
     import matplotlib.axes
