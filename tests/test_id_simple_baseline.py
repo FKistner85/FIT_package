@@ -62,3 +62,48 @@ def test_load_splits_filters_unknown(tmp_path):
     df = _load_splits(sp, include_test=True)
     assert df["Trail"].notna().all()
     assert not df["Trail"].str.lower().eq("unknown").any()
+
+
+def test_run_simple_baseline_all_species(tmp_path, monkeypatch):
+    root = tmp_path
+    sp_dir = root / "data" / "splits" / "sp"
+    sp_dir.mkdir(parents=True)
+
+    rows = []
+    idx = 0
+    for fold in [0, 1]:
+        for ind in ["A", "B"]:
+            rows.append(
+                {
+                    "id": idx,
+                    "individual_id": ind,
+                    "f1": float(idx),
+                    "Trail": f"{ind}_{fold}",
+                    "sex": "f" if ind == "A" else "m",
+                    "fold": fold,
+                }
+            )
+            idx += 1
+    df = pd.DataFrame(rows)
+    df.to_parquet(sp_dir / "train.parquet", index=False)
+
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    import FIT_python.config as cfg
+    import importlib
+    importlib.reload(cfg)
+    from FIT_python.soft_config import SOFT_CONFIG
+
+    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+
+    import FIT_python.pipeline_individual_id.simple_baseline as sb
+    importlib.reload(sb)
+
+    sb.run_simple_baseline_all_species(
+        root / "exp",
+        best_k=1,
+        cutoff={},
+        reuse_summary=False,
+        n_jobs=1,
+    )
+
+    assert (root / "exp" / "sp" / "summary.csv").exists()

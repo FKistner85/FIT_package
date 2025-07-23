@@ -22,6 +22,14 @@ def run_baseline_all_species(*args, **kwargs):
     return _impl(*args, **kwargs)
 
 
+def run_simple_baseline_all_species(*args, **kwargs):
+    """Lazy wrapper around :func:`simple_baseline.run_simple_baseline_all_species`."""
+
+    from .simple_baseline import run_simple_baseline_all_species as _impl
+
+    return _impl(*args, **kwargs)
+
+
 def run_sex_prediction_experiment(*args, **kwargs):
     """Lazy wrapper around :func:`simple_baseline.run_sex_prediction_experiment`."""
 
@@ -49,6 +57,7 @@ def plot_bcr_comparison(*args, **kwargs):
 __all__ = [
     "run_simple_baseline_otter",
     "run_baseline_all_species",
+    "run_simple_baseline_all_species",
     "run_sex_prediction_experiment",
     "collect_id_metrics",
     "plot_bcr_comparison",
