@@ -227,6 +227,66 @@ def run_baseline_all_species(
         )
 
 
+def run_simple_baseline_all_species(
+    exp_dir: Path,
+    best_k: int,
+    cutoff: Dict[str, Any],
+    *,
+    reuse_summary: bool = True,
+    n_jobs: int = -1,
+) -> None:
+    """Evaluate cross-validation folds for every species.
+
+    This helper mirrors :func:`run_baseline_all_species` but relies on the
+    ``fold`` column of the training data instead of sequential holdouts.
+    ``run_fold_cv`` is called once per species and writes the results to
+    ``exp_dir/<species>``.
+    """
+
+    exp_dir = Path(exp_dir)
+    exp_dir.mkdir(parents=True, exist_ok=True)
+
+    for species_dir in tqdm(sorted(SPLITS_DIR.iterdir()), desc="Species"):
+        if not species_dir.is_dir():
+            continue
+
+        out_dir = exp_dir / species_dir.name
+        summary_fp = out_dir / "summary.csv"
+        if reuse_summary and summary_fp.exists():
+            continue
+
+        try:
+            df = _load_splits(species_dir, include_test=False)
+        except FileNotFoundError:
+            warnings.warn(
+                f"Split directory for {species_dir.name!r} not found \u2013 skipping.",
+                UserWarning,
+            )
+            continue
+
+        feature_cols = get_feature_cols(df)
+
+        if species_dir.name == "eurasian_otter":
+            k = best_k
+            ward = None
+        else:
+            spec_cfg = cutoff.get(species_dir.name, {})
+            k = spec_cfg.get("k", best_k)
+            ward = spec_cfg.get("ward")
+
+        run_fold_cv(
+            df,
+            feature_cols,
+            out_dir=out_dir,
+            k_features=k,
+            trail_col="Trail",
+            subsample=False,
+            cutoff=ward,
+            reuse_summary=reuse_summary,
+            n_jobs=n_jobs,
+        )
+
+
 def run_sex_prediction_experiment(
     exp_dir: Path,
     best_k: int,
@@ -370,3 +430,156 @@ def add_sex_features(df: pd.DataFrame, pred_df: pd.DataFrame) -> pd.DataFrame:
         )
 
     return out
+
+
+def run_fold_cv(
+    df: pd.DataFrame,
+    feature_cols: Iterable[str],
+    sex_predictions: pd.DataFrame | None = None,
+    *,
+    sample_col: str = "id",
+    id_col: str = "individual_id",
+    fold_col: str = "fold",
+    out_dir: Path | None = None,
+    n_jobs: int = -1,
+    reuse_summary: bool = True,
+    k_features: int | None = None,
+    trail_col: str = "trail",
+    subsample: bool = False,
+    cutoff: float | None = None,
+    overlap_prob: float = 0.5,
+) -> pd.DataFrame:
+    """Evaluate pairwise pipeline using predefined folds.
+
+    The function iterates over unique values in ``fold_col`` and treats each
+    fold as validation set while the remaining data forms the training set.  The
+    results for every fold are written to ``out_dir`` as ``fold_<n>.csv`` with a
+    combined ``summary.csv`` containing the evaluation metrics.
+    """
+
+    from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
+    from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
+    from .evaluation import (
+        compute_confusion,
+        compute_overlap_jsl_style,
+        compute_bcr,
+    )
+    from .population_estimation import (
+        cluster_population,
+        compute_erd,
+        optimal_cutoff,
+        concordance_correlation_coefficient,
+    )
+    import numpy as np
+
+    out_dir = Path(out_dir or RESULTS_DATA_DIR / "individual_id")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    summary_fp = out_dir / "summary.csv"
+    if reuse_summary and summary_fp.exists():
+        return pd.read_csv(summary_fp)
+
+    df_all, pred_cols = sequential_holdout._merge_predictions(
+        df, sex_predictions, sample_col=sample_col
+    )
+    use_cols = list(feature_cols) + pred_cols
+
+    if fold_col not in df_all.columns:
+        raise KeyError(f"DataFrame must contain '{fold_col}' column")
+
+    folds = sorted(df_all[fold_col].dropna().unique())
+
+    all_parts: list[pd.DataFrame] = []
+    summaries: list[dict[str, Any]] = []
+
+    for fold in folds:
+        df_train = df_all[df_all[fold_col] != fold]
+        df_val = df_all[df_all[fold_col] == fold]
+
+        comps, _ = generate_pairwise_comparisons_from_df(
+            df_val,
+            trail_col=trail_col,
+            subsample=subsample,
+            fold_col=fold_col,
+        )
+        if not comps:
+            continue
+
+        base_df = pd.concat([df_train, df_val], ignore_index=True)
+        kwargs = {"n_jobs": n_jobs, "feature_cols": use_cols}
+        if k_features is not None:
+            kwargs["k_features"] = k_features
+        res = run_all_pairwise_projections_parallel(comps, base_df, **kwargs)
+        df_res = pd.DataFrame(res)
+        if df_res.empty:
+            continue
+
+        df_res["fold"] = fold
+        all_parts.append(df_res.copy())
+
+        df_res["pred"] = df_res.apply(
+            compute_overlap_jsl_style, axis=1, p=overlap_prob
+        )
+        cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
+        bcr = compute_bcr(cm)
+
+        trails = sorted(set(df_res["trail_a_id"]) | set(df_res["trail_b_id"]))
+        dist_mat = pd.DataFrame(np.nan, index=trails, columns=trails)
+        for a, b, val in zip(
+            df_res["trail_a_id"], df_res["trail_b_id"], df_res["dist_euclidean"]
+        ):
+            try:
+                v = float(val)
+            except Exception:
+                continue
+            dist_mat.at[a, b] = v
+            dist_mat.at[b, a] = v
+        np.fill_diagonal(dist_mat.values, 0.0)
+        max_d = np.nanmax(dist_mat.values)
+        dist_mat = dist_mat.fillna(max_d)
+
+        true_n = df_val[id_col].dropna().astype(str).nunique()
+        if cutoff is None:
+            ward_cutoff, ci = optimal_cutoff(dist_mat, true_n)
+            cutoff_low, cutoff_high = ci
+        else:
+            ward_cutoff = float(cutoff)
+            cutoff_low = ward_cutoff
+            cutoff_high = ward_cutoff
+
+        pred_n = cluster_population(dist_mat, ward_cutoff)
+        erd = compute_erd(pred_n, true_n)
+
+        summaries.append(
+            {
+                "fold": fold,
+                "bcr": bcr,
+                "pred_count": pred_n,
+                "true_count": true_n,
+                "erd": erd,
+                "ward_cutoff": ward_cutoff,
+                "cutoff_low": cutoff_low,
+                "cutoff_high": cutoff_high,
+                "tp": int(cm.loc["true_same", "pred_same"]),
+                "fp": int(cm.loc["true_diff", "pred_same"]),
+                "tn": int(cm.loc["true_diff", "pred_diff"]),
+                "fn": int(cm.loc["true_same", "pred_diff"]),
+                "n_pairs": len(df_res),
+            }
+        )
+
+        df_res.to_csv(out_dir / f"fold_{fold}.csv", index=False)
+
+    if all_parts:
+        df_all_pairs = pd.concat(all_parts, ignore_index=True)
+        df_all_pairs.to_csv(out_dir / "all_folds.csv", index=False)
+
+    summary_df = pd.DataFrame(summaries)
+    if not summary_df.empty:
+        ccc = concordance_correlation_coefficient(
+            summary_df["pred_count"], summary_df["true_count"]
+        )
+        summary_df["ccc"] = ccc
+    else:
+        summary_df["ccc"] = float("nan")
+    summary_df.to_csv(summary_fp, index=False)
+    return summary_df

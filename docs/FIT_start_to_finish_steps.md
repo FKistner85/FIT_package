@@ -53,6 +53,14 @@ species directory contains a `summary.csv`, the collected metrics are written to
 `raw_results.csv`, and the resulting BCR comparison plot is saved as
 `id_baseline/fig/bcr_comparison.png`.
 
+## Fold-Based Baseline
+
+Some split tables include a `fold` column for cross-validation.  Calling
+`run_simple_baseline_all_species(EXP_DIR/'fold_cv', best_k, cutoff)` processes
+these folds without creating new holdout sets.  Results are stored in the
+respective species directories with one CSV per fold and a combined
+`summary.csv`.
+
 ## Global Cut-off Evaluation
 
 After determining the best feature count the notebook now loops over every
