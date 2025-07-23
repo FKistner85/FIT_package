@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable, List, Dict, Any
+import warnings
 from tqdm.auto import tqdm
 
 import pandas as pd
@@ -190,7 +191,14 @@ def run_baseline_all_species(
             continue
 
         # only use the training split to derive sequential holdouts
-        df = _load_splits(species_dir, include_test=False)
+        try:
+            df = _load_splits(species_dir, include_test=False)
+        except FileNotFoundError:
+            warnings.warn(
+                f"Split directory for {species_dir.name!r} not found \u2013 skipping.",
+                UserWarning,
+            )
+            continue
         feature_cols = get_feature_cols(df)
 
         if species_dir.name == "eurasian_otter":
@@ -225,7 +233,14 @@ def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, 
         if not species_dir.is_dir():
             continue
 
-        df = _load_splits(species_dir)
+        try:
+            df = _load_splits(species_dir)
+        except FileNotFoundError:
+            warnings.warn(
+                f"Split directory for {species_dir.name!r} not found \u2013 skipping.",
+                UserWarning,
+            )
+            continue
         feature_cols = get_feature_cols(df)
 
         spec_cfg = cutoff.get(species_dir.name, {})
