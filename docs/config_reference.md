@@ -22,6 +22,7 @@ This document defines all configurable values in the repository. **Any code gene
 - `scoring`: mapping of scoring identifiers used by sklearn.
 - `pipeline_order`: order of parameters in pipeline identifiers.
 - `run_otter_search_sex`: defaults for the `run_otter_search_sex` helper.
+- `run_species_search`: defaults for the unified search helper.
 
 ## pipeline_individual_id
 - `pairwise_defaults`: defaults for pairwise embedding pipelines.
