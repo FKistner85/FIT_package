@@ -91,17 +91,52 @@ def parse_list(value) -> np.ndarray:
     return np.empty(0, dtype=float)
 
 
-def compute_overlap_jsl_style(row, p=0.5):
+import numpy as np
+from scipy.stats import chi2
+
+def compute_overlap_jsl_style(row, p=0.5) -> bool:
+    """Return True if the 50% confidence ellipses of A/B overlap."""
+    # 1) Daten einlesen
     xa, ya = parse_list(row["coords_a_x"]), parse_list(row["coords_a_y"])
     xb, yb = parse_list(row["coords_b_x"]), parse_list(row["coords_b_y"])
-    if len(xa)<2 or len(xb)<2 or len(xa)!=len(ya) or len(xb)!=len(yb):
+    if len(xa) < 2 or len(xb) < 2 or len(xa) != len(ya) or len(xb) != len(yb):
         return False
-    pts_a, pts_b = np.column_stack([xa, ya]), np.column_stack([xb, yb])
-    mu_a, mu_b   = pts_a.mean(axis=0), pts_b.mean(axis=0)
-    da, db       = np.linalg.norm(pts_a - mu_a, axis=1), np.linalg.norm(pts_b - mu_b, axis=1)
-    std_a, std_b = da.std(ddof=1), db.std(ddof=1)
-    chi_val      = np.sqrt(chi2.ppf(p, df=2))
-    return np.linalg.norm(mu_a - mu_b) <= (chi_val*std_a + chi_val*std_b)
+
+    pts_a = np.column_stack([xa, ya])
+    pts_b = np.column_stack([xb, yb])
+
+    # 2) Zentren
+    mu_a = pts_a.mean(axis=0)
+    mu_b = pts_b.mean(axis=0)
+
+    # 3) Kovarianzmatrizen
+    cov_a = np.cov(pts_a, rowvar=False)
+    cov_b = np.cov(pts_b, rowvar=False)
+
+    # 4) Chi-Quadrat-Faktor für df=2
+    chi_val = chi2.ppf(p, df=2)
+
+    # 5) Eigen-Dekomposition
+    vals_a, vecs_a = np.linalg.eigh(cov_a)
+    vals_b, vecs_b = np.linalg.eigh(cov_b)
+
+    # 6) Halbachsen der Konfidenzellipse
+    axes_a = np.sqrt(vals_a * chi_val)  # [a1, a2]
+    axes_b = np.sqrt(vals_b * chi_val)  # [b1, b2]
+
+    # 7) Vektor zwischen Zentren
+    delta = mu_b - mu_a
+
+    # 8) Projectionstest auf jede Hauptachse:
+    #    Für jede Achse i prüfen, ob |delta·v_i| <= a_i + b_i
+    for vec, ra, rb in zip(vecs_a.T, axes_a, axes_b):
+        proj = abs(np.dot(delta, vec))
+        if proj > (ra + rb):
+            return False
+
+    # Wenn auf allen Achsen kein Separationsabstand, dann überlappen
+    return True
+
 
 
 def compute_overlap_rhombus(row, p: float = 0.5) -> bool:

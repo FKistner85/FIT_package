@@ -1,5 +1,0 @@
-species,file,balanced_acc
-amur_tiger,all_splits.csv,0.9287044426709231
-bengal_tiger,all_splits.csv,0.7667548500881833
-cheetah,all_splits.csv,0.8618613257157697
-eurasian_otter,all_splits.csv,0.8387748416684866

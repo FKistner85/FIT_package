@@ -1,1 +1,0 @@
-Histogram of t2_4_5 before and after cleaning.

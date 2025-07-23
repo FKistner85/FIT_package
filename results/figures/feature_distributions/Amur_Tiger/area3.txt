@@ -1,1 +1,0 @@
-Histogram of area3 before and after cleaning.

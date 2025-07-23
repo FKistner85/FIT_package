@@ -16,7 +16,8 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
-
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.decomposition import PCA
 from FIT_python.config import RESULTS_DATA_DIR
 from FIT_python.soft_config import SOFT_CONFIG
 
@@ -132,6 +133,7 @@ def run_all_pairwise_projections_parallel(
         scalers = [None]
 
     def process_pair(i: int, comp: Dict) -> List[Dict]:
+
         out = []
         ind_a, ind_b = comp["ind_a"], comp["ind_b"]
         ids_a = map_indices(comp["samples_a"], idx_to_id, df_base.index)
@@ -229,43 +231,44 @@ def run_all_pairwise_projections_parallel(
                                         print(f"[DEBUG] skip LDA pair {i}, k={k}, nc={nc}")
                                     continue
 
-                 # --- Fit & Transform entsprechend JMP-Logik über das `supervised`‑Flag ---
+
+                            # --- Gemeinsames Fit & Transform für alle supervised Reducer inkl. RCV ---
                             dr_model = DimensionalityReducerTransformer(
                                 method=reducer,
-                                n_components=nc_eff,
-                                supervised=supervised,
+                                n_components=2,
+                                supervised=supervised
                             )
 
-                            if supervised:
-                                # 1) Trainiere nur auf Trail A + Trail B
-                                X_train = pd.concat([da, db], ignore_index=True)
-                                y_train = np.concatenate([
-                                    np.zeros(len(da), int),  # Klasse 0 = Trail A
-                                    np.ones(len(db),  int),  # Klasse 1 = Trail B
-                                ])
-                                dr_model.fit(X_train, y_train)
+                            # Baue den gemeinsamen Trainings‑Datensatz aus A, B und RCV
+                            X_all = pd.concat([da, db, dr], ignore_index=True)
+                            # Labels: 0 = Trail A, 1 = Trail B, 2 = RCV
+                            y_all = np.concatenate([
+                                np.zeros(len(da), dtype=int),
+                                np.ones(len(db), dtype=int),
+                                np.full(len(dr), 2, dtype=int)
+                            ])
 
-                                # 2) Projiziere anschließend alle drei Gruppen (A, B, R)
-                                X_all  = pd.concat([da, db, dr], ignore_index=True)
+                            # Fit & Transform in einem Schritt
+                            if supervised:
+                                # LDA, supervised UMAP etc. trainieren auf A/B/RCV
+                                dr_model.fit(X_all, y_all)
+                                coords = dr_model.transform(X_all)
+                            else:
+                                # unsupervised Reducer (PCA, t-SNE, unsupervised UMAP...)
+                                dr_model.fit(X_all, None)
                                 coords = dr_model.transform(X_all)
 
-                            else:
-                                # unsupervised: fit & transform auf allen Daten gleichzeitig
-                                dr_model.fit(arr, None)
-                                coords = dr_model.transform(arr)
+                            # Splitte coords wie gehabt in die drei Gruppen
+                            n_a, n_b = len(da), len(db)
+                            ca = coords[:n_a]
+                            cb = coords[n_a : n_a + n_b]
+                            cr = coords[n_a + n_b :]
 
-                            # Danach teilst Du die Koordinaten wieder auf:
-                            ca = coords[: len(da)]
-                            cb = coords[len(da) : len(da) + len(db)]
-                            cr = coords[len(da) + len(db) :]
-
-                            # Zentren berechnen und Distanzen bestimmen
-                            cA, cB, cR = (
-                                ca.mean(axis=0),
-                                cb.mean(axis=0),
-                                cr.mean(axis=0),
-                            )
+                            # Zentren und Distanzen im 2D‑Raum
+                            cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
                             dists = compute_distances(cA, cB)
+
+
 
 
                             # Result-Dict

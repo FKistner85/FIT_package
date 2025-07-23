@@ -1,1 +1,0 @@
-Histogram of dist2_7 before and after cleaning.

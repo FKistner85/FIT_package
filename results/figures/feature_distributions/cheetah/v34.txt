@@ -1,1 +1,0 @@
-Histogram of v34 before and after cleaning.
