@@ -317,6 +317,7 @@ def run_otter_search_sex(
         n_iter,
         cv,
         random_state,
+    )
 
 def _run_search_for_species(
     species: str,
@@ -554,24 +555,4 @@ def run_other_species_search(
             cv,
             random_state,
         )
-
-    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
-) -> None:
-    """Run ``RandomizedSearchCV`` for all species except the Eurasian otter."""
-
-    for species_dir in SPLITS_DIR.iterdir():
-        if not species_dir.is_dir():
-            continue
-        species = species_dir.name
-        if species == "eurasian_otter":
-            continue
-        _run_search_for_species(
-            species,
-            n_iter=n_iter,
-            cv=cv,
-            random_state=random_state,
-        )
-
 
