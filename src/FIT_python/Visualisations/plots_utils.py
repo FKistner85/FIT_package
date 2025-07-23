@@ -937,6 +937,7 @@ def plot_umap_by_individual(
     mapping: dict | None = None,
     *,
     legend: bool = True,
+    use_sex_colors: bool = False,
 ) -> Path:
     """Scatter UMAP coordinates coloured and marked per individual.
 
@@ -949,6 +950,10 @@ def plot_umap_by_individual(
     ----------
     legend : bool, optional
         If ``True`` (default), draw a legend showing the individuals.
+    use_sex_colors : bool, optional
+        If ``True``, color individuals according to their sex using
+        :data:`~FIT_python.Visualisations.plot_style.SEX_COLORS` instead of
+        :data:`~FIT_python.Visualisations.id_style.ID_COLORS`.
     """
 
     from matplotlib.lines import Line2D
@@ -979,12 +984,20 @@ def plot_umap_by_individual(
 
     fig, ax = plt.subplots(figsize=(8, 6))  # etwas kompakter, aber gute Lesbarkeit
 
+    color_lookup = {}
+    if use_sex_colors:
+        for ind, subset in df.groupby("individual_id"):
+            color_lookup[ind] = SEX_COLORS[subset["sex_mapped"].iloc[0]]
+    else:
+        for ind in df["individual_id"].unique():
+            color_lookup[ind] = ID_COLORS.get(ind, "black")
+
     for ind, subset in df.groupby("individual_id"):
         _scatter_points(
             ax,
             subset[xcol],
             subset[ycol],
-            ID_COLORS.get(ind, "black"),
+            color_lookup[ind],
             marker_map.get(ind, "o"),
             label=label_map.get(ind, ind),
         )
@@ -997,7 +1010,7 @@ def plot_umap_by_individual(
             [0],
             [0],
             marker=ID_MARKERS.get(ind, "o"),
-            color=ID_COLORS.get(ind, "black"),
+            color=color_lookup[ind],
             linestyle="",
             markersize=6,
             label=label_map.get(ind, ind),
