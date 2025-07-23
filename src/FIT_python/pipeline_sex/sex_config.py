@@ -305,19 +305,6 @@ def _run_species_search(
 
 
 
-def run_otter_search_sex(
-    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
-) -> None:
-    """Run BayesSearchCV for the Eurasian otter dataset."""
-    _run_species_search(
-        "eurasian_otter",
-        "eurasian_otter_bayes_search_standard_metrics",
-        n_iter,
-        cv,
-        random_state,
-
 def _run_search_for_species(
     species: str,
     *,
@@ -521,9 +508,9 @@ def _run_search_for_species(
 
 
 def run_otter_search_sex(
-    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
     """Wrapper for backward compatibility calling ``_run_search_for_species`` for the otter."""
 
@@ -555,23 +542,5 @@ def run_other_species_search(
             random_state,
         )
 
-    n_iter: int = PIPE_CFG["run_otter_search"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search"]["cv"],
-    random_state: int = PIPE_CFG["run_otter_search"]["random_state"],
-) -> None:
-    """Run ``RandomizedSearchCV`` for all species except the Eurasian otter."""
-
-    for species_dir in SPLITS_DIR.iterdir():
-        if not species_dir.is_dir():
-            continue
-        species = species_dir.name
-        if species == "eurasian_otter":
-            continue
-        _run_search_for_species(
-            species,
-            n_iter=n_iter,
-            cv=cv,
-            random_state=random_state,
-        )
 
 
