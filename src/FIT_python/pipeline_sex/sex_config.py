@@ -38,6 +38,39 @@ from FIT_python.pipeline_sex.grouped_metrics import (
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
     plot_hyperparam_heatmap,
 )
+
+
+class EstimatorWrapper:
+    """Simple container for an estimator without ``__len__``/``__iter__``.
+
+    The wrapper proxies all estimator methods/attributes so it can be used
+    transparently inside a :class:`~sklearn.pipeline.Pipeline` while ensuring
+    that optimization libraries treat it as an atomic object.
+    """
+
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def __getattr__(self, name):  # proxy to underlying estimator
+        return getattr(self.estimator, name)
+
+    def get_params(self, deep=True):
+        # Only expose the wrapped estimator so ``sklearn.clone`` works.
+        return {"estimator": self.estimator}
+
+    def set_params(self, **params):
+        if "estimator" in params:
+            self.estimator = params.pop("estimator")
+        if params:
+            self.estimator.set_params(**params)
+        return self
+
+    def __getstate__(self):
+        return {"estimator": self.estimator}
+
+    def __setstate__(self, state):
+        self.estimator = state["estimator"]
+
 from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from FIT_python.data_split_and_summary.split_utils import (
@@ -70,7 +103,7 @@ SEARCH_SPACES = {
     ),
     "select__method": Categorical(SEARCH_SPACE_CFG["select__method"]),
     "select__k": Categorical(SEARCH_SPACE_CFG["select__k"]),
-    "clf": Categorical([MODELS["rf_small"]], transform="identity"),
+    "clf": Categorical([EstimatorWrapper(MODELS["rf_small"])], transform="identity"),
 }
 
 METRICS = PIPE_CFG["metrics"]
@@ -192,14 +225,18 @@ def _run_species_search(
 
     cv_res = search.cv_results_
     for i, params in enumerate(cv_res["params"]):
+        clean_params = {
+            k: (v.estimator if isinstance(v, EstimatorWrapper) else v)
+            for k, v in params.items()
+        }
         record = {
             "species": species,
             "mean_test_accuracy": cv_res["mean_test_accuracy"][i],
             "mean_test_balanced_accuracy": cv_res["mean_test_balanced_accuracy"][i],
             "mean_test_neg_log_loss": cv_res["mean_test_neg_log_loss"][i],
-            **params,
+            **clean_params,
         }
-        mdl = clone(pipe).set_params(**params).fit(X_tr, y_tr)
+        mdl = clone(pipe).set_params(**clean_params).fit(X_tr, y_tr)
         y_tr_pred = mdl.predict(X_tr)
         y_te_pred = mdl.predict(X_te)
         y_all_true = np.concatenate([y_tr, y_te])
@@ -252,7 +289,7 @@ def _run_species_search(
 
         pid_parts = []
         for key in PIPELINE_ORDER:
-            val = params.get(key)
+            val = clean_params.get(key)
             pid_parts.append(f"{key}={val if val is not None else 'None'}")
         record["pipeline_id"] = ";".join(pid_parts)
 
@@ -265,10 +302,14 @@ def _run_species_search(
     for metric in METRICS:
         best_idx = df_eval[metric].idxmax()
         best_params = cv_res["params"][best_idx]
+        clean_best = {
+            k: (v.estimator if isinstance(v, EstimatorWrapper) else v)
+            for k, v in best_params.items()
+        }
         best_record = df_eval.loc[best_idx].to_dict()
         best_record["best_metric"] = metric
 
-        best_pipe = clone(pipe).set_params(**best_params).fit(X_tr, y_tr)
+        best_pipe = clone(pipe).set_params(**clean_best).fit(X_tr, y_tr)
         out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
         print(
