@@ -22,6 +22,7 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 - `scoring`: Mapping der Scoring-Bezeichner von sklearn.
 - `pipeline_order`: Reihenfolge der Kennzeichen in Pipeline-IDs.
 - `run_otter_search_sex`: Standardwerte für die Hilfsfunktion `run_otter_search_sex`.
+- `run_species_search`: Standardwerte für die vereinheitlichte Suchfunktion.
 
 ## pipeline_individual_id
 - `pairwise_defaults`: Voreinstellungen für Paar-Embedding-Pipelines.

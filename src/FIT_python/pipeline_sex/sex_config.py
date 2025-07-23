@@ -62,18 +62,14 @@ SEARCH_SPACE_CFG = PIPE_CFG["search_spaces"].copy()
 SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
 
 SEARCH_SPACES = {
-    "outlier": Categorical([OutlierCleanerTransformer(method="clip")], transform="identity"),
-    "scale": Categorical([FeatureScalerTransformer(method="standard")], transform="identity"),
+    "outlier": Categorical(
+        [OutlierCleanerTransformer(method="clip")], transform="identity"
+    ),
+    "scale": Categorical(
+        [FeatureScalerTransformer(method="standard")], transform="identity"
+    ),
     "select__method": Categorical(SEARCH_SPACE_CFG["select__method"]),
     "select__k": Categorical(SEARCH_SPACE_CFG["select__k"]),
-    "reduce_pre": Categorical(
-        [DimensionalityReducerTransformer(method=None, n_components=1)],
-        transform="identity",
-    ),
-    "reduce_post": Categorical(
-        [DimensionalityReducerTransformer(method=None, n_components=1)],
-        transform="identity",
-    ),
     "clf": Categorical([MODELS["rf_small"]], transform="identity"),
 }
 
@@ -158,12 +154,10 @@ def _run_species_search(
 
     search = BayesSearchCV(
         estimator=pipe,
-
         search_spaces=SEARCH_SPACES,
-
         n_iter=n_iter,
         scoring=SCORING,
-        refit=False,
+        refit="balanced_accuracy",
         cv=cv,
         n_jobs=-1,
         random_state=random_state,
@@ -311,26 +305,31 @@ def run_otter_search_sex(
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
     """Run BayesSearchCV for the Eurasian otter dataset."""
-    _run_species_search(
-        "eurasian_otter",
-        "eurasian_otter_bayes_search_standard_metrics",
-        n_iter,
-        cv,
-        random_state,
+    run_species_search(
+        species_filter=["eurasian_otter"],
+        n_iter=n_iter,
+        cv=cv,
+        random_state=random_state,
     )
 
-def run_other_species_search(
 
+def run_species_search(
+    species_filter: list[str] | None = None,
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
     cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
-    """Run the search for all species except the Eurasian otter."""
+    """Run the search for all species in ``SPLITS_DIR``.
+
+    When ``species_filter`` is provided only those directory names are used.
+    """
 
     for species_dir in sorted(SPLITS_DIR.iterdir()):
-        if not species_dir.is_dir() or species_dir.name == "eurasian_otter":
+        if not species_dir.is_dir():
             continue
         species = species_dir.name
+        if species_filter and species not in species_filter:
+            continue
         _run_species_search(
             species,
             f"{species}_bayes_search_standard_metrics",
@@ -338,4 +337,18 @@ def run_other_species_search(
             cv,
             random_state,
         )
+
+def run_other_species_search(
+    n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
+    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
+) -> None:
+    """Run the search for all species except the Eurasian otter."""
+
+    run_species_search(
+        species_filter=[s.name for s in SPLITS_DIR.iterdir() if s.is_dir() and s.name != "eurasian_otter"],
+        n_iter=n_iter,
+        cv=cv,
+        random_state=random_state,
+    )
 
