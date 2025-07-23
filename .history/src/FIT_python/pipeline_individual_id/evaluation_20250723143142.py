@@ -137,41 +137,6 @@ def compute_overlap_jsl_style(row, p=0.5) -> bool:
     # Wenn auf allen Achsen kein Separationsabstand, dann überlappen
     return True
 
-import numpy as np
-from scipy.stats import chi2
-
-def compute_overlap_jsl_style_isotropic(row, p=0.5) -> bool:
-    """
-    Return True if the p‑level isotropic confidence circles of A/B overlap.
-
-    Die Funktion berechnet aus den 2D‑Koordinaten von A und B jeweils
-    den radialen Standardabstand vom Mittelpunkt und multipliziert mit
-    sqrt(chi2.ppf(p, df=2)), um einen Kreisradius zu erhalten.
-    """
-    # 1) Daten einlesen
-    xa, ya = parse_list(row["coords_a_x"]), parse_list(row["coords_a_y"])
-    xb, yb = parse_list(row["coords_b_x"]), parse_list(row["coords_b_y"])
-    if len(xa) < 2 or len(xb) < 2 or len(xa) != len(ya) or len(xb) != len(yb):
-        return False
-
-    pts_a = np.column_stack([xa, ya])
-    pts_b = np.column_stack([xb, yb])
-
-    # 2) Zentren
-    mu_a = pts_a.mean(axis=0)
-    mu_b = pts_b.mean(axis=0)
-
-    # 3) Radiale Abstände und isotroper Radius
-    d_a = np.linalg.norm(pts_a - mu_a, axis=1)
-    d_b = np.linalg.norm(pts_b - mu_b, axis=1)
-    chi_val = np.sqrt(chi2.ppf(p, df=2))
-
-    r_a = chi_val * d_a.std(ddof=1)
-    r_b = chi_val * d_b.std(ddof=1)
-
-    # 4) Überlappungstest: Abstand der Mittelpunkte <= r_a + r_b
-    return np.linalg.norm(mu_a - mu_b) <= (r_a + r_b)
-
 
 
 def compute_overlap_rhombus(row, p: float = 0.5) -> bool:
