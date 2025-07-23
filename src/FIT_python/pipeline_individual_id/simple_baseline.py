@@ -21,12 +21,6 @@ from . import sequential_holdout
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
 
 
-def load_sex_predictions(species: str) -> pd.DataFrame:
-    """Return sex-model predictions for ``species``."""
-
-    return predict_all(species, prefer_generic=True)
-
-
 def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
     """Return averaged metrics across baseline holdout splits.
 
@@ -62,7 +56,9 @@ def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
             )
         else:
             ccc = float("nan")
-        records.append({"species": csv.parent.name, "bcr": mean_bcr, "erd": mean_erd, "ccc": ccc})
+        records.append(
+            {"species": csv.parent.name, "bcr": mean_bcr, "erd": mean_erd, "ccc": ccc}
+        )
 
     result = pd.DataFrame(records)
     result.to_csv(exp_dir / "raw_results.csv", index=False)
@@ -81,7 +77,15 @@ def plot_bcr_comparison(df: pd.DataFrame, fig_dir: Path) -> Path:
     order = df.sort_values("bcr", ascending=False)["species"]
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    sns.barplot(data=df, x="species", y="bcr", order=order, ax=ax, color="#4C72B0", edgecolor="black")
+    sns.barplot(
+        data=df,
+        x="species",
+        y="bcr",
+        order=order,
+        ax=ax,
+        color="#4C72B0",
+        edgecolor="black",
+    )
     ax.set_xlabel("Species")
     ax.set_ylabel("BCR")
     plt.xticks(rotation=45, ha="right")
@@ -223,7 +227,13 @@ def run_baseline_all_species(
         )
 
 
-def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, Any]) -> None:
+def run_sex_prediction_experiment(
+    exp_dir: Path,
+    best_k: int,
+    cutoff: Dict[str, Any],
+    *,
+    models_dir: str | Path | None = None,
+) -> None:
     """Evaluate sequential holdouts with and without sex predictions."""
 
     exp_dir = Path(exp_dir)
@@ -247,7 +257,10 @@ def run_sex_prediction_experiment(exp_dir: Path, best_k: int, cutoff: Dict[str, 
         k = spec_cfg.get("k", best_k)
         ward = spec_cfg.get("ward")
 
-        preds = load_sex_predictions(species_dir.name)
+        preds = load_sex_predictions(
+            species_dir.name,
+            models_dir=models_dir,
+        )
 
         out_with = exp_dir / species_dir.name / "with_sex"
         sequential_holdout.run(
@@ -313,18 +326,27 @@ def _load_splits(species_dir: Path, *, include_test: bool = True) -> pd.DataFram
     return df
 
 
-def load_sex_predictions(species: str, prefer_generic: bool = True) -> pd.DataFrame:
+def load_sex_predictions(
+    species: str,
+    *,
+    prefer_generic: bool = True,
+    models_dir: str | Path | None = None,
+) -> pd.DataFrame:
     """Return sex-model predictions for ``species``.
 
-    This is a thin wrapper around :func:`predict_all` from the sex
-    classification pipeline.  The helper simply forwards the parameters and
-    returns the resulting DataFrame so that the individual ID baseline can load
-    the predictions without importing the full sex pipeline here.
+    This is a thin wrapper around :func:`predict_all` from the sex classification
+    pipeline.  The helper simply forwards the parameters and returns the
+    resulting DataFrame so that the individual ID baseline can load the
+    predictions without importing the full sex pipeline here.
     """
 
     from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
 
-    return predict_all(species, prefer_generic=prefer_generic)
+    return predict_all(
+        species,
+        prefer_generic=prefer_generic,
+        models_dir=models_dir,
+    )
 
 
 def add_sex_features(df: pd.DataFrame, pred_df: pd.DataFrame) -> pd.DataFrame:
@@ -333,7 +355,9 @@ def add_sex_features(df: pd.DataFrame, pred_df: pd.DataFrame) -> pd.DataFrame:
     if "id" not in df.columns:
         raise KeyError("DataFrame must contain an 'id' column")
 
-    prob_cols = [c for c in pred_df.columns if c.startswith("pred_") and c.endswith("proba_f")]
+    prob_cols = [
+        c for c in pred_df.columns if c.startswith("pred_") and c.endswith("proba_f")
+    ]
     if not prob_cols:
         return df
 
@@ -346,5 +370,3 @@ def add_sex_features(df: pd.DataFrame, pred_df: pd.DataFrame) -> pd.DataFrame:
         )
 
     return out
-
-

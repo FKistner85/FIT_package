@@ -42,7 +42,7 @@ charts. Each figure is saved to the experiment directory for later inspection.
 
 ## Sex Feature Experiment
 
-After benchmarking the baseline individual identification pipeline, the notebook calls `run_sex_prediction_experiment(EXP_DIR/'sex_feature')` to evaluate models with and without appended sex predictions. The resulting summary tables are loaded and passed to `plot_sex_feature_boxplots`, which compares BCR and count differences across setups. Example boxplots for the Eurasian otter and the aggregated results are displayed in the notebook.
+After benchmarking the baseline individual identification pipeline, the notebook calls `run_sex_prediction_experiment(EXP_DIR/'sex_feature', models_dir=EXP_DIR/'models')` to evaluate models with and without appended sex predictions. The optional `models_dir` argument allows the function to load the sex models saved in the experiment directory. The resulting summary tables are loaded and passed to `plot_sex_feature_boxplots`, which compares BCR and count differences across setups. Example boxplots for the Eurasian otter and the aggregated results are displayed in the notebook.
 ## Sequential Holdout and Individual-ID Baseline
 
 The notebook then runs `run_simple_baseline_otter` to determine the best feature
