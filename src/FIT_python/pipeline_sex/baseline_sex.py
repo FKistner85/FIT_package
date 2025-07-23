@@ -205,7 +205,7 @@ def plot_accuracy_by_sex(df: pd.DataFrame, fig_dir: Path) -> Path:
         id_vars="species",
         value_vars=["female_individual_acc", "male_individual_acc"],
         var_name="sex",
-        value_name="accuracy",
+        value_name="value",
     )
     plot_df["sex"] = plot_df["sex"].map(
         {
@@ -223,7 +223,7 @@ def plot_accuracy_by_sex(df: pd.DataFrame, fig_dir: Path) -> Path:
     sns.barplot(
         data=plot_df,
         x="species",
-        y="accuracy",
+        y="value",
         hue="sex",
         order=order,
         palette={k: SEX_COLORS[k] for k in ["Female", "Male"]},
