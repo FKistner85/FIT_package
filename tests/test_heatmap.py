@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("pandas")
 import pandas as pd
 from pathlib import Path
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import plot_hyperparam_heatmap

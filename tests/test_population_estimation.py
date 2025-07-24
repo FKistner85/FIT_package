@@ -1,5 +1,6 @@
-import pandas as pd
 import pytest
+pytest.importorskip("pandas")
+import pandas as pd
 
 from FIT_python.pipeline_individual_id.population_estimation import (
     cluster_population,

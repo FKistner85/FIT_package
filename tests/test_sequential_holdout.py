@@ -1,5 +1,6 @@
-import pandas as pd
 import pytest
+pytest.importorskip("pandas")
+import pandas as pd
 from FIT_python.pipeline_individual_id.sequential_holdout import run
 from FIT_python.pipeline_individual_id.holdout_helper import generate_holdout_sets
 

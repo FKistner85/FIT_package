@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("pandas")
 import pandas as pd
 from FIT_python.pipeline_individual_id.evaluation import compute_bcr
 

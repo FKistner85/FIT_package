@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("PyQt5")
 from PyQt5 import QtCore, QtGui
 from FIT_python.utils.transformations import TransformationPipeline
 

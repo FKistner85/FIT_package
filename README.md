@@ -65,16 +65,13 @@ pytest
 
 ### Optional testing dependencies
 
-Before executing the test suite make sure that optional GUI/testing
-packages such as `pandas` and `PyQt5` are installed. Missing modules will
-prevent pytest from collecting the tests and you will see import errors
-like `ModuleNotFoundError: No module named pandas`.
-
-Running the tests requires `PyQt5`. If you encounter a
-`ModuleNotFoundError` when executing `pytest`, install the dependency via
+Some tests rely on additional libraries such as `pandas` and `PyQt5`.
+If they are not installed, pytest will automatically skip the affected
+tests using `pytest.importorskip`. Install these packages if you want to
+run the entire suite:
 
 ```bash
-pip install PyQt5
+pip install pandas PyQt5
 ```
 
 The unit tests located in `tests/` cover a small subset of the pipeline logic.

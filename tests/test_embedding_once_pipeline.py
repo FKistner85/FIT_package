@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("pandas")
 import pandas as pd
 from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
     run_all_pairwise_projections_parallel,

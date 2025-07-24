@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("pandas")
 import pandas as pd
 from FIT_python.Visualisations.display_mapping import generate_display_mapping, apply_display_mapping
 

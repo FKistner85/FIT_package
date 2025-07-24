@@ -1,6 +1,7 @@
+import pytest
+pytest.importorskip("pandas")
 import pandas as pd
 import importlib
-import pytest
 
 def test_predict_all_reuse_csv(tmp_path, monkeypatch):
     root = tmp_path

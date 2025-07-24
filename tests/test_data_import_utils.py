@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("pandas")
 import pandas as pd
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 

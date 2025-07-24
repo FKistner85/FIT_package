@@ -1,5 +1,6 @@
-import pandas as pd
 import pytest
+pytest.importorskip("pandas")
+import pandas as pd
 
 torch = pytest.importorskip("torch")
 
