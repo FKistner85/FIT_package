@@ -181,9 +181,24 @@ class PipelineWrapper:
 
         Parameters
         ----------
+        fs_method:
+            Feature-selection algorithm. Options: ``{_ALLOWED_FS}``.
+        fs_k:
+            Number of features selected when ``fs_method`` is not ``None``.
+        impute_method:
+            Imputation strategy. Options: ``{_ALLOWED_IMPUTE}``.
+        outlier_method:
+            Outlier cleaning method. Options: ``{_ALLOWED_OUTLIERS}``.
+        scaler_method:
+            Scaling approach. Options: ``{_ALLOWED_SCALERS}``.
+        reduce_pre_method, reduce_post_method:
+            Dimensionality reduction before/after selection. Options:
+            ``{_ALLOWED_REDS}``.
+        n_jobs:
+            Number of parallel jobs used for cross-validation.
         debug:
-            If ``True`` the wrapper prints additional information and
-            debugging statistics during training.
+            If ``True`` the wrapper prints additional information and debugging
+            statistics during training.
         """
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys = model_keys or list(MODELS.keys())

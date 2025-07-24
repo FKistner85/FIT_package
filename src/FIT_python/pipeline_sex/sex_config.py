@@ -167,7 +167,9 @@ def _run_species_search(
     cv: int | str,
     random_state: int,
     *,
-    reuse_results: bool = PIPE_CFG["run_otter_search_sex"]["reuse_results"],
+    reuse_results: bool = PIPE_CFG.get("run_otter_search_sex", {}).get(
+        "reuse_results", True
+    ),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run the hyperparameter search for a single species.
 
@@ -402,7 +404,9 @@ def run_otter_search_sex(
     cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
     *,
-    reuse_results: bool = PIPE_CFG["run_otter_search_sex"]["reuse_results"],
+    reuse_results: bool = PIPE_CFG.get("run_otter_search_sex", {}).get(
+        "reuse_results", True
+    ),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run BayesSearchCV for the Eurasian otter dataset."""
     return run_species_search(
@@ -420,7 +424,9 @@ def run_species_search(
     cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
     *,
-    reuse_results: bool = PIPE_CFG["run_otter_search_sex"]["reuse_results"],
+    reuse_results: bool = PIPE_CFG.get("run_otter_search_sex", {}).get(
+        "reuse_results", True
+    ),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run the search for all species in ``SPLITS_DIR``.
 

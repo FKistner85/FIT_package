@@ -30,7 +30,20 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         supervised: bool = False,
         **kwargs,
     ):
-        """Store parameters verbatim for sklearn cloning."""
+        """Initialise the reducer.
+
+        Parameters
+        ----------
+        method:
+            Reduction algorithm. Options: ``'pca'``, ``'umap'``, ``'tsne'``,
+            ``'lda'``, ``'mds'`` or ``'isomap'``. Defaults to ``'pca'``.
+        n_components:
+            Number of dimensions to keep. Defaults to ``2``.
+        supervised:
+            Whether to perform supervised reduction where supported.
+        **kwargs:
+            Additional arguments passed to the underlying reducer.
+        """
 
         self.method = method
         self.n_components = n_components
