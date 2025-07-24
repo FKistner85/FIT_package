@@ -102,6 +102,7 @@ def test_run_simple_baseline_all_species(tmp_path, monkeypatch):
         root / "exp",
         best_k=1,
         cutoff={},
+        subsample=True,
         reuse_summary=False,
         n_jobs=1,
     )
