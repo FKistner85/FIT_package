@@ -32,7 +32,7 @@ The notebook then calls `run_simple_baseline_all_species(EXP_DIR, n_jobs=-1, pro
 ## Baseline Evaluation
 
 Finally, call `predict_all('eurasian_otter', reuse_csv=False)` once after training to create
-`eurasian_otter_all_predictions.csv` under `results/data/`. Subsequent
+`eurasian_otter_all_predictions.csv` in `results/data/random_search_standard_metrics`. Subsequent
 notebook runs can set `reuse_csv=True` to load this file instead of recomputing
 predictions. The following calls to `plot_confusion_and_inference`,
 `plot_quality`, `plot_quality_heatmaps` and `plot_individual_probabilities`
