@@ -81,6 +81,7 @@ SOFT_CONFIG = {
             "n_iter": 2,
             "cv": "fold",
             "random_state": 42,
+            "reuse_results": True,
         },
     },
     "pipeline_individual_id": {

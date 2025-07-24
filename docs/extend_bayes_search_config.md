@@ -55,6 +55,10 @@ SEARCH_SPACES = {
 }
 ```
 
+The functions `run_otter_search_sex` and `run_species_search` also look up
+``reuse_results`` in ``SOFT_CONFIG['pipeline_sex']['run_otter_search_sex']``. Set
+this to ``True`` to load existing CSV files instead of running a new search.
+
 `BayesSearchCV` will now explore combinations of outlier handling, scaling,
 dimensionality reduction and several classifiers in a single optimisation run.
 `get_pipeline_steps` already accepts the corresponding arguments, so no further

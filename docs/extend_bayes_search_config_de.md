@@ -50,4 +50,9 @@ SEARCH_SPACES = {
 }
 ```
 
+Die Funktionen `run_otter_search_sex` und `run_species_search` lesen zudem den
+Wert `reuse_results` aus ``SOFT_CONFIG['pipeline_sex']['run_otter_search_sex']``
+ein. Ist dieser auf ``True`` gesetzt, werden vorhandene CSV-Dateien geladen und
+die Suche übersprungen.
+
 Damit untersucht `BayesSearchCV` unterschiedliche Kombinationen aus Ausreißerbehandlung, Skalierung, Dimensionsreduktion und mehreren Klassifikatoren. `get_pipeline_steps` akzeptiert bereits die notwendigen Argumente – weitere Änderungen sind nicht erforderlich.
