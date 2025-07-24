@@ -127,8 +127,25 @@ def run_simple_baseline_otter(
     k_range: Iterable[int] = range(12, 21),
     iterations: int = 10,
     use_sex_predictions: bool = False,
+    *,
+    reuse_results: bool = True,
 ) -> int:
-    """Run sequential holdouts for the otter data across ``k_range`` values."""
+    """Run sequential holdouts for the otter data across ``k_range`` values.
+
+    Parameters
+    ----------
+    exp_dir:
+        Root directory used to save intermediate and summary results.
+    k_range:
+        Iterable of ``k`` feature counts to evaluate.
+    iterations:
+        Number of sequential holdout iterations per ``k``.
+    use_sex_predictions:
+        When ``True`` sex-model predictions are appended as extra features.
+    reuse_results:
+        When ``True`` already existing summaries are loaded instead of
+        recomputing the baseline.
+    """
 
     exp_dir = Path(exp_dir)
     out_dir = exp_dir / "otter"
@@ -145,27 +162,62 @@ def run_simple_baseline_otter(
 
     best_summary: pd.DataFrame | None = None
 
+    # check if all results already exist
+    if reuse_results:
+        loaded = {}
+        summaries: dict[int, pd.DataFrame] = {}
+        for k in k_range:
+            k_dir = out_dir / f"k{k}"
+            sum_fp = k_dir / "summary.csv"
+            agg_fp = out_dir / f"summary_k{k}.csv"
+            if sum_fp.exists():
+                df_sum = pd.read_csv(sum_fp)
+                summaries[k] = df_sum
+            elif agg_fp.exists():
+                df_sum = pd.read_csv(agg_fp)
+            else:
+                loaded = None
+                break
+            mean_bcr = float(df_sum["bcr"].mean()) if "bcr" in df_sum.columns else float("nan")
+            loaded[k] = mean_bcr
+        if loaded is not None and loaded:
+            best_k = max(loaded, key=loaded.get)
+            best_bcr = loaded[best_k]
+            best_summary = summaries.get(best_k)
+            if use_sex_predictions and best_summary is not None:
+                best_summary.to_csv(out_dir / "summary_with_sex.csv", index=False)
+            return best_k
+
     for k in k_range:
         k_dir = out_dir / f"k{k}"
-        summary = sequential_holdout.run(
-            df,
-            feature_cols,
-            sex_predictions=sex_preds,
-            iterations=iterations,
-            out_dir=k_dir,
-            k_features=k,
-            trail_col="Trail",
-            subsample=False,
-        )
+        sum_fp = k_dir / "summary.csv"
+        agg_fp = out_dir / f"summary_k{k}.csv"
+
+        if reuse_results and sum_fp.exists():
+            summary = pd.read_csv(sum_fp)
+        elif reuse_results and agg_fp.exists():
+            summary = pd.read_csv(agg_fp)
+        else:
+            summary = sequential_holdout.run(
+                df,
+                feature_cols,
+                sex_predictions=sex_preds,
+                iterations=iterations,
+                out_dir=k_dir,
+                k_features=k,
+                trail_col="Trail",
+                subsample=False,
+            )
 
         agg = summary[["bcr", "pred_count", "true_count", "erd", "ccc"]].mean()
-        pd.DataFrame([agg]).to_csv(out_dir / f"summary_k{k}.csv", index=False)
+        pd.DataFrame([agg]).to_csv(agg_fp, index=False)
 
         mean_bcr = float(agg.get("bcr", float("nan")))
         if mean_bcr > best_bcr:
             best_bcr = mean_bcr
             best_k = k
-            best_summary = summary
+            if "split" in summary.columns:
+                best_summary = summary
 
     if best_k is None:
         raise RuntimeError("No valid results computed for otter baseline")
