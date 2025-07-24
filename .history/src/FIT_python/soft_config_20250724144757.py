@@ -71,9 +71,9 @@ SOFT_CONFIG = {
         "pipeline_order": [
             "outlier",
             "scale",
-            "reduce_pre__method",
             "select__method",
             "select__k",
+            "reduce_pre__method",
             "reduce_post__method",
             "clf",
         ],
