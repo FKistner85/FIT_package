@@ -93,6 +93,14 @@ SOFT_CONFIG = {
             "scaler_methods": None,
             "use_sexmodel_prediction": False,
         },
+        "search_spaces": {
+            "outlier": [None, "clip", "zscore"],
+            "scale": [None, "standard", "robust"],
+            "select__method": [None, "forward", "random_forest", "variance", "lasso"],
+            "select__k": [2, 5, 10],
+            "reduce__method": ["pca", "umap", "lda"],
+            "n_components": [2, 3, 4],
+        },
         "trail_generation_defaults": {
             "sample_size": 9,
             "subsample_sizes": [3, 5, 7],
