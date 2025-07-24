@@ -138,6 +138,21 @@ def run_all_pairwise_projections_parallel(
     else:
         scalers = [None]
 
+    # --- Cache outlier & scaling steps for all method combinations ---
+    preprocessed_cache: Dict[Tuple[Optional[str], Optional[str]], pd.DataFrame] = {}
+    for out_method in outs:
+        for scaler_method in scalers:
+            X = df_base[feature_cols]
+            if out_method:
+                out = OutlierCleanerTransformer(method=out_method)
+                out.fit(X)
+                X = out.transform(X)
+            if scaler_method:
+                scaler = FeatureScalerTransformer(method=scaler_method)
+                scaler.fit(X)
+                X = scaler.transform(X)
+            preprocessed_cache[(out_method, scaler_method)] = X
+
     def process_pair(i: int, comp: Dict) -> List[Dict]:
 
         out = []
@@ -150,13 +165,8 @@ def run_all_pairwise_projections_parallel(
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
-        # feature matrices A & B
-        df_a = df_base.loc[ids_a, feature_cols]
-        df_b = df_base.loc[ids_b, feature_cols]
-
         # RCV set as the complement
         rcv_ids = df_base.index.difference(ids_a + ids_b)
-        df_r = df_base.loc[rcv_ids, feature_cols]
 
         # labels for feature selection
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
@@ -173,22 +183,19 @@ def run_all_pairwise_projections_parallel(
         # 4) iterate over outlier and scaler methods
         for out_method in outs:
             for scaler_method in scalers:
-                steps = []
-                if out_method:
-                    steps.append(("outlier", OutlierCleanerTransformer(method=out_method)))
-                if scaler_method:
-                    steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
-                selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
-                steps.append(("select", selector))
-                pipe = Pipeline(steps)
+                df_proc = preprocessed_cache[(out_method, scaler_method)]
+                df_a = df_proc.loc[ids_a]
+                df_b = df_proc.loc[ids_b]
+                df_r = df_proc.loc[rcv_ids]
 
-                X_ab_raw = pd.concat([df_a, df_b], ignore_index=True)
-                pipe.fit(X_ab_raw, y_ab)
+                selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
+                X_ab_proc = pd.concat([df_a, df_b], ignore_index=True)
+                selector.fit(X_ab_proc, y_ab)
                 full_ranking = selector.feature_ranking_
 
-                df_a_fs = pipe.transform(df_a)
-                df_b_fs = pipe.transform(df_b)
-                df_r_fs = pipe.transform(df_r)
+                df_a_fs = selector.transform(df_a)
+                df_b_fs = selector.transform(df_b)
+                df_r_fs = selector.transform(df_r)
 
                 # ``Pipeline.transform`` may return an ``np.ndarray`` depending
                 # on the scikit-learn version. The following steps expect a
