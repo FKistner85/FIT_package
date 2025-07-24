@@ -136,6 +136,7 @@ Steps
 4. ``same_individual`` und ``same_sex`` kennzeichnen Gleichheit oder ``"unknown"``.
 5. Jede Person wird per ``StratifiedKFold`` (nach ``sex``) einem Fold zugewiesen; Paare werden nur behalten, wenn beide Individuen dem gleichen Fold angehören.
 6. Eine Summary-Tabelle zeigt Mittelwert und Standardabweichung der Pair-Anzahl.
+7. Mit ``evaluation=True`` wird die ``fold``-Spalte ignoriert und alle Vergleichspaare erhalten ``None`` für die Fold-Felder.
 
 ## FIT_python.pipeline_individual_id.geometric_pairwise_projection.generate_pairwise_comparisons_from_df
 Create trail pair comparisons with metadata:

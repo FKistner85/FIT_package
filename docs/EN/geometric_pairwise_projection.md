@@ -12,6 +12,8 @@ Builds a list of trail pairings with fold assignments for cross‑validation. Th
 result can be cached with joblib to speed up repeated experiments. The input
 DataFrame must contain individual identifiers and sufficient samples per trail
 size.
+Set ``evaluation=True`` to skip fold handling when the DataFrame lacks a ``fold``
+column.
 
 ### run_all_pairwise_projections_parallel
 Executes feature selection, dimensionality reduction and distance computation
