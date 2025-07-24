@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
 from FIT_python.pipeline_sex import grouped_metrics
-from sklearn.model_selection import cross_val_score, cross_val_predict, PredefinedSplit
+from sklearn.model_selection import cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
     SPLITS_DIR,
@@ -285,22 +285,7 @@ class PipelineWrapper:
 
                     # cross-val using balanced accuracy and out-of-fold predictions
                     try:
-                        bal = cross_val_score(
-                            pipe,
-                            X_train,
-                            y_train,
-                            cv=cv,
-                            scoring="balanced_accuracy",
-                            n_jobs=self.n_jobs,
-                        )
-                        y_pred_cv = cross_val_predict(
-                            pipe,
-                            X_train,
-                            y_train,
-                            cv=cv,
-                            n_jobs=self.n_jobs,
-                        )
-                        y_pred_cv_proba = cross_val_predict(
+                        prob = cross_val_predict(
                             pipe,
                             X_train,
                             y_train,
@@ -308,7 +293,9 @@ class PipelineWrapper:
                             method="predict_proba",
                             n_jobs=self.n_jobs,
                         )
-                        cv_bal_mean = float(bal.mean())
+                        y_pred_cv = prob.argmax(axis=1)
+                        cv_bal_mean = balanced_accuracy_score(y_train, y_pred_cv)
+                        y_pred_cv_proba = prob
                     except Exception:
                         cv_bal_mean = None
                         y_pred_cv = np.full(len(y_train), np.nan)
