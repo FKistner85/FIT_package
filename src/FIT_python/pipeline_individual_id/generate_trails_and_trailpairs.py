@@ -98,9 +98,7 @@ def generate_subsamples(
             continue
         remaining = grp[grp[trail_col].isna()].index.tolist()
         if remaining:
-            assign = rng.choice(trails, size=len(remaining))
-            for idx, tr in zip(remaining, assign):
-                df.at[idx, trail_col] = tr
+            df.loc[remaining, trail_col] = rng.choice(trails, size=len(remaining))
 
     trail_to_ids = {
         tr: df.loc[df[trail_col] == tr, id_col].tolist()
