@@ -114,7 +114,17 @@ def run_species_search(
     n_iter: int = 2,
     random_state: int = 0,
 ) -> None:
-    """Run BayesSearchCV for all species in ``SPLITS_DIR``."""
+    """Run BayesSearchCV for all species in ``SPLITS_DIR``.
+
+    Parameters
+    ----------
+    species_filter : list[str], optional
+        If given, restrict the search to these species directory names.
+    n_iter : int, optional
+        Number of parameter samples drawn by :class:`skopt.BayesSearchCV`.
+    random_state : int, optional
+        Random seed controlling the search.
+    """
 
     for sp_dir in sorted(SPLITS_DIR.iterdir()):
         if not sp_dir.is_dir():
