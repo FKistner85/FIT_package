@@ -7,12 +7,21 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from sklearn.linear_model import LogisticRegression
 
+from FIT_python.config import GLOBAL_RANDOM_SEED
+
 from .distance_metrics import compute_distances
 from .utils import map_indices
 
 
 class TripletDataset(Dataset):
-    """Randomly generate triplets from a dataframe."""
+    """Randomly generate triplets from a dataframe.
+
+    Parameters
+    ----------
+    seed : int, optional
+        Seed for the internal random number generator. Defaults to
+        ``GLOBAL_RANDOM_SEED``.
+    """
 
     def __init__(
         self,
@@ -20,6 +29,8 @@ class TripletDataset(Dataset):
         feature_cols: List[str],
         id_col: str = "individual_id",
         sample_col: str = "id",
+        *,
+        seed: int = GLOBAL_RANDOM_SEED,
     ) -> None:
         df = df.copy()
         df[sample_col] = df[sample_col].astype(str)
@@ -31,12 +42,12 @@ class TripletDataset(Dataset):
         for rid, ind in zip(self.df.index, self.df[id_col]):
             self.by_id.setdefault(str(ind), []).append(rid)
         self.ids = list(self.by_id.keys())
+        self.rng = np.random.default_rng(seed)
 
     def __len__(self) -> int:  # number of anchors
         return len(self.df)
 
     def __getitem__(self, idx: int):
-        rng = np.random.default_rng()
         row_id = self.row_ids[idx]
         anchor = self.df.loc[row_id, self.features].to_numpy(dtype=np.float32)
         anchor_id = str(self.df.loc[row_id, self.id_col])
@@ -44,19 +55,24 @@ class TripletDataset(Dataset):
         pos_choices = [i for i in self.by_id[anchor_id] if i != row_id]
         if not pos_choices:
             pos_choices = [row_id]
-        pos_id = rng.choice(pos_choices)
+        pos_id = self.rng.choice(pos_choices)
         positive = self.df.loc[pos_id, self.features].to_numpy(dtype=np.float32)
 
-        neg_ind = rng.choice([i for i in self.ids if i != anchor_id])
-        neg_id = rng.choice(self.by_id[neg_ind])
+        neg_ind = self.rng.choice([i for i in self.ids if i != anchor_id])
+        neg_id = self.rng.choice(self.by_id[neg_ind])
         negative = self.df.loc[neg_id, self.features].to_numpy(dtype=np.float32)
         return anchor, positive, negative
 
 
 def build_dataloader(
-    df: pd.DataFrame, feature_cols: List[str], batch_size: int, *, sample_col: str = "id"
+    df: pd.DataFrame,
+    feature_cols: List[str],
+    batch_size: int,
+    *,
+    sample_col: str = "id",
+    seed: int = GLOBAL_RANDOM_SEED,
 ) -> DataLoader:
-    ds = TripletDataset(df, feature_cols, sample_col=sample_col)
+    ds = TripletDataset(df, feature_cols, sample_col=sample_col, seed=seed)
     return DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
 
 
@@ -94,8 +110,11 @@ def train_siamese(
     epochs: int = 10,
     batch_size: int = 32,
     lr: float = 1e-3,
+    seed: int = GLOBAL_RANDOM_SEED,
 ) -> SiameseNet:
-    dataloader = build_dataloader(df, feature_cols, batch_size, sample_col=sample_col)
+    dataloader = build_dataloader(
+        df, feature_cols, batch_size, sample_col=sample_col, seed=seed
+    )
     net = SiameseNet(len(feature_cols), embedding_dim, hidden_dim)
     criterion = nn.TripletMarginLoss(margin=1.0)
     optim = torch.optim.Adam(net.parameters(), lr=lr)
@@ -143,8 +162,16 @@ def run(
     batch_size: int = 32,
     lr: float = 1e-3,
     val_df: pd.DataFrame | None = None,
+    seed: int = GLOBAL_RANDOM_SEED,
 ) -> List[Dict]:
-    """Train a siamese network and evaluate on validation comparisons."""
+    """Train a siamese network and evaluate on validation comparisons.
+
+    Parameters
+    ----------
+    seed : int, optional
+        Seed for random sampling in the training process. Defaults to
+        ``GLOBAL_RANDOM_SEED``.
+    """
 
     use_cols = feature_cols + (sex_features or [])
     df_train = train_df.copy()
@@ -160,6 +187,7 @@ def run(
         epochs=epochs,
         batch_size=batch_size,
         lr=lr,
+        seed=seed,
     )
 
     embeddings_arr = net.transform(df_train[use_cols])
