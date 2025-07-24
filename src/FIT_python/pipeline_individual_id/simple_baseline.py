@@ -325,6 +325,7 @@ def run_simple_baseline_all_species(
     best_k: int,
     cutoff: Dict[str, Any],
     *,
+    subsample: bool = False,
     reuse_summary: bool = True,
     n_jobs: int = -1,
 ) -> None:
@@ -344,6 +345,9 @@ def run_simple_baseline_all_species(
         for other species.
     cutoff : dict[str, Any]
         Mapping of species names to optional ``"k"`` and ``"ward"`` overrides.
+    subsample : bool, optional
+        When ``True`` a subset of trail pairs is sampled for each fold via
+        :func:`generate_pairwise_comparisons_from_df`.
     reuse_summary : bool, optional
         Skip processing when ``exp_dir/<species>/summary.csv`` already exists.
     n_jobs : int, optional
@@ -387,7 +391,7 @@ def run_simple_baseline_all_species(
             out_dir=out_dir,
             k_features=k,
             trail_col="Trail",
-            subsample=False,
+            subsample=subsample,
             cutoff=ward,
             reuse_summary=reuse_summary,
             n_jobs=n_jobs,
