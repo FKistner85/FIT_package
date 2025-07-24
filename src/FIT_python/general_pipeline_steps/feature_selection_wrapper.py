@@ -5,6 +5,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, f_classif, VarianceThreshold
 from sklearn.linear_model import LassoCV
+from FIT_python.utils import debug_report
 
 
 def _forward_ranking(
@@ -152,12 +153,16 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
     def transform(self, X: Union[pd.DataFrame, np.ndarray]):
         """Return the selected feature columns as the same type as the input."""
         if isinstance(X, pd.DataFrame):
-            return X[self.selected_features_].copy()
+            out = X[self.selected_features_].copy()
+            debug_report(out, "select")
+            return out
 
         arr = np.asarray(X, float)
         all_feat_names = [f"f{i}" for i in range(arr.shape[1])]
         selected_indices = [all_feat_names.index(f) for f in self.selected_features_]
-        return arr[:, selected_indices]
+        out = arr[:, selected_indices]
+        debug_report(out, "select")
+        return out
 
     # Provide sklearn style API for feature names
     def get_feature_names_out(self, input_features=None) -> List[str]:

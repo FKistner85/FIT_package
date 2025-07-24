@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.utils import debug_report
 
 
 class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
@@ -51,6 +52,7 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
             arr = np.asarray(X, dtype=float)
 
         arr_out = self.scaler.transform(arr)
+        debug_report(arr_out, "scale")
 
         # return DataFrame with original labels if that was the input
         if isinstance(X, pd.DataFrame):
