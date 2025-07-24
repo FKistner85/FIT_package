@@ -14,7 +14,7 @@ from FIT_python.soft_config import SOFT_CONFIG
 from .evaluation import (
     sequential_holdout_ids,
     compute_confusion,
-    compute_overlap_jsl_style,
+    compute_overlap_jsl_style_vec,
     compute_bcr,
 )
 from .population_estimation import (
@@ -113,7 +113,7 @@ def run(
         Optional Ward distance used for population clustering. When ``None`` the
         cutoff is determined via :func:`optimal_cutoff` for each split.
     overlap_prob:
-        Probability mass for :func:`compute_overlap_jsl_style` when predicting
+        Probability mass for :func:`compute_overlap_jsl_style_vec` when predicting
         whether two trails belong to the same individual.
 
     Returns
@@ -181,9 +181,7 @@ def run(
         df_res["n_val"] = split["n_val"]
         all_parts.append(df_res.copy())
 
-        df_res["pred"] = df_res.apply(
-            compute_overlap_jsl_style, axis=1, p=overlap_prob
-        )
+        df_res["pred"] = compute_overlap_jsl_style_vec(df_res, p=overlap_prob)
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
         bcr = compute_bcr(cm)
 

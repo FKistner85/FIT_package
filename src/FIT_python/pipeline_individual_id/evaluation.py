@@ -137,6 +137,57 @@ def compute_overlap_jsl_style(row, p=0.5) -> bool:
     # Wenn auf allen Achsen kein Separationsabstand, dann überlappen
     return True
 
+
+def compute_overlap_jsl_style_vec(df: pd.DataFrame, p: float = 0.5) -> np.ndarray:
+    """Return boolean overlap predictions for all rows in ``df``.
+
+    The function performs the same ellipse overlap check as
+    :func:`compute_overlap_jsl_style`, but processes the entire dataframe in a
+    vectorised manner. The coordinate columns may contain either sequences of
+    numeric values or their string representations.
+    """
+
+    xa_list = df["coords_a_x"].map(parse_list)
+    ya_list = df["coords_a_y"].map(parse_list)
+    xb_list = df["coords_b_x"].map(parse_list)
+    yb_list = df["coords_b_y"].map(parse_list)
+
+    n = len(df)
+    mu_a = np.zeros((n, 2))
+    mu_b = np.zeros((n, 2))
+    cov_a = np.zeros((n, 2, 2))
+    cov_b = np.zeros((n, 2, 2))
+    valid = np.ones(n, dtype=bool)
+
+    for i, (xa, ya, xb, yb) in enumerate(zip(xa_list, ya_list, xb_list, yb_list)):
+        if (
+            len(xa) < 2
+            or len(xb) < 2
+            or len(xa) != len(ya)
+            or len(xb) != len(yb)
+        ):
+            valid[i] = False
+            continue
+
+        pts_a = np.column_stack([xa, ya])
+        pts_b = np.column_stack([xb, yb])
+        mu_a[i] = pts_a.mean(axis=0)
+        mu_b[i] = pts_b.mean(axis=0)
+        cov_a[i] = np.cov(pts_a, rowvar=False)
+        cov_b[i] = np.cov(pts_b, rowvar=False)
+
+    chi_val = chi2.ppf(p, df=2)
+    vals_a, vecs_a = np.linalg.eigh(cov_a)
+    vals_b, vecs_b = np.linalg.eigh(cov_b)
+
+    axes_a = np.sqrt(vals_a * chi_val)
+    axes_b = np.sqrt(vals_b * chi_val)
+    delta = mu_b - mu_a
+
+    proj = np.abs(np.sum(delta[:, None, :] * vecs_a, axis=2))
+    overlaps = (proj <= (axes_a + axes_b)).all(axis=1)
+    return overlaps & valid
+
 import numpy as np
 from scipy.stats import chi2
 

@@ -28,7 +28,7 @@ from FIT_python.data_split_and_summary.datasplit_and_summary_wraper import Split
 from FIT_python.data_split_and_summary.summary_data_utils import compute_summary
 from FIT_python.pipeline_individual_id.evaluation import (
     sequential_holdout_ids,
-    compute_overlap_jsl_style,
+    compute_overlap_jsl_style_vec,
 )
 from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
     generate_pairwise_comparisons_from_df,
@@ -123,7 +123,7 @@ def _confusion_from_results(results: List[Dict]) -> list[list[int]]:
     df = pd.DataFrame(results)
     if df.empty:
         return [[0, 0], [0, 0]]
-    df["pred_same"] = df.apply(compute_overlap_jsl_style, axis=1)
+    df["pred_same"] = compute_overlap_jsl_style_vec(df)
     y_true = df["same_individual"].astype(str) == "True"
     y_pred = df["pred_same"]
     cm = confusion_matrix(y_true, y_pred, labels=[True, False])

@@ -472,7 +472,7 @@ def run_fold_cv(
     from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
     from .evaluation import (
         compute_confusion,
-        compute_overlap_jsl_style,
+        compute_overlap_jsl_style_vec,
         compute_bcr,
     )
     from .population_estimation import (
@@ -534,9 +534,7 @@ def run_fold_cv(
         df_res["fold"] = fold
         all_parts.append(df_res.copy())
 
-        df_res["pred"] = df_res.apply(
-            compute_overlap_jsl_style, axis=1, p=overlap_prob
-        )
+        df_res["pred"] = compute_overlap_jsl_style_vec(df_res, p=overlap_prob)
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
         bcr = compute_bcr(cm)
 
