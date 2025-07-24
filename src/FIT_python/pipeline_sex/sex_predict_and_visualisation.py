@@ -457,8 +457,7 @@ def plot_quality(df):
     df["Correct"] = np.any([df[c] == df["true_label"] for c in pred_label_cols], axis=0)
 
     # Klassifizierung
-    def classify(group):
-        acc = group["Correct"].mean()
+    def label(acc: float) -> str:
         if acc >= 0.9:
             return "High"
         if acc >= 0.7:
@@ -483,9 +482,9 @@ def plot_quality(df):
             ("b)", ["individual_id", "true_label"]),
         ],
     ):
-        kvals = (
-            df.groupby(cols, group_keys=False).apply(classify).reset_index(name="Class")
-        )
+        acc = df.groupby(cols)["Correct"].mean().reset_index(name="acc")
+        acc["Class"] = acc["acc"].map(label)
+        kvals = acc.drop(columns="acc")
         pivot = kvals.pivot_table(
             index="true_label",
             columns="Class",
