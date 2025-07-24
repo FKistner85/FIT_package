@@ -7,7 +7,11 @@ preprocessing steps and training models.
 ## Installation
 
 Create a Python environment (e.g. using `venv` or conda) with Python 3.11 or
-newer and install the dependencies:
+newer. Dependency versions are defined in `pyproject.toml`. The accompanying
+`requirements.txt` and `environment.yml` files are generated from that list via
+`scripts/sync_deps.py`.
+
+Install the dependencies with:
 
 ```bash
 pip install -r requirements.txt
@@ -90,6 +94,13 @@ Running the tests requires `PyQt5`. If you encounter a
 
 ```bash
 pip install PyQt5
+```
+
+Deep learning utilities in `pipeline_individual_id` rely on `torch`. Install it
+via
+
+```bash
+pip install torch
 ```
 
 The unit tests located in `tests/` cover a small subset of the pipeline logic.

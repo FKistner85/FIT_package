@@ -13,15 +13,13 @@ dependencies:
   - scikit-learn
   - matplotlib
   - seaborn
-  - jupyterlab
   - optuna
   - catboost
   - xgboost
   - lightgbm
-  - scikit-optimize
   - scipy
   - umap-learn
-  - pyarrow
+  - scikit-optimize
   - PyQt5
   - tqdm
 
@@ -33,5 +31,7 @@ dependencies:
     - flake8
     - mypy
     - missingpy
+    - jupyterlab
+    - pyarrow
     - tqdm-joblib
     - joblib
