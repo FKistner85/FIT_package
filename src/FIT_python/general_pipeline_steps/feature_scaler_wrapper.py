@@ -17,6 +17,16 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
         method: str = SOFT_CONFIG["general_pipeline_steps"]["scaler_default"]["method"],
         **scaler_kwargs,
     ):
+        """Create the transformer.
+
+        Parameters
+        ----------
+        method:
+            Scaling strategy. Options: ``'standard'`` or ``'robust'``.
+            Defaults to the value from :data:`SOFT_CONFIG`.
+        scaler_kwargs:
+            Additional arguments passed to the underlying scaler.
+        """
         if method not in ("standard", "robust"):
             raise ValueError("method must be 'standard' or 'robust'")
         self.method = method

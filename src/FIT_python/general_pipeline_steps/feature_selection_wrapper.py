@@ -69,8 +69,10 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         method:
-            Selection algorithm to use. See :data:`FEATURE_SELECTION_PRESETS` for
-            common options.
+            Selection algorithm. Options: ``None`` (use all), ``'forward'``,
+            ``'random_forest'``, ``'variance'``, ``'univariate'`` or ``'lasso'``.
+            Defaults to ``None``. See :data:`FEATURE_SELECTION_PRESETS` for
+            common configurations.
         k:
             Number of top features to retain. ``None`` keeps all.
         random_state:
