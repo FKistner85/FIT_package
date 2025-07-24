@@ -33,14 +33,15 @@ A minimal example running the sex-classification pipeline could look like:
 from FIT_python.pipeline_sex.pipeline_wrapper_sex import run_pipeline
 
 # prepare your training dataframe `df`
-res = run_pipeline(df, target_col="sex", n_jobs=-1)
+res = run_pipeline(df, target_col="sex", n_jobs=-1, debug=True)
 ```
 
 ### Debug output
 
 Set `FIT_python.config.DEBUG_MODE = True` or pass `debug=True` when
-creating a `PipelineWrapper` to print shapes and counts of missing or
-infinite values after each preprocessing step. This aids troubleshooting
+creating a `PipelineWrapper` (or calling `run_pipeline`) to print shapes
+and counts of missing or infinite values after each preprocessing step.
+This aids troubleshooting
 when building new pipelines.  For manual control you can instantiate
 and run the wrapper directly:
 
