@@ -44,6 +44,7 @@ The main computation takes place in `run_all_pairwise_projections_parallel` with
 0) Falls use_sexmodel_prediction aktiv ist, das Sex-Modell laden und predict_proba vorberechnen.
 1) Basis-DF bereinigen
 2) Pipeline-Schritte: Outlier-Cleaning & Feature-Scaling
+   (einmal pro Methoden-Kombi im Cache gespeichert)
 3) Feature-Selection (einmal mit k_max)
 4) RCV-Set als Komplement
 5) Sex-probas extrahieren & mitteln
@@ -54,7 +55,7 @@ The main computation takes place in `run_all_pairwise_projections_parallel` with
 ```
 【F:src/FIT_python/pipeline_individual_id/pairwise_individual_id_pipeline.py†L55-L69】
 
-After optionally loading a pre-trained sex classifier, the function converts the selected feature columns to numeric values (lines 85‑88) and precomputes `predict_proba` values if requested (lines 90‑94).  For each pair the pipeline iterates over outlier cleaning and scaling choices, applies forward feature selection, and then reduces the dimension with either LDA, PCA or UMAP.  The results include the projected coordinates of both trails and of an RCV reference set, as well as multiple distance metrics computed between the trail centroids.
+After optionally loading a pre-trained sex classifier, the function converts the selected feature columns to numeric values (lines 85‑88) and precomputes `predict_proba` values if requested (lines 90‑94).  Outlier removal and feature scaling are performed once for each `(outlier, scaler)` combination and cached.  `process_pair` only runs the feature selection step per pair using these cached DataFrames.  The dimensionality reduction (LDA, PCA or UMAP) then follows, producing coordinates for both trails and the RCV set as well as multiple distance metrics between the centroids.
 
 Distances between all individual points are also summarised **after dimensionality reduction** to provide mean and median values both between and within the two trails.  This happens at lines 324‑357 of the same file.
 
