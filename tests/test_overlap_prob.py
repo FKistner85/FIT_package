@@ -1,6 +1,6 @@
 import pandas as pd
 from FIT_python.pipeline_individual_id.evaluation import (
-    compute_overlap_jsl_style,
+    compute_overlap_jsl_style_vec,
     compute_overlap_rhombus,
 )
 
@@ -18,8 +18,9 @@ def _build_row(shift: float = 1.5) -> pd.Series:
 
 def test_overlap_prob_affects_jsl():
     row = _build_row()
-    assert not compute_overlap_jsl_style(row, p=0.5)
-    assert compute_overlap_jsl_style(row, p=0.99)
+    df = pd.DataFrame([row])
+    assert not compute_overlap_jsl_style_vec(df, p=0.5)[0]
+    assert compute_overlap_jsl_style_vec(df, p=0.99)[0]
 
 def test_overlap_prob_affects_rhombus():
     row = _build_row()
