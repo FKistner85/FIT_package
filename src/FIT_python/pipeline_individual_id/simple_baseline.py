@@ -22,6 +22,29 @@ from . import sequential_holdout
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
 
 
+def _pairs_to_array(
+    trail_a: Iterable[str], trail_b: Iterable[str], distances: Iterable[float]
+) -> tuple[np.ndarray, list[str]]:
+    """Return distance array and trail order via index mapping.
+
+    Using the vectorised approach is about an order of magnitude faster
+    than iterating over ``DataFrame`` rows.
+    """
+
+    trails = pd.Index(sorted(set(trail_a) | set(trail_b)), dtype=str)
+    index = pd.Series(np.arange(len(trails)), index=trails)
+    ia = index.loc[pd.Index(trail_a)].to_numpy()
+    ib = index.loc[pd.Index(trail_b)].to_numpy()
+    vals = pd.to_numeric(pd.Series(distances), errors="coerce").to_numpy()
+
+    arr = np.full((len(trails), len(trails)), np.nan)
+    mask = ~np.isnan(vals)
+    arr[ia[mask], ib[mask]] = vals[mask]
+    arr[ib[mask], ia[mask]] = vals[mask]
+    np.fill_diagonal(arr, 0.0)
+    return arr, trails.to_list()
+
+
 def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
     """Return averaged metrics across baseline holdout splits.
 
@@ -538,20 +561,11 @@ def run_fold_cv(
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
         bcr = compute_bcr(cm)
 
-        trails = sorted(set(df_res["trail_a_id"]) | set(df_res["trail_b_id"]))
-        dist_mat = pd.DataFrame(np.nan, index=trails, columns=trails)
-        for a, b, val in zip(
+        arr, trails = _pairs_to_array(
             df_res["trail_a_id"], df_res["trail_b_id"], df_res["dist_euclidean"]
-        ):
-            try:
-                v = float(val)
-            except Exception:
-                continue
-            dist_mat.at[a, b] = v
-            dist_mat.at[b, a] = v
-        np.fill_diagonal(dist_mat.values, 0.0)
-        max_d = np.nanmax(dist_mat.values)
-        dist_mat = dist_mat.fillna(max_d)
+        )
+        dist_mat = pd.DataFrame(arr, index=trails, columns=trails)
+        dist_mat = dist_mat.fillna(np.nanmax(arr))
 
         true_n = df_val[id_col].dropna().astype(str).nunique()
         if cutoff is None:
