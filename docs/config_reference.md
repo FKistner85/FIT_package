@@ -23,6 +23,8 @@ This document defines all configurable values in the repository. **Any code gene
 - `pipeline_order`: order of parameters in pipeline identifiers.
 - `run_otter_search_sex`: defaults for the `run_otter_search_sex` helper.
 - `run_species_search`: defaults for the unified search helper.
+  Both helpers accept a `reuse_results` flag to load existing CSVs and
+  models from `RESULTS_DATA_DIR` instead of repeating the search.
 - setting `"cv": "fold"` uses the `Fold` column via `PredefinedSplit`.
 
 ## pipeline_individual_id

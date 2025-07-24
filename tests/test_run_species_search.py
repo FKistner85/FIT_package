@@ -52,7 +52,7 @@ def test_run_species_search_executes(tmp_path, monkeypatch):
     importlib.reload(sc)
     captured = {}
 
-    def fake_run_species_search(species, base_dir_suffix, n_iter, cv, random_state):
+    def fake_run_species_search(species, base_dir_suffix, n_iter, cv, random_state, *, reuse_results=False):
         species_dir = sc.SPLITS_DIR / species
         df_train = pd.read_parquet(species_dir / "train.parquet").query("sex in ['f','m']")
         if cv == "fold":

@@ -23,6 +23,9 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 - `pipeline_order`: Reihenfolge der Kennzeichen in Pipeline-IDs.
 - `run_otter_search_sex`: Standardwerte für die Hilfsfunktion `run_otter_search_sex`.
 - `run_species_search`: Standardwerte für die vereinheitlichte Suchfunktion.
+  Beide Funktionen besitzen das Flag `reuse_results`, um vorhandene
+  CSV-Dateien und Modelle aus `RESULTS_DATA_DIR` zu laden und die Suche zu
+  überspringen.
 - Wird `"cv": "fold"` gesetzt, nutzt die Suche die `Fold`-Spalte über `PredefinedSplit`.
 
 ## pipeline_individual_id
