@@ -19,6 +19,7 @@ from FIT_python.config import SPLITS_DIR
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from . import sequential_holdout
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
+from FIT_python.soft_config import SOFT_CONFIG
 
 
 def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
@@ -448,6 +449,10 @@ def run_fold_cv(
     subsample: bool = False,
     cutoff: float | None = None,
     overlap_prob: float = 0.5,
+    outlier_methods: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"],
+    scaler_methods: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"],
+    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["use_sexmodel_prediction"],
+    sexmodel_path: str | None = None,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using predefined folds.
 
@@ -505,7 +510,14 @@ def run_fold_cv(
             continue
 
         base_df = pd.concat([df_train, df_val], ignore_index=True)
-        kwargs = {"n_jobs": n_jobs, "feature_cols": use_cols}
+        kwargs = {
+            "n_jobs": n_jobs,
+            "feature_cols": use_cols,
+            "outlier_methods": outlier_methods,
+            "scaler_methods": scaler_methods,
+            "use_sexmodel_prediction": use_sexmodel_prediction,
+            "sexmodel_path": sexmodel_path,
+        }
         if k_features is not None:
             kwargs["k_features"] = k_features
         res = run_all_pairwise_projections_parallel(comps, base_df, **kwargs)
