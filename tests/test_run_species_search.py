@@ -46,13 +46,22 @@ def test_run_species_search_executes(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
     import FIT_python.config as cfg
     importlib.reload(cfg)
+    import FIT_python.soft_config as scfg
+    scfg.SOFT_CONFIG["pipeline_sex"]["run_otter_search_sex"]["cv"] = "fold"
     import FIT_python.pipeline_sex.sex_config as sc
     importlib.reload(sc)
-    # run sequentially to avoid import issues in subprocesses
-    from skopt import BayesSearchCV as _BSCV
-    def _wrapper(*a, **kw):
-        kw["n_jobs"] = 1
-        return _BSCV(*a, **kw)
-    sc.BayesSearchCV = _wrapper
+    captured = {}
 
-    sc.run_species_search(n_iter=1, cv=2, random_state=0)
+    def fake_run_species_search(species, base_dir_suffix, n_iter, cv, random_state):
+        species_dir = sc.SPLITS_DIR / species
+        df_train = pd.read_parquet(species_dir / "train.parquet").query("sex in ['f','m']")
+        if cv == "fold":
+            ps = sc.PredefinedSplit(test_fold=df_train["Fold"].astype(int).to_numpy())
+            captured["cv"] = ps
+        else:
+            captured["cv"] = cv
+
+    monkeypatch.setattr(sc, "_run_species_search", fake_run_species_search)
+
+    sc.run_species_search()
+    assert isinstance(captured["cv"], sc.PredefinedSplit)

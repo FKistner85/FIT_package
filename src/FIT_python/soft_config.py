@@ -75,7 +75,7 @@ SOFT_CONFIG = {
         ],
         "run_otter_search_sex": {
             "n_iter": 2,
-            "cv": 2,
+            "cv": "fold",
             "random_state": 42,
         },
     },

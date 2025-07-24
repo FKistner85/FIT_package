@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.base import clone
 from skopt import BayesSearchCV
 from skopt.space import Categorical
+from sklearn.model_selection import PredefinedSplit
 from tqdm.auto import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
@@ -145,7 +146,7 @@ def _run_species_search(
     species: str,
     base_dir_suffix: str,
     n_iter: int,
-    cv: int,
+    cv: int | str,
     random_state: int,
 ) -> None:
     """Run the hyperparameter search for a single species."""
@@ -155,8 +156,13 @@ def _run_species_search(
     df_train = (
         pd.read_parquet(species_dir / "train.parquet")
         .query("sex in ['f','m']")
-        .drop(columns=["Fold"], errors="ignore")
     )
+    if cv == "fold":
+        fold_ids = df_train["Fold"].astype(int).to_numpy()
+        df_train = df_train.drop(columns=["Fold"])
+        cv = PredefinedSplit(test_fold=fold_ids)
+    else:
+        df_train = df_train.drop(columns=["Fold"], errors="ignore")
     df_test = (
         pd.read_parquet(species_dir / "test.parquet")
         .query("sex in ['f','m']")
@@ -198,7 +204,9 @@ def _run_species_search(
     )
 
     folds = (
-        search.cv if isinstance(search.cv, int) else getattr(search.cv, "n_splits", len(list(search.cv)))
+        search.cv
+        if isinstance(search.cv, int)
+        else getattr(search.cv, "n_splits", search.cv.get_n_splits())
     )
     total_fits = search.n_iter * folds
     base_dir = RESULTS_DATA_DIR / base_dir_suffix
@@ -342,7 +350,7 @@ def _run_species_search(
 
 def run_otter_search_sex(
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
     """Run BayesSearchCV for the Eurasian otter dataset."""
@@ -357,7 +365,7 @@ def run_otter_search_sex(
 def run_species_search(
     species_filter: list[str] | None = None,
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
     """Run the search for all species in ``SPLITS_DIR``.
@@ -381,7 +389,7 @@ def run_species_search(
 
 def run_other_species_search(
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
-    cv: int = PIPE_CFG["run_otter_search_sex"]["cv"],
+    cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
     """Run the search for all species except the Eurasian otter."""
