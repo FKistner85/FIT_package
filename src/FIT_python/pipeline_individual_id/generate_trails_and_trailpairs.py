@@ -167,6 +167,7 @@ def generate_pairwise_comparisons_from_df(
     sex_col: str = "sex",
     id_field: str = "id",
     subsample: bool = False,
+    evaluation: bool = False,
     random_state: int = 0,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Create pairwise trail comparisons.
@@ -177,6 +178,10 @@ def generate_pairwise_comparisons_from_df(
     ``same_fold`` indicating equality. If a ``substrate`` column exists or the
     species is ``"eurasian_otter"`` then ``substrate_a`` and ``substrate_b`` are
     added to each comparison.
+
+    When ``evaluation`` is ``True`` the ``fold`` column is ignored and the
+    returned comparisons contain ``None`` for ``fold_a``/``fold_b`` and do not
+    set ``same_fold``.
     """
 
     df = select_or_generate_trails(
@@ -205,7 +210,10 @@ def generate_pairwise_comparisons_from_df(
     pairs = generate_pairs(trails)
 
     base_to_ind = df.groupby(trail_col)[id_col].first().to_dict()
-    base_to_fold = df.groupby(trail_col)[fold_col].first().to_dict()
+    if not evaluation and fold_col in df.columns:
+        base_to_fold = df.groupby(trail_col)[fold_col].first().to_dict()
+    else:
+        base_to_fold = {}
     base_to_sex = df.groupby(trail_col)[sex_col].first().fillna("unknown").replace("", "unknown").to_dict()
 
     use_sub = "substrate" in df.columns or (
@@ -225,6 +233,16 @@ def generate_pairwise_comparisons_from_df(
         sex_b = base_to_sex.get(base_b, "unknown")
         fold_a = base_to_fold.get(base_a)
         fold_b = base_to_fold.get(base_b)
+        if evaluation:
+            same_fold = None
+            fold_val = None
+        else:
+            same_fold = fold_a == fold_b
+            fold_val = (
+                max(fold_a, fold_b)
+                if fold_a is not None and fold_b is not None
+                else fold_a or fold_b
+            )
         rec = {
             "ind_a": ind_a,
             "ind_b": ind_b,
@@ -240,8 +258,8 @@ def generate_pairwise_comparisons_from_df(
             ),
             "fold_a": fold_a,
             "fold_b": fold_b,
-            "same_fold": fold_a == fold_b,
-            "fold": max(fold_a, fold_b) if fold_a is not None and fold_b is not None else fold_a or fold_b,
+            "same_fold": same_fold,
+            "fold": fold_val,
         }
         if use_sub:
             rec["substrate_a"] = base_to_sub.get(base_a)
