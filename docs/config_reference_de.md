@@ -27,6 +27,13 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 
 ## pipeline_individual_id
 - `pairwise_defaults`: Voreinstellungen für Paar-Embedding-Pipelines.
+  - `k_features`: Anzahl der auszuwählenden Merkmale.
+  - `reducers`: Liste der Methoden zur Dimensionsreduktion.
+  - `selection_method`: Verfahren zur Merkmalsauswahl.
+  - `n_components`: Ziel-Dimensionalität der Reduktion.
+  - `outlier_methods`: Liste der Ausreißer-Methoden oder `None`.
+  - `scaler_methods`: Liste der Skalierungsverfahren oder `None`.
+  - `use_sexmodel_prediction`: Ob Sex-Modell-Vorhersagen angehängt werden.
 - `sequential_holdout_val_sizes`: Validierungsgrößen für die sequentiellen Holdouts.
 
 ## gui_annotator

@@ -27,6 +27,13 @@ This document defines all configurable values in the repository. **Any code gene
 
 ## pipeline_individual_id
 - `pairwise_defaults`: defaults for pairwise embedding pipelines.
+  - `k_features`: number of features to select.
+  - `reducers`: list of dimensionality reduction methods.
+  - `selection_method`: feature selection strategy.
+  - `n_components`: target dimensionality for reducers.
+  - `outlier_methods`: list of outlier cleaning methods or `None`.
+  - `scaler_methods`: list of feature scaling methods or `None`.
+  - `use_sexmodel_prediction`: whether to append sex-model predictions.
 - `sequential_holdout_val_sizes`: validation sizes for sequential holdouts.
 
 ## gui_annotator
