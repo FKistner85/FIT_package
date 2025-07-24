@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
 from FIT_python.pipeline_sex import grouped_metrics
-from sklearn.model_selection import cross_val_score, cross_val_predict, PredefinedSplit
+from sklearn.model_selection import cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
     SPLITS_DIR,
@@ -283,23 +283,8 @@ class PipelineWrapper:
                         f"[{s_idx}/{total_species} | {m_idx}/{total_models}]"
                     )
 
-                    # cross-val using balanced accuracy and out-of-fold predictions
+                    # cross-val using out-of-fold predicted probabilities
                     try:
-                        bal = cross_val_score(
-                            pipe,
-                            X_train,
-                            y_train,
-                            cv=cv,
-                            scoring="balanced_accuracy",
-                            n_jobs=self.n_jobs,
-                        )
-                        y_pred_cv = cross_val_predict(
-                            pipe,
-                            X_train,
-                            y_train,
-                            cv=cv,
-                            n_jobs=self.n_jobs,
-                        )
                         y_pred_cv_proba = cross_val_predict(
                             pipe,
                             X_train,
@@ -308,7 +293,10 @@ class PipelineWrapper:
                             method="predict_proba",
                             n_jobs=self.n_jobs,
                         )
-                        cv_bal_mean = float(bal.mean())
+                        y_pred_cv = np.argmax(y_pred_cv_proba, axis=1)
+                        cv_bal_mean = float(
+                            balanced_accuracy_score(y_train, y_pred_cv)
+                        )
                     except Exception:
                         cv_bal_mean = None
                         y_pred_cv = np.full(len(y_train), np.nan)
