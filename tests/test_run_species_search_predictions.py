@@ -84,7 +84,7 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
     monkeypatch.setattr(sc, "predict_all", fake_predict_all)
 
     df_all, df_best = sc._run_species_search(
-        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0
+        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0, reuse_results=False
     )
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
@@ -143,7 +143,7 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
     monkeypatch.setattr(sc, "predict_all", fake_predict_all)
 
     df_all, df_best = sc._run_species_search(
-        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0
+        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0, reuse_results=False
     )
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
