@@ -60,7 +60,7 @@ def run_all_pairwise_projections_parallel(
     outlier_methods: Union[str, List[str], None] = None,
     scaler_methods: Union[str, List[str], None] = None,
     use_sexmodel_prediction: bool = False,
-    sexmodel_path: str = None,
+    sexmodel_path: str | None = None,
     debug: bool = False,
     n_jobs: int = -1,
     checkpoint_path: str | None = None,
