@@ -97,14 +97,29 @@ SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
 
 SEARCH_SPACES = {
     "outlier": Categorical(
-        [OutlierCleanerTransformer(method="clip")], transform="identity"
+        [
+            None,
+            OutlierCleanerTransformer(method="clip"),
+            OutlierCleanerTransformer(method="zscore"),
+        ],
+        transform="identity",
     ),
     "scale": Categorical(
-        [FeatureScalerTransformer(method="standard")], transform="identity"
+        [
+            None,
+            FeatureScalerTransformer(method="standard"),
+            FeatureScalerTransformer(method="robust"),
+        ],
+        transform="identity",
     ),
     "select__method": Categorical(SEARCH_SPACE_CFG["select__method"]),
     "select__k": Categorical(SEARCH_SPACE_CFG["select__k"]),
-    "clf": Categorical([EstimatorWrapper(MODELS["rf_small"])], transform="identity"),
+    "reduce_pre__method": Categorical(SEARCH_SPACE_CFG["reduce_pre__method"]),
+    "reduce_post__method": Categorical(SEARCH_SPACE_CFG["reduce_post__method"]),
+    "clf": Categorical(
+        [EstimatorWrapper(MODELS[k]) for k in ("rf_small", "rf_med", "xgb_std", "lda")],
+        transform="identity",
+    ),
 }
 
 METRICS = PIPE_CFG["metrics"]
