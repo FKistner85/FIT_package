@@ -30,9 +30,15 @@ class DistanceBaseline:
         reducers: List[str] | None = None,
         selection_method: str = "forward",
         n_components: int | List[int] = 2,
-        outlier_methods: Optional[List[str] | str] = None,
-        scaler_methods: Optional[List[str] | str] = None,
-        use_sexmodel_prediction: bool = False,
+        outlier_methods: Optional[List[str] | str] = SOFT_CONFIG["pipeline_individual_id"][
+            "pairwise_defaults"
+        ]["outlier_methods"],
+        scaler_methods: Optional[List[str] | str] = SOFT_CONFIG["pipeline_individual_id"][
+            "pairwise_defaults"
+        ]["scaler_methods"],
+        use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+            "use_sexmodel_prediction"
+        ],
         sexmodel_path: str | None = None,
         n_jobs: int = -1,
         debug: bool = False,

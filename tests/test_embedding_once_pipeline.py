@@ -49,8 +49,6 @@ def test_embedding_once_matches_pairwise():
         reducers=['pca'],
         selection_method='forward',
         n_components=2,
-        outlier_methods=None,
-        scaler_methods='standard',
         n_jobs=1,
     )
 
@@ -62,8 +60,6 @@ def test_embedding_once_matches_pairwise():
         reducer='pca',
         selection_method='forward',
         n_components=2,
-        outlier_method=None,
-        scaler_method='standard',
     )
 
     dist_pw = {(r['trail_a_id'], r['trail_b_id']): r['dist_euclidean'] for r in res_pw}
@@ -83,8 +79,6 @@ def test_resume_checkpoint(tmp_path):
         reducers=['pca'],
         selection_method='forward',
         n_components=2,
-        outlier_methods=None,
-        scaler_methods='standard',
         n_jobs=1,
     )
 
@@ -97,8 +91,6 @@ def test_resume_checkpoint(tmp_path):
         reducers=['pca'],
         selection_method='forward',
         n_components=2,
-        outlier_methods=None,
-        scaler_methods='standard',
         n_jobs=1,
         checkpoint_path=str(ckpt),
     )
@@ -111,8 +103,6 @@ def test_resume_checkpoint(tmp_path):
         reducers=['pca'],
         selection_method='forward',
         n_components=2,
-        outlier_methods=None,
-        scaler_methods='standard',
         n_jobs=1,
         checkpoint_path=str(ckpt),
         resume=True,

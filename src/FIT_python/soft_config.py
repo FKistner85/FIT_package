@@ -89,6 +89,9 @@ SOFT_CONFIG = {
             "reducers": ["lda"],
             "selection_method": "forward",
             "n_components": 2,
+            "outlier_methods": None,
+            "scaler_methods": None,
+            "use_sexmodel_prediction": False,
         },
         "trail_generation_defaults": {
             "sample_size": 9,

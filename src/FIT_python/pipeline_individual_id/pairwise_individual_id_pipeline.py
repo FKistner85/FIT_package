@@ -57,9 +57,15 @@ def run_all_pairwise_projections_parallel(
     n_components: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["n_components"],
-    outlier_methods: Union[str, List[str], None] = None,
-    scaler_methods: Union[str, List[str], None] = None,
-    use_sexmodel_prediction: bool = False,
+    outlier_methods: Union[str, List[str], None] = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["outlier_methods"],
+    scaler_methods: Union[str, List[str], None] = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["scaler_methods"],
+    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "use_sexmodel_prediction"
+    ],
     sexmodel_path: str | None = None,
     debug: bool = False,
     n_jobs: int = -1,
@@ -418,9 +424,25 @@ def run_embedding_once_pipeline(
         "selection_method"
     ],
     n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
-    outlier_method: str | None = None,
-    scaler_method: str | None = None,
-    use_sexmodel_prediction: bool = False,
+    outlier_method: str | None = (
+        SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"][0]
+        if isinstance(
+            SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"],
+            list,
+        )
+        else SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"]
+    ),
+    scaler_method: str | None = (
+        SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"][0]
+        if isinstance(
+            SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"],
+            list,
+        )
+        else SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"]
+    ),
+    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "use_sexmodel_prediction"
+    ],
     sexmodel_path: str | None = None,
     debug: bool = False,
     checkpoint_path: str | None = None,
