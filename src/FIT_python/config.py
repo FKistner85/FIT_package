@@ -38,6 +38,11 @@ NUMERIC_DIR = PROCESSED_DIR / "numeric"
 OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
 OTTER_POINT_MAP_PATH = PROCESSED_DIR / "otter_point_map.json"
 
+# Results directories
+RESULTS_DIR = EXPERIMENT_ROOT / "results"
+RESULTS_DATA_DIR = RESULTS_DIR / "data"
+FIGURES_DIR = RESULTS_DIR / "figures"
+
 # Unified file paths for generated artefacts
 PATHS = {
     "pipeline_cache": RESULTS_DATA_DIR / "pipeline_cache",
@@ -47,11 +52,6 @@ PATHS = {
     "random_search": RESULTS_DATA_DIR / "random_search_standard_metrics",
     "individual_id_results": RESULTS_DATA_DIR / "individual_id_pipelines",
 }
-
-# Results directories
-RESULTS_DIR = EXPERIMENT_ROOT / "results"
-RESULTS_DATA_DIR = RESULTS_DIR / "data"
-FIGURES_DIR = RESULTS_DIR / "figures"
 
 # Scripts and notebooks
 SCRIPTS_DIR = EXPERIMENT_ROOT / "scripts"

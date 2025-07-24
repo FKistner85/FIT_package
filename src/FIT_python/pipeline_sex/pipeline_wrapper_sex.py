@@ -15,6 +15,7 @@ from tqdm.auto import tqdm
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import balanced_accuracy_score, classification_report
 from FIT_python.pipeline_sex import grouped_metrics
+import inspect
 from sklearn.model_selection import cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
@@ -24,6 +25,7 @@ from FIT_python.config import (
     GLOBAL_RANDOM_SEED,
     PATHS,
 )
+import FIT_python.config as config
 
 # Utility functions
 from FIT_python.data_split_and_summary.split_utils import (
@@ -76,6 +78,8 @@ def get_pipeline_steps(
     scaler_method: Optional[str] = None,
     reduce_pre_method: Optional[str] = None,
     reduce_post_method: Optional[str] = None,
+    *,
+    debug: bool = False,
 ) -> list[tuple[str, object]]:
     """Construct the list of ``(name, transformer)`` steps based on the chosen hyperparameters."""
     if fs_method not in _ALLOWED_FS:
@@ -101,57 +105,61 @@ def get_pipeline_steps(
             f"reduce_post_method must be one of {_ALLOWED_REDS}, got {reduce_post_method!r}"
         )
 
+    def _make(cls, **kwargs):
+        if "debug" in inspect.signature(cls.__init__).parameters:
+            kwargs.setdefault("debug", debug)
+        return cls(**kwargs)
+
     steps: list[tuple[str, object]] = []
 
     # 2) Numeric conversion
-    steps.append(("transform", NumericTransformer()))
+    steps.append(("transform", _make(NumericTransformer)))
 
     # 3) Imputation
     if impute_method == "miss_forest":
-        steps.append(("impute", ImputationWrapper()))
+        steps.append(("impute", _make(ImputationWrapper)))
 
     # 4) Outlier cleaning
     if outlier_method == "clip":
         steps.append(
             (
                 "outlier",
-                OutlierCleanerTransformer(
-                    method="clip", lower_quantile=0.01, upper_quantile=0.99
+                _make(
+                    OutlierCleanerTransformer,
+                    method="clip",
+                    lower_quantile=0.01,
+                    upper_quantile=0.99,
                 ),
             )
         )
     elif outlier_method == "zscore":
         steps.append(
-            ("outlier", OutlierCleanerTransformer(method="zscore", z_thresh=3.0))
+            ("outlier", _make(OutlierCleanerTransformer, method="zscore", z_thresh=3.0))
         )
 
     # 5) Scaling
     if scaler_method in ("standard", "robust"):
-        steps.append(("scale", FeatureScalerTransformer(method=scaler_method)))
+        steps.append(("scale", _make(FeatureScalerTransformer, method=scaler_method)))
 
     # 6) Pre-dimensionality reduction
     if reduce_pre_method in ("pca", "umap", "tsne"):
         steps.append(
             (
                 "reduce_pre",
-                DimensionalityReducerTransformer(
-                    method=reduce_pre_method, n_components=10
-                ),
+                _make(DimensionalityReducerTransformer, method=reduce_pre_method, n_components=10),
             )
         )
 
     # 7) Feature selection
     if fs_method:
-        steps.append(("select", FeatureSelectionTransformer(method=fs_method, k=fs_k)))
+        steps.append(("select", _make(FeatureSelectionTransformer, method=fs_method, k=fs_k)))
 
     # 8) Post-dimensionality reduction
     if reduce_post_method in ("pca", "umap", "tsne"):
         steps.append(
             (
                 "reduce_post",
-                DimensionalityReducerTransformer(
-                    method=reduce_post_method, n_components=10
-                ),
+                _make(DimensionalityReducerTransformer, method=reduce_post_method, n_components=10),
             )
         )
 
@@ -173,6 +181,7 @@ class PipelineWrapper:
         reduce_pre_method: Optional[str] = None,
         reduce_post_method: Optional[str] = None,
         n_jobs: int = -1,
+        debug: bool = False,
     ):
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys = model_keys or list(MODELS.keys())
@@ -184,11 +193,18 @@ class PipelineWrapper:
         self.reduce_pre_method = reduce_pre_method
         self.reduce_post_method = reduce_post_method
         self.n_jobs = n_jobs
+        self.debug = debug
 
         self._model_dir = PATHS["sex_models"]
         self._model_dir.mkdir(parents=True, exist_ok=True)
         self._best_dir = PATHS["sex_models_best"]
         self._best_dir.mkdir(parents=True, exist_ok=True)
+
+    def _debug_report(self, step: str, X) -> None:
+        """Print debug info about ``X`` if debugging is enabled."""
+        if self.debug or config.DEBUG_MODE:
+            shape = getattr(X, "shape", None)
+            print(f"[DEBUG] after {step}: shape={shape}")
 
     def prepare(self):
         """Run data import, splitting and summary exactly once."""
@@ -276,6 +292,7 @@ class PipelineWrapper:
                         scaler_method=self.scaler_method,
                         reduce_pre_method=self.reduce_pre_method,
                         reduce_post_method=self.reduce_post_method,
+                        debug=self.debug,
                     )
                     steps.append(("classifier", model))
                     pipe = Pipeline(steps, memory=memory)
@@ -318,6 +335,7 @@ class PipelineWrapper:
                             else step.fit(X_tmp, y_train).transform(X_tmp)
                         )
                         times[f"time_{name}"] = perf_counter() - t0
+                        self._debug_report(name, X_tmp)
 
                     clf = pipe.steps[-1][1]
                     t0 = perf_counter()
@@ -438,6 +456,7 @@ class PipelineWrapper:
                 scaler_method=row["scaler_method"],
                 reduce_pre_method=row["reduce_pre_method"],
                 reduce_post_method=row["reduce_post_method"],
+                debug=self.debug,
             )
             steps.append(("classifier", MODELS[mk]))
             fname_all = (

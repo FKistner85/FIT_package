@@ -36,6 +36,17 @@ from FIT_python.pipeline_sex.pipeline_wrapper_sex import run_pipeline
 res = run_pipeline(df, target_col="sex", n_jobs=-1)
 ```
 
+Enable verbose debug output during training by instantiating the wrapper
+directly and setting ``debug=True``:
+
+```python
+from FIT_python.pipeline_sex.pipeline_wrapper_sex import PipelineWrapper
+
+wrapper = PipelineWrapper(debug=True)
+wrapper.prepare()
+wrapper.train()
+```
+
 ## Experiment root
 
 Most paths used by the pipelines are built relative to
