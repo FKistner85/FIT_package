@@ -36,6 +36,13 @@ from FIT_python.pipeline_sex.pipeline_wrapper_sex import run_pipeline
 res = run_pipeline(df, target_col="sex", n_jobs=-1)
 ```
 
+### Debug output
+
+Set `FIT_python.config.DEBUG_MODE = True` or pass `debug=True` when
+creating a `PipelineWrapper` to print shapes and counts of missing or
+infinite values after each preprocessing step. This aids troubleshooting
+when building new pipelines.
+
 ## Experiment root
 
 Most paths used by the pipelines are built relative to

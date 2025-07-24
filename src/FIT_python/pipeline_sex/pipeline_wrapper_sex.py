@@ -24,6 +24,7 @@ from FIT_python.config import (
     GLOBAL_RANDOM_SEED,
     PATHS,
 )
+import FIT_python.config as config
 
 # Utility functions
 from FIT_python.data_split_and_summary.split_utils import (
@@ -173,6 +174,7 @@ class PipelineWrapper:
         reduce_pre_method: Optional[str] = None,
         reduce_post_method: Optional[str] = None,
         n_jobs: int = -1,
+        debug: bool = False,
     ):
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys = model_keys or list(MODELS.keys())
@@ -184,6 +186,7 @@ class PipelineWrapper:
         self.reduce_pre_method = reduce_pre_method
         self.reduce_post_method = reduce_post_method
         self.n_jobs = n_jobs
+        self.debug = debug
 
         self._model_dir = PATHS["sex_models"]
         self._model_dir.mkdir(parents=True, exist_ok=True)
@@ -206,6 +209,9 @@ class PipelineWrapper:
         records: list[dict] = []
         best_acc_per_species: dict[str, float] = {}
         summary_msgs: list[str] = []
+
+        orig_debug = config.DEBUG_MODE
+        config.DEBUG_MODE = config.DEBUG_MODE or self.debug
 
         # iterate over all feature-selection variants
         fs_methods = [self.fs_method] if self.fs_method else [None]
@@ -465,6 +471,7 @@ class PipelineWrapper:
                 dump(final_pipe, best_path)
                 best_acc_per_species[species] = row["test_balanced_accuracy"]
 
+        config.DEBUG_MODE = orig_debug
         return df_new
 
 

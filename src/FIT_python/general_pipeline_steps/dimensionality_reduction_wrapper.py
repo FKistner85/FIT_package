@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, MDS, Isomap
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap
+from FIT_python.utils import debug_report
 
 
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
@@ -104,10 +105,13 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
 
         if self._method_norm in ("pca", "umap", "lda", "mds", "isomap"):
-            return self.reducer_.transform(arr)
-
+            out = self.reducer_.transform(arr)
         elif self._method_norm == "tsne":
-            return self.reducer_.fit_transform(arr)
+            out = self.reducer_.fit_transform(arr)
+        else:
+            out = arr
+        debug_report(out, "reduce")
+        return out
 
     def get_feature_names_out(self, input_features=None) -> list[str]:
         return self.feature_names_out_

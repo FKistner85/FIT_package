@@ -7,6 +7,7 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.utils import debug_report
 
 
 class ImputationWrapper(TransformerMixin, BaseEstimator):
@@ -81,7 +82,10 @@ class ImputationWrapper(TransformerMixin, BaseEstimator):
             X_out = X.copy()
             num_cols = X_out.select_dtypes(include=[np.number]).columns
             X_out[num_cols] = self.imputer.transform(X_out[num_cols])
+            debug_report(X_out, "impute")
             return X_out
         else:
             arr = np.asarray(X, dtype=float)
-            return self.imputer.transform(arr)
+            X_out = self.imputer.transform(arr)
+            debug_report(X_out, "impute")
+            return X_out

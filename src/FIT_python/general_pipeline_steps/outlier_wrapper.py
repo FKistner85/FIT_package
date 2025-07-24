@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.pipeline import Pipeline
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.utils import debug_report
 from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
 
 
@@ -59,6 +60,7 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
             lower = mean - zt * std
             upper = mean + zt * std
             arr = np.minimum(np.maximum(arr, lower), upper)
+        debug_report(arr, "outlier_clean")
         if isinstance(X, pd.DataFrame):
             return pd.DataFrame(arr, index=X.index, columns=X.columns)
         return arr
