@@ -90,3 +90,55 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
 
     df = sc.predict_all("otter", models_dir=cfg.RESULTS_DATA_DIR / "random_search_standard_metrics", reuse_csv=True)
     pd.testing.assert_frame_equal(df, pd.DataFrame({"a": [1]}))
+
+
+def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
+    root = tmp_path
+    data_dir = root / "data" / "splits" / "otter"
+    data_dir.mkdir(parents=True)
+    build_train_df().to_parquet(data_dir / "train.parquet", index=False)
+    build_test_df().to_parquet(data_dir / "test.parquet", index=False)
+
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    import FIT_python.config as cfg
+    importlib.reload(cfg)
+    import FIT_python.pipeline_sex.sex_config as sc
+    importlib.reload(sc)
+
+    class DummySearch:
+        def __init__(self, estimator=None, search_spaces=None, n_iter=1, scoring=None, refit=None, cv=None, n_jobs=None, random_state=None, verbose=None):
+            self.cv = cv
+            self.n_iter = n_iter
+            self.cv_results_ = {
+                "params": [{}],
+                "mean_test_accuracy": [1.0],
+                "mean_test_balanced_accuracy": [1.0],
+                "mean_test_neg_log_loss": [0.0],
+            }
+
+        def fit(self, X, y):
+            return self
+
+    monkeypatch.setattr(sc, "BayesSearchCV", DummySearch)
+    monkeypatch.setattr(sc, "plot_hyperparam_heatmap", lambda *a, **k: None)
+
+    def fake_dump(obj, path):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_bytes(b"0")
+    monkeypatch.setattr(sc.joblib, "dump", fake_dump)
+
+    def fake_predict_all(species, models_dir, reuse_csv=False, prefer_generic=False, include_inference=False, use_cv_train_predictions=False):
+        csv = Path(models_dir) / f"{species}_all_predictions.csv"
+        if reuse_csv:
+            return pd.read_csv(csv)
+        csv.parent.mkdir(parents=True, exist_ok=True)
+        df = pd.DataFrame({"a": [1]})
+        df.to_csv(csv, index=False)
+        return df
+
+    monkeypatch.setattr(sc, "predict_all", fake_predict_all)
+
+    sc._run_species_search("otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0)
+
+    model_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "best_balanced_test_acc" / "otter.joblib"
+    assert model_path.exists()
