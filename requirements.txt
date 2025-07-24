@@ -1,3 +1,4 @@
+# Auto-generated from pyproject.toml
 # Core runtime packages
 pandas>=1.3
 xlrd>=1.2
@@ -6,20 +7,15 @@ numpy>=1.21
 scikit-learn
 matplotlib
 seaborn
-jupyterlab
 optuna
 catboost
 xgboost
 lightgbm
-scikit-optimize
 scipy
 umap-learn
-pyarrow
-tqdm
+scikit-optimize
 PyQt5
-torch
-tqdm-joblib
-joblib
+tqdm
 
 # Development and testing tools
 pytest
@@ -27,6 +23,13 @@ coverage
 flake8
 mypy
 missingpy
+jupyterlab
+pyarrow
+tqdm-joblib
+joblib
+
+# Optional torch support
+torch
 
 # Install local package in editable mode
 -e .

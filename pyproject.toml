@@ -27,9 +27,25 @@ dependencies = [                       # aus install_requires=
   "tqdm",
 ]
 
+
+
 authors = [                            # aus author=
-{ name = "Frederick Kistner" }
+  { name = "Frederick Kistner" }
 ]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "coverage",
+  "flake8",
+  "mypy",
+  "missingpy",
+  "jupyterlab",
+  "pyarrow",
+  "tqdm-joblib",
+  "joblib",
+]
+torch = ["torch"]
 
 [tool.setuptools.packages.find]        # Nachbildung von find_packages()
 include = ["FIT_python", "FIT_python.*"]
