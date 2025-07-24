@@ -25,6 +25,7 @@ from FIT_python.config import (
     PATHS,
 )
 import FIT_python.config as config
+from FIT_python.utils import debug_report
 
 # Utility functions
 from FIT_python.data_split_and_summary.split_utils import (
@@ -195,11 +196,14 @@ class PipelineWrapper:
 
     def prepare(self):
         """Run data import, splitting and summary exactly once."""
-        print("\n📥 Schritt 1: Datenimport & Cleaning")
+        if self.debug or config.DEBUG_MODE:
+            print("\n📥 Schritt 1: Datenimport & Cleaning")
         DataImportWrapper().clean_all()
-        print("\n✂️ Schritt 2: Splitting & Fold-Zuordnung")
+        if self.debug or config.DEBUG_MODE:
+            print("\n✂️ Schritt 2: Splitting & Fold-Zuordnung")
         SplitWrapper().split_all(reuse_splits=True)
-        print("\n📊 Schritt 3: Zusammenfassung der Splits")
+        if self.debug or config.DEBUG_MODE:
+            print("\n📊 Schritt 3: Zusammenfassung der Splits")
         SummaryWrapper().summarize_all()
         ensure_valid_splits()
 
@@ -284,11 +288,18 @@ class PipelineWrapper:
                         reduce_post_method=self.reduce_post_method,
                     )
                     steps.append(("classifier", model))
+                    for _, st in steps:
+                        if hasattr(st, "debug"):
+                            try:
+                                st.debug = self.debug
+                            except Exception:
+                                pass
                     pipe = Pipeline(steps, memory=memory)
-                    print(
-                        f"Training {key} – {mk} "
-                        f"[{s_idx}/{total_species} | {m_idx}/{total_models}]"
-                    )
+                    if self.debug or config.DEBUG_MODE:
+                        print(
+                            f"Training {key} – {mk} "
+                            f"[{s_idx}/{total_species} | {m_idx}/{total_models}]"
+                        )
 
                     # cross-val using balanced accuracy and out-of-fold predictions
                     try:
@@ -323,6 +334,8 @@ class PipelineWrapper:
                             if hasattr(step, "fit_transform")
                             else step.fit(X_tmp, y_train).transform(X_tmp)
                         )
+                        if self.debug or config.DEBUG_MODE:
+                            debug_report(X_tmp, name)
                         times[f"time_{name}"] = perf_counter() - t0
 
                     clf = pipe.steps[-1][1]
@@ -349,7 +362,8 @@ class PipelineWrapper:
                         f"Test BA={test_bal_acc:.3f}, "
                         f"n_feat={len(selected) if selected is not None else 'NA'}"
                     )
-                    print(head_msg)
+                    if self.debug or config.DEBUG_MODE:
+                        print(head_msg)
                     summary_msgs.append(head_msg)
                     for lbl in ("0", "1"):
                         line = (
@@ -357,19 +371,22 @@ class PipelineWrapper:
                             f"r={report[lbl]['recall']:.2f}, "
                             f"f1={report[lbl]['f1-score']:.2f}"
                         )
-                        print(line)
+                        if self.debug or config.DEBUG_MODE:
+                            print(line)
                         summary_msgs.append(line)
                     if "individual_id" in df_test.columns:
                         fem_i, mal_i, bal_i = grouped_metrics.individual_accuracies(
                             y_test.to_numpy(), y_pred, df_test["individual_id"]
                         )
                         id_line = f"  - per-id BA: F={fem_i:.3f}, M={mal_i:.3f}, B={bal_i:.3f}"
-                        print(id_line)
+                        if self.debug or config.DEBUG_MODE:
+                            print(id_line)
                         summary_msgs.append(id_line)
                     time_line = "  - " + ", ".join(
                         f"{k.replace('time_', '')}={v:.2f}s" for k, v in times.items()
                     )
-                    print(time_line)
+                    if self.debug or config.DEBUG_MODE:
+                        print(time_line)
                     summary_msgs.append(time_line)
 
                     # record
@@ -425,9 +442,10 @@ class PipelineWrapper:
         # Visualise the hyperparameter search results
         plot_hyperparam_heatmap(df_new, Path(FIGURES_DIR) / "hyperparam_search")
 
-        print("\nSummary of runs:")
-        for msg in summary_msgs:
-            print(msg)
+        if self.debug or config.DEBUG_MODE:
+            print("\nSummary of runs:")
+            for msg in summary_msgs:
+                print(msg)
 
         # finale pipelines fit & dump
         for _, row in df_new.iterrows():
@@ -457,10 +475,12 @@ class PipelineWrapper:
             )
             model_path = self._model_dir / fname_all
             if model_path.exists():
-                print(f"🔁 Lade bestehendes Modell {fname_all}")
+                if self.debug or config.DEBUG_MODE:
+                    print(f"🔁 Lade bestehendes Modell {fname_all}")
                 final_pipe = load(model_path)
             else:
-                print(f"⚙️ Trainiere Modell {fname_all}")
+                if self.debug or config.DEBUG_MODE:
+                    print(f"⚙️ Trainiere Modell {fname_all}")
                 final_pipe = Pipeline(steps)
                 final_pipe.fit(X_t, y_t)
                 dump(final_pipe, model_path)

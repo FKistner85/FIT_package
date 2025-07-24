@@ -41,7 +41,14 @@ res = run_pipeline(df, target_col="sex", n_jobs=-1)
 Set `FIT_python.config.DEBUG_MODE = True` or pass `debug=True` when
 creating a `PipelineWrapper` to print shapes and counts of missing or
 infinite values after each preprocessing step. This aids troubleshooting
-when building new pipelines.
+when building new pipelines.  For manual control you can instantiate
+and run the wrapper directly:
+
+```python
+wrapper = PipelineWrapper(debug=True)
+wrapper.prepare()
+wrapper.train()
+```
 
 ## Experiment root
 
