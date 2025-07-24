@@ -52,7 +52,7 @@ def test_run_species_search_executes(tmp_path, monkeypatch):
     importlib.reload(sc)
     captured = {}
 
-    def fake_run_species_search(species, base_dir_suffix, n_iter, cv, random_state):
+    def fake_run_species_search(species, base_dir_suffix, n_iter, cv, random_state, reuse_results=True):
         species_dir = sc.SPLITS_DIR / species
         df_train = pd.read_parquet(species_dir / "train.parquet").query("sex in ['f','m']")
         if cv == "fold":
@@ -60,8 +60,11 @@ def test_run_species_search_executes(tmp_path, monkeypatch):
             captured["cv"] = ps
         else:
             captured["cv"] = cv
+        return pd.DataFrame(), pd.DataFrame()
 
     monkeypatch.setattr(sc, "_run_species_search", fake_run_species_search)
 
-    sc.run_species_search()
+    df_all, df_best = sc.run_species_search()
+    assert isinstance(df_all, pd.DataFrame)
+    assert isinstance(df_best, pd.DataFrame)
     assert isinstance(captured["cv"], sc.PredefinedSplit)
