@@ -54,6 +54,8 @@ For each generated train/validation split run the following pipelines. All compo
 4. Optionally append `sex_features` and perform feature selection on them.
 5. Reduce dimensionality using a supervised method (default: UMAP); return embeddings and Euclidean distances.
 6. Select informative distance features and train a classifier to decide whether a pair stems from the same individual.
+   When computing predictions any rows where distance metrics are missing
+   are dropped to avoid errors in the logistic regression classifier.
 
 ### Pipeline 3 – Siamese Network
 1. `y_train = train_set["individual_id"]`.

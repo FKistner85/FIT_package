@@ -191,6 +191,15 @@ def run(
 
     dist_df = _compute_pair_features(emb_df, val_comparisons)
 
+    # drop rows where any distance-based feature is NaN
+    dist_cols = [
+        c
+        for c in dist_df.columns
+        if c.startswith("dist_") or c.startswith("mean_") or c.startswith("median_")
+    ]
+    if dist_df[dist_cols].isna().any(axis=1).any():
+        dist_df = dist_df.dropna(subset=dist_cols).reset_index(drop=True)
+
     X_dist = dist_df[[c for c in dist_df.columns if c.startswith("dist_")]]
     y_dist = dist_df["same_individual"].astype(int)
 
