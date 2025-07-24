@@ -21,8 +21,11 @@ Example usage:
 
 ```python
 from FIT_python.pipeline_individual_id import run_id_search
-run_id_search(n_iter=10, random_state=0)
+run_id_search(n_iter=10, random_state=0, reuse_results=True)
 ```
+
+When ``reuse_results`` is ``True`` and result files already exist, the search
+is skipped and the CSV tables are loaded instead.
 
 After optimisation one can inspect the Euclidean distances via
 `search.best_estimator_.named_steps['est'].results_`.
