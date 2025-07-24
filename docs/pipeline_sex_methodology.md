@@ -36,7 +36,7 @@ This document summarises the workflow implemented in the notebook `pipeline_sex_
 
 ### 4. Training Workflow
 - **PipelineWrapper** – This class handles preparation (data import, splitting, summary generation) and model training. The `.train()` method loops over species and model configurations.
-- **Cross‑Validation** – Each configuration undergoes five‑fold cross-validation via `cross_val_score` with `balanced_accuracy_score` to handle class imbalance.
+- **Cross‑Validation** – Each configuration undergoes five‑fold cross-validation using `cross_val_predict(method="predict_proba")`. Balanced accuracy is derived from the resulting class predictions.
 - **Metrics** – Test results include a classification report and balanced accuracy. Helper functions in `grouped_metrics.py` compute per-individual accuracy and majority-vote metrics.
 - **Timing** – Transformation, imputation and prediction durations are measured using `perf_counter` to profile pipeline stages.
 
