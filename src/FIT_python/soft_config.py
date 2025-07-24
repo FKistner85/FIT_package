@@ -49,8 +49,12 @@ SOFT_CONFIG = {
             "lda",
         ],
         "search_spaces": {
+            "outlier": [None, "clip", "zscore"],
+            "scale": [None, "standard", "robust"],
             "select__method": [None, "forward", "lasso", "variance", "random_forest"],
             "select__k": [1, 2, 3, 4, 5, 6, 10, 20, 50, 100],
+            "reduce_pre__method": [None, "pca", "umap", "tsne"],
+            "reduce_post__method": [None, "pca", "umap", "tsne"],
             "clf": None,  # placeholder, to be filled with MODELS
         },
         "metrics": [
@@ -69,8 +73,8 @@ SOFT_CONFIG = {
             "scale",
             "select__method",
             "select__k",
-            "reduce_pre",
-            "reduce_post",
+            "reduce_pre__method",
+            "reduce_post__method",
             "clf",
         ],
         "run_otter_search_sex": {
