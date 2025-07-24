@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from pathlib import Path
+import shutil
 import pandas as pd
 import numpy as np
 import warnings
@@ -336,6 +337,11 @@ def _run_species_search(
         best_pipe = clone(pipe).set_params(**clean_best).fit(X_tr, y_tr)
         out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
+
+        generic_dir = RESULTS_DATA_DIR / "random_search_standard_metrics" / f"best_{metric}"
+        generic_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(out_path, generic_dir / f"{species}.joblib")
+
         print(
             f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}"
         )
