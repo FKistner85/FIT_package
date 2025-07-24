@@ -6,10 +6,7 @@ import pandas as pd
 def individual_accuracies(y_true, y_pred, ids):
     """Return female, male and balanced accuracy per individual."""
     df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred, "id": ids})
-    # FutureWarning vermeiden mit include_groups=False
-    acc_per = df.groupby("id").apply(
-        lambda g: (g.y_true == g.y_pred).mean(), include_groups=False
-    )
+    acc_per = (df.y_true == df.y_pred).groupby(df.id).mean()
     fem_ids = df.loc[df.y_true == 0, "id"].unique()
     mal_ids = df.loc[df.y_true == 1, "id"].unique()
     fem_acc = acc_per.loc[fem_ids].mean()
@@ -21,10 +18,7 @@ def individual_accuracies(y_true, y_pred, ids):
 def individual_majority_stats(y_true, y_pred, ids):
     """Count individuals with majority correct predictions."""
     df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred, "id": ids})
-    # auch hier include_groups=False
-    pct_per = df.groupby("id").apply(
-        lambda g: (g.y_true == g.y_pred).mean(), include_groups=False
-    )
+    pct_per = (df.y_true == df.y_pred).groupby(df.id).mean()
     total = pct_per.shape[0]
     correct = int((pct_per > 0.5).sum())
     wrong = total - correct
