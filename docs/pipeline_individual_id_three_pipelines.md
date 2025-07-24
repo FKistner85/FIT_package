@@ -17,11 +17,14 @@ This document translates the rough notes in `pipeline_individual_id_3_pipelines.
    - Optionally create a correlation heatmap from the scaled training values.
 5. **Sex Model Predictions**
    - Run `predict_all('<species>', reuse_csv=False)` once after training to
-     generate `{species}_all_predictions.csv` under `results/data/`. Future
+     generate `{species}_all_predictions.csv` in
+     `results/data/random_search_standard_metrics`. Future
      executions can pass `reuse_csv=True` to reuse this CSV.
    - For the training split the pre-computed cross-validation predictions are
      used so that the model only sees out-of-fold values.
    - Store these predictions as additional features `sex_features`.
+   - Individual ID pipelines load these files automatically when
+     `use_sexmodel_prediction=True`.
 
 ## 2. Training Setup
 1. **Select Individuals**

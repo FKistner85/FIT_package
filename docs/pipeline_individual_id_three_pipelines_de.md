@@ -17,12 +17,15 @@ Dieses Dokument fasst die Notizen in `pipeline_individual_id_3_pipelines.txt` zu
    - Optional entsteht eine Korrelationsgrafik der skalierten Merkmale.
 5. **Vorhersagen des Sex-Modells**
    - `predict_all('<species>', reuse_csv=False)` erzeugt einmalig
-     `{species}_all_predictions.csv` unter `results/data/`. Spätere Aufrufe
+     `{species}_all_predictions.csv` im Verzeichnis
+     `results/data/random_search_standard_metrics`. Spätere Aufrufe
      können `reuse_csv=True` verwenden, um die Datei erneut zu laden.
    - Für den Trainingssatz werden die bereits gespeicherten
      Kreuzvalidierungs‑Vorhersagen verwendet, um nur Out‑of‑Fold‑Werte zu
      nutzen.
    - Diese werden als zusätzliche Merkmale `sex_features` gespeichert.
+   - Die Individual-ID-Pipelines laden diese Dateien automatisch, wenn
+     `use_sexmodel_prediction=True` gesetzt ist.
 
 ## 2. Trainingseinrichtung
 1. **Individuen auswählen**

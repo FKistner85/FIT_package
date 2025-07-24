@@ -38,6 +38,7 @@ from FIT_python.pipeline_sex.grouped_metrics import (
 )
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
     plot_hyperparam_heatmap,
+    predict_all,
 )
 
 
@@ -360,6 +361,15 @@ def _run_species_search(
         }
     )
     plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
+
+    # Create prediction CSVs for downstream pipelines
+    predict_all(
+        species,
+        models_dir=RESULTS_DATA_DIR / "random_search_standard_metrics",
+        reuse_csv=False,
+        prefer_generic=False,
+        include_inference=False,
+    )
 
 
 
