@@ -22,6 +22,7 @@ from FIT_python.config import (
     RESULTS_DATA_DIR,
     FIGURES_DIR,
     GLOBAL_RANDOM_SEED,
+    PATHS,
 )
 
 # Utility functions
@@ -53,7 +54,7 @@ from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
 )
 
 # Cache for sklearn Pipelines
-_cache_dir = Path(RESULTS_DATA_DIR) / "pipeline_cache"
+_cache_dir = PATHS["pipeline_cache"]
 memory = Memory(location=_cache_dir, verbose=0)
 
 # In-memory cache of loaded splits
@@ -184,9 +185,9 @@ class PipelineWrapper:
         self.reduce_post_method = reduce_post_method
         self.n_jobs = n_jobs
 
-        self._model_dir = Path(RESULTS_DATA_DIR) / "sex_models"
+        self._model_dir = PATHS["sex_models"]
         self._model_dir.mkdir(parents=True, exist_ok=True)
-        self._best_dir = Path(RESULTS_DATA_DIR) / "sex_models_best"
+        self._best_dir = PATHS["sex_models_best"]
         self._best_dir.mkdir(parents=True, exist_ok=True)
 
     def prepare(self):
@@ -395,7 +396,7 @@ class PipelineWrapper:
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
-        raw_out = Path(RESULTS_DATA_DIR) / "raw_results.csv"
+        raw_out = PATHS["raw_results"]
         df_new.to_csv(raw_out, mode="a", header=not raw_out.exists(), index=False)
 
         # aggregate timing columns

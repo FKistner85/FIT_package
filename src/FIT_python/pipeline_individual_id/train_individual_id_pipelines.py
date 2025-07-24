@@ -88,7 +88,7 @@ def _add_sex_predictions(species: str, dfs: dict[str, pd.DataFrame]) -> None:
     pred_df = predict_all(
         species,
         prefer_generic=True,
-        models_dir=config.RESULTS_DATA_DIR / "random_search_standard_metrics",
+        models_dir=config.PATHS["random_search"],
         use_cv_train_predictions=True,
     )
     sex_cols = [c for c in pred_df.columns if c.startswith("pred_")]
@@ -191,7 +191,7 @@ def main(species: str = "eurasian_otter") -> None:
             reducers=["umap"],
             n_components=2,
             use_sexmodel_prediction=True,
-            sexmodel_path=str(config.RESULTS_DATA_DIR / "random_search_standard_metrics" / "best_balanced_test_acc" / f"{species}.joblib"),
+            sexmodel_path=str(config.PATHS["random_search"] / "best_balanced_test_acc" / f"{species}.joblib"),
             n_jobs=1,
         )
         results["umap"] = _confusion_from_results(res2)

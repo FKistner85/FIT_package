@@ -7,7 +7,7 @@ import warnings
 from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
-from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR
+from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, PATHS
 from FIT_python.Visualisations.plot_style import SEX_COLORS
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 
@@ -36,8 +36,10 @@ def _base_paths(
     if models_dir is not None:
         models = Path(models_dir)
     else:
-        specific = RESULTS_DATA_DIR / f"{species}_random_search_standard_metrics"
-        generic = RESULTS_DATA_DIR / "random_search_standard_metrics"
+        specific = PATHS["random_search"].with_name(
+            f"{species}_random_search_standard_metrics"
+        )
+        generic = PATHS["random_search"]
         models = generic if prefer_generic else specific
         if not models.exists():
             models = specific if prefer_generic else generic

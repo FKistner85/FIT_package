@@ -88,6 +88,7 @@ from FIT_python.config import (
     DEFAULT_TARGETS,
     GROUP_COL,
     NUM_FOLDS,
+    PATHS,
 )
 
 PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
@@ -353,7 +354,7 @@ def _run_species_search(
         out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
 
-        generic_dir = RESULTS_DATA_DIR / "random_search_standard_metrics" / f"best_{metric}"
+        generic_dir = PATHS["random_search"] / f"best_{metric}"
         generic_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(out_path, generic_dir / f"{species}.joblib")
 
@@ -386,7 +387,7 @@ def _run_species_search(
     # Create prediction CSVs for downstream pipelines
     predict_all(
         species,
-        models_dir=RESULTS_DATA_DIR / "random_search_standard_metrics",
+        models_dir=PATHS["random_search"],
         reuse_csv=False,
         prefer_generic=False,
         include_inference=False,
