@@ -165,8 +165,24 @@ def _run_species_search(
     n_iter: int,
     cv: int | str,
     random_state: int,
-) -> None:
-    """Run the hyperparameter search for a single species."""
+    *,
+    reuse_results: bool = True,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run the hyperparameter search for a single species.
+
+    Parameters
+    ----------
+    reuse_results:
+        When ``True`` and result CSVs exist in ``base_dir_suffix`` the search
+        is skipped and the files are loaded instead.
+    """
+    base_dir = RESULTS_DATA_DIR / base_dir_suffix
+    all_csv = base_dir / "all_results.csv"
+    best_csv = base_dir / "best_models.csv"
+    if reuse_results and all_csv.exists() and best_csv.exists():
+        df_all = pd.read_csv(all_csv)
+        df_best = pd.read_csv(best_csv)
+        return df_all, df_best
 
     species_dir = SPLITS_DIR / species
 
@@ -226,7 +242,6 @@ def _run_species_search(
         else getattr(search.cv, "n_splits", search.cv.get_n_splits())
     )
     total_fits = search.n_iter * folds
-    base_dir = RESULTS_DATA_DIR / base_dir_suffix
     base_dir.mkdir(parents=True, exist_ok=True)
     for m in METRICS:
         (base_dir / f"best_{m}").mkdir(exist_ok=True)
@@ -377,19 +392,24 @@ def _run_species_search(
         include_inference=False,
     )
 
+    return df_all, df_best
+
 
 
 def run_otter_search_sex(
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
     cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
-) -> None:
+    *,
+    reuse_results: bool = True,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run BayesSearchCV for the Eurasian otter dataset."""
-    run_species_search(
+    return run_species_search(
         species_filter=["eurasian_otter"],
         n_iter=n_iter,
         cv=cv,
         random_state=random_state,
+        reuse_results=reuse_results,
     )
 
 
@@ -398,25 +418,35 @@ def run_species_search(
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],
     cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
-) -> None:
+    *,
+    reuse_results: bool = True,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run the search for all species in ``SPLITS_DIR``.
 
     When ``species_filter`` is provided only those directory names are used.
     """
-
+    all_dfs: list[pd.DataFrame] = []
+    best_dfs: list[pd.DataFrame] = []
     for species_dir in sorted(SPLITS_DIR.iterdir()):
         if not species_dir.is_dir():
             continue
         species = species_dir.name
         if species_filter and species not in species_filter:
             continue
-        _run_species_search(
+        df_all, df_best = _run_species_search(
             species,
             f"{species}_bayes_search_standard_metrics",
             n_iter,
             cv,
             random_state,
+            reuse_results=reuse_results,
         )
+        all_dfs.append(df_all)
+        best_dfs.append(df_best)
+
+    df_all_comb = pd.concat(all_dfs, ignore_index=True) if all_dfs else pd.DataFrame()
+    df_best_comb = pd.concat(best_dfs, ignore_index=True) if best_dfs else pd.DataFrame()
+    return df_all_comb, df_best_comb
 
 def run_other_species_search(
     n_iter: int = PIPE_CFG["run_otter_search_sex"]["n_iter"],

@@ -83,7 +83,11 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
 
     monkeypatch.setattr(sc, "predict_all", fake_predict_all)
 
-    sc._run_species_search("otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0)
+    df_all, df_best = sc._run_species_search(
+        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0
+    )
+    assert isinstance(df_all, pd.DataFrame)
+    assert isinstance(df_best, pd.DataFrame)
 
     csv_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "otter_all_predictions.csv"
     assert csv_path.exists()
@@ -138,7 +142,54 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
 
     monkeypatch.setattr(sc, "predict_all", fake_predict_all)
 
-    sc._run_species_search("otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0)
+    df_all, df_best = sc._run_species_search(
+        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=0
+    )
+    assert isinstance(df_all, pd.DataFrame)
+    assert isinstance(df_best, pd.DataFrame)
 
     model_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "best_balanced_test_acc" / "otter.joblib"
     assert model_path.exists()
+
+
+def test_run_species_search_reuses_results(tmp_path, monkeypatch):
+    root = tmp_path
+    data_dir = root / "data" / "splits" / "otter"
+    data_dir.mkdir(parents=True)
+    build_train_df().to_parquet(data_dir / "train.parquet", index=False)
+    build_test_df().to_parquet(data_dir / "test.parquet", index=False)
+
+    results_dir = root / "results" / "data" / "otter_bayes_search_standard_metrics"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    df_all = pd.DataFrame({"a": [1]})
+    df_best = pd.DataFrame({"b": [2]})
+    df_all.to_csv(results_dir / "all_results.csv", index=False)
+    df_best.to_csv(results_dir / "best_models.csv", index=False)
+
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    import FIT_python.config as cfg
+    importlib.reload(cfg)
+    import FIT_python.pipeline_sex.sex_config as sc
+    importlib.reload(sc)
+
+    class DummySearch:
+        def __init__(self, *a, **k):
+            pass
+
+        def fit(self, X, y):
+            raise RuntimeError("should not fit")
+
+    monkeypatch.setattr(sc, "BayesSearchCV", DummySearch)
+    monkeypatch.setattr(sc, "plot_hyperparam_heatmap", lambda *a, **k: None)
+
+    got_all, got_best = sc._run_species_search(
+        "otter",
+        "otter_bayes_search_standard_metrics",
+        n_iter=1,
+        cv=2,
+        random_state=0,
+        reuse_results=True,
+    )
+
+    pd.testing.assert_frame_equal(got_all, df_all)
+    pd.testing.assert_frame_equal(got_best, df_best)
