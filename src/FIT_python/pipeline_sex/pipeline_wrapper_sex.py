@@ -26,6 +26,7 @@ from FIT_python.config import (
 )
 import FIT_python.config as config
 from FIT_python.utils import debug_report
+from FIT_python.soft_config import SOFT_CONFIG
 
 # Utility functions
 from FIT_python.data_split_and_summary.split_utils import (
@@ -62,12 +63,7 @@ memory = Memory(location=_cache_dir, verbose=0)
 # In-memory cache of loaded splits
 _DATA_CACHE: dict[str, dict[str, pd.DataFrame]] = {}
 
-# Allowed hyperparameter values
-_ALLOWED_FS = [None, "forward", "random_forest", "variance", "univariate", "lasso"]
-_ALLOWED_IMPUTE = [None, "miss_forest"]
-_ALLOWED_OUTLIERS = [None, "clip", "zscore"]
-_ALLOWED_SCALERS = [None, "standard", "robust"]
-_ALLOWED_REDS = [None, "pca", "umap", "tsne"]
+PIPE_SEARCH = SOFT_CONFIG["pipeline_sex"].get("search_spaces", {})
 
 
 def get_pipeline_steps(
@@ -80,27 +76,33 @@ def get_pipeline_steps(
     reduce_post_method: Optional[str] = None,
 ) -> list[tuple[str, object]]:
     """Construct the list of ``(name, transformer)`` steps based on the chosen hyperparameters."""
-    if fs_method not in _ALLOWED_FS:
-        raise ValueError(f"fs_method must be one of {_ALLOWED_FS}, got {fs_method!r}")
-    if impute_method not in _ALLOWED_IMPUTE:
+    allowed_fs = PIPE_SEARCH.get("select__method", [])
+    allowed_outliers = PIPE_SEARCH.get("outlier", [])
+    allowed_scalers = PIPE_SEARCH.get("scale", [])
+    allowed_red_pre = PIPE_SEARCH.get("reduce_pre__method", [])
+    allowed_red_post = PIPE_SEARCH.get("reduce_post__method", [])
+
+    if fs_method not in allowed_fs:
+        raise ValueError(f"fs_method must be one of {allowed_fs}, got {fs_method!r}")
+    if impute_method not in (None, "miss_forest"):
         raise ValueError(
-            f"impute_method must be one of {_ALLOWED_IMPUTE}, got {impute_method!r}"
+            f"impute_method must be one of [None, 'miss_forest'], got {impute_method!r}"
         )
-    if outlier_method not in _ALLOWED_OUTLIERS:
+    if outlier_method not in allowed_outliers:
         raise ValueError(
-            f"outlier_method must be one of {_ALLOWED_OUTLIERS}, got {outlier_method!r}"
+            f"outlier_method must be one of {allowed_outliers}, got {outlier_method!r}"
         )
-    if scaler_method not in _ALLOWED_SCALERS:
+    if scaler_method not in allowed_scalers:
         raise ValueError(
-            f"scaler_method must be one of {_ALLOWED_SCALERS}, got {scaler_method!r}"
+            f"scaler_method must be one of {allowed_scalers}, got {scaler_method!r}"
         )
-    if reduce_pre_method not in _ALLOWED_REDS:
+    if reduce_pre_method not in allowed_red_pre:
         raise ValueError(
-            f"reduce_pre_method must be one of {_ALLOWED_REDS}, got {reduce_pre_method!r}"
+            f"reduce_pre_method must be one of {allowed_red_pre}, got {reduce_pre_method!r}"
         )
-    if reduce_post_method not in _ALLOWED_REDS:
+    if reduce_post_method not in allowed_red_post:
         raise ValueError(
-            f"reduce_post_method must be one of {_ALLOWED_REDS}, got {reduce_post_method!r}"
+            f"reduce_post_method must be one of {allowed_red_post}, got {reduce_post_method!r}"
         )
 
     steps: list[tuple[str, object]] = []
@@ -182,18 +184,22 @@ class PipelineWrapper:
         Parameters
         ----------
         fs_method:
-            Feature-selection algorithm. Options: ``{_ALLOWED_FS}``.
+            Feature-selection algorithm. Valid choices are defined in
+            ``SOFT_CONFIG['pipeline_sex']['search_spaces']['select__method']``.
         fs_k:
             Number of features selected when ``fs_method`` is not ``None``.
         impute_method:
-            Imputation strategy. Options: ``{_ALLOWED_IMPUTE}``.
+            Imputation strategy. ``"miss_forest"`` or ``None``.
         outlier_method:
-            Outlier cleaning method. Options: ``{_ALLOWED_OUTLIERS}``.
+            Outlier cleaning method. Choices come from
+            ``SOFT_CONFIG['pipeline_sex']['search_spaces']['outlier']``.
         scaler_method:
-            Scaling approach. Options: ``{_ALLOWED_SCALERS}``.
+            Scaling approach. Choices come from
+            ``SOFT_CONFIG['pipeline_sex']['search_spaces']['scale']``.
         reduce_pre_method, reduce_post_method:
-            Dimensionality reduction before/after selection. Options:
-            ``{_ALLOWED_REDS}``.
+            Dimensionality reduction before/after selection. Valid options are
+            defined in ``SOFT_CONFIG['pipeline_sex']['search_spaces']`` under
+            ``'reduce_pre__method'`` and ``'reduce_post__method'``.
         n_jobs:
             Number of parallel jobs used for cross-validation.
         debug:
