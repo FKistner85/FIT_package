@@ -408,7 +408,20 @@ def run_otter_search_sex(
         "reuse_results", True
     ),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Run BayesSearchCV for the Eurasian otter dataset."""
+    """Run BayesSearchCV for the Eurasian otter dataset.
+
+    Parameters
+    ----------
+    n_iter : int, optional
+        Number of iterations for :class:`skopt.BayesSearchCV`.
+    cv : int or str, optional
+        Cross-validation strategy forwarded to :func:`run_species_search`.
+    random_state : int, optional
+        Random seed controlling the search.
+    reuse_results : bool, optional
+        When ``True`` previously saved search results are loaded from
+        ``PATHS['random_search']``.
+    """
     return run_species_search(
         species_filter=["eurasian_otter"],
         n_iter=n_iter,
@@ -430,7 +443,23 @@ def run_species_search(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run the search for all species in ``SPLITS_DIR``.
 
-    When ``species_filter`` is provided only those directory names are used.
+    Parameters
+    ----------
+    species_filter : list[str], optional
+        Restrict the search to these species names.
+    n_iter : int, optional
+        Number of iterations for :class:`skopt.BayesSearchCV`.
+    cv : int or str, optional
+        Cross-validation strategy (``"fold"`` or integer).
+    random_state : int, optional
+        Random seed controlling the search.
+    reuse_results : bool, optional
+        When ``True`` previously saved results are reused if present.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame]
+        Combined results of all searches and the best parameters per species.
     """
     all_dfs: list[pd.DataFrame] = []
     best_dfs: list[pd.DataFrame] = []
@@ -460,7 +489,17 @@ def run_other_species_search(
     cv: int | str = PIPE_CFG["run_otter_search_sex"]["cv"],
     random_state: int = PIPE_CFG["run_otter_search_sex"]["random_state"],
 ) -> None:
-    """Run the search for all species except the Eurasian otter."""
+    """Run the search for all species except the Eurasian otter.
+
+    Parameters
+    ----------
+    n_iter : int, optional
+        Number of iterations for :class:`skopt.BayesSearchCV`.
+    cv : int or str, optional
+        Cross-validation strategy forwarded to :func:`run_species_search`.
+    random_state : int, optional
+        Random seed controlling the search.
+    """
 
     run_species_search(
         species_filter=[s.name for s in SPLITS_DIR.iterdir() if s.is_dir() and s.name != "eurasian_otter"],

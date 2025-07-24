@@ -56,8 +56,38 @@ __all__ = [
 def run_pipeline(**kwargs):
     """Prepare data and train the sex-classification models.
 
-    Parameters are forwarded to :class:`PipelineWrapper`.  Returns the
-    DataFrame produced by ``PipelineWrapper.train``.
+    This is a convenience wrapper around :class:`PipelineWrapper`.  All
+    keyword arguments are forwarded to :class:`~pipeline_sex.pipeline_wrapper_sex.PipelineWrapper`.
+
+    Parameters
+    ----------
+    model_keys : list[str], optional
+        Identifiers of models to train.  Available keys are defined in
+        ``pipeline_wrapper_sex.MODELS``.
+    fs_method : str or None, optional
+        Feature-selection algorithm. Options: ``forward``, ``random_forest``,
+        ``variance``, ``univariate``, ``lasso`` or ``None``.
+    fs_k : int, optional
+        Number of features selected when ``fs_method`` is not ``None``.
+    impute_method : str or None, optional
+        Imputation strategy. Options: ``miss_forest`` or ``None``.
+    outlier_method : str or None, optional
+        Outlier cleaning method. Options: ``clip``, ``zscore`` or ``None``.
+    scaler_method : str or None, optional
+        Feature scaling approach. Options: ``standard``, ``robust`` or ``None``.
+    reduce_pre_method, reduce_post_method : str or None, optional
+        Dimensionality reduction before/after feature selection. Options:
+        ``pca``, ``umap``, ``tsne`` or ``None``.
+    n_jobs : int, optional
+        Number of parallel jobs used for cross-validation. ``-1`` uses all
+        available CPU cores.
+    debug : bool, optional
+        If ``True`` additional debug information is printed during training.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The result table produced by :meth:`pipeline_sex.pipeline_wrapper_sex.PipelineWrapper.train`.
     """
     wrapper = PipelineWrapper(**kwargs)
     wrapper.prepare()

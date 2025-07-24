@@ -17,9 +17,14 @@ from .pipeline_wrapper_sex import PipelineWrapper
 def run_baseline_all_species(exp_dir: Path) -> None:
     """Train baseline LDA classifiers for each species.
 
+    A :class:`PipelineWrapper` with ``model_keys=['lda']`` and
+    ``fs_method='forward'`` is used to train one model per species.  The
+    resulting ``raw_results.csv`` and the best models are written below
+    ``exp_dir``.
+
     Parameters
     ----------
-    exp_dir:
+    exp_dir : Path
         Directory where ``raw_results.csv`` and best models will be stored.
     """
     exp_dir = Path(exp_dir)

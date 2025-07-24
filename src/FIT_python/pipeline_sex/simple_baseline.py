@@ -54,26 +54,26 @@ def run_simple_baseline_all_species(
 ) -> pd.DataFrame:
     """Train a simple LDA baseline for each species.
 
+    Each species split is loaded from :data:`SPLITS_DIR` and an LDA model with
+    forward feature selection is trained using cross-validation.  Results are
+    stored in ``exp_dir`` and optionally the per-sample predictions are written
+    for later analysis.
+
     Parameters
     ----------
-    exp_dir:
+    exp_dir : Path
         Directory where ``raw_results.csv`` and models will be stored.
-
-    n_jobs:
-        Number of CPU cores to use during cross-validation. ``-1``
-        uses all available cores.
-
-    progress:
+    n_jobs : int, optional
+        Number of CPU cores to use during cross-validation. ``-1`` uses all
+        available cores.
+    progress : bool, optional
         Show a progress bar for species and cross-validation when ``True``.
-
-    max_features:
+    max_features : int, optional
         Maximum number of features to select during forward selection.
-
-    reuse_results:
+    reuse_results : bool, optional
         When ``True`` existing ``raw_results.csv`` and model files in
         ``exp_dir`` are loaded and returned instead of training new models.
-
-    save_predictions:
+    save_predictions : bool, optional
         When ``True`` baseline predictions for each species are written to
         ``{exp_dir}/{species}_baseline_predictions.csv`` after training.
 

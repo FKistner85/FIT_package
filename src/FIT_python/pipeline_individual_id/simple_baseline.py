@@ -131,21 +131,31 @@ def run_simple_baseline_otter(
     *,
     reuse_results: bool = True,
 ) -> int:
-    """Run sequential holdouts for the otter data across ``k_range`` values.
+    """Run sequential holdouts for the otter dataset.
+
+    The helper evaluates different feature counts using
+    :func:`sequential_holdout.run` and returns the ``k`` with the best mean BCR.
 
     Parameters
     ----------
-    exp_dir:
-        Root directory used to save intermediate and summary results.
-    k_range:
-        Iterable of ``k`` feature counts to evaluate.
-    iterations:
-        Number of sequential holdout iterations per ``k``.
-    use_sex_predictions:
-        When ``True`` sex-model predictions are appended as extra features.
-    reuse_results:
+    exp_dir : Path
+        Directory used to store intermediate and summary results.
+    k_range : Iterable[int], optional
+        Range of feature counts to evaluate.  Defaults to ``range(12, 21)``.
+    iterations : int, optional
+        Number of sequential holdout iterations per ``k``.  Defaults to ``10``.
+    use_sex_predictions : bool, optional
+        Append sex-model probabilities via :func:`load_sex_predictions` when
+        ``True``.
+    reuse_results : bool, optional
         When ``True`` already existing summaries are loaded instead of
         recomputing the baseline.
+
+    Returns
+    -------
+    int
+        The ``k`` value that achieved the best balanced correct recognition
+        rate.
     """
 
     exp_dir = Path(exp_dir)
@@ -241,23 +251,27 @@ def run_baseline_all_species(
 ) -> None:
     """Evaluate the baseline for every species using sequential holdouts.
 
+    For each species in :data:`SPLITS_DIR` this helper invokes
+    :func:`sequential_holdout.run` once and writes ``summary.csv`` to
+    ``exp_dir/<species>``.
+
     Parameters
     ----------
-    exp_dir:
+    exp_dir : Path
         Root directory for all results. One subdirectory per species will be
         created underneath this path.
-    best_k:
-        Number of features for the otter experiments and the default for the
-        benchmark species.
-    cutoff:
-        Mapping of species name to parameter dictionary with keys ``k`` and
-        ``ward`` specifying deviations from ``best_k`` and the Ward cut-off
-        distance.
-    reuse_summary:
+    best_k : int
+        Feature count used for the otter dataset and as the default for all
+        other species.
+    cutoff : dict[str, Any]
+        Mapping of species name to a parameter dictionary with optional keys
+        ``"k"`` (int) and ``"ward"`` (float) overriding ``best_k`` and the Ward
+        clustering cut-off.
+    reuse_summary : bool, optional
         When ``True`` and ``exp_dir/<species>/summary.csv`` exists, the
         computation for that species is skipped.
-    n_jobs:
-        Parallel jobs forwarded to :func:`sequential_holdout.run`. ``-1`` uses
+    n_jobs : int, optional
+        Parallel jobs forwarded to :func:`sequential_holdout.run`.  ``-1`` uses
         all available CPU cores.
     """
 
@@ -318,8 +332,22 @@ def run_simple_baseline_all_species(
 
     This helper mirrors :func:`run_baseline_all_species` but relies on the
     ``fold`` column of the training data instead of sequential holdouts.
-    ``run_fold_cv`` is called once per species and writes the results to
+    It calls :func:`run_fold_cv` for each species and writes the results to
     ``exp_dir/<species>``.
+
+    Parameters
+    ----------
+    exp_dir : Path
+        Directory where per-species results will be stored.
+    best_k : int
+        Default number of features used for the otter dataset and as fallback
+        for other species.
+    cutoff : dict[str, Any]
+        Mapping of species names to optional ``"k"`` and ``"ward"`` overrides.
+    reuse_summary : bool, optional
+        Skip processing when ``exp_dir/<species>/summary.csv`` already exists.
+    n_jobs : int, optional
+        Parallel jobs forwarded to :func:`run_fold_cv`.  ``-1`` uses all cores.
     """
 
     exp_dir = Path(exp_dir)
@@ -376,19 +404,25 @@ def run_sex_prediction_experiment(
 ) -> None:
     """Evaluate sequential holdouts with and without sex predictions.
 
+    For each species two runs of :func:`sequential_holdout.run` are performed:
+    one with appended sex-model probabilities and one without.  The resulting
+    summaries are written to ``exp_dir/<species>/with_sex`` and
+    ``exp_dir/<species>/without_sex`` respectively.
+
     Parameters
     ----------
-    exp_dir:
+    exp_dir : Path
         Root directory for the output structure.
-    best_k:
+    best_k : int
         Default number of features for all species.
-    cutoff:
+    cutoff : dict[str, Any]
         Mapping of species specific Ward cut-offs and feature counts.
-    models_dir:
-        Optional directory containing saved sex models.
-    reuse_results:
-        When ``True`` (default) existing ``summary.csv`` files are loaded and the
-        computation for that setup is skipped.
+    models_dir : str or Path, optional
+        Directory containing saved sex models loaded by
+        :func:`load_sex_predictions`.
+    reuse_results : bool, optional
+        When ``True`` (default) existing ``summary.csv`` files are loaded and
+        the computation for that setup is skipped.
     """
 
     exp_dir = Path(exp_dir)

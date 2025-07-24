@@ -88,7 +88,12 @@ plot_bcr_comparison = _make_lazy_wrapper("plot_bcr_comparison")
 
 
 def run_id_search(*args, **kwargs):
-    """Lazy wrapper around :func:`id_config.run_species_search`."""
+    """Lazy wrapper around :func:`id_config.run_species_search`.
+
+    All parameters are forwarded to
+    :func:`~FIT_python.pipeline_individual_id.id_config.run_species_search` which
+    performs a :class:`skopt.BayesSearchCV` over the pairwise ID pipeline.
+    """
 
     from .id_config import run_species_search as _impl
 
