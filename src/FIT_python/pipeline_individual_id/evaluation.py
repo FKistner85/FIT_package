@@ -333,6 +333,20 @@ def compute_bcr(cm: pd.DataFrame) -> float:
     return (tpr + tnr) / 2
 
 
+def separation_score(metric: str = "dist_euclidean"):
+    """Return a scoring callable comparing mean diff/same distances."""
+
+    def _score(estimator, X, y=None):
+        df = estimator.predict(X)
+        if df.empty:
+            return float("nan")
+        same = pd.to_numeric(df[df["same_individual"].astype(str) == "True"][metric], errors="coerce")
+        diff = pd.to_numeric(df[df["same_individual"].astype(str) == "False"][metric], errors="coerce")
+        return diff.mean() - same.mean()
+
+    return _score
+
+
 def report_skipped(skipped_counts: Mapping[str, int]) -> str:
     """Return a multi-line summary of skipped validation counts."""
     total = sum(skipped_counts.values())

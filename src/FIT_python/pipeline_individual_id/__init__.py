@@ -54,6 +54,14 @@ def plot_bcr_comparison(*args, **kwargs):
     return _impl(*args, **kwargs)
 
 
+def run_id_search(*args, **kwargs):
+    """Lazy wrapper around :func:`id_config.run_species_search`."""
+
+    from .id_config import run_species_search as _impl
+
+    return _impl(*args, **kwargs)
+
+
 __all__ = [
     "run_simple_baseline_otter",
     "run_baseline_all_species",
@@ -61,5 +69,6 @@ __all__ = [
     "run_sex_prediction_experiment",
     "collect_id_metrics",
     "plot_bcr_comparison",
+    "run_id_search",
 ]
 
