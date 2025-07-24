@@ -53,6 +53,8 @@ Für jeden Train-/Validation-Split werden folgende Pipelines durchlaufen.
 4. Optional `sex_features` anhängen und ebenfalls selektieren.
 5. Dimension mit einem überwachtem Verfahren (Standard: UMAP) reduzieren; Embeddings und euklidische Distanzen zurückgeben.
 6. Aussagekräftige Distanzmerkmale auswählen und einen Klassifikator trainieren.
+   Fehlende Distanzwerte werden vor dem Training verworfen, damit der
+   Logit-Klassifikator keine ungültigen Eingaben erhält.
 
 ### Pipeline 3 – Siamese Network
 1. `y_train = train_set["individual_id"]`.
