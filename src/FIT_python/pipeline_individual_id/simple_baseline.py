@@ -178,7 +178,9 @@ def run_simple_baseline_otter(
             else:
                 loaded = None
                 break
-            mean_bcr = float(df_sum["bcr"].mean()) if "bcr" in df_sum.columns else float("nan")
+            mean_bcr = (
+                float(df_sum["bcr"].mean()) if "bcr" in df_sum.columns else float("nan")
+            )
             loaded[k] = mean_bcr
         if loaded is not None and loaded:
             best_k = max(loaded, key=loaded.get)
@@ -369,8 +371,24 @@ def run_sex_prediction_experiment(
     cutoff: Dict[str, Any],
     *,
     models_dir: str | Path | None = None,
+    reuse_results: bool = True,
 ) -> None:
-    """Evaluate sequential holdouts with and without sex predictions."""
+    """Evaluate sequential holdouts with and without sex predictions.
+
+    Parameters
+    ----------
+    exp_dir:
+        Root directory for the output structure.
+    best_k:
+        Default number of features for all species.
+    cutoff:
+        Mapping of species specific Ward cut-offs and feature counts.
+    models_dir:
+        Optional directory containing saved sex models.
+    reuse_results:
+        When ``True`` (default) existing ``summary.csv`` files are loaded and the
+        computation for that setup is skipped.
+    """
 
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
@@ -399,29 +417,35 @@ def run_sex_prediction_experiment(
         )
 
         out_with = exp_dir / species_dir.name / "with_sex"
-        sequential_holdout.run(
-            df,
-            feature_cols,
-            sex_predictions=preds,
-            iterations=1,
-            out_dir=out_with,
-            k_features=k,
-            trail_col="Trail",
-            subsample=False,
-            cutoff=ward,
-        )
+        with_sum = out_with / "summary.csv"
+        if not (reuse_results and with_sum.exists()):
+            sequential_holdout.run(
+                df,
+                feature_cols,
+                sex_predictions=preds,
+                iterations=1,
+                out_dir=out_with,
+                k_features=k,
+                trail_col="Trail",
+                subsample=False,
+                cutoff=ward,
+                reuse_summary=reuse_results,
+            )
 
         out_without = exp_dir / species_dir.name / "without_sex"
-        sequential_holdout.run(
-            df,
-            feature_cols,
-            iterations=1,
-            out_dir=out_without,
-            k_features=k,
-            trail_col="Trail",
-            subsample=False,
-            cutoff=ward,
-        )
+        without_sum = out_without / "summary.csv"
+        if not (reuse_results and without_sum.exists()):
+            sequential_holdout.run(
+                df,
+                feature_cols,
+                iterations=1,
+                out_dir=out_without,
+                k_features=k,
+                trail_col="Trail",
+                subsample=False,
+                cutoff=ward,
+                reuse_summary=reuse_results,
+            )
 
 
 def _load_splits(species_dir: Path, *, include_test: bool = True) -> pd.DataFrame:
@@ -524,15 +548,19 @@ def run_fold_cv(
     subsample: bool = False,
     cutoff: float | None = None,
     overlap_prob: float = 0.5,
-    outlier_methods: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"][
-        "pairwise_defaults"
-    ]["outlier_methods"],
-    scaler_methods: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"][
-        "pairwise_defaults"
-    ]["scaler_methods"],
-    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
-        "use_sexmodel_prediction"
+    outlier_methods: Iterable[str]
+    | str
+    | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "outlier_methods"
     ],
+    scaler_methods: Iterable[str]
+    | str
+    | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "scaler_methods"
+    ],
+    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["use_sexmodel_prediction"],
     sexmodel_path: str | None = None,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using predefined folds.
