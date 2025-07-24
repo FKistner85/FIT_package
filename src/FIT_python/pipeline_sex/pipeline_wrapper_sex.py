@@ -177,6 +177,14 @@ class PipelineWrapper:
         n_jobs: int = -1,
         debug: bool = False,
     ):
+        """Create the wrapper and store configuration.
+
+        Parameters
+        ----------
+        debug:
+            If ``True`` the wrapper prints additional information and
+            debugging statistics during training.
+        """
         RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.model_keys = model_keys or list(MODELS.keys())
         self.fs_method = fs_method
