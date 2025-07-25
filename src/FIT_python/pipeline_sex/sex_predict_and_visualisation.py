@@ -35,6 +35,17 @@ def _base_paths(
 
     if models_dir is not None:
         models = Path(models_dir)
+        # Heuristically resolve the directory containing the saved models
+        if not any((models / d).exists() for d in MODELS.values()):
+            # Common experiment layout puts the models under
+            # ``results/data/random_search_standard_metrics`` relative to the
+            # experiment root.  When ``models_dir`` points to the experiment
+            # directory or ``models`` subfolder, adjust accordingly.
+            candidate = models / "results" / "data" / "random_search_standard_metrics"
+            if not candidate.exists() and models.name == "models":
+                candidate = models.parent / "results" / "data" / "random_search_standard_metrics"
+            if candidate.exists():
+                models = candidate
     else:
         specific = PATHS["random_search"].with_name(
             f"{species}_random_search_standard_metrics"
