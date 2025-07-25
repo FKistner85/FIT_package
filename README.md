@@ -63,15 +63,20 @@ from the environment variable `FIT_EXPERIMENT_ROOT` and defaults to the current
 working directory if not set.  Directories such as `data/` and `results/` are
 therefore resolved inside the configured experiment root.
 
+When running Jupyter notebooks without setting ``FIT_EXPERIMENT_ROOT``, the
+package automatically uses ``FIT_python.config.EXPERIMENT_DIR`` as the
+experiment root so every notebook run keeps its own ``data`` and ``results``
+subdirectories.
+
 Individual experiments are stored under `FIT_python.config.EXPERIMENT_DIR`,
 which defaults to `EXPERIMENT_ROOT/experiments/<SOFT_CONFIG["experiment"]["name"]>`.
 Set the environment variable `FIT_EXPERIMENT_NAME` or adjust
 ``SOFT_CONFIG["experiment"]["name"]`` before importing ``FIT_python.config`` to
 write results to a different subfolder.
 
-Raw data is loaded from ``FIT_python.config.RAW_DIR``.  You can override this
-path via the environment variable ``FIT_RAW_DIR``.  If unset it defaults to
-``<EXPERIMENT_ROOT>/data/raw``.
+Raw data is loaded from ``FIT_python.config.RAW_DIR``.  Set the environment
+variable ``FIT_RAW_DIR`` to the location of the immutable raw dataset.  If
+unset it defaults to ``<EXPERIMENT_ROOT>/data/raw``.
 
 After training has completed you can point the environment variable to the
 experiment directory and run predictions:
