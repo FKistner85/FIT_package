@@ -4,10 +4,13 @@ This document defines all configurable values in the repository. **Any code gene
 
 ## config
 - `RAW_DIR`: path to the raw data directory. Set via the environment variable
-  `FIT_RAW_DIR` and defaults to `<EXPERIMENT_ROOT>/data/raw` when unset.
+  `FIT_RAW_DIR` and defaults to `<EXPERIMENT_ROOT>/data/raw` when unset. Point it
+  at a read-only location containing the immutable original CSV files.
 - `EXPERIMENT_DIR`: directory where notebook outputs are written. Defaults to
   `EXPERIMENT_ROOT/experiments/<SOFT_CONFIG["experiment"]["name"]>` and can be
   overridden via the environment variable `FIT_EXPERIMENT_NAME`.
+  When running notebooks without setting `FIT_EXPERIMENT_ROOT`, this directory is
+  used as the experiment root so data and results stay within the experiment.
 
 ## data_split_and_summary
 - `sex_categories`: categories used when summarising datasets. The default

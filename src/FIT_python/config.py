@@ -2,60 +2,28 @@
 
 from pathlib import Path
 import os
+import sys
 
-# Determine the experiment root. When the package is installed, ``__file__``
-# points inside ``site-packages`` which does not contain the project data.  In
+# Determine the experiment root. When the package is installed ``__file__``
+# resides inside ``site-packages`` which does not contain the project data. In
 # that case we fall back to the current working directory or an explicit
-# environment variable ``FIT_EXPERIMENT_ROOT``.
-EXPERIMENT_ROOT = Path(
-    os.environ.get("FIT_EXPERIMENT_ROOT", Path(__file__).resolve().parents[2])
-)
+# environment variable ``FIT_EXPERIMENT_ROOT``. The value is only finalised once
+# ``EXPERIMENT_DIR`` is known so notebooks can override it.
+_BASE_ROOT = Path(__file__).resolve().parents[2]
+_experiment_root = Path(os.environ.get("FIT_EXPERIMENT_ROOT", _BASE_ROOT))
 
-# If the computed path does not contain the ``data`` directory, assume the
-# current working directory is the experiment root.  This enables running the
-# package from a cloned repository without installation.
-if not (EXPERIMENT_ROOT / "data").exists():
+# If the computed path does not contain ``data`` assume the current working
+# directory is the project root. This enables running the package from a cloned
+# repository without installation.
+if not (_experiment_root / "data").exists():
     cwd = Path.cwd()
     if (cwd / "data").exists():
-        EXPERIMENT_ROOT = cwd
+        _experiment_root = cwd
 
-# Data directories
-DATA_DIR = EXPERIMENT_ROOT / "data"
-RAW_DIR = Path(os.getenv("FIT_RAW_DIR", DATA_DIR / "raw"))
-CLEANED_DIR = DATA_DIR / "cleaned"
-SPLITS_DIR = DATA_DIR / "splits"
-PROCESSED_DIR = DATA_DIR / "processed"
-# Pipeline sub-directories under processed data
-PROCESSED_SPLITS_DIR = PROCESSED_DIR / "splits"
-SCALED_DIR = PROCESSED_DIR / "scaled"
-FEATURE_SELECTED_DIR = PROCESSED_DIR / "feature_selected"
-DIM_REDUCED_DIR = PROCESSED_DIR / "dim_reduced"
+# Data and result directories are defined after EXPERIMENT_ROOT is finalised.
+# They will automatically reside inside the selected experiment root so that
+# each experiment keeps its own ``data`` and ``results`` folders.
 
-# Numeric processed directory
-NUMERIC_DIR = PROCESSED_DIR / "numeric"
-
-# Processed data files
-OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
-OTTER_POINT_MAP_PATH = PROCESSED_DIR / "otter_point_map.json"
-
-# Results directories
-RESULTS_DIR = EXPERIMENT_ROOT / "results"
-RESULTS_DATA_DIR = RESULTS_DIR / "data"
-FIGURES_DIR = RESULTS_DIR / "figures"
-
-# Unified file paths for generated artefacts
-PATHS = {
-    "pipeline_cache": RESULTS_DATA_DIR / "pipeline_cache",
-    "sex_models": RESULTS_DATA_DIR / "sex_models",
-    "sex_models_best": RESULTS_DATA_DIR / "sex_models_best",
-    "raw_results": RESULTS_DATA_DIR / "raw_results.csv",
-    "random_search": RESULTS_DATA_DIR / "random_search_standard_metrics",
-    "individual_id_results": RESULTS_DATA_DIR / "individual_id_pipelines",
-}
-
-# Scripts and notebooks
-SCRIPTS_DIR = EXPERIMENT_ROOT / "scripts"
-NOTEBOOKS_DIR = EXPERIMENT_ROOT / "notebooks"
 
 # Default column configurations
 OTTER_META_COLS = ["id", "date", "location", "dataorigin", "substrate"]
@@ -74,7 +42,48 @@ DEBUG_MODE = False
 
 from FIT_python.soft_config import SOFT_CONFIG
 
-EXPERIMENTS_DIR = NOTEBOOKS_DIR.parent / "experiments"
-EXPERIMENT_DIR = EXPERIMENTS_DIR / os.getenv(
+experiments_dir = _experiment_root / "experiments"
+experiment_dir = experiments_dir / os.getenv(
     "FIT_EXPERIMENT_NAME", SOFT_CONFIG["experiment"]["name"]
 )
+
+# When executed inside a Jupyter notebook and no explicit ``FIT_EXPERIMENT_ROOT``
+# is set, default to writing results into ``experiment_dir``.
+if "ipykernel" in sys.modules and "FIT_EXPERIMENT_ROOT" not in os.environ:
+    _experiment_root = experiment_dir
+
+EXPERIMENT_ROOT = _experiment_root
+
+# Paths relative to the final experiment root
+NOTEBOOKS_DIR = EXPERIMENT_ROOT / "notebooks"
+SCRIPTS_DIR = EXPERIMENT_ROOT / "scripts"
+EXPERIMENTS_DIR = experiments_dir
+EXPERIMENT_DIR = experiment_dir
+
+DATA_DIR = EXPERIMENT_ROOT / "data"
+RAW_DIR = Path(os.getenv("FIT_RAW_DIR", DATA_DIR / "raw"))
+CLEANED_DIR = DATA_DIR / "cleaned"
+SPLITS_DIR = DATA_DIR / "splits"
+PROCESSED_DIR = DATA_DIR / "processed"
+PROCESSED_SPLITS_DIR = PROCESSED_DIR / "splits"
+SCALED_DIR = PROCESSED_DIR / "scaled"
+FEATURE_SELECTED_DIR = PROCESSED_DIR / "feature_selected"
+DIM_REDUCED_DIR = PROCESSED_DIR / "dim_reduced"
+NUMERIC_DIR = PROCESSED_DIR / "numeric"
+
+OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
+OTTER_POINT_MAP_PATH = PROCESSED_DIR / "otter_point_map.json"
+
+RESULTS_DIR = EXPERIMENT_ROOT / "results"
+RESULTS_DATA_DIR = RESULTS_DIR / "data"
+FIGURES_DIR = RESULTS_DIR / "figures"
+
+PATHS = {
+    "pipeline_cache": RESULTS_DATA_DIR / "pipeline_cache",
+    "sex_models": RESULTS_DATA_DIR / "sex_models",
+    "sex_models_best": RESULTS_DATA_DIR / "sex_models_best",
+    "raw_results": RESULTS_DATA_DIR / "raw_results.csv",
+    "random_search": RESULTS_DATA_DIR / "random_search_standard_metrics",
+    "individual_id_results": RESULTS_DATA_DIR / "individual_id_pipelines",
+}
+
