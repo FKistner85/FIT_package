@@ -79,8 +79,9 @@ Set the environment variable `FIT_EXPERIMENT_NAME` or adjust
 write results to a different subfolder.
 
 Raw data is loaded from ``FIT_python.config.RAW_DIR``.  Set the environment
-variable ``FIT_RAW_DIR`` to the location of the immutable raw dataset.  If
-unset it defaults to ``<EXPERIMENT_ROOT>/data/raw``.
+variable ``FIT_RAW_DIR`` to the location of the immutable raw dataset.  When
+unset the package first looks for ``<EXPERIMENT_ROOT>/data/raw`` and falls back
+to ``<REPO_ROOT>/data/raw`` if that directory exists.
 
 After training has completed you can point the environment variable to the
 experiment directory and run predictions:

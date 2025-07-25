@@ -4,7 +4,8 @@ This document defines all configurable values in the repository. **Any code gene
 
 ## config
 - `RAW_DIR`: path to the raw data directory. Set via the environment variable
-  `FIT_RAW_DIR` and defaults to `<EXPERIMENT_ROOT>/data/raw` when unset. Point it
+  `FIT_RAW_DIR`. If unset the package looks for `<EXPERIMENT_ROOT>/data/raw`
+  and falls back to `<REPO_ROOT>/data/raw` when that directory exists. Point it
   at a read-only location containing the immutable original CSV files.
 - `EXPERIMENT_DIR`: directory where notebook outputs are written. Defaults to
   `EXPERIMENT_ROOT/experiments/<SOFT_CONFIG["experiment"]["name"]>` and can be

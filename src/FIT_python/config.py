@@ -61,7 +61,20 @@ EXPERIMENTS_DIR = experiments_dir
 EXPERIMENT_DIR = experiment_dir
 
 DATA_DIR = EXPERIMENT_ROOT / "data"
-RAW_DIR = Path(os.getenv("FIT_RAW_DIR", DATA_DIR / "raw"))
+# Raw data may live outside the experiment directory. When ``FIT_RAW_DIR`` is
+# unset and ``DATA_DIR / "raw"`` does not exist, fall back to the repository
+# root so notebooks executed from subfolders can still access the immutable
+# dataset.
+_raw_env = os.getenv("FIT_RAW_DIR")
+if _raw_env is not None:
+    RAW_DIR = Path(_raw_env)
+else:
+    _default_raw = DATA_DIR / "raw"
+    if _default_raw.exists():
+        RAW_DIR = _default_raw
+    else:
+        _root_raw = _BASE_ROOT / "data" / "raw"
+        RAW_DIR = _root_raw
 CLEANED_DIR = DATA_DIR / "cleaned"
 SPLITS_DIR = DATA_DIR / "splits"
 PROCESSED_DIR = DATA_DIR / "processed"
