@@ -22,7 +22,7 @@ def build_df():
 
 def test_run_produces_summary(tmp_path):
     df = build_df()
-    preds = pd.DataFrame({'p_f': 0.5, 'p_m': 0.5}, index=df['id'])
+    preds = pd.DataFrame({'pred_f': 0.5, 'pred_m': 0.5}, index=df['id'])
     from FIT_python.soft_config import SOFT_CONFIG
     SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
     summary = run(df, ['f1', 'f2'], preds, val_sizes=[2], iterations=1, out_dir=tmp_path, n_jobs=1)
@@ -57,7 +57,7 @@ def test_k_features_influences_results(tmp_path):
     """``run`` should yield different outcomes for different ``k_features``."""
 
     df = build_df()
-    preds = pd.DataFrame({"p_f": 0.5, "p_m": 0.5}, index=df["id"])
+    preds = pd.DataFrame({"pred_f": 0.5, "pred_m": 0.5}, index=df["id"])
     from FIT_python.soft_config import SOFT_CONFIG
 
     SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
@@ -131,7 +131,7 @@ def test_reuse_summary(tmp_path):
 
 def test_all_splits_csv(tmp_path):
     df = build_df()
-    preds = pd.DataFrame({"p_f": 0.5, "p_m": 0.5}, index=df["id"])
+    preds = pd.DataFrame({"pred_f": 0.5, "pred_m": 0.5}, index=df["id"])
     from FIT_python.soft_config import SOFT_CONFIG
 
     SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
@@ -201,3 +201,15 @@ def test_compute_global_cutoffs(tmp_path):
     assert stats["median_cutoff"] == pytest.approx(0.56447084, rel=1e-6)
     assert stats["mean_low"] == pytest.approx(0.35723542, rel=1e-6)
     assert stats["mean_high"] == pytest.approx(0.77170626, rel=1e-6)
+
+
+def test_merge_predictions_allows_overlap():
+    from FIT_python.pipeline_individual_id import sequential_holdout as sh
+
+    df = pd.DataFrame({"id": [0, 1], "pred_a": [1.0, 2.0]})
+    preds = pd.DataFrame({"id": [0, 1], "pred_a": [0.1, 0.2], "pred_b": [0.3, 0.4]})
+
+    out, cols = sh._merge_predictions(df, preds, sample_col="id")
+
+    assert set(cols) == {"pred_a", "pred_b"}
+    assert "pred_a" in out.columns and "pred_b" in out.columns

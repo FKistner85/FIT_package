@@ -21,3 +21,6 @@
 The helper iterates over the provided `split_dir`, loads each `train.parquet` and
 uses `sequential_holdout_ids` to derive train/validation splits. Returned
 DataFrames are ready for further processing.
+
+When merging sex-model predictions via `_merge_predictions` the prediction table
+must only contain columns prefixed with `pred_`.

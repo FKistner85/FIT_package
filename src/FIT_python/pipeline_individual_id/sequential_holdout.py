@@ -27,18 +27,33 @@ from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_d
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
 
 
-def _merge_predictions(df: pd.DataFrame, preds: pd.DataFrame | None, *, sample_col: str = "id") -> tuple[pd.DataFrame, list[str]]:
+def _merge_predictions(
+    df: pd.DataFrame, preds: pd.DataFrame | None, *, sample_col: str = "id"
+) -> tuple[pd.DataFrame, list[str]]:
     """Return ``df`` merged with ``preds`` and list of added columns."""
+
     if preds is None:
         return df, []
 
     df = df.copy()
+
+    # keep only prediction columns and track them for later use
+    pred_cols = [c for c in preds.columns if c.startswith("pred_")]
+    preds = preds[pred_cols]
+
     if sample_col in preds.columns:
         preds = preds.set_index(sample_col)
+
     df = df.set_index(sample_col)
+
+    # drop overlapping columns to avoid join errors
+    overlap = df.columns.intersection(preds.columns)
+    if len(overlap) > 0:
+        df = df.drop(columns=list(overlap))
+
     df = df.join(preds, how="left")
     df = df.reset_index()
-    pred_cols = [c for c in preds.columns]
+
     return df, pred_cols
 
 
