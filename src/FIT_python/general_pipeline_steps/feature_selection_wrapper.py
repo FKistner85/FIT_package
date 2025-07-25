@@ -5,6 +5,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, f_classif, VarianceThreshold
 from sklearn.linear_model import LassoCV
+from FIT_python.config import GLOBAL_RANDOM_SEED
 from FIT_python.utils import debug_report
 
 
@@ -62,7 +63,7 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         self,
         method: str = None,  # 'forward', 'random_forest', 'variance', 'univariate', 'lasso', or None (use all)
         k: int = None,
-        random_state: int = 0,
+        random_state: int = GLOBAL_RANDOM_SEED,
     ):
         """Create the transformer with the desired selection method.
 
@@ -76,7 +77,7 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
         k:
             Number of top features to retain. ``None`` keeps all.
         random_state:
-            Seed for methods relying on randomness.
+            Seed for methods relying on randomness. Defaults to ``GLOBAL_RANDOM_SEED``.
         """
         allowed_methods = [
             None,

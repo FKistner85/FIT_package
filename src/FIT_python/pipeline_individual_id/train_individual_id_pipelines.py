@@ -139,7 +139,9 @@ def main(species: str = "eurasian_otter") -> None:
     morph_cols = _select_features(dfs_raw)
 
     unique_ids = dfs_raw["train"]["individual_id"].dropna().unique()
-    splits = sequential_holdout_ids(unique_ids, val_sizes=[2, 4, 6, 8], n_iter=1, random_state=0)
+    splits = sequential_holdout_ids(
+        unique_ids, val_sizes=[2, 4, 6, 8], n_iter=1, random_state=config.GLOBAL_RANDOM_SEED
+    )
 
     out_dir = config.RESULTS_DATA_DIR / "individual_id_pipelines"
     out_dir.mkdir(parents=True, exist_ok=True)

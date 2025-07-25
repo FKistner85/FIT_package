@@ -3,6 +3,7 @@ from typing import Dict, List, Tuple, Union, Optional, Any, Iterable
 
 import numpy as np
 import pandas as pd
+from FIT_python.config import GLOBAL_RANDOM_SEED
 from FIT_python.soft_config import SOFT_CONFIG
 
 __all__ = [
@@ -30,7 +31,7 @@ def select_or_generate_trails(
     individual_col: str = "individual_id",
     trail_col: str = "trail",
     sample_size: int = SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"],
-    random_state: int = 0,
+    random_state: int = GLOBAL_RANDOM_SEED,
 ) -> pd.DataFrame:
     """Return existing trails or generate new ones.
 
@@ -49,7 +50,7 @@ def select_or_generate_trails(
         Number of observations per generated trail. Defaults to
         ``SOFT_CONFIG['pipeline_individual_id']['trail_generation_defaults']['sample_size']``.
     random_state : int, optional
-        Seed for random sampling. Defaults to ``0``.
+        Seed for random sampling. Defaults to ``GLOBAL_RANDOM_SEED``.
 
     Returns
     -------
@@ -85,7 +86,7 @@ def generate_subsamples(
     sample_size: int = SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"],
     subsample_sizes: Tuple[int, ...] = tuple(SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["subsample_sizes"]),
     n_candidates: int = SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["n_candidates"],
-    random_state: int = 0,
+    random_state: int = GLOBAL_RANDOM_SEED,
 ) -> Dict[str, List[str]]:
     """Create diverse subsamples for each trail."""
 
@@ -168,7 +169,7 @@ def generate_pairwise_comparisons_from_df(
     id_field: str = "id",
     subsample: bool = False,
     evaluation: bool = False,
-    random_state: int = 0,
+    random_state: int = GLOBAL_RANDOM_SEED,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """Create pairwise trail comparisons.
 

@@ -11,7 +11,15 @@ from FIT_python.data_split_and_summary.split_utils import (
 )
 from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 
-from FIT_python.config import RAW_DIR, SPLITS_DIR, RESULTS_DATA_DIR, DEFAULT_TARGETS, GROUP_COL, NUM_FOLDS
+from FIT_python.config import (
+    RAW_DIR,
+    SPLITS_DIR,
+    RESULTS_DATA_DIR,
+    DEFAULT_TARGETS,
+    GROUP_COL,
+    NUM_FOLDS,
+    GLOBAL_RANDOM_SEED,
+)
 
 
 class SplitWrapper:
@@ -130,7 +138,7 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         else:
             # generischer Stratified split nach individual_id (oder GROUP_COL)
             train_df, test_df, inf_df = stratified_individual_split(
-                df, group_col=GROUP_COL, n_folds=NUM_FOLDS, random_state=0
+                df, group_col=GROUP_COL, n_folds=NUM_FOLDS, random_state=GLOBAL_RANDOM_SEED
             )
 
         # 3) Folds ins train_df schreiben, falls nicht schon geschehen

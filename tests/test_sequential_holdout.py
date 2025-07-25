@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 from FIT_python.pipeline_individual_id.sequential_holdout import run
 from FIT_python.pipeline_individual_id.holdout_helper import generate_holdout_sets
+from FIT_python.config import GLOBAL_RANDOM_SEED
 
 
 def build_df():
@@ -44,7 +45,7 @@ def test_generate_holdout_sets(tmp_path):
     species_dir.mkdir()
     df.to_parquet(species_dir / "train.parquet", index=False)
 
-    splits = generate_holdout_sets(tmp_path, val_sizes=[2], iterations=2, seed=0)
+    splits = generate_holdout_sets(tmp_path, val_sizes=[2], iterations=2, seed=GLOBAL_RANDOM_SEED)
     assert "otter" in splits
     assert len(splits["otter"]) == 2
     for split in splits["otter"]:

@@ -8,7 +8,7 @@ from typing import Iterable, Sequence
 import numpy as np
 import pandas as pd
 
-from FIT_python.config import RESULTS_DATA_DIR
+from FIT_python.config import RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED
 from FIT_python.soft_config import SOFT_CONFIG
 
 from .evaluation import (
@@ -74,7 +74,7 @@ def run(
     id_col: str = "individual_id",
     iterations: int = 1,
     val_sizes: Iterable[int] | None = None,
-    random_state: int | None = None,
+    random_state: int = GLOBAL_RANDOM_SEED,
     out_dir: Path | None = None,
     n_jobs: int = -1,
     reuse_summary: bool = True,
@@ -116,7 +116,7 @@ def run(
         Validation sizes passed to :func:`sequential_holdout_ids`. Defaults to
         ``SOFT_CONFIG['pipeline_individual_id']['sequential_holdout_val_sizes']``.
     random_state:
-        Random seed for the split generator.
+        Random seed for the split generator. Defaults to ``GLOBAL_RANDOM_SEED``.
     out_dir:
         Directory to write per-split CSV results. Defaults to
         ``RESULTS_DATA_DIR / 'individual_id'``.

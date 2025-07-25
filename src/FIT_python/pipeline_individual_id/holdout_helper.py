@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Sequence, Dict, List
 
+from FIT_python.config import GLOBAL_RANDOM_SEED
+
 import pandas as pd
 
 from .evaluation import sequential_holdout_ids
@@ -14,7 +16,7 @@ def generate_holdout_sets(
     split_dir: Path,
     val_sizes: Sequence[int],
     iterations: int,
-    seed: int = 42,
+    seed: int = GLOBAL_RANDOM_SEED,
 ) -> dict[str, list[dict[str, pd.DataFrame]]]:
     """Return sequential holdout splits for every species.
 
@@ -27,7 +29,7 @@ def generate_holdout_sets(
     iterations:
         Number of sequential holdout iterations.
     seed:
-        Random seed for reproducible splits. Defaults to ``42``.
+        Random seed for reproducible splits. Defaults to ``GLOBAL_RANDOM_SEED``.
 
     Returns
     -------
