@@ -68,6 +68,10 @@ package automatically uses ``FIT_python.config.EXPERIMENT_DIR`` as the
 experiment root so every notebook run keeps its own ``data`` and ``results``
 subdirectories.
 
+To store notebook outputs in a custom location, set ``FIT_EXPERIMENT_ROOT`` in
+your environment (or adjust ``SOFT_CONFIG``) **before** launching Jupyter so the
+paths in ``FIT_python.config`` are initialised correctly.
+
 Individual experiments are stored under `FIT_python.config.EXPERIMENT_DIR`,
 which defaults to `EXPERIMENT_ROOT/experiments/<SOFT_CONFIG["experiment"]["name"]>`.
 Set the environment variable `FIT_EXPERIMENT_NAME` or adjust
