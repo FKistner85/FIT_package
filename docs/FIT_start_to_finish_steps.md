@@ -57,9 +57,11 @@ species directory contains a `summary.csv`, the collected metrics are written to
 
 Some split tables include a `fold` column for cross-validation.  Calling
 `run_simple_baseline_all_species(EXP_DIR/'fold_cv', best_k, cutoff)` processes
-these folds without creating new holdout sets.  Results are stored in the
-respective species directories with one CSV per fold and a combined
-`summary.csv`.
+these folds without creating new holdout sets.  Passing
+`use_sex_predictions=True` loads saved sex-model outputs via
+`load_sex_predictions` (optionally using `models_dir`) and appends them before
+cross-validation. Results are stored in the respective species directories with
+one CSV per fold and a combined `summary.csv`.
 
 ## Global Cut-off Evaluation
 

@@ -328,6 +328,8 @@ def run_simple_baseline_all_species(
     subsample: bool = False,
     reuse_summary: bool = True,
     n_jobs: int = -1,
+    use_sex_predictions: bool = False,
+    models_dir: Path | None = None,
 ) -> None:
     """Evaluate cross-validation folds for every species.
 
@@ -352,6 +354,12 @@ def run_simple_baseline_all_species(
         Skip processing when ``exp_dir/<species>/summary.csv`` already exists.
     n_jobs : int, optional
         Parallel jobs forwarded to :func:`run_fold_cv`.  ``-1`` uses all cores.
+    use_sex_predictions : bool, optional
+        When ``True`` sex-model probabilities are loaded via
+        :func:`load_sex_predictions` and appended before evaluation.
+    models_dir : Path, optional
+        Directory containing the saved sex models used by
+        :func:`load_sex_predictions`.
     """
 
     exp_dir = Path(exp_dir)
@@ -385,9 +393,17 @@ def run_simple_baseline_all_species(
             k = spec_cfg.get("k", best_k)
             ward = spec_cfg.get("ward")
 
+        preds = None
+        if use_sex_predictions:
+            preds = load_sex_predictions(
+                species_dir.name,
+                models_dir=models_dir,
+            )
+
         run_fold_cv(
             df,
             feature_cols,
+            sex_predictions=preds,
             out_dir=out_dir,
             k_features=k,
             trail_col="Trail",
