@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pandas as pd
 
-from FIT_python.config import RESULTS_DIR
+from FIT_python.config import EXPERIMENT_DIR
 from FIT_python.data_split_and_summary.data_import_utils import sanitize_labels
 
-BASE_DIR = RESULTS_DIR / "experiments" / "fit_start_to_finish"
+BASE_DIR = EXPERIMENT_DIR
 CSV_GLOB = "*_baseline_predictions.csv"
 
 FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}

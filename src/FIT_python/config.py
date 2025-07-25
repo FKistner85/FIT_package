@@ -71,3 +71,10 @@ NUM_FOLDS = 3
 # True  -> raise FileNotFoundError on missing files (development)
 # False -> merely log and continue (production)
 DEBUG_MODE = False
+
+from FIT_python.soft_config import SOFT_CONFIG
+
+EXPERIMENTS_DIR = NOTEBOOKS_DIR.parent / "experiments"
+EXPERIMENT_DIR = EXPERIMENTS_DIR / os.getenv(
+    "FIT_EXPERIMENT_NAME", SOFT_CONFIG["experiment"]["name"]
+)
