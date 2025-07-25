@@ -60,6 +60,19 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+
+        if self._method_norm is None:
+            from sklearn.preprocessing import FunctionTransformer
+
+            transformer = FunctionTransformer(validate=False)
+            transformer.fit(arr)
+            self.reducer_ = transformer
+            if isinstance(X, pd.DataFrame):
+                self.feature_names_out_ = list(X.columns)
+            else:
+                self.feature_names_out_ = [f"x{i}" for i in range(arr.shape[1])]
+            return self
+
         n_samples, n_features = arr.shape
         max_c = min(n_samples, n_features)
         n_used = min(self.requested_n, max_c)
