@@ -88,6 +88,7 @@ def test_run_simple_baseline_all_species(tmp_path, monkeypatch):
     df.to_parquet(sp_dir / "train.parquet", index=False)
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
@@ -134,6 +135,7 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
     df.to_parquet(sp_dir / "train.parquet", index=False)
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)

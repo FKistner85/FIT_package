@@ -44,6 +44,7 @@ def test_run_species_search_executes(tmp_path, monkeypatch):
     build_test_df().to_parquet(data_dir / "test.parquet", index=False)
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.soft_config as scfg

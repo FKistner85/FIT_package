@@ -13,6 +13,7 @@ def test_predict_simple_baseline_reuse_csv(tmp_path, monkeypatch):
     data.to_csv(csv_file, index=False)
 
     monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
+    monkeypatch.setenv('FIT_RAW_DIR', str(root / 'data' / 'raw'))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.simple_baseline as sb
@@ -29,6 +30,7 @@ def test_predict_simple_baseline_missing_csv(tmp_path, monkeypatch):
     (root / 'data').mkdir()
 
     monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
+    monkeypatch.setenv('FIT_RAW_DIR', str(root / 'data' / 'raw'))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.simple_baseline as sb

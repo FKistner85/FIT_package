@@ -35,6 +35,7 @@ def test_sex_prediction_experiment_reuse(tmp_path, monkeypatch):
     )
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
 
     importlib.reload(cfg)
