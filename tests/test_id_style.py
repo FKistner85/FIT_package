@@ -4,7 +4,7 @@ import importlib
 
 def test_id_colors_populated(tmp_path, monkeypatch):
     root = tmp_path
-    csv_dir = root / "results" / "experiments" / "fit_start_to_finish"
+    csv_dir = root / "experiments" / "fit_start_to_finish"
     csv_dir.mkdir(parents=True)
     (root / "data").mkdir()
     df = pd.DataFrame({"individual_id": ["A", "B", "A"], "trail": ["t1", "t2", "t3"]})

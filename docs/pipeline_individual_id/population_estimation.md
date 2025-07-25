@@ -90,5 +90,5 @@ re-runs the evaluation with the averaged cut-off.  A scatter plot of predicted
 versus true population sizes is saved next to the summary.
 
 ```python
-evaluate_with_cutoff(Path("results/experiments/fit_start_to_finish/id_baseline"))
+evaluate_with_cutoff(Path("experiments/fit_start_to_finish/id_baseline"))
 ```

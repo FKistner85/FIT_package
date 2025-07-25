@@ -39,15 +39,11 @@ def _build_categories() -> list[tuple[str, list[Path]]]:
     categories: list[tuple[str, list[Path]]] = []
 
     # Generic experiment level figures
-    split_dir = (
-        config.RESULTS_DIR / 'experiments' / 'fit_start_to_finish' / 'split_fig'
-    )
+    split_dir = config.EXPERIMENT_DIR / 'split_fig'
     if split_dir.exists():
         categories.append(('Data loading and split', [split_dir]))
 
-    sex_boxplot = (
-        config.RESULTS_DIR / 'experiments' / 'fit_start_to_finish' / 'sex_boxplots.png'
-    )
+    sex_boxplot = config.EXPERIMENT_DIR / 'sex_boxplots.png'
     if sex_boxplot.exists():
         categories.append(('Sex model Evaluation', [sex_boxplot]))
 
@@ -69,13 +65,7 @@ def _build_categories() -> list[tuple[str, list[Path]]]:
         if corr_dir:
             paths.append(corr_dir)
 
-        id_dir = (
-            config.RESULTS_DIR
-            / 'experiments'
-            / 'fit_start_to_finish'
-            / 'id_baseline'
-            / species
-        )
+        id_dir = config.EXPERIMENT_DIR / 'id_baseline' / species
         if id_dir.is_dir():
             paths.append(id_dir)
 

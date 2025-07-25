@@ -63,6 +63,12 @@ from the environment variable `FIT_EXPERIMENT_ROOT` and defaults to the current
 working directory if not set.  Directories such as `data/` and `results/` are
 therefore resolved inside the configured experiment root.
 
+Individual experiments are stored under `FIT_python.config.EXPERIMENT_DIR`,
+which defaults to `EXPERIMENT_ROOT/experiments/<SOFT_CONFIG["experiment"]["name"]>`.
+Set the environment variable `FIT_EXPERIMENT_NAME` or adjust
+``SOFT_CONFIG["experiment"]["name"]`` before importing ``FIT_python.config`` to
+write results to a different subfolder.
+
 Raw data is loaded from ``FIT_python.config.RAW_DIR``.  You can override this
 path via the environment variable ``FIT_RAW_DIR``.  If unset it defaults to
 ``<EXPERIMENT_ROOT>/data/raw``.
@@ -122,5 +128,5 @@ a confusion matrix plot next to each CSV.
 
 ```bash
 python -m FIT_python.pipeline_individual_id.overlap_evaluation \
-    results/experiments/fit_start_to_finish/id_baseline
+    experiments/fit_start_to_finish/id_baseline
 ```

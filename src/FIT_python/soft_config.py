@@ -154,4 +154,5 @@ SOFT_CONFIG = {
             },
         }
     },
+    "experiment": {"name": "fit_start_to_finish"},
 }
