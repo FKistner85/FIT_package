@@ -8,6 +8,7 @@ from FIT_python.data_split_and_summary.data_import_utils import coerce_numeric_c
 
 import numpy as np
 import pandas as pd
+from FIT_python.config import GLOBAL_RANDOM_SEED
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
@@ -119,7 +120,7 @@ def run(
     dist_selection_method: str | None = None,
     k_distances: int | None = None,
     classifier=None,
-    random_state: int = 0,
+    random_state: int = GLOBAL_RANDOM_SEED,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Fit a supervised UMAP pipeline and classify validation pairs.
 

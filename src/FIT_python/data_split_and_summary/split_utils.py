@@ -28,13 +28,13 @@ from pathlib import Path
 import pandas as pd
 
 
-from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL
+from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL, GLOBAL_RANDOM_SEED
 
 
 def stratified_individual_split(
     df: pd.DataFrame,
     test_size: float = 0.2,
-    random_state: int = 42,
+    random_state: int = GLOBAL_RANDOM_SEED,
     group_col: str = "individual_id",
     stratify_col: str = "sex",
     add_folds: bool = True,
@@ -375,7 +375,7 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         else:
             # generischer Stratified split nach individual_id (oder GROUP_COL)
             train_df, test_df, inf_df = stratified_individual_split(
-                df, group_col=GROUP_COL, n_folds=NUM_FOLDS, random_state=0
+                df, group_col=GROUP_COL, n_folds=NUM_FOLDS, random_state=GLOBAL_RANDOM_SEED
             )
 
         # 3) Folds ins train_df schreiben, falls nicht schon geschehen

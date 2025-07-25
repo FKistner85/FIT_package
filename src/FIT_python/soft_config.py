@@ -1,5 +1,7 @@
 """Default configuration parameters for pipelines."""
 
+from FIT_python.config import GLOBAL_RANDOM_SEED
+
 SOFT_CONFIG = {
     "data_split_and_summary": {
         "sex_categories": ["Female", "Male"],
@@ -20,7 +22,7 @@ SOFT_CONFIG = {
         "imputation_defaults": {
             "n_estimators": 10,
             "max_iter": 10,
-            "random_state": 42,
+            "random_state": GLOBAL_RANDOM_SEED,
         },
         "dim_reducer_defaults": {
             "method": "pca",
@@ -80,7 +82,7 @@ SOFT_CONFIG = {
         "run_otter_search_sex": {
             "n_iter": 2,
             "cv": "fold",
-            "random_state": 42,
+            "random_state": GLOBAL_RANDOM_SEED,
             "reuse_results": True,
         },
     },

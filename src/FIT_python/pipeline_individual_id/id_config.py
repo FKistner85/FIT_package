@@ -22,7 +22,7 @@ from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
     generate_pairwise_comparisons_from_df,
 )
 from FIT_python.soft_config import SOFT_CONFIG
-from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR
+from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 
 
@@ -112,7 +112,7 @@ def run_species_search(
     *,
     species_filter: list[str] | None = None,
     n_iter: int = 2,
-    random_state: int = 0,
+    random_state: int = GLOBAL_RANDOM_SEED,
 ) -> None:
     """Run BayesSearchCV for all species in ``SPLITS_DIR``.
 
@@ -123,7 +123,7 @@ def run_species_search(
     n_iter : int, optional
         Number of parameter samples drawn by :class:`skopt.BayesSearchCV`.
     random_state : int, optional
-        Random seed controlling the search.
+        Random seed controlling the search. Defaults to ``GLOBAL_RANDOM_SEED``.
     """
 
     for sp_dir in sorted(SPLITS_DIR.iterdir()):

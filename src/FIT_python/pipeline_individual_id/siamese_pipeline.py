@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -135,8 +135,15 @@ def train_siamese(
     return net
 
 
-def _pairwise_dataset(embeddings: np.ndarray, ids: List[str], n_samples: int = 10000):
-    rng = np.random.default_rng(0)
+def _pairwise_dataset(
+    embeddings: np.ndarray,
+    ids: List[str],
+    n_samples: int = 10000,
+    *,
+    seed: int = GLOBAL_RANDOM_SEED,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Return pairwise distance features and labels."""
+    rng = np.random.default_rng(seed)
     n = len(embeddings)
     idx1 = rng.integers(0, n, size=n_samples)
     idx2 = rng.integers(0, n, size=n_samples)
@@ -206,7 +213,7 @@ def run(
     idx_to_id = emb_df.index.to_series().reset_index(drop=True)
 
     ids = df_train["individual_id"].astype(str).tolist()
-    X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids)
+    X_cls, y_cls = _pairwise_dataset(embeddings_arr, ids, seed=seed)
     clf = LogisticRegression(max_iter=200).fit(X_cls, y_cls)
 
     results: List[Dict] = []
