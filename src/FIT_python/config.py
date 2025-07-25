@@ -21,7 +21,7 @@ if not (EXPERIMENT_ROOT / "data").exists():
 
 # Data directories
 DATA_DIR = EXPERIMENT_ROOT / "data"
-RAW_DIR = DATA_DIR / "raw"
+RAW_DIR = Path(os.getenv("FIT_RAW_DIR", DATA_DIR / "raw"))
 CLEANED_DIR = DATA_DIR / "cleaned"
 SPLITS_DIR = DATA_DIR / "splits"
 PROCESSED_DIR = DATA_DIR / "processed"

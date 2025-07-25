@@ -11,6 +11,7 @@ def test_id_colors_populated(tmp_path, monkeypatch):
     df.to_csv(csv_dir / "otter_baseline_predictions.csv", index=False)
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.Visualisations.id_style as ids

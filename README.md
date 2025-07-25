@@ -63,6 +63,10 @@ from the environment variable `FIT_EXPERIMENT_ROOT` and defaults to the current
 working directory if not set.  Directories such as `data/` and `results/` are
 therefore resolved inside the configured experiment root.
 
+Raw data is loaded from ``FIT_python.config.RAW_DIR``.  You can override this
+path via the environment variable ``FIT_RAW_DIR``.  If unset it defaults to
+``<EXPERIMENT_ROOT>/data/raw``.
+
 After training has completed you can point the environment variable to the
 experiment directory and run predictions:
 

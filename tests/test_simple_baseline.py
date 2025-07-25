@@ -29,6 +29,7 @@ def test_simple_baseline_runs(tmp_path, monkeypatch):
     build_test_df().to_parquet(data_dir / "test.parquet", index=False)
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.simple_baseline as sb
@@ -69,6 +70,7 @@ def test_simple_baseline_reuse_results(tmp_path, monkeypatch):
     (root / "data").mkdir()
 
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
     import FIT_python.pipeline_sex.simple_baseline as sb
