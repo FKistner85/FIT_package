@@ -21,6 +21,7 @@ from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
 from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
     generate_pairwise_comparisons_from_df,
 )
+from FIT_python.pipeline_individual_id.evaluation import separation_score
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
