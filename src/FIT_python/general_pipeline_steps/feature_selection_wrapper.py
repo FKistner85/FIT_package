@@ -8,6 +8,11 @@ from sklearn.linear_model import LassoCV
 from FIT_python.config import GLOBAL_RANDOM_SEED
 from FIT_python.utils import debug_report
 
+# Columns that should be passed through unchanged when fitting on a DataFrame.
+# These are considered metadata and excluded from the feature selection
+# procedure.
+DEFAULT_METADATA_COLS = {"individual_id", "Trail", "sex", "id", "Fold"}
+
 
 def _forward_ranking(
     X_arr: np.ndarray, y_arr: np.ndarray, feature_names: List[str], k_max: int
@@ -98,12 +103,14 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y):
         """Rank features according to the chosen method."""
         if isinstance(X, pd.DataFrame):
-            df = X.copy()
+            self.metadata_cols_ = [c for c in X.columns if c in DEFAULT_METADATA_COLS or not pd.api.types.is_numeric_dtype(X[c])]
+            df = X.drop(columns=self.metadata_cols_, errors="ignore")
             feat_names = df.columns.tolist()
             arr = df.values
         else:
             arr = np.asarray(X, float)
             feat_names = [f"f{i}" for i in range(arr.shape[1])]
+            self.metadata_cols_ = []
 
         k_max = self.k or arr.shape[1]
 
@@ -156,9 +163,11 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
     def transform(self, X: Union[pd.DataFrame, np.ndarray]):
         """Return the selected feature columns as the same type as the input."""
         if isinstance(X, pd.DataFrame):
-            out = X[self.selected_features_].copy()
-            debug_report(out, "select")
-            return out
+            meta_cols = [c for c in self.metadata_cols_ if c in X.columns]
+            df_meta = X[meta_cols].copy() if meta_cols else pd.DataFrame(index=X.index)
+            df_feats = X[self.selected_features_].copy()
+            debug_report(df_feats, "select")
+            return pd.concat([df_meta, df_feats], axis=1)
 
         arr = np.asarray(X, float)
         all_feat_names = [f"f{i}" for i in range(arr.shape[1])]

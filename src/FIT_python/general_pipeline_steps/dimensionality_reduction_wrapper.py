@@ -9,6 +9,10 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap
 from FIT_python.utils import debug_report
 
+# Metadata columns that should be passed through unchanged when the input is a
+# DataFrame. These columns are ignored during dimensionality reduction.
+DEFAULT_METADATA_COLS = {"individual_id", "Trail", "sex", "id", "Fold"}
+
 
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     """Apply various dimensionality reduction techniques.
@@ -61,12 +65,14 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         if isinstance(X, pd.DataFrame):
-            X_num = X.select_dtypes(include="number")
+            self.metadata_cols_ = [c for c in X.columns if c in DEFAULT_METADATA_COLS or not pd.api.types.is_numeric_dtype(X[c])]
+            X_num = X.drop(columns=self.metadata_cols_, errors="ignore")
             arr = X_num.to_numpy(dtype=float)
             self.input_features_ = X_num.columns.to_list()
         else:
             arr = np.asarray(X, dtype=float)
             self.input_features_ = [f"x{i}" for i in range(arr.shape[1])]
+            self.metadata_cols_ = []
 
         if self._method_norm is None:
             from sklearn.preprocessing import FunctionTransformer
@@ -144,6 +150,10 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         else:
             out = arr
         debug_report(out, "reduce")
+        if isinstance(X, pd.DataFrame):
+            df_meta = X[[c for c in self.metadata_cols_ if c in X.columns]].copy() if self.metadata_cols_ else pd.DataFrame(index=X.index)
+            df_out = pd.DataFrame(out, columns=self.feature_names_out_, index=X.index)
+            return pd.concat([df_meta, df_out], axis=1)
         return out
 
     def get_feature_names_out(self, input_features=None) -> list[str]:
