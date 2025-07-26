@@ -174,15 +174,14 @@ def run_species_search(
             cv_strategy = cv
         feature_cols = get_feature_cols(df_train)
 
-        pipe = Pipeline(
-            [
-                ("outlier", OutlierCleanerTransformer()),
-                ("scale", FeatureScalerTransformer()),
-                ("select", FeatureSelectionTransformer()),
-                ("reduce", DimensionalityReducerTransformer()),
-                ("est", PairwiseEstimator(feature_cols)),
-            ]
-        )
+        # ``PairwiseEstimator`` already performs outlier cleaning, scaling,
+        # feature selection and dimensionality reduction internally.  Passing
+        # the raw DataFrame ensures that the required metadata columns
+        # (e.g. ``individual_id`` and ``Trail``) remain available.  Wrapping the
+        # estimator in a trivial :class:`~sklearn.pipeline.Pipeline` keeps the
+        # interface compatible with :class:`skopt.BayesSearchCV` while avoiding
+        # loss of information.
+        pipe = Pipeline([("est", PairwiseEstimator(feature_cols))])
 
         search = BayesSearchCV(
             estimator=pipe,
