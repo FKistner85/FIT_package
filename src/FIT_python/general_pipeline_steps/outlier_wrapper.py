@@ -60,8 +60,14 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         self.bounds_ = {}
 
     def fit(self, X, y=None):
-        """No fitting necessary."""
-        arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+        """Calculate clipping or z-score bounds on numeric columns only."""
+        if isinstance(X, pd.DataFrame):
+            X_num = X.select_dtypes(include="number")
+            self.numeric_cols_ = X_num.columns.to_list()
+            arr = X_num.values.astype(float)
+        else:
+            self.numeric_cols_ = None
+            arr = np.asarray(X, dtype=float)
         if self.method == "clip":
             lows = np.quantile(arr, self.lower_quantile, axis=0)
             highs = np.quantile(arr, self.upper_quantile, axis=0)
@@ -73,12 +79,14 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform the DataFrame by clipping or z-score limiting."""
-        arr = (
-            X.values.copy()
-            if isinstance(X, pd.DataFrame)
-            else np.asarray(X, dtype=float)
-        )
+        """Transform ``X`` by clipping or z-score limiting numeric columns."""
+        if isinstance(X, pd.DataFrame):
+            X_out = X.copy()
+            cols = self.numeric_cols_ or X_out.select_dtypes(include="number").columns.tolist()
+            arr = X_out[cols].values.astype(float)
+        else:
+            arr = np.asarray(X, dtype=float)
+            cols = None
         if self.method == "clip":
             low, high = self.bounds_["low"], self.bounds_["high"]
             arr = np.minimum(np.maximum(arr, low), high)
@@ -90,7 +98,8 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
             arr = np.minimum(np.maximum(arr, lower), upper)
         debug_report(arr, "outlier_clean")
         if isinstance(X, pd.DataFrame):
-            return pd.DataFrame(arr, index=X.index, columns=X.columns)
+            X_out[cols] = arr
+            return X_out
         return arr
 
 
