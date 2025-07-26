@@ -56,10 +56,17 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         self._method_norm = method_norm
         self.requested_n = n_components
         self.reducer_ = None
+        self.input_features_: list[str] = []
         self.feature_names_out_: list[str] = []
 
     def fit(self, X, y=None):
-        arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+        if isinstance(X, pd.DataFrame):
+            X_num = X.select_dtypes(include="number")
+            arr = X_num.to_numpy(dtype=float)
+            self.input_features_ = X_num.columns.to_list()
+        else:
+            arr = np.asarray(X, dtype=float)
+            self.input_features_ = [f"x{i}" for i in range(arr.shape[1])]
 
         if self._method_norm is None:
             from sklearn.preprocessing import FunctionTransformer
@@ -67,10 +74,7 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             transformer = FunctionTransformer(validate=False)
             transformer.fit(arr)
             self.reducer_ = transformer
-            if isinstance(X, pd.DataFrame):
-                self.feature_names_out_ = list(X.columns)
-            else:
-                self.feature_names_out_ = [f"x{i}" for i in range(arr.shape[1])]
+            self.feature_names_out_ = list(self.input_features_)
             return self
 
         n_samples, n_features = arr.shape
@@ -128,7 +132,10 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             raise RuntimeError(
                 "DimensionalityReducerTransformer must be fitted before transform."
             )
-        arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+        if isinstance(X, pd.DataFrame):
+            arr = X[self.input_features_].to_numpy(dtype=float)
+        else:
+            arr = np.asarray(X, dtype=float)
 
         if self._method_norm in ("pca", "umap", "lda", "mds", "isomap"):
             out = self.reducer_.transform(arr)
