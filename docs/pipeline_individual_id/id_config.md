@@ -33,13 +33,13 @@ class PairwiseEstimator:
 The Bayesian search space includes ``"est__use_sexmodel_prediction"`` to toggle
 appending sex-model predictions during optimisation.
 
-The helper `run_species_search()` loads the training splits, constructs a `PredefinedSplit` from the fold numbers and performs a Bayesian hyperparameter search. Results are written to `results/<species>_id_search/cv_results.csv`.
+The helper `run_species_search()` loads the training splits and performs a Bayesian hyperparameter search. The cross-validation strategy can be customised via the ``cv`` parameter. When set to ``"fold"`` (default) the function constructs a :class:`~sklearn.model_selection.PredefinedSplit` from the ``Fold`` column. Results are written to ``results/<species>_id_search/cv_results.csv``.
 
 Example usage:
 
 ```python
 from FIT_python.pipeline_individual_id import run_id_search
-run_id_search(n_iter=10, random_state=0)
+run_id_search(n_iter=10, random_state=0, cv="fold")
 ```
 
 After optimisation one can inspect the Euclidean distances via

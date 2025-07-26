@@ -125,6 +125,7 @@ def run_species_search(
     *,
     species_filter: list[str] | None = None,
     n_iter: int = 2,
+    cv: int | str = "fold",
     random_state: int = GLOBAL_RANDOM_SEED,
 ) -> None:
     """Run BayesSearchCV for all species in ``SPLITS_DIR``.
@@ -135,6 +136,10 @@ def run_species_search(
         If given, restrict the search to these species directory names.
     n_iter : int, optional
         Number of parameter samples drawn by :class:`skopt.BayesSearchCV`.
+    cv : int or str, optional
+        Cross-validation strategy. ``"fold"`` uses the ``Fold`` column via
+        :class:`~sklearn.model_selection.PredefinedSplit`. Any other value is
+        forwarded to :class:`skopt.BayesSearchCV` as-is.
     random_state : int, optional
         Random seed controlling the search. Defaults to ``GLOBAL_RANDOM_SEED``.
     """
@@ -151,9 +156,14 @@ def run_species_search(
             continue
 
         df_train = pd.read_parquet(train_fp)
-        fold_ids = df_train["Fold"].astype(int).to_numpy()
+        if cv == "fold":
+            fold_ids = df_train["Fold"].astype(int).to_numpy()
+            df_train = df_train.drop(columns=["Fold"])
+            cv_strategy = PredefinedSplit(test_fold=fold_ids)
+        else:
+            df_train = df_train.drop(columns=["Fold"], errors="ignore")
+            cv_strategy = cv
         feature_cols = get_feature_cols(df_train)
-        cv = PredefinedSplit(test_fold=fold_ids)
 
         pipe = Pipeline([
             ("outlier", OutlierCleanerTransformer()),
@@ -169,13 +179,14 @@ def run_species_search(
             n_iter=n_iter,
             scoring=separation_score(),
             refit=False,
-            cv=cv,
+            cv=cv_strategy,
             n_jobs=1,
             random_state=random_state,
             verbose=0,
         )
 
-        X_all = df_train[feature_cols + ["individual_id", "Trail", "Fold", "id"]].copy()
+        extra_cols = ["individual_id", "Trail", "id"]
+        X_all = df_train[feature_cols + extra_cols].copy()
         search.fit(X_all, None)
 
         out_dir = RESULTS_DATA_DIR / f"{species}_id_search"
