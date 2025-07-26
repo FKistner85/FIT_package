@@ -15,6 +15,7 @@ import pandas as pd
 
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import PATHS
 
 
 class DistanceBaseline:
@@ -71,8 +72,10 @@ class DistanceBaseline:
         use_sexmodel_prediction:
             Whether to append sex-model probabilities as features.
         sexmodel_path:
-            Path to the sex classifier to use when
-            ``use_sexmodel_prediction`` is ``True``.
+            Path to the sex classifier. If ``use_sexmodel_prediction`` is
+            ``True`` and no path is given, the classifier location is derived
+            from the ``species`` column via
+            ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
         n_jobs:
             Number of parallel jobs for the underlying pipeline.
         debug:
@@ -88,6 +91,19 @@ class DistanceBaseline:
 
         base_df = df_rcv if val_df is None else pd.concat([df_rcv, val_df], ignore_index=True)
 
+        model_fp = sexmodel_path
+        if use_sexmodel_prediction and model_fp is None:
+            if "species" not in base_df.columns:
+                raise ValueError(
+                    "sexmodel_path must be provided when use_sexmodel_prediction=True"
+                )
+            species = str(base_df["species"].dropna().unique()[0])
+            model_fp = (
+                PATHS["random_search"]
+                / "best_balanced_test_acc"
+                / f"{species}.joblib"
+            )
+
         results = run_all_pairwise_projections_parallel(
             list(val_comparisons),
             base_df,
@@ -99,7 +115,7 @@ class DistanceBaseline:
             outlier_methods=outlier_methods,
             scaler_methods=scaler_methods,
             use_sexmodel_prediction=use_sexmodel_prediction,
-            sexmodel_path=sexmodel_path,
+            sexmodel_path=model_fp,
             debug=debug,
             n_jobs=n_jobs,
         )

@@ -98,6 +98,7 @@ def test_run_simple_baseline_all_species(tmp_path, monkeypatch):
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
+    from pathlib import Path
 
     sb.run_simple_baseline_all_species(
         root / "exp",
@@ -215,13 +216,15 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
+    from pathlib import Path
 
     captured = {}
 
-    def fake_run(*args, use_sexmodel_prediction=None, out_dir=None, **kwargs):
+    def fake_run(*args, use_sexmodel_prediction=None, sexmodel_path=None, out_dir=None, **kwargs):
         from pathlib import Path
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         captured["use_sexmodel_prediction"] = use_sexmodel_prediction
+        captured["sexmodel_path"] = sexmodel_path
         df_out = pd.DataFrame({"bcr": [1.0]})
         df_out.to_csv(Path(out_dir) / "summary.csv", index=False)
         return df_out
@@ -239,4 +242,6 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
     )
 
     assert captured["use_sexmodel_prediction"] is True
+    expected = cfg.PATHS["random_search"] / "best_balanced_test_acc" / "sp.joblib"
+    assert Path(captured["sexmodel_path"]) == expected
     assert (root / "exp" / "sp" / "summary.csv").exists()
