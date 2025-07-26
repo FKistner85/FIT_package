@@ -329,6 +329,7 @@ def run_simple_baseline_all_species(
     reuse_summary: bool = True,
     n_jobs: int = -1,
     use_sex_predictions: bool = False,
+    use_sexmodel_prediction: bool = False,
     models_dir: Path | None = None,
 ) -> None:
     """Evaluate cross-validation folds for every species.
@@ -357,6 +358,9 @@ def run_simple_baseline_all_species(
     use_sex_predictions : bool, optional
         When ``True`` sex-model probabilities are loaded via
         :func:`load_sex_predictions` and appended before evaluation.
+    use_sexmodel_prediction : bool, optional
+        Forwarded to :func:`run_fold_cv` to toggle usage of sex-model
+        predictions inside the pairwise pipeline.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -411,6 +415,7 @@ def run_simple_baseline_all_species(
             cutoff=ward,
             reuse_summary=reuse_summary,
             n_jobs=n_jobs,
+            use_sexmodel_prediction=use_sexmodel_prediction,
         )
 
 
