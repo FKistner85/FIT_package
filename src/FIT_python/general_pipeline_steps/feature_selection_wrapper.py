@@ -7,11 +7,15 @@ from sklearn.feature_selection import SelectKBest, f_classif, VarianceThreshold
 from sklearn.linear_model import LassoCV
 from FIT_python.config import GLOBAL_RANDOM_SEED
 from FIT_python.utils import debug_report
+from FIT_python.soft_config import SOFT_CONFIG
 
 # Columns that should be passed through unchanged when fitting on a DataFrame.
 # These are considered metadata and excluded from the feature selection
-# procedure.
-DEFAULT_METADATA_COLS = {"individual_id", "Trail", "sex", "id", "Fold"}
+# procedure. The list is defined in :data:`SOFT_CONFIG` so it can easily be
+# customised.
+DEFAULT_METADATA_COLS = set(
+    SOFT_CONFIG["general_pipeline_steps"].get("metadata_cols", [])
+)
 
 
 def _forward_ranking(
