@@ -278,6 +278,23 @@ def run_baseline_all_species(
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
 
+    if selection_method is None:
+        selection_method = SOFT_CONFIG["pipeline_individual_id"][
+            "pairwise_defaults"
+        ]["selection_method"]
+    if reducers is None:
+        reducers = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+            "reducers"
+        ]
+    if n_components is None:
+        n_components = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+            "n_components"
+        ]
+    if scaler_methods is None:
+        scaler_methods = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+            "scaler_methods"
+        ]
+
     for species_dir in tqdm(sorted(SPLITS_DIR.iterdir()), desc="Species"):
         if not species_dir.is_dir():
             continue
@@ -332,6 +349,10 @@ def run_simple_baseline_all_species(
     use_sexmodel_prediction: bool = False,
     models_dir: Path | None = None,
     sexmodel_path: str | Path | None = None,
+    selection_method: str | None = None,
+    reducers: Iterable[str] | str | None = None,
+    n_components: int | Iterable[int] | None = None,
+    scaler_methods: Iterable[str] | str | None = None,
 ) -> None:
     """Evaluate cross-validation folds for every species.
 
@@ -370,6 +391,9 @@ def run_simple_baseline_all_species(
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
+    selection_method, reducers, n_components, scaler_methods : optional
+        Parameters forwarded to :func:`run_fold_cv` controlling feature
+        selection, dimensionality reduction and scaling.
     """
 
     exp_dir = Path(exp_dir)
@@ -431,6 +455,10 @@ def run_simple_baseline_all_species(
             n_jobs=n_jobs,
             use_sexmodel_prediction=use_sexmodel_prediction,
             sexmodel_path=model_fp,
+            selection_method=selection_method,
+            reducers=reducers,
+            n_components=n_components,
+            scaler_methods=scaler_methods,
         )
 
 
