@@ -196,8 +196,9 @@ def run_species_search(
             verbose=0,
         )
 
-        extra_cols = ["individual_id", "Trail", "id"]
-        X_all = df_train[feature_cols + extra_cols].copy()
+        extra_cols = ["individual_id", "Trail", "sex", "id"]
+        use_cols = feature_cols + [c for c in extra_cols if c in df_train.columns]
+        X_all = df_train[use_cols].copy()
         y_all = df_train["Trail"]
         search.fit(X_all, y_all)
 
