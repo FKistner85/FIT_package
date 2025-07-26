@@ -272,10 +272,16 @@ def run_all_pairwise_projections_parallel(
                                 coords = dr_model.transform(X_all)
 
                             # Splitte coords wie gehabt in die drei Gruppen
+                            # ``DimensionalityReducerTransformer`` may return a
+                            # ``DataFrame`` when the input is a ``DataFrame``.
+                            # Convert to ``ndarray`` so downstream indexing with
+                            # ``[:, 0]`` works consistently across pandas and
+                            # numpy.
                             n_a, n_b = len(da), len(db)
-                            ca = coords[:n_a]
-                            cb = coords[n_a : n_a + n_b]
-                            cr = coords[n_a + n_b :]
+                            coords_np = np.asarray(coords)
+                            ca = coords_np[:n_a]
+                            cb = coords_np[n_a : n_a + n_b]
+                            cr = coords_np[n_a + n_b :]
 
                             # Zentren und Distanzen im 2D‑Raum
                             cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
