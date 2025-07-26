@@ -157,6 +157,9 @@ def run_species_search(
             continue
 
         df_train = pd.read_parquet(train_fp)
+
+        if "trail" in df_train.columns and "Trail" not in df_train.columns:
+            df_train = df_train.rename(columns={"trail": "Trail"})
         if cv == "fold":
             fold_ids = df_train["Fold"].astype(int).to_numpy()
             df_train = df_train.drop(columns=["Fold"])
