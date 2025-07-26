@@ -11,21 +11,26 @@ from sklearn.pipeline import Pipeline
 from skopt import BayesSearchCV
 from skopt.space import Categorical
 
-from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTransformer
-from FIT_python.general_pipeline_steps.feature_scaler_wrapper import FeatureScalerTransformer
-from FIT_python.general_pipeline_steps.feature_selection_wrapper import FeatureSelectionTransformer
-from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import DimensionalityReducerTransformer
-from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
-    run_all_pairwise_projections_parallel,
+from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR
+from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
+from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import (
+    DimensionalityReducerTransformer,
 )
+from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
+    FeatureScalerTransformer,
+)
+from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
+    FeatureSelectionTransformer,
+)
+from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTransformer
+from FIT_python.pipeline_individual_id.evaluation import separation_score
 from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
     generate_pairwise_comparisons_from_df,
 )
-from FIT_python.pipeline_individual_id.evaluation import separation_score
+from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
+    run_all_pairwise_projections_parallel,
+)
 from FIT_python.soft_config import SOFT_CONFIG
-from FIT_python.config import SPLITS_DIR, RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED
-from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
-
 
 PIPE_CFG = SOFT_CONFIG["pipeline_individual_id"]
 
@@ -62,7 +67,7 @@ class PairwiseEstimator:
         use_sexmodel_prediction: bool = False,
         sexmodel_path: str | None = None,
     ) -> None:
-        self.feature_cols = list(feature_cols)
+        self.feature_cols = feature_cols
         self.outlier_method = outlier_method
         self.scaler_method = scaler_method
         self.selection_method = selection_method
@@ -107,7 +112,7 @@ class PairwiseEstimator:
         res = run_all_pairwise_projections_parallel(
             comps,
             df_all,
-            feature_cols=self.feature_cols,
+            feature_cols=list(self.feature_cols),
             k_features=self.k_features,
             reducers=[self.reducer],
             selection_method=self.selection_method,
@@ -169,13 +174,15 @@ def run_species_search(
             cv_strategy = cv
         feature_cols = get_feature_cols(df_train)
 
-        pipe = Pipeline([
-            ("outlier", OutlierCleanerTransformer()),
-            ("scale", FeatureScalerTransformer()),
-            ("select", FeatureSelectionTransformer()),
-            ("reduce", DimensionalityReducerTransformer()),
-            ("est", PairwiseEstimator(feature_cols)),
-        ])
+        pipe = Pipeline(
+            [
+                ("outlier", OutlierCleanerTransformer()),
+                ("scale", FeatureScalerTransformer()),
+                ("select", FeatureSelectionTransformer()),
+                ("reduce", DimensionalityReducerTransformer()),
+                ("est", PairwiseEstimator(feature_cols)),
+            ]
+        )
 
         search = BayesSearchCV(
             estimator=pipe,
@@ -198,5 +205,3 @@ def run_species_search(
         pd.DataFrame(search.cv_results_).to_csv(out_dir / "cv_results.csv", index=False)
 
         print(f"✅ Finished {species} -> results under {out_dir}")
-
-
