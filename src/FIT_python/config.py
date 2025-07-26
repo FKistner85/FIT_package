@@ -33,8 +33,8 @@ DEFAULT_TARGETS = ["species", "individual_id", "trail", "sex"]
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
 GLOBAL_RANDOM_SEED = 99
-TEST_SIZE = 0.2
-NUM_FOLDS = 3
+TEST_SIZE = 0.3
+NUM_FOLDS = 4
 # Global debug switch controlling fail-fast behaviour.
 # True  -> raise FileNotFoundError on missing files (development)
 # False -> merely log and continue (production)
