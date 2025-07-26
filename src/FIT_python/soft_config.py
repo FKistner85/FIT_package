@@ -155,5 +155,5 @@ SOFT_CONFIG = {
             },
         }
     },
-    "experiment": {"name": "baysian_test"},
+    "experiment": {"name": "fit_start_to_finish"},
 }
