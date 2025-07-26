@@ -136,6 +136,13 @@ def run_all_pairwise_projections_parallel(
     k_max = max(ks)
     ncs = n_components if isinstance(n_components, (list, tuple)) else [n_components]
 
+    if isinstance(reducers, (list, tuple)):
+        reducer_list = list(reducers)
+    elif reducers is not None:
+        reducer_list = [reducers]
+    else:
+        reducer_list = []
+
     if isinstance(outlier_methods, (list, tuple)):
         outs = outlier_methods
     elif outlier_methods is not None:
@@ -220,7 +227,7 @@ def run_all_pairwise_projections_parallel(
                     df_r_fs = pd.DataFrame(df_r_fs, columns=feat_names, index=df_r.index)
 
                 # 5) iterate over reducers, n_components and k_features
-                for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
+                for reducer in tqdm(reducer_list, desc=f"[Pair {i}] Reducer", leave=False):
                     supervised = reducer in ("lda", "umap")
                     for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
                         for k in tqdm(ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False):

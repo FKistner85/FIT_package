@@ -43,7 +43,7 @@ This document defines all configurable values in the repository. **Any code gene
 ## pipeline_individual_id
 - `pairwise_defaults`: defaults for pairwise embedding pipelines.
   - `k_features`: number of features to select.
-  - `reducers`: list of dimensionality reduction methods.
+  - `reducers`: dimensionality reduction methods as list or single string.
   - `selection_method`: feature selection strategy.
   - `n_components`: target dimensionality for reducers.
   - `outlier_methods`: list of outlier cleaning methods or `None`.

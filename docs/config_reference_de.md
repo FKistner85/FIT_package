@@ -32,7 +32,7 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 ## pipeline_individual_id
 - `pairwise_defaults`: Voreinstellungen für Paar-Embedding-Pipelines.
   - `k_features`: Anzahl der auszuwählenden Merkmale.
-  - `reducers`: Liste der Methoden zur Dimensionsreduktion.
+  - `reducers`: Dimensionsreduktions-Methoden als Liste oder einzelner String.
   - `selection_method`: Verfahren zur Merkmalsauswahl.
   - `n_components`: Ziel-Dimensionalität der Reduktion.
   - `outlier_methods`: Liste der Ausreißer-Methoden oder `None`.
