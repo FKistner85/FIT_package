@@ -109,3 +109,21 @@ def test_resume_checkpoint(tmp_path):
     )
 
     assert resumed == full
+
+
+def test_str_reducer_handling():
+    df = build_data()
+    comps = build_comparisons()
+
+    res = run_all_pairwise_projections_parallel(
+        comps,
+        df,
+        feature_cols=["f1", "f2"],
+        k_features=2,
+        reducers="pca",
+        selection_method="forward",
+        n_components=2,
+        n_jobs=1,
+    )
+
+    assert len(res) == len(comps)
