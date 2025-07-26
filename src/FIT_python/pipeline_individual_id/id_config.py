@@ -198,7 +198,8 @@ def run_species_search(
 
         extra_cols = ["individual_id", "Trail", "id"]
         X_all = df_train[feature_cols + extra_cols].copy()
-        search.fit(X_all, None)
+        y_all = df_train["Trail"]
+        search.fit(X_all, y_all)
 
         out_dir = RESULTS_DATA_DIR / f"{species}_id_search"
         out_dir.mkdir(parents=True, exist_ok=True)
