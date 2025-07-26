@@ -6,7 +6,7 @@ def test_none_method_dataframe():
     df = pd.DataFrame(np.random.randn(5, 3), columns=['a', 'b', 'c'])
     reducer = DimensionalityReducerTransformer(method=None)
     result = reducer.fit(df).transform(df)
-    assert np.array_equal(result, df.values)
+    pd.testing.assert_frame_equal(result, df)
     assert reducer.get_feature_names_out() == ['a', 'b', 'c']
 
 def test_none_method_array():
