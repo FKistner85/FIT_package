@@ -644,6 +644,14 @@ def run_fold_cv(
     fold as validation set while the remaining data forms the training set.  The
     results for every fold are written to ``out_dir`` as ``fold_<n>.csv`` with a
     combined ``summary.csv`` containing the evaluation metrics.
+
+    Parameters
+    ----------
+    sexmodel_path : str, optional
+        Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
+        ``True`` and no path is given, the function attempts to resolve the
+        model path from the ``species`` column using
+        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
     """
 
     from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
@@ -671,6 +679,19 @@ def run_fold_cv(
         df, sex_predictions, sample_col=sample_col
     )
     use_cols = list(feature_cols) + pred_cols
+
+    model_fp = sexmodel_path
+    if use_sexmodel_prediction and model_fp is None:
+        if "species" not in df_all.columns:
+            raise ValueError(
+                "sexmodel_path must be provided when use_sexmodel_prediction=True"
+            )
+        species = str(df_all["species"].dropna().unique()[0])
+        model_fp = (
+            PATHS["random_search"]
+            / "best_balanced_test_acc"
+            / f"{species}.joblib"
+        )
 
     if fold_col not in df_all.columns:
         raise KeyError(f"DataFrame must contain '{fold_col}' column")
@@ -700,7 +721,7 @@ def run_fold_cv(
             "outlier_methods": outlier_methods,
             "scaler_methods": scaler_methods,
             "use_sexmodel_prediction": use_sexmodel_prediction,
-            "sexmodel_path": sexmodel_path,
+            "sexmodel_path": model_fp,
         }
         if k_features is not None:
             kwargs["k_features"] = k_features
