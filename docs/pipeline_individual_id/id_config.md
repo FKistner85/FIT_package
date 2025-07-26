@@ -4,16 +4,34 @@
 
 ```python
 class PairwiseEstimator:
-    def __init__(self, feature_cols: Iterable[str], *, outlier_method=None,
-                 scaler_method=None, selection_method=None, k_features=5,
-                 reducer="pca", n_components=2):
+    def __init__(
+        self,
+        feature_cols: Iterable[str],
+        *,
+        outlier_method=None,
+        scaler_method=None,
+        selection_method=None,
+        k_features=5,
+        reducer="pca",
+        n_components=2,
+        use_sexmodel_prediction=False,
+        sexmodel_path=None,
+    ):
         ...
+
     def predict(self, X: pd.DataFrame):
         comps, _ = generate_pairwise_comparisons_from_df(X)
-        res = run_all_pairwise_projections_parallel(...)
+        res = run_all_pairwise_projections_parallel(
+            ...,
+            use_sexmodel_prediction=self.use_sexmodel_prediction,
+            sexmodel_path=self.sexmodel_path,
+        )
         return pd.DataFrame(res)
 ```
-【F:src/FIT_python/pipeline_individual_id/id_config.py†L32-L71】
+【F:src/FIT_python/pipeline_individual_id/id_config.py†L48-L121】
+
+The Bayesian search space includes ``"est__use_sexmodel_prediction"`` to toggle
+appending sex-model predictions during optimisation.
 
 The helper `run_species_search()` loads the training splits, constructs a `PredefinedSplit` from the fold numbers and performs a Bayesian hyperparameter search. Results are written to `results/<species>_id_search/cv_results.csv`.
 

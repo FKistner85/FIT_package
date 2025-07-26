@@ -103,6 +103,7 @@ SOFT_CONFIG = {
             "select__k": [2, 5, 10],
             "reduce__method": ["pca", "umap", "lda"],
             "n_components": [2, 3, 4],
+            "use_sexmodel_prediction": [False, True],
         },
         "trail_generation_defaults": {
             "sample_size": 9,

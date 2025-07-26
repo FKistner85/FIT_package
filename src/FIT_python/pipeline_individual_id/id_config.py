@@ -33,10 +33,15 @@ SEARCH_SPACE_CFG = PIPE_CFG.get("search_spaces", {})
 SEARCH_SPACES = {
     "est__outlier_method": Categorical(SEARCH_SPACE_CFG.get("outlier", [None])),
     "est__scaler_method": Categorical(SEARCH_SPACE_CFG.get("scale", [None])),
-    "est__selection_method": Categorical(SEARCH_SPACE_CFG.get("select__method", [None])),
+    "est__selection_method": Categorical(
+        SEARCH_SPACE_CFG.get("select__method", [None])
+    ),
     "est__k_features": Categorical(SEARCH_SPACE_CFG.get("select__k", [5])),
     "est__reducer": Categorical(SEARCH_SPACE_CFG.get("reduce__method", ["pca"])),
     "est__n_components": Categorical(SEARCH_SPACE_CFG.get("n_components", [2])),
+    "est__use_sexmodel_prediction": Categorical(
+        SEARCH_SPACE_CFG.get("use_sexmodel_prediction", [False, True])
+    ),
 }
 
 
@@ -53,6 +58,8 @@ class PairwiseEstimator:
         k_features: int = 5,
         reducer: str = "pca",
         n_components: int = 2,
+        use_sexmodel_prediction: bool = False,
+        sexmodel_path: str | None = None,
     ) -> None:
         self.feature_cols = list(feature_cols)
         self.outlier_method = outlier_method
@@ -61,6 +68,8 @@ class PairwiseEstimator:
         self.k_features = k_features
         self.reducer = reducer
         self.n_components = n_components
+        self.use_sexmodel_prediction = use_sexmodel_prediction
+        self.sexmodel_path = sexmodel_path
 
         self._train_df: pd.DataFrame | None = None
         self.results_: pd.DataFrame | None = None
@@ -74,6 +83,8 @@ class PairwiseEstimator:
             "k_features": self.k_features,
             "reducer": self.reducer,
             "n_components": self.n_components,
+            "use_sexmodel_prediction": self.use_sexmodel_prediction,
+            "sexmodel_path": self.sexmodel_path,
         }
 
     def set_params(self, **params):  # pragma: no cover - simple passthrough
@@ -102,6 +113,8 @@ class PairwiseEstimator:
             n_components=self.n_components,
             outlier_methods=self.outlier_method,
             scaler_methods=self.scaler_method,
+            use_sexmodel_prediction=self.use_sexmodel_prediction,
+            sexmodel_path=self.sexmodel_path,
             n_jobs=1,
         )
         self.results_ = pd.DataFrame(res)
