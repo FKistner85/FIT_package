@@ -96,6 +96,11 @@ def run_all_pairwise_projections_parallel(
     checkpoint if it exists and processing continues from the saved index.
     """
 
+    if n_components is None or (
+        isinstance(n_components, (list, tuple)) and any(v is None for v in n_components)
+    ):
+        raise ValueError("n_components must be an int or list of ints, got None")
+
     # --- 0) load sex model if requested ---
     if use_sexmodel_prediction:
         model_fp = sexmodel_path
@@ -486,21 +491,26 @@ def run_embedding_once_pipeline(
     :func:`run_all_pairwise_projections_parallel`.
     """
 
+    kwargs = {
+        "feature_cols": feature_cols,
+        "sample_col": sample_col,
+        "k_features": k_features,
+        "reducers": [reducer],
+        "selection_method": selection_method,
+        "outlier_methods": outlier_method,
+        "scaler_methods": scaler_method,
+        "use_sexmodel_prediction": use_sexmodel_prediction,
+        "sexmodel_path": sexmodel_path,
+        "debug": debug,
+        "n_jobs": 1,
+        "checkpoint_path": checkpoint_path,
+        "resume": resume,
+    }
+    if n_components is not None:
+        kwargs["n_components"] = n_components
+
     return run_all_pairwise_projections_parallel(
         comparisons,
         df,
-        feature_cols=feature_cols,
-        sample_col=sample_col,
-        k_features=k_features,
-        reducers=[reducer],
-        selection_method=selection_method,
-        n_components=n_components,
-        outlier_methods=outlier_method,
-        scaler_methods=scaler_method,
-        use_sexmodel_prediction=use_sexmodel_prediction,
-        sexmodel_path=sexmodel_path,
-        debug=debug,
-        n_jobs=1,
-        checkpoint_path=checkpoint_path,
-        resume=resume,
+        **kwargs,
     )

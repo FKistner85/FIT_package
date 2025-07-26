@@ -442,9 +442,7 @@ def run_simple_baseline_all_species(
                 / f"{species_dir.name}.joblib"
             )
 
-        run_fold_cv(
-            df,
-            feature_cols,
+        kwargs = dict(
             sex_predictions=preds,
             out_dir=out_dir,
             k_features=k,
@@ -457,8 +455,15 @@ def run_simple_baseline_all_species(
             sexmodel_path=model_fp,
             selection_method=selection_method,
             reducers=reducers,
-            n_components=n_components,
             scaler_methods=scaler_methods,
+        )
+        if n_components is not None:
+            kwargs["n_components"] = n_components
+
+        run_fold_cv(
+            df,
+            feature_cols,
+            **kwargs,
         )
 
 
@@ -763,12 +768,13 @@ def run_fold_cv(
             "feature_cols": use_cols,
             "selection_method": selection_method,
             "reducers": reducers,
-            "n_components": n_components,
             "outlier_methods": outlier_methods,
             "scaler_methods": scaler_methods,
             "use_sexmodel_prediction": use_sexmodel_prediction,
             "sexmodel_path": model_fp,
         }
+        if n_components is not None:
+            kwargs["n_components"] = n_components
         if k_features is not None:
             kwargs["k_features"] = k_features
         res = run_all_pairwise_projections_parallel(comps, base_df, **kwargs)
