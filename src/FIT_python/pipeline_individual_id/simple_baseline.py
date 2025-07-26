@@ -16,7 +16,7 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
-from FIT_python.config import SPLITS_DIR
+from FIT_python.config import SPLITS_DIR, PATHS
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from . import sequential_holdout
@@ -331,6 +331,7 @@ def run_simple_baseline_all_species(
     use_sex_predictions: bool = False,
     use_sexmodel_prediction: bool = False,
     models_dir: Path | None = None,
+    sexmodel_path: str | Path | None = None,
 ) -> None:
     """Evaluate cross-validation folds for every species.
 
@@ -361,6 +362,11 @@ def run_simple_baseline_all_species(
     use_sexmodel_prediction : bool, optional
         Forwarded to :func:`run_fold_cv` to toggle usage of sex-model
         predictions inside the pairwise pipeline.
+    sexmodel_path : str or Path, optional
+        Path to a saved sex model forwarded to :func:`run_fold_cv` when
+        ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
+        resolved automatically for each species using
+        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -404,6 +410,14 @@ def run_simple_baseline_all_species(
                 models_dir=models_dir,
             )
 
+        model_fp = sexmodel_path
+        if use_sexmodel_prediction and model_fp is None:
+            model_fp = (
+                PATHS["random_search"]
+                / "best_balanced_test_acc"
+                / f"{species_dir.name}.joblib"
+            )
+
         run_fold_cv(
             df,
             feature_cols,
@@ -416,6 +430,7 @@ def run_simple_baseline_all_species(
             reuse_summary=reuse_summary,
             n_jobs=n_jobs,
             use_sexmodel_prediction=use_sexmodel_prediction,
+            sexmodel_path=model_fp,
         )
 
 
