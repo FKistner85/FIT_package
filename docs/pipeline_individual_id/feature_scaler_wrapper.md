@@ -14,6 +14,7 @@ The `FeatureScalerTransformer` applies either standard or robust scaling. The op
 * **RobustScaler** uses the median and the inter‑quartile range instead of the mean and standard deviation. This makes the scaling procedure much less sensitive to extreme values and heavy‑tailed distributions. The approach follows the ideas discussed for robust statistics in texts such as *Huber, 1981*. While it offers stability for messy data, it may distort variables that are already well behaved.
 
 The transformer returns a `pandas.DataFrame` if the input was a DataFrame and otherwise an `ndarray`, so it integrates neatly into scikit‑learn pipelines.
+Columns that are not numeric are ignored and passed through unchanged.
 
 **References**
 * Huber, P. J. (1981). *Robust Statistics*. John Wiley & Sons.

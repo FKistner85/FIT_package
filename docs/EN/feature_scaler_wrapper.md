@@ -13,6 +13,7 @@ scikit‑learn. The transformer keeps track of the column order so that a
 labels. Use this component when models are sensitive to feature scales. Be aware
 that scaling parameters are learned from the training set and may not be
 appropriate for out‑of‑distribution data.
+Non-numeric columns are left untouched and simply passed through.
 
 ## References
 - https://scikit-learn.org/stable/modules/preprocessing.html#scaling-features
