@@ -13,5 +13,7 @@
 
 * **Z-Score-Winsorizing** setzt Werte außerhalb eines Vielfachen der Standardabweichung auf eben diese Grenze. Dadurch bleibt die Form der Verteilung erhalten, vorausgesetzt sie ist annähernd normalverteilt. Bei stark schiefen Merkmalen wählt man die Schwelle besser vorsichtig.
 
+Nicht-numerische Spalten werden unverändert weitergereicht; der Transformer kann somit bedenkenlos am Anfang einer Pipeline eingesetzt werden.
+
 ### Referenzen
 * Tukey, J. W. (1962). "The future of data analysis." *Annals of Mathematical Statistics*.

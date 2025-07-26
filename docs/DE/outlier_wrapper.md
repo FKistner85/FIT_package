@@ -11,4 +11,6 @@ Der Transformer bereitet numerische Daten für nachgelagerte Analysen auf. Er ei
 - https://scikit-learn.org/stable/modules/preprocessing.html#robust-scaler
 
 ## Annahmen und Einschränkungen
-Voraussetzung sind numerische Eingaben; der Rückgabewert hat den gleichen Typ wie die Eingabe.
+Es werden ausschließlich numerische Spalten verändert. Nicht-numerische Spalten
+werden unverändert durchgereicht, sodass der Transformer problemlos am Anfang
+einer Pipeline stehen kann.

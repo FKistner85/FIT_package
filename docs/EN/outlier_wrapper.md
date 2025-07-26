@@ -17,4 +17,5 @@ the z‑score method assumes an approximately normal distribution.
 - https://scikit-learn.org/stable/modules/preprocessing.html#robust-scaler
 
 ## Assumptions and Limitations
-Assumes numeric inputs; returns same type as input.
+Only numeric columns are modified. Any non-numeric columns are returned
+unchanged so the transformer can be placed at the start of a pipeline.

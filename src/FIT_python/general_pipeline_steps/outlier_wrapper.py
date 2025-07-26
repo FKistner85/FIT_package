@@ -60,8 +60,14 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         self.bounds_ = {}
 
     def fit(self, X, y=None):
-        """No fitting necessary."""
-        arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X, dtype=float)
+        """Compute bounds for numeric columns only."""
+        if isinstance(X, pd.DataFrame):
+            self.columns_ = list(X.select_dtypes(include=np.number).columns)
+            arr = X[self.columns_].to_numpy(dtype=float)
+        else:
+            self.columns_ = None
+            arr = np.asarray(X, dtype=float)
+
         if self.method == "clip":
             lows = np.quantile(arr, self.lower_quantile, axis=0)
             highs = np.quantile(arr, self.upper_quantile, axis=0)
@@ -73,12 +79,14 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform the DataFrame by clipping or z-score limiting."""
-        arr = (
-            X.values.copy()
-            if isinstance(X, pd.DataFrame)
-            else np.asarray(X, dtype=float)
-        )
+        """Transform numeric columns, leaving others untouched."""
+        if isinstance(X, pd.DataFrame):
+            X_out = X.copy()
+            arr = X_out[self.columns_].to_numpy(dtype=float)
+        else:
+            arr = np.asarray(X, dtype=float)
+            X_out = None
+
         if self.method == "clip":
             low, high = self.bounds_["low"], self.bounds_["high"]
             arr = np.minimum(np.maximum(arr, low), high)
@@ -89,8 +97,10 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
             upper = mean + zt * std
             arr = np.minimum(np.maximum(arr, lower), upper)
         debug_report(arr, "outlier_clean")
+
         if isinstance(X, pd.DataFrame):
-            return pd.DataFrame(arr, index=X.index, columns=X.columns)
+            X_out[self.columns_] = arr
+            return X_out
         return arr
 
 
