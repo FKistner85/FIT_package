@@ -355,10 +355,17 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
     - Für alle anderen Arten `stratified_individual_split`.
     """
 
+    normalised_filter = None
+    if species_filter:
+        normalised_filter = {
+            s.replace(" ", "_").lower() for s in species_filter
+        }
+
     for csv_fp in RAW_DIR.glob("*.csv"):
         species = csv_fp.stem  # z.B. "Eurasian Otter"
+        species_key = species.replace(" ", "_").lower()
         # Filter?
-        if species_filter and species not in species_filter:
+        if normalised_filter and species_key not in normalised_filter:
             continue
 
         # 1) Import
