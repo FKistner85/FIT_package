@@ -623,6 +623,15 @@ def run_fold_cv(
     subsample: bool = False,
     cutoff: float | None = None,
     overlap_prob: float = 0.5,
+    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        "selection_method"
+    ],
+    reducers: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["reducers"],
+    n_components: int | Iterable[int] = SOFT_CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["n_components"],
     outlier_methods: Iterable[str]
     | str
     | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
@@ -647,6 +656,9 @@ def run_fold_cv(
 
     Parameters
     ----------
+    selection_method, reducers, n_components, scaler_methods
+        Parameters forwarded to ``run_all_pairwise_projections_parallel`` to
+        control feature selection, dimensionality reduction and scaling.
     sexmodel_path : str, optional
         Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
         ``True`` and no path is given, the function attempts to resolve the
@@ -718,6 +730,9 @@ def run_fold_cv(
         kwargs = {
             "n_jobs": n_jobs,
             "feature_cols": use_cols,
+            "selection_method": selection_method,
+            "reducers": reducers,
+            "n_components": n_components,
             "outlier_methods": outlier_methods,
             "scaler_methods": scaler_methods,
             "use_sexmodel_prediction": use_sexmodel_prediction,
