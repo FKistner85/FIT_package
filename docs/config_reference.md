@@ -25,6 +25,8 @@ This document defines all configurable values in the repository. **Any code gene
 - `scaler_default`: default scaler method.
 - `imputation_defaults`: default settings for the iterative imputer.
 - `dim_reducer_defaults`: default parameters for dimensionality reduction.
+- `metadata_cols`: columns treated as metadata and passed through wrappers
+  unchanged.
 
 ## pipeline_sex
 - `model_keys`: order of classifier keys available in `MODELS`.

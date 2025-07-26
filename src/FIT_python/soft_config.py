@@ -31,6 +31,10 @@ SOFT_CONFIG = {
             "min_dist": 0.1,
             "whiten": False,
         },
+        # Columns that should be preserved when wrappers operate on DataFrames
+        # regardless of their data type. Pipelines may overwrite this entry at
+        # runtime to customise behaviour.
+        "metadata_cols": ["individual_id", "Trail", "sex", "id", "Fold"],
     },
     "pipeline_sex": {
         "model_keys": [

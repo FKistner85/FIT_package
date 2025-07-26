@@ -14,6 +14,8 @@ Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden 
 - `scaler_default`: Standard-Skalierungsmethode.
 - `imputation_defaults`: Einstellungen für den iterativen Imputer.
 - `dim_reducer_defaults`: Parameter für die Dimensionsreduktion.
+- `metadata_cols`: Spalten, die von den Wrappern als Metadaten unverändert
+  durchgereicht werden.
 
 ## pipeline_sex
 - `model_keys`: Reihenfolge der Klassifikatorkürzel aus `MODELS`.
