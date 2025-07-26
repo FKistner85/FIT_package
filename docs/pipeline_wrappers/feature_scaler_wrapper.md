@@ -13,5 +13,7 @@ Der `FeatureScalerTransformer` stellt zwei Varianten des Skalierens bereit:
 
 * **RobustScaler** verwendet Median und Interquartilsabstand und ist damit unempfindlicher gegenüber Ausreißern. Dies bietet sich bei schiefen oder verrauschten Daten an. Der Preis dafür ist eine gewisse Verzerrung bei eigentlich skalengetreuen Variablen.
 
+Nicht-numerische Spalten im DataFrame werden unverändert durchgereicht.
+
 ### Referenzen
 * Die [scikit-learn Dokumentation zur Vorverarbeitung](https://scikit-learn.org/stable/modules/preprocessing.html#scaling-features) erläutert die Skalierer im Detail.

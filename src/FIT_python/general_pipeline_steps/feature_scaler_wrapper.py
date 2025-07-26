@@ -37,8 +37,9 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         # determine whether input is DataFrame or ``ndarray``
         if isinstance(X, pd.DataFrame):
-            arr = X.values
-            self.feature_names_in_ = X.columns.to_list()
+            X_num = X.select_dtypes(include="number")
+            arr = X_num.to_numpy(dtype=float)
+            self.feature_names_in_ = X_num.columns.to_list()
         else:
             arr = np.asarray(X, dtype=float)
             # assign dummy column names ``f0``, ``f1``, ... for ``ndarray`` input
@@ -55,19 +56,20 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        # consistently convert to ``ndarray``
+        # consistently convert to ``ndarray`` and only scale numeric columns
         if isinstance(X, pd.DataFrame):
-            arr = X.values
+            X_out = X.copy()
+            arr = X_out[self.feature_names_in_].to_numpy(dtype=float)
         else:
             arr = np.asarray(X, dtype=float)
+            X_out = None
 
         arr_out = self.scaler.transform(arr)
         debug_report(arr_out, "scale")
 
-        # return DataFrame with original labels if that was the input
         if isinstance(X, pd.DataFrame):
-            return pd.DataFrame(arr_out, index=X.index, columns=self.feature_names_in_)
-        # otherwise return ``ndarray``
+            X_out[self.feature_names_in_] = arr_out
+            return X_out
         return arr_out
 
 

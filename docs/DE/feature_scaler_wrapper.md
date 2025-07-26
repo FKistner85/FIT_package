@@ -12,3 +12,4 @@ Je nach gewählter Methode wird eine Standard- oder robuste Skalierung ausgefüh
 
 ## Annahmen und Einschränkungen
 Gibt ein Array oder DataFrame im selben Typ wie die Eingabe zurück.
+Nicht-numerische Spalten werden unverändert durchgereicht.
