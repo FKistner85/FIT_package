@@ -154,6 +154,9 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         else:
             out = arr
         debug_report(out, "reduce")
+        if out.shape[1] < len(self.feature_names_out_):
+            pad = np.zeros((out.shape[0], len(self.feature_names_out_) - out.shape[1]))
+            out = np.concatenate([out, pad], axis=1)
         if isinstance(X, pd.DataFrame):
             df_meta = X[[c for c in self.metadata_cols_ if c in X.columns]].copy() if self.metadata_cols_ else pd.DataFrame(index=X.index)
             df_out = pd.DataFrame(out, columns=self.feature_names_out_, index=X.index)

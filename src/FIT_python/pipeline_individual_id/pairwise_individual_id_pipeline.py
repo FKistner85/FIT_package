@@ -18,7 +18,7 @@ from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
-from FIT_python.config import RESULTS_DATA_DIR
+from FIT_python.config import RESULTS_DATA_DIR, PATHS
 from FIT_python.soft_config import SOFT_CONFIG
 
 # Local modules
@@ -77,7 +77,9 @@ def run_all_pairwise_projections_parallel(
     Steps
     -----
     0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
-       precompute ``predict_proba``. ``sexmodel_path`` must point to a valid ``.joblib`` file.
+       precompute ``predict_proba``. When no ``sexmodel_path`` is given, the
+       classifier location is derived from the ``species`` column via
+       ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
     1. Clean the base DataFrame.
     2. Apply pipeline steps: outlier cleaning and feature scaling.
     3. Perform feature selection once with ``k_max`` on the **scaled** data.
@@ -96,12 +98,22 @@ def run_all_pairwise_projections_parallel(
 
     # --- 0) load sex model if requested ---
     if use_sexmodel_prediction:
-        if not sexmodel_path:
-            raise ValueError("sexmodel_path must be provided when use_sexmodel_prediction=True")
+        model_fp = sexmodel_path
+        if model_fp is None:
+            if "species" not in df.columns:
+                raise ValueError(
+                    "sexmodel_path must be provided when use_sexmodel_prediction=True"
+                )
+            species = str(df["species"].dropna().unique()[0])
+            model_fp = (
+                PATHS["random_search"]
+                / "best_balanced_test_acc"
+                / f"{species}.joblib"
+            )
 
-        model_fp = Path(sexmodel_path)
+        model_fp = Path(model_fp)
         if not model_fp.is_file():
-            raise FileNotFoundError(f"Sex model file not found: {sexmodel_path}")
+            raise FileNotFoundError(f"Sex model file not found: {model_fp}")
 
         sex_clf = load(model_fp)
 
