@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
     run_all_pairwise_projections_parallel,
     run_embedding_once_pipeline,
@@ -127,3 +128,23 @@ def test_str_reducer_handling():
     )
 
     assert len(res) == len(comps)
+
+
+def test_n_components_none_raises():
+    df = build_data()
+    comps = build_comparisons()
+
+    with pytest.raises(
+        ValueError,
+        match="n_components must be an int or list of ints, got None",
+    ):
+        run_all_pairwise_projections_parallel(
+            comps,
+            df,
+            feature_cols=["f1", "f2"],
+            k_features=2,
+            reducers=["pca"],
+            selection_method="forward",
+            n_components=None,
+            n_jobs=1,
+        )

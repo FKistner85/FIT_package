@@ -316,3 +316,63 @@ def test_run_simple_baseline_all_species_forward_params(tmp_path, monkeypatch):
         "scaler_methods": "standard",
     }
     assert (root / "exp" / "sp" / "summary.csv").exists()
+
+
+def test_run_simple_baseline_all_species_none_n_components(tmp_path, monkeypatch):
+    root = tmp_path
+    sp_dir = root / "data" / "splits" / "sp"
+    sp_dir.mkdir(parents=True)
+
+    rows = []
+    idx = 0
+    for fold in [0, 1]:
+        for ind in ["A", "B"]:
+            rows.append(
+                {
+                    "id": idx,
+                    "individual_id": ind,
+                    "f1": float(idx),
+                    "Trail": f"{ind}_{fold}",
+                    "sex": "f" if ind == "A" else "m",
+                    "fold": fold,
+                }
+            )
+            idx += 1
+    pd.DataFrame(rows).to_parquet(sp_dir / "train.parquet", index=False)
+
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
+    import FIT_python.config as cfg
+    import importlib
+    importlib.reload(cfg)
+    from FIT_python.soft_config import SOFT_CONFIG
+
+    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+
+    import FIT_python.pipeline_individual_id.simple_baseline as sb
+    importlib.reload(sb)
+    from pathlib import Path
+
+    captured = {}
+
+    def fake_run(*args, n_components=None, out_dir=None, **kwargs):
+        Path(out_dir).mkdir(parents=True, exist_ok=True)
+        captured["n_components"] = n_components
+        df_out = pd.DataFrame({"bcr": [1.0]})
+        df_out.to_csv(Path(out_dir) / "summary.csv", index=False)
+        return df_out
+
+    monkeypatch.setattr(sb, "run_fold_cv", fake_run)
+
+    sb.run_simple_baseline_all_species(
+        root / "exp",
+        best_k=1,
+        cutoff={},
+        subsample=True,
+        reuse_summary=False,
+        n_jobs=1,
+        n_components=None,
+    )
+
+    assert captured["n_components"] is None
+    assert (root / "exp" / "sp" / "summary.csv").exists()
