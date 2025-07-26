@@ -680,7 +680,10 @@ def run_fold_cv(
     The function iterates over unique values in ``fold_col`` and treats each
     fold as validation set while the remaining data forms the training set.  The
     results for every fold are written to ``out_dir`` as ``fold_<n>.csv`` with a
-    combined ``summary.csv`` containing the evaluation metrics.
+    combined ``summary.csv`` containing the evaluation metrics.  Summary rows
+    now also include a ``pipeline`` identifier describing the preprocessing and
+    reduction steps chosen inside
+    :func:`run_all_pairwise_projections_parallel`.
 
     Parameters
     ----------
@@ -776,6 +779,10 @@ def run_fold_cv(
         df_res["fold"] = fold
         all_parts.append(df_res.copy())
 
+        pipeline_name = (
+            df_res["pipeline"].iloc[0] if "pipeline" in df_res.columns else ""
+        )
+
         df_res["pred"] = compute_overlap_jsl_style_vec(df_res, p=overlap_prob)
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
         bcr = compute_bcr(cm)
@@ -800,6 +807,7 @@ def run_fold_cv(
 
         summaries.append(
             {
+                "pipeline": pipeline_name,
                 "fold": fold,
                 "bcr": bcr,
                 "pred_count": pred_n,
