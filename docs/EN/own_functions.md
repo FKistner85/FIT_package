@@ -187,7 +187,8 @@ Process all pairwise projections.
 Steps
 -----
 0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
-   precompute ``predict_proba``. ``sexmodel_path`` must point to a valid ``.joblib`` file.
+   precompute ``predict_proba``. When no ``sexmodel_path`` is given, the
+   classifier is resolved automatically from ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
 1. Clean the base DataFrame.
 2. Apply pipeline steps: outlier cleaning and feature scaling.
 3. Perform feature selection once with ``k_max``.
