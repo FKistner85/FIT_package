@@ -12,4 +12,4 @@ Die Klasse ermöglicht einen einheitlichen Aufruf verschiedener Reduktionsverfah
 - https://umap-learn.readthedocs.io/en/latest/
 
 ## Annahmen und Einschränkungen
-Wählt die Methode anhand der Parameter; beaufsichtigter Modus nur bei LDA oder UMAP möglich.
+Wählt die Methode anhand der Parameter; UMAP wird stets beaufsichtigt trainiert, sodass die Option `supervised` nur andere Verfahren betrifft.

@@ -24,7 +24,7 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
     Supported methods
     -----------------
     - PCA (unsupervised)
-    - UMAP (unsupervised or supervised)
+    - UMAP (supervised)
     - t-SNE (unsupervised)
     - LDA (supervised)
     - MDS (unsupervised)
@@ -48,7 +48,9 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         n_components:
             Number of dimensions to keep. Defaults to ``2``.
         supervised:
-            Whether to perform supervised reduction where supported.
+            Whether to perform supervised reduction where supported. This flag
+            is ignored when ``method='umap'`` because UMAP is always trained in
+            supervised mode.
         **kwargs:
             Additional arguments passed to the underlying reducer.
         """
@@ -62,6 +64,9 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
         if method_norm not in (None, "pca", "umap", "tsne", "lda", "mds", "isomap"):
             raise ValueError(f"Unknown method: {method!r}")
         self._method_norm = method_norm
+        if method_norm == "umap":
+            # Always run UMAP in supervised mode regardless of the flag
+            self.supervised = True
         self.requested_n = n_components
         self.reducer_ = None
         self.input_features_: list[str] = []
@@ -101,19 +106,15 @@ class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
             reducer.fit(arr)
 
         elif self._method_norm == "umap":
-            if self.supervised and y is not None:
-                y_series = pd.Series(y)
-                if not np.issubdtype(y_series.dtype, np.number):
-                    y_encoded = pd.factorize(y_series)[0]
-                else:
-                    y_encoded = y_series.to_numpy()
-                reducer = umap.UMAP(
-                    n_components=n_used, target_metric="categorical", **self.kwargs
-                )
-                reducer.fit(arr, y_encoded)
+            y_series = pd.Series(y)
+            if not np.issubdtype(y_series.dtype, np.number):
+                y_encoded = pd.factorize(y_series)[0]
             else:
-                reducer = umap.UMAP(n_components=n_used, **self.kwargs)
-                reducer.fit(arr)
+                y_encoded = y_series.to_numpy()
+            reducer = umap.UMAP(
+                n_components=n_used, target_metric="categorical", **self.kwargs
+            )
+            reducer.fit(arr, y_encoded)
 
         elif self._method_norm == "lda":
             reducer = LinearDiscriminantAnalysis(n_components=n_used, **self.kwargs)
