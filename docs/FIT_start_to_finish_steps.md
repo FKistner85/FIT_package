@@ -62,6 +62,9 @@ these folds without creating new holdout sets.  Passing
 `load_sex_predictions` (optionally using `models_dir`) and appends them before
 cross-validation. Results are stored in the respective species directories with
 one CSV per fold and a combined `summary.csv`.
+The helper `aggregate_all_folds(EXP_DIR/'fold_cv')` can collect all
+species `all_folds.csv` files into `all_species_folds.csv` for further
+analysis.
 
 ## Global Cut-off Evaluation
 
