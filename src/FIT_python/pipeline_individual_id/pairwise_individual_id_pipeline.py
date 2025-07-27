@@ -18,7 +18,7 @@ from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
-from FIT_python.config import RESULTS_DATA_DIR
+from FIT_python.config import RESULTS_DATA_DIR, PATHS
 from FIT_python.soft_config import SOFT_CONFIG
 
 # Local modules
@@ -77,7 +77,9 @@ def run_all_pairwise_projections_parallel(
     Steps
     -----
     0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
-       precompute ``predict_proba``. ``sexmodel_path`` must point to a valid ``.joblib`` file.
+       precompute ``predict_proba``. When no ``sexmodel_path`` is given, the
+       classifier location is derived from the ``species`` column via
+       ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
     1. Clean the base DataFrame.
     2. Apply pipeline steps: outlier cleaning and feature scaling.
     3. Perform feature selection once with ``k_max`` on the **scaled** data.
@@ -94,14 +96,29 @@ def run_all_pairwise_projections_parallel(
     checkpoint if it exists and processing continues from the saved index.
     """
 
+    if n_components is None or (
+        isinstance(n_components, (list, tuple)) and any(v is None for v in n_components)
+    ):
+        raise ValueError("n_components must be an int or list of ints, got None")
+
     # --- 0) load sex model if requested ---
     if use_sexmodel_prediction:
-        if not sexmodel_path:
-            raise ValueError("sexmodel_path must be provided when use_sexmodel_prediction=True")
+        model_fp = sexmodel_path
+        if model_fp is None:
+            if "species" not in df.columns:
+                raise ValueError(
+                    "sexmodel_path must be provided when use_sexmodel_prediction=True"
+                )
+            species = str(df["species"].dropna().unique()[0])
+            model_fp = (
+                PATHS["random_search"]
+                / "best_balanced_test_acc"
+                / f"{species}.joblib"
+            )
 
-        model_fp = Path(sexmodel_path)
+        model_fp = Path(model_fp)
         if not model_fp.is_file():
-            raise FileNotFoundError(f"Sex model file not found: {sexmodel_path}")
+            raise FileNotFoundError(f"Sex model file not found: {model_fp}")
 
         sex_clf = load(model_fp)
 
@@ -123,6 +140,13 @@ def run_all_pairwise_projections_parallel(
     ks = k_features if isinstance(k_features, (list, tuple)) else [k_features]
     k_max = max(ks)
     ncs = n_components if isinstance(n_components, (list, tuple)) else [n_components]
+
+    if isinstance(reducers, (list, tuple)):
+        reducer_list = list(reducers)
+    elif reducers is not None:
+        reducer_list = [reducers]
+    else:
+        reducer_list = []
 
     if isinstance(outlier_methods, (list, tuple)):
         outs = outlier_methods
@@ -208,7 +232,7 @@ def run_all_pairwise_projections_parallel(
                     df_r_fs = pd.DataFrame(df_r_fs, columns=feat_names, index=df_r.index)
 
                 # 5) iterate over reducers, n_components and k_features
-                for reducer in tqdm(reducers, desc=f"[Pair {i}] Reducer", leave=False):
+                for reducer in tqdm(reducer_list, desc=f"[Pair {i}] Reducer", leave=False):
                     supervised = reducer in ("lda", "umap")
                     for nc in tqdm(ncs, desc=f"[Pair {i} / {reducer}] n_comp", leave=False):
                         for k in tqdm(ks, desc=f"[Pair {i} / {reducer} / nc={nc}] k", leave=False):
@@ -272,10 +296,16 @@ def run_all_pairwise_projections_parallel(
                                 coords = dr_model.transform(X_all)
 
                             # Splitte coords wie gehabt in die drei Gruppen
+                            # ``DimensionalityReducerTransformer`` may return a
+                            # ``DataFrame`` when the input is a ``DataFrame``.
+                            # Convert to ``ndarray`` so downstream indexing with
+                            # ``[:, 0]`` works consistently across pandas and
+                            # numpy.
                             n_a, n_b = len(da), len(db)
-                            ca = coords[:n_a]
-                            cb = coords[n_a : n_a + n_b]
-                            cr = coords[n_a + n_b :]
+                            coords_np = np.asarray(coords)
+                            ca = coords_np[:n_a]
+                            cb = coords_np[n_a : n_a + n_b]
+                            cr = coords_np[n_a + n_b :]
 
                             # Zentren und Distanzen im 2D‑Raum
                             cA, cB, cR = ca.mean(axis=0), cb.mean(axis=0), cr.mean(axis=0)
@@ -461,21 +491,26 @@ def run_embedding_once_pipeline(
     :func:`run_all_pairwise_projections_parallel`.
     """
 
+    kwargs = {
+        "feature_cols": feature_cols,
+        "sample_col": sample_col,
+        "k_features": k_features,
+        "reducers": [reducer],
+        "selection_method": selection_method,
+        "outlier_methods": outlier_method,
+        "scaler_methods": scaler_method,
+        "use_sexmodel_prediction": use_sexmodel_prediction,
+        "sexmodel_path": sexmodel_path,
+        "debug": debug,
+        "n_jobs": 1,
+        "checkpoint_path": checkpoint_path,
+        "resume": resume,
+    }
+    if n_components is not None:
+        kwargs["n_components"] = n_components
+
     return run_all_pairwise_projections_parallel(
         comparisons,
         df,
-        feature_cols=feature_cols,
-        sample_col=sample_col,
-        k_features=k_features,
-        reducers=[reducer],
-        selection_method=selection_method,
-        n_components=n_components,
-        outlier_methods=outlier_method,
-        scaler_methods=scaler_method,
-        use_sexmodel_prediction=use_sexmodel_prediction,
-        sexmodel_path=sexmodel_path,
-        debug=debug,
-        n_jobs=1,
-        checkpoint_path=checkpoint_path,
-        resume=resume,
+        **kwargs,
     )

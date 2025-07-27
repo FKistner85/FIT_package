@@ -153,6 +153,11 @@ def run(
     overlap_prob:
         Probability mass for :func:`compute_overlap_jsl_style_vec` when predicting
         whether two trails belong to the same individual.
+    sexmodel_path : str, optional
+        Path to a saved sex classifier.  If ``use_sexmodel_prediction`` is
+        ``True`` and no path is provided, the model location is derived from the
+        ``species`` column using
+        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
 
     Returns
     -------
@@ -178,6 +183,19 @@ def run(
 
     df_all, pred_cols = _merge_predictions(df, sex_predictions, sample_col=sample_col)
     use_cols = list(feature_cols) + pred_cols
+
+    model_fp = sexmodel_path
+    if use_sexmodel_prediction and model_fp is None:
+        if "species" not in df_all.columns:
+            raise ValueError(
+                "sexmodel_path must be provided when use_sexmodel_prediction=True"
+            )
+        species = str(df_all["species"].dropna().unique()[0])
+        model_fp = (
+            PATHS["random_search"]
+            / "best_balanced_test_acc"
+            / f"{species}.joblib"
+        )
 
     unique_ids = df_all[id_col].dropna().astype(str).unique()
     splits = sequential_holdout_ids(unique_ids, val_sizes=val_sizes, n_iter=iterations, random_state=random_state)
@@ -205,7 +223,7 @@ def run(
             "outlier_methods": outlier_methods,
             "scaler_methods": scaler_methods,
             "use_sexmodel_prediction": use_sexmodel_prediction,
-            "sexmodel_path": sexmodel_path,
+            "sexmodel_path": model_fp,
         }
         if k_features is not None:
             kwargs["k_features"] = k_features

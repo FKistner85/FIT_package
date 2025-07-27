@@ -13,16 +13,7 @@ from skopt.space import Categorical
 
 from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
-from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import (
-    DimensionalityReducerTransformer,
-)
-from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
-    FeatureScalerTransformer,
-)
-from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
-    FeatureSelectionTransformer,
-)
-from FIT_python.general_pipeline_steps.outlier_wrapper import OutlierCleanerTransformer
+
 from FIT_python.pipeline_individual_id.evaluation import separation_score
 from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
     generate_pairwise_comparisons_from_df,
@@ -52,7 +43,12 @@ SEARCH_SPACES = {
 
 
 class PairwiseEstimator:
-    """Estimator that computes pairwise distances using the embedding pipeline."""
+    """Estimator that computes pairwise distances using the embedding pipeline.
+
+    All preprocessing steps including outlier cleaning, scaling, feature
+    selection and dimensionality reduction are handled inside
+    :func:`run_all_pairwise_projections_parallel`.
+    """
 
     def __init__(
         self,
@@ -148,6 +144,12 @@ def run_species_search(
         forwarded to :class:`skopt.BayesSearchCV` as-is.
     random_state : int, optional
         Random seed controlling the search. Defaults to ``GLOBAL_RANDOM_SEED``.
+
+    Notes
+    -----
+    Preprocessing (outlier cleaning, scaling, feature selection and dimensional
+    reduction) is performed inside :class:`PairwiseEstimator` by
+    :func:`run_all_pairwise_projections_parallel`.
     """
 
     for sp_dir in sorted(SPLITS_DIR.iterdir()):
@@ -174,15 +176,7 @@ def run_species_search(
             cv_strategy = cv
         feature_cols = get_feature_cols(df_train)
 
-        pipe = Pipeline(
-            [
-                ("outlier", OutlierCleanerTransformer()),
-                ("scale", FeatureScalerTransformer()),
-                ("select", FeatureSelectionTransformer()),
-                ("reduce", DimensionalityReducerTransformer()),
-                ("est", PairwiseEstimator(feature_cols)),
-            ]
-        )
+        pipe = Pipeline([("est", PairwiseEstimator(feature_cols))])
 
         search = BayesSearchCV(
             estimator=pipe,
