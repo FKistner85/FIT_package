@@ -10,7 +10,8 @@ Transformer implementing PCA, UMAP, t-SNE, LDA, MDS and Isomap.
 Sklearn‑style transformer that wraps several reduction algorithms such as PCA,
 UMAP, t‑SNE, LDA, MDS and Isomap. Select the desired method via the `method`
 parameter and optionally enable the `supervised` flag when a label vector is
-required (e.g. for LDA or supervised UMAP). The transformer expects numeric
+required (e.g. for LDA). For UMAP the flag is ignored because the algorithm is
+always run in supervised mode. The transformer expects numeric
 matrices and returns the reduced coordinates. While PCA and LDA are relatively
 fast, methods like t‑SNE can be slow and non‑deterministic. The unified API
 makes experimentation easy but not all approaches work equally well for all
@@ -21,4 +22,5 @@ datasets.
 - https://umap-learn.readthedocs.io/en/latest/
 
 ## Assumptions and Limitations
-Chooses method based on parameters; supervised mode for LDA/UMAP.
+Chooses method based on parameters; UMAP is always supervised so the
+`supervised` flag only affects other reducers.

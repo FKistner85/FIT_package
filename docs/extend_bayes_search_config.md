@@ -14,8 +14,8 @@ SOFT_CONFIG["pipeline_sex"]["search_spaces"].update(
     {
         "outlier": [None, "clip", "zscore"],
         "scale": [None, "standard", "robust"],
-        "reduce_pre__method": [None, "pca", "umap_unsupervised", "umap_supervised", "lda"],
-        "reduce_post__method": [None, "pca", "umap_unsupervised", "umap_supervised", "lda"],
+        "reduce_pre__method": [None, "pca", "umap", "lda"],
+        "reduce_post__method": [None, "pca", "umap", "lda"],
     }
 )
 ```

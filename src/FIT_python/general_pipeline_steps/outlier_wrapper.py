@@ -234,7 +234,7 @@ OUTLIER_PRESETS = {}
 # 3.1 Unsupervised UMAP → DF → 1% drop
 OUTLIER_PRESETS["umap_centroid_1pct"] = Pipeline(
     [
-        ("umap_df", UMAPtoDF(n_components=2)),
+        ("umap_df", UMAPtoDF(n_components=2, supervised=True)),
         (
             "centroid",
             CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True),
@@ -256,14 +256,14 @@ OUTLIER_PRESETS["sup_umap_centroid_1pct"] = Pipeline(
 # 3.3 Iterative unsupervised: 20%→UMAP→5%→UMAP→1%
 OUTLIER_PRESETS["umap_centroid_iterative"] = Pipeline(
     [
-        ("umap0", UMAPtoDF(n_components=2)),
+        ("umap0", UMAPtoDF(n_components=2, supervised=True)),
         (
             "coarse20",
             CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True),
         ),
-        ("umap1", UMAPtoDF(n_components=2)),
+        ("umap1", UMAPtoDF(n_components=2, supervised=True)),
         ("fine5", CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0, drop=True)),
-        ("umap2", UMAPtoDF(n_components=2)),
+        ("umap2", UMAPtoDF(n_components=2, supervised=True)),
         ("very1", CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True)),
     ]
 )
@@ -286,14 +286,14 @@ OUTLIER_PRESETS["sup_umap_centroid_iterative"] = Pipeline(
 # 3.5 Hybrid unsup→sup→unsup
 OUTLIER_PRESETS["hybrid_umap_centroid_iterative"] = Pipeline(
     [
-        ("umap0", UMAPtoDF(n_components=2, supervised=False)),
+        ("umap0", UMAPtoDF(n_components=2, supervised=True)),
         (
             "coarse20",
             CentroidOutlierTransformer(bandwidth=0.5, percentile=20.0, drop=True),
         ),
         ("umap1", UMAPtoDF(n_components=2, supervised=True)),
         ("fine5", CentroidOutlierTransformer(bandwidth=0.5, percentile=5.0, drop=True)),
-        ("umap2", UMAPtoDF(n_components=2, supervised=False)),
+        ("umap2", UMAPtoDF(n_components=2, supervised=True)),
         ("very1", CentroidOutlierTransformer(bandwidth=0.5, percentile=1.0, drop=True)),
     ]
 )
