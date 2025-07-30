@@ -202,3 +202,49 @@ def test_preprocessing_uses_fit_df(monkeypatch):
 
     assert captured["out"] == len(train_df)
     assert captured["scale"] == len(train_df)
+
+
+def test_rcv_uses_fit_df():
+    df = build_data()
+    extra = {
+        "id": len(df),
+        "individual_id": "C",
+        "sex": 0,
+        "f1": 2.0,
+        "f2": 2.0,
+    }
+    df_extra = pd.DataFrame([extra])
+    df_all = pd.concat([df, df_extra], ignore_index=True)
+
+    train_df = df_all.iloc[:4]
+    val_df = df_all.iloc[4:]
+    base_df = pd.concat([train_df, val_df], ignore_index=True)
+
+    comps = [
+        {
+            "ind_a": "A",
+            "ind_b": "B",
+            "trail_a_id": "A2",
+            "trail_b_id": "B1",
+            "samples_a": [2, 3],
+            "samples_b": [4],
+            "same_individual": False,
+            "fold": 0,
+        }
+    ]
+
+    res = run_all_pairwise_projections_parallel(
+        comps,
+        base_df,
+        feature_cols=["f1", "f2"],
+        k_features=2,
+        reducers=["pca"],
+        selection_method="forward",
+        n_components=2,
+        n_jobs=1,
+        fit_df=train_df,
+    )
+
+    assert len(res) == 1
+    # RCV set should contain only training samples (ids 0 and 1)
+    assert len(res[0]["coords_r_x"]) == 2
