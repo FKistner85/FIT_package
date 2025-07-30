@@ -108,6 +108,7 @@ class PairwiseEstimator:
         res = run_all_pairwise_projections_parallel(
             comps,
             df_all,
+            fit_df=self._train_df,
             feature_cols=list(self.feature_cols),
             k_features=self.k_features,
             reducers=[self.reducer],

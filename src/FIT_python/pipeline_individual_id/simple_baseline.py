@@ -777,7 +777,12 @@ def run_fold_cv(
             kwargs["n_components"] = n_components
         if k_features is not None:
             kwargs["k_features"] = k_features
-        res = run_all_pairwise_projections_parallel(comps, base_df, **kwargs)
+        res = run_all_pairwise_projections_parallel(
+            comps,
+            base_df,
+            fit_df=df_train,
+            **kwargs,
+        )
         df_res = pd.DataFrame(res)
         if df_res.empty:
             continue

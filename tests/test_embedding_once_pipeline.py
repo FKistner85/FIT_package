@@ -148,3 +148,57 @@ def test_n_components_none_raises():
             n_components=None,
             n_jobs=1,
         )
+
+
+def test_preprocessing_uses_fit_df(monkeypatch):
+    df = build_data()
+    train_df = df.iloc[:4]
+    val_df = df.iloc[4:]
+    base_df = pd.concat([train_df, val_df], ignore_index=True)
+    comps = [build_comparisons()[1]]
+
+    captured = {}
+
+    import FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline as pp
+
+    class StubOut:
+        def __init__(self, method=None):
+            pass
+
+        def fit(self, X):
+            captured["out"] = len(X)
+            return self
+
+        def transform(self, X):
+            return X
+
+    class StubScale:
+        def __init__(self, method=None):
+            pass
+
+        def fit(self, X):
+            captured["scale"] = len(X)
+            return self
+
+        def transform(self, X):
+            return X
+
+    monkeypatch.setattr(pp, "OutlierCleanerTransformer", StubOut)
+    monkeypatch.setattr(pp, "FeatureScalerTransformer", StubScale)
+
+    run_all_pairwise_projections_parallel(
+        comps,
+        base_df,
+        feature_cols=["f1", "f2"],
+        k_features=2,
+        reducers=["pca"],
+        selection_method="forward",
+        n_components=2,
+        outlier_methods="clip_90",
+        scaler_methods="standard",
+        n_jobs=1,
+        fit_df=train_df,
+    )
+
+    assert captured["out"] == len(train_df)
+    assert captured["scale"] == len(train_df)

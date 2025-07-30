@@ -71,6 +71,7 @@ def run_all_pairwise_projections_parallel(
     n_jobs: int = -1,
     checkpoint_path: str | None = None,
     resume: bool = False,
+    fit_df: pd.DataFrame | None = None,
 ) -> List[Dict]:
     """Process all pairwise projections.
 
@@ -89,6 +90,9 @@ def run_all_pairwise_projections_parallel(
        - apply the dimensionality reduction
        - compute distances
        - record results including average probabilities for A/B/R
+
+    ``fit_df`` optionally specifies the DataFrame used to fit the preprocessing
+    steps.  When ``None`` the full ``df`` is used for fitting as before.
 
     Parameters ``checkpoint_path`` and ``resume`` allow long runs to be continued.
     When ``checkpoint_path`` is given the current index and partial results are
@@ -125,6 +129,11 @@ def run_all_pairwise_projections_parallel(
     # --- 1) prepare base DataFrame ---
     df_base, idx_to_id = prepare_base_df(
         df, feature_cols, sample_col=sample_col
+    )
+    df_fit, _ = prepare_base_df(
+        fit_df if fit_df is not None else df,
+        feature_cols,
+        sample_col=sample_col,
     )
 
     # --- 2) pre-compute ``predict_proba`` for all samples ---
@@ -166,16 +175,18 @@ def run_all_pairwise_projections_parallel(
     preprocessed_cache: Dict[Tuple[Optional[str], Optional[str]], pd.DataFrame] = {}
     for out_method in outs:
         for scaler_method in scalers:
-            X = df_base[feature_cols]
+            X_fit = df_fit[feature_cols]
+            X_base = df_base[feature_cols]
             if out_method:
                 out = OutlierCleanerTransformer(method=out_method)
-                out.fit(X)
-                X = out.transform(X)
+                out.fit(X_fit)
+                X_fit = out.transform(X_fit)
+                X_base = out.transform(X_base)
             if scaler_method:
                 scaler = FeatureScalerTransformer(method=scaler_method)
-                scaler.fit(X)
-                X = scaler.transform(X)
-            preprocessed_cache[(out_method, scaler_method)] = X
+                scaler.fit(X_fit)
+                X_base = scaler.transform(X_base)
+            preprocessed_cache[(out_method, scaler_method)] = X_base
 
     def process_pair(i: int, comp: Dict) -> List[Dict]:
 

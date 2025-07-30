@@ -107,6 +107,7 @@ class DistanceBaseline:
         results = run_all_pairwise_projections_parallel(
             list(val_comparisons),
             base_df,
+            fit_df=df_rcv,
             feature_cols,
             k_features=SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
             reducers=reducers or ["lda"],
