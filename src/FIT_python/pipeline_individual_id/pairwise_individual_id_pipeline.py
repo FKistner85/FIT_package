@@ -200,8 +200,18 @@ def run_all_pairwise_projections_parallel(
         trail_a_id = comp["trail_a_id"]
         trail_b_id = comp["trail_b_id"]
 
-        # RCV set as the complement
-        rcv_ids = df_base.index.difference(ids_a + ids_b)
+        # RCV set as the complement using the fitting DataFrame
+        # ``df_fit`` contains only the training samples and therefore
+        # determines the reference control variation set regardless of
+        # any validation rows included in ``df``.
+        rcv_ids = df_fit.index.difference(ids_a + ids_b)
+
+        if len(rcv_ids) < 2:
+            if debug:
+                print(
+                    f"[DEBUG] skip pair {i}: not enough RCV samples ({len(rcv_ids)})"
+                )
+            return []
 
         # labels for feature selection
         y_ab = np.concatenate([np.zeros(size_a, int), np.ones(size_b, int)])
@@ -227,6 +237,11 @@ def run_all_pairwise_projections_parallel(
                 X_ab_proc = pd.concat([df_a, df_b], ignore_index=True)
                 selector.fit(X_ab_proc, y_ab)
                 full_ranking = selector.feature_ranking_
+
+                if not full_ranking:
+                    if debug:
+                        print(f"[DEBUG] skip pair {i}: no features ranked")
+                    continue
 
                 df_a_fs = selector.transform(df_a)
                 df_b_fs = selector.transform(df_b)
@@ -283,7 +298,7 @@ def run_all_pairwise_projections_parallel(
                             # --- Gemeinsames Fit & Transform für alle supervised Reducer inkl. RCV ---
                             dr_model = DimensionalityReducerTransformer(
                                 method=reducer,
-                                n_components=2,
+                                n_components=nc_eff,
                                 supervised=supervised
                             )
 
@@ -296,15 +311,30 @@ def run_all_pairwise_projections_parallel(
                                 np.full(len(dr), 2, dtype=int)
                             ])
 
+                            if debug:
+                                print(f"[DEBUG] X_all shape {X_all.shape}")
+
+                            if X_all.shape[1] == 0:
+                                if debug:
+                                    print(
+                                        f"[DEBUG] skip pair {i}, k={k}, reducer={reducer}: no features after selection"
+                                    )
+                                continue
+
                             # Fit & Transform in einem Schritt
-                            if supervised:
-                                # LDA, supervised UMAP etc. trainieren auf A/B/RCV
-                                dr_model.fit(X_all, y_all)
-                                coords = dr_model.transform(X_all)
-                            else:
-                                # unsupervised Reducer (PCA, t-SNE, unsupervised UMAP...)
-                                dr_model.fit(X_all, None)
-                                coords = dr_model.transform(X_all)
+                            try:
+                                if supervised:
+                                    # LDA, supervised UMAP etc. trainieren auf A/B/RCV
+                                    dr_model.fit(X_all, y_all)
+                                    coords = dr_model.transform(X_all)
+                                else:
+                                    # unsupervised Reducer (PCA, t-SNE, unsupervised UMAP...)
+                                    dr_model.fit(X_all, None)
+                                    coords = dr_model.transform(X_all)
+                            except Exception as exc:
+                                if debug:
+                                    print(f"[DEBUG] skip pair {i}, k={k}, reducer={reducer}: {exc}")
+                                continue
 
                             # Splitte coords wie gehabt in die drei Gruppen
                             # ``DimensionalityReducerTransformer`` may return a
