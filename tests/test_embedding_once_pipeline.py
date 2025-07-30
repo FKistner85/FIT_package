@@ -45,6 +45,7 @@ def test_embedding_once_matches_pairwise():
     res_pw = run_all_pairwise_projections_parallel(
         comps,
         df,
+        train_df=df,
         feature_cols=['f1', 'f2'],
         k_features=2,
         reducers=['pca'],
@@ -56,6 +57,7 @@ def test_embedding_once_matches_pairwise():
     res_emb = run_embedding_once_pipeline(
         comps,
         df,
+        train_df=df,
         feature_cols=['f1', 'f2'],
         k_features=2,
         reducer='pca',
@@ -75,6 +77,7 @@ def test_resume_checkpoint(tmp_path):
     full = run_all_pairwise_projections_parallel(
         comps,
         df,
+        train_df=df,
         feature_cols=['f1', 'f2'],
         k_features=2,
         reducers=['pca'],
@@ -87,6 +90,7 @@ def test_resume_checkpoint(tmp_path):
     run_all_pairwise_projections_parallel(
         comps[:1],
         df,
+        train_df=df,
         feature_cols=['f1', 'f2'],
         k_features=2,
         reducers=['pca'],
@@ -99,6 +103,7 @@ def test_resume_checkpoint(tmp_path):
     resumed = run_all_pairwise_projections_parallel(
         comps,
         df,
+        train_df=df,
         feature_cols=['f1', 'f2'],
         k_features=2,
         reducers=['pca'],
@@ -119,6 +124,7 @@ def test_str_reducer_handling():
     res = run_all_pairwise_projections_parallel(
         comps,
         df,
+        train_df=df,
         feature_cols=["f1", "f2"],
         k_features=2,
         reducers="pca",
@@ -141,6 +147,7 @@ def test_n_components_none_raises():
         run_all_pairwise_projections_parallel(
             comps,
             df,
+            train_df=df,
             feature_cols=["f1", "f2"],
             k_features=2,
             reducers=["pca"],

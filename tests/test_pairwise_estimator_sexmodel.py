@@ -28,8 +28,9 @@ def test_pairwise_estimator_passes_sexmodel_args(tmp_path, monkeypatch):
 
     captured = {}
 
-    def fake_run(comps, df, **kwargs):
+    def fake_run(comps, df, train_df=None, **kwargs):
         captured.update(kwargs)
+        assert train_df.equals(train)
         return []
 
     monkeypatch.setattr(ic, "generate_pairwise_comparisons_from_df", fake_gen)
@@ -78,6 +79,7 @@ def test_pairwise_pipeline_autodetects_sexmodel(tmp_path, monkeypatch):
             [],
             df,
             ["f1"],
+            train_df=df,
             use_sexmodel_prediction=True,
             n_jobs=1,
         )

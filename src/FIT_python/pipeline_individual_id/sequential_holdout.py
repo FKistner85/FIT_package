@@ -227,7 +227,12 @@ def run(
         }
         if k_features is not None:
             kwargs["k_features"] = k_features
-        res = run_all_pairwise_projections_parallel(comps, base_df, **kwargs)
+        res = run_all_pairwise_projections_parallel(
+            comps,
+            base_df,
+            train_df=df_train,
+            **kwargs,
+        )
         df_res = pd.DataFrame(res)
         if df_res.empty:
             continue

@@ -46,6 +46,7 @@ def run_all_pairwise_projections_parallel(
     df: pd.DataFrame,
     feature_cols: List[str],
     *,
+    train_df: pd.DataFrame | None = None,
     sample_col: str = "id",
     k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "k_features"
@@ -81,7 +82,9 @@ def run_all_pairwise_projections_parallel(
        classifier location is derived from the ``species`` column via
        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
     1. Clean the base DataFrame.
-    2. Apply pipeline steps: outlier cleaning and feature scaling.
+    2. Apply pipeline steps: outlier cleaning and feature scaling.  When
+       ``train_df`` is given, the transformers are fitted on that subset
+       and applied to the full ``df``.
     3. Perform feature selection once with ``k_max`` on the **scaled** data.
     4. Use an RCV set as the complement.
     5. Extract and average sex probabilities.
@@ -164,18 +167,22 @@ def run_all_pairwise_projections_parallel(
 
     # --- Cache outlier & scaling steps for all method combinations ---
     preprocessed_cache: Dict[Tuple[Optional[str], Optional[str]], pd.DataFrame] = {}
+    df_fit = df if train_df is None else train_df
+    df_fit_base, _ = prepare_base_df(df_fit, feature_cols, sample_col=sample_col)
     for out_method in outs:
         for scaler_method in scalers:
-            X = df_base[feature_cols]
+            X_train = df_fit_base[feature_cols]
+            X_all = df_base[feature_cols]
             if out_method:
                 out = OutlierCleanerTransformer(method=out_method)
-                out.fit(X)
-                X = out.transform(X)
+                out.fit(X_train)
+                X_train = out.transform(X_train)
+                X_all = out.transform(X_all)
             if scaler_method:
                 scaler = FeatureScalerTransformer(method=scaler_method)
-                scaler.fit(X)
-                X = scaler.transform(X)
-            preprocessed_cache[(out_method, scaler_method)] = X
+                scaler.fit(X_train)
+                X_all = scaler.transform(X_all)
+            preprocessed_cache[(out_method, scaler_method)] = X_all
 
     def process_pair(i: int, comp: Dict) -> List[Dict]:
 
@@ -454,6 +461,7 @@ def run_embedding_once_pipeline(
     df: pd.DataFrame,
     *,
     feature_cols: List[str],
+    train_df: pd.DataFrame | None = None,
     sample_col: str = "id",
     k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
     reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
@@ -488,7 +496,8 @@ def run_embedding_once_pipeline(
     """Convenience wrapper that processes comparisons sequentially.
 
     Parameters ``checkpoint_path`` and ``resume`` mirror the arguments of
-    :func:`run_all_pairwise_projections_parallel`.
+    :func:`run_all_pairwise_projections_parallel`.  The ``train_df`` argument
+    allows fitting the preprocessing steps on a subset of ``df``.
     """
 
     kwargs = {
@@ -512,5 +521,6 @@ def run_embedding_once_pipeline(
     return run_all_pairwise_projections_parallel(
         comparisons,
         df,
+        train_df=train_df,
         **kwargs,
     )

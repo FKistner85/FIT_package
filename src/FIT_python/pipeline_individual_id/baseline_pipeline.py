@@ -108,6 +108,7 @@ class DistanceBaseline:
             list(val_comparisons),
             base_df,
             feature_cols,
+            train_df=df_rcv,
             k_features=SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
             reducers=reducers or ["lda"],
             selection_method=selection_method,
