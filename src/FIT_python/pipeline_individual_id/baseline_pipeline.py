@@ -107,7 +107,6 @@ class DistanceBaseline:
         results = run_all_pairwise_projections_parallel(
             list(val_comparisons),
             base_df,
-            fit_df=df_rcv,
             feature_cols,
             k_features=SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
             reducers=reducers or ["lda"],
@@ -119,6 +118,7 @@ class DistanceBaseline:
             sexmodel_path=model_fp,
             debug=debug,
             n_jobs=n_jobs,
+            fit_df=df_rcv,
         )
 
         return pd.DataFrame(results)
