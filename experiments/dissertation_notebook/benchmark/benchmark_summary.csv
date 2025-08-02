@@ -1,0 +1,9 @@
+Species,Balanced Accuracy,Accuracy,Majority Vote Accuracy,Female Accuracy,Male Accuracy
+Amur Tiger,0.93,0.92,1.0,0.89,0.94
+Bengal Tiger,0.9,0.9,0.86,0.9,0.76
+Eurasian Otter,0.84,0.83,1.0,0.76,0.88
+Giant Panda,0.81,0.78,0.78,0.96,0.52
+Mountain Lion,0.78,0.78,0.71,0.81,0.8
+White Rhino,0.59,0.41,0.44,0.22,0.95
+Cheetah,0.55,0.56,0.5,0.59,0.45
+Lowlandtapir,0.53,0.55,0.62,0.43,0.64

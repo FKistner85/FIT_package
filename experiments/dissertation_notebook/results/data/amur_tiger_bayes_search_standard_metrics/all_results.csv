@@ -1,0 +1,24 @@
+species,mean_test_accuracy,mean_test_balanced_accuracy,mean_test_neg_log_loss,clf,outlier,reduce_post__method,reduce_pre__method,scale,select__k,select__method,female_train_acc,male_train_acc,balanced_train_acc,accuracy_train,female_test_acc,male_test_acc,balanced_test_acc,accuracy_test,female_full_acc,male_full_acc,balanced_full_acc,accuracy_full,maj_train_count,maj_train_wrong,maj_train_pct,maj_test_count,maj_test_wrong,maj_test_pct,maj_full_count,maj_full_wrong,maj_full_pct,pipeline_id
+amur_tiger,0.8956141887894464,0.9007498563370093,-0.2696896663371725,LinearDiscriminantAnalysis(),OutlierCleanerTransformer(),None,None,FeatureScalerTransformer(),2,lasso,0.9217192813684041,0.9130489393647289,0.9179500254971953,0.917864476386037,0.9285714285714285,0.8541666666666666,0.9105809802012333,0.923728813559322,0.9232088785864528,0.9018332683746219,0.9181479996435891,0.9190082644628099,33,2,0.9428571428571428,9,0,1.0,42,2,0.9545454545454546,outlier=OutlierCleanerTransformer();scale=FeatureScalerTransformer();reduce_pre__method=None;select__method=lasso;select__k=2;reduce_post__method=None;clf=LinearDiscriminantAnalysis()
+amur_tiger,0.8876698467626303,0.899966133004926,-0.2604719912057919,LinearDiscriminantAnalysis(),OutlierCleanerTransformer(method='zscore'),None,None,FeatureScalerTransformer(),2,random_forest,0.918099647266314,0.9102707749766573,0.915332313445521,0.9158110882956879,0.8857142857142858,0.9444444444444444,0.9300551768906199,0.923728813559322,0.9110593512767428,0.916780045351474,0.9171567317116636,0.9173553719008265,33,2,0.9428571428571428,9,0,1.0,42,2,0.9545454545454546,outlier=OutlierCleanerTransformer(method='zscore');scale=FeatureScalerTransformer();reduce_pre__method=None;select__method=random_forest;select__k=2;reduce_post__method=None;clf=LinearDiscriminantAnalysis()
+amur_tiger,0.8616404351662084,0.8697119936296765,-0.3723475753859621,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",OutlierCleanerTransformer(method='zscore'),None,None,FeatureScalerTransformer(),1,lasso,0.9309263267596601,0.9387265297482015,0.9363929967703553,0.9363449691991786,0.9,0.9375,0.9300551768906199,0.923728813559322,0.9242032122466906,0.9384929050342583,0.9344649380735989,0.9338842975206612,35,0,1.0,9,0,1.0,44,0,1.0,"outlier=OutlierCleanerTransformer(method='zscore');scale=FeatureScalerTransformer();reduce_pre__method=None;select__method=lasso;select__k=1;reduce_post__method=None;clf=XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)"

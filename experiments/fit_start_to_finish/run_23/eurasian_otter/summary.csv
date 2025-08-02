@@ -1,4 +1,0 @@
-pipeline,fold,bcr,pred_count,true_count,erd,ward_cutoff,cutoff_low,cutoff_high,tp,fp,tn,fn,n_pairs,ccc
-lasso_no_out_standard_k50_lda_nc2_sex_on,0,0.49489795918367346,9,9,0.0,5.065962787522578,5.028138519486434,5.103787055558721,0,1,97,7,105,
-lasso_no_out_standard_k50_lda_nc2_sex_on,1,0.6666666666666666,9,9,0.0,5.731164861528828,5.676693725275058,5.785635997782598,3,0,96,6,105,
-lasso_no_out_standard_k50_lda_nc2_sex_on,2,0.5,9,9,0.0,5.725902798117147,5.696595841183957,5.755209755050338,0,0,175,15,190,
