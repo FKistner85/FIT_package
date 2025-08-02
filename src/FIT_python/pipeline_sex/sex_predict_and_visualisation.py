@@ -197,9 +197,14 @@ def predict_all(
         species, prefer_generic, models_dir
     )
 
-    # Falls CSV schon existiert
-    if reuse_csv and csv_path.exists():
-        return pd.read_csv(csv_path)
+    # When reuse_csv=True the predictions must already exist on disk
+    if reuse_csv:
+        if csv_path.exists():
+            return pd.read_csv(csv_path)
+        raise FileNotFoundError(
+            f"Predictions CSV not found: {csv_path}. "
+            "Set reuse_csv=False to recompute predictions."
+        )
 
     if not splits_dir.is_dir():
         warnings.warn(f"Split directory for {species!r} not found – skipping.")
@@ -379,72 +384,64 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
 
 # === Plots für Confusion & Inference ===
 def plot_confusion(df: pd.DataFrame) -> None:
-    """Plot CV vs. test confusion matrices for each model."""
+    """Plot confusion matrices for train (CV) and test predictions.
+
+    The new :func:`predict_all` function no longer stores model specific
+    prediction columns such as ``pred_<model>_sex``.  Instead, predictions for
+    the best model are available in a single ``pred_sex`` column.  This
+    implementation therefore directly uses this column for both train and test
+    splits and, when available, compares the train split's out-of-fold
+    predictions with the test predictions.
+    """
+
     apply_style()
-    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
-    if not pred_cols:
-        raise KeyError("DataFrame contains no prediction columns")
 
-    models = {
-        c[len("pred_") : -len("_sex")] for c in pred_cols if not c.endswith("_cv_sex")
-    }
-    for mk in sorted(models):
-        test_col = f"pred_{mk}_sex"
-        cv_col = f"pred_{mk}_cv_sex"
-        if test_col not in df.columns:
-            continue
+    if "pred_sex" not in df.columns:
+        raise KeyError("DataFrame contains no 'pred_sex' column")
+    if "__split__" not in df.columns:
+        raise KeyError("DataFrame is missing the '__split__' column")
 
-        train = df[(df["__split__"] == "train") & df["sex"].isin(["f", "m"])]
-        test = df[(df["__split__"] == "test") & df["sex"].isin(["f", "m"])]
-        if train.empty or test.empty:
-            continue
+    train = df[(df["__split__"] == "train") & df["sex"].isin(["f", "m"])]
+    test = df[(df["__split__"] == "test") & df["sex"].isin(["f", "m"])]
+    if train.empty or test.empty:
+        return
 
-        y_true_train = train["sex"].map({"f": "F", "m": "M"})
-        y_true_test = test["sex"].map({"f": "F", "m": "M"})
+    # Map labels to 'F'/'M' for display
+    mapping = {"f": "F", "m": "M"}
+    y_true_train = train["sex"].map(mapping)
+    y_true_test = test["sex"].map(mapping)
+    y_pred_train = train["pred_sex"].map(mapping)
+    y_pred_test = test["pred_sex"].map(mapping)
 
-        y_pred_train = (
-            train[cv_col].map({0: "F", 1: "M"}) if cv_col in df.columns else None
+    cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
+    cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
+
+    height = plt.rcParams["figure.figsize"][1] * 0.6
+    fig, axes = plt.subplots(1, 2, figsize=(8, height), sharey=True)
+    mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
+
+    for ax, (cm, title) in zip(axes, mats):
+        sns.heatmap(
+            cm / cm.sum(axis=1, keepdims=True),
+            annot=True,
+            fmt=".2f",
+            cmap="Blues",
+            xticklabels=["Female", "Male"],
+            yticklabels=["Female", "Male"],
+            ax=ax,
         )
-        y_pred_test = test[test_col].map({0: "F", 1: "M"})
-
-        cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
-        if y_pred_train is not None:
-            cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
-            height = plt.rcParams["figure.figsize"][1] * 0.6
-            fig, axes = plt.subplots(
-                1,
-                2,
-                figsize=(8, height),
-                sharey=True,
-            )
-            mats = [(cm_train, "CV (train)"), (cm_test, "Test")]
+        ax.set_title(title)
+        ax.set_xlabel("Predicted Sex")
+        if ax is axes[0]:
+            ax.set_ylabel("True Sex")
         else:
-            fig, axes = plt.subplots(1, 1, figsize=(4, 4))
-            axes = [axes]
-            mats = [(cm_test, "Test")]
+            ax.set_ylabel("")
+            ax.tick_params(axis="y", labelleft=False)
+        ax.set_xticklabels(["Female", "Male"], rotation=0)
+        ax.set_yticklabels(["Female", "Male"], rotation=0)
 
-        for ax, (cm, title) in zip(axes, mats):
-            sns.heatmap(
-                cm / cm.sum(axis=1, keepdims=True),
-                annot=True,
-                fmt=".2f",
-                cmap="Blues",
-                xticklabels=["Female", "Male"],
-                yticklabels=["Female", "Male"],
-                ax=ax,
-            )
-            ax.set_title(title)
-            ax.set_xlabel("Predicted Sex")
-            if ax is axes[0]:
-                ax.set_ylabel("True Sex")
-            else:
-                ax.set_ylabel("")
-                ax.tick_params(axis="y", labelleft=False)
-            ax.set_xticklabels(["Female", "Male"], rotation=0)
-            ax.set_yticklabels(["Female", "Male"], rotation=0)
-
-        plt.tight_layout()
-        plt.show()
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_inference(df: pd.DataFrame) -> None:
@@ -605,7 +602,11 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path) -> None
     apply_style()
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
-    proba_cols = [c for c in df if c.startswith("pred_") and c.endswith("_proba_m")]
+
+    # ``predict_all`` now produces a single probability column ``pred_proba_m``.
+    # For backwards compatibility we still detect any columns ending with
+    # ``_proba_m``.
+    proba_cols = [c for c in df.columns if c.endswith("_proba_m")]
     if not proba_cols:
         raise ValueError(
             "DataFrame contains no probability columns ending with '_proba_m'.",
@@ -628,7 +629,10 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path) -> None
         grouped["sex_std"] = map_sex(grouped["sex"])
 
         for col in proba_cols:
-            model = col.split("_")[1]
+            # Remove prefix/suffix to obtain a readable model identifier.  When
+            # no identifier is present (e.g. ``pred_proba_m``) fall back to a
+            # generic name to avoid creating file names with double underscores.
+            model = col[len("pred_") : -len("_proba_m")] or "pred"
             height = plt.rcParams["figure.figsize"][1] * 0.75
             plt.figure(figsize=(plt.rcParams["figure.figsize"][0], height))
             sns.histplot(

@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pandas as pd
 
-from FIT_python.config import EXPERIMENT_DIR
+from FIT_python.config import EXPERIMENTS_DIR
 from FIT_python.data_split_and_summary.data_import_utils import sanitize_labels
 
-BASE_DIR = EXPERIMENT_DIR
+BASE_DIR = EXPERIMENTS_DIR
 CSV_GLOB = "*_baseline_predictions.csv"
 
 FILLED_MARKERS = {"o", "s", "^", "v", "P", "X", "D", "*", "h", "8"}
@@ -49,7 +49,7 @@ def _load_unique() -> tuple[list[str], list[str], dict[str, str]]:
     ids: set[str] = set()
     trails: set[str] = set()
     trail_to_id: dict[str, str] = {}
-    for fp in BASE_DIR.glob(CSV_GLOB):
+    for fp in BASE_DIR.glob(f"**/{CSV_GLOB}"):
         usecols = ["individual_id", "trail"]
         df = pd.read_csv(fp, usecols=lambda c: c in usecols)
         df = sanitize_id_trail(df)
