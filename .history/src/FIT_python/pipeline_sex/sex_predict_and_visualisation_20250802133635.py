@@ -417,7 +417,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
         plt.show()
 
 
-def plot_inference(df: pd.DataFrame) -> None:
+def plot_inference_with_simple_labels(df: pd.DataFrame) -> None:
     """Plot predicted sex counts for inference split with Location + Trail number labels."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]

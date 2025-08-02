@@ -8,7 +8,7 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, PATHS
-from FIT_python.Visualisations.plot_style import SEX_COLORS, SEX_VALUE_MAP
+from FIT_python.Visualisations.plot_style import SEX_COLORS
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 
 
@@ -418,7 +418,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
 
 
 def plot_inference(df: pd.DataFrame) -> None:
-    """Plot predicted sex counts for inference split with Location + Trail number labels."""
+    """Plot predicted sex counts for the inference split."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
@@ -426,25 +426,18 @@ def plot_inference(df: pd.DataFrame) -> None:
     if "inference" not in df["__split__"].unique():
         return
 
-    sub = df[df["__split__"] == "inference"].copy()
+    label_map = {0: "Female", 1: "Male"}  # Mapping 0/1 zu Labels
+
+    sub = df[df["__split__"] == "inference"]
     for col in pred_cols:
-        sub[col] = sub[col].map(SEX_VALUE_MAP)
-
-        # Nur letzte Zahl aus Trail extrahieren
-        sub["trail_num"] = sub["trail"].str.extract(r"(\d+)$")
-        sub["loc_trail"] = sub["location"] + " " + sub["trail_num"].fillna("")
-
         pivot = sub.pivot_table(
-            index="loc_trail", columns=col, aggfunc="size", fill_value=0
-        )
-
+            index="trail", columns=col, aggfunc="size", fill_value=0
+        ).rename(columns=label_map)
         colors = [SEX_COLORS.get(c, "#333333") for c in pivot.columns]
-        ax = pivot.plot.bar(stacked=True, figsize=(10, 4), color=colors)
-
-        plt.xlabel("Location & Trail")
+        ax = pivot.plot.bar(stacked=True, figsize=(6, 3), color=colors)
+        plt.xlabel("Trail")
         plt.ylabel("Count")
         ax.legend(title="Predicted", labels=pivot.columns)
-        plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
         plt.show()
 

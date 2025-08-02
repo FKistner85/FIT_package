@@ -8,7 +8,7 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, PATHS
-from FIT_python.Visualisations.plot_style import SEX_COLORS, SEX_VALUE_MAP
+from FIT_python.Visualisations.plot_style import SEX_COLORS
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 
 
@@ -417,7 +417,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
         plt.show()
 
 
-def plot_inference(df: pd.DataFrame) -> None:
+def plot_inference_with_simple_labels(df: pd.DataFrame) -> None:
     """Plot predicted sex counts for inference split with Location + Trail number labels."""
     apply_style()
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]

@@ -20,7 +20,7 @@ from .sex_predict_and_visualisation import (
     plot_confusion,
     plot_inference,
     plot_confusion_and_inference,
-    plot_quality_grouped,
+    plot_quality,
     plot_individual_probabilities,
     plot_quality_heatmaps,
     plot_model_quality_heatmaps,
