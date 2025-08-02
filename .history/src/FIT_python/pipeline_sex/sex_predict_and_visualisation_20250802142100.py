@@ -180,22 +180,18 @@ import warnings
 
 def predict_all(
     species: str,
-    metric_key: str = "best_balanced_test_acc",  # z.B. "best_accuracy_test"
+    metric_key: str = "best_balanced_test_acc",
     prefer_generic: bool = False,
     models_dir: str | Path | None = None,
     include_inference: bool = True,
     reuse_csv: bool = True,
     use_cv_train_predictions: bool = True,
 ) -> pd.DataFrame:
-    """Return dataframe with best-model predictions for Train/Test/Inference.
-
-    Train: Out-of-fold predictions (OOF) using 'Fold' column.
-    Test + Inference: Predictions from model retrained on full Train.
     """
-
-    splits_dir, models_dir, csv_path = _base_paths(
-        species, prefer_generic, models_dir
-    )
+    Return dataframe with model predictions for Train/Test/Inference using a 
+    model selected by metric_key (e.g., 'best_balanced_test_acc').
+    """
+    splits_dir, models_dir, csv_path = _base_paths(species, prefer_generic, models_dir)
 
     # Falls CSV schon existiert
     if reuse_csv and csv_path.exists():
@@ -216,23 +212,19 @@ def predict_all(
         df.columns = df.columns.str.replace(r"[.\-]", "_", regex=True).str.replace("T", "t")
         df["__split__"] = name
 
-    # Bestes Modell laden
-    best_model_path = models_dir / metric_key / f"{species}.joblib"
-    if not best_model_path.exists():
-        raise FileNotFoundError(f"No model found at {best_model_path}")
-    best_model = joblib.load(best_model_path)
+    # Modell direkt aus dem passenden Ordner laden
+    model_path = models_dir / metric_key / f"{species}.joblib"
+    if not model_path.exists():
+        raise FileNotFoundError(f"No model found at {model_path}")
+    best_model = joblib.load(model_path)
 
     # Features bestimmen
     num_cols = dfs["train"].select_dtypes(include=np.number).columns
     feature_cols = [c for c in num_cols if not c.startswith("pred_") and c != "Fold"]
 
-    # OOF Predictions für Train
+    # Out-of-Fold für Train
     if use_cv_train_predictions and "Fold" in dfs["train"].columns:
-        n_samples = len(dfs["train"])
-        oof_preds = np.empty(n_samples, dtype=object)  # Strings zulassen
-        oof_proba_f = np.empty(n_samples, dtype=float)
-        oof_proba_m = np.empty(n_samples, dtype=float)
-
+        oof_preds, oof_proba_f, oof_proba_m = [None] * len(dfs["train"]), [None] * len(dfs["train"]), [None] * len(dfs["train"])
         for fold in sorted(dfs["train"]["Fold"].unique()):
             tr_idx = dfs["train"].index[dfs["train"]["Fold"] != fold]
             val_idx = dfs["train"].index[dfs["train"]["Fold"] == fold]
@@ -259,7 +251,7 @@ def predict_all(
         dfs["train"]["pred_proba_f"] = proba[:, 0]
         dfs["train"]["pred_proba_m"] = proba[:, 1]
 
-    # Retrain auf ganzem Trainset für Test und Inference
+    # Retrain auf vollem Train für Test und Inference
     X_train_full, y_train_full = dfs["train"][feature_cols], dfs["train"]["sex"]
     final_model = clone(best_model).fit(X_train_full, y_train_full)
 
@@ -271,7 +263,7 @@ def predict_all(
             dfs[split]["pred_proba_f"] = proba[:, 0]
             dfs[split]["pred_proba_m"] = proba[:, 1]
 
-    # Zusammenführen und Speichern
+    # Zusammenführen
     all_df = pd.concat(dfs.values(), ignore_index=True)
     all_df.to_csv(csv_path, index=False)
     return all_df

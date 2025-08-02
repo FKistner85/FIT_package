@@ -180,7 +180,7 @@ import warnings
 
 def predict_all(
     species: str,
-    metric_key: str = "best_balanced_test_acc",  # z.B. "best_accuracy_test"
+    metric_key: str = "best_balanced_test_acc",  # Ordnername für das beste Modell
     prefer_generic: bool = False,
     models_dir: str | Path | None = None,
     include_inference: bool = True,
@@ -229,7 +229,7 @@ def predict_all(
     # OOF Predictions für Train
     if use_cv_train_predictions and "Fold" in dfs["train"].columns:
         n_samples = len(dfs["train"])
-        oof_preds = np.empty(n_samples, dtype=object)  # Strings zulassen
+        oof_preds = np.empty(n_samples, dtype=int)
         oof_proba_f = np.empty(n_samples, dtype=float)
         oof_proba_m = np.empty(n_samples, dtype=float)
 

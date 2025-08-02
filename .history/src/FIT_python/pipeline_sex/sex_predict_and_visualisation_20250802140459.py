@@ -170,113 +170,91 @@ from pathlib import Path
 from sklearn.base import clone
 from joblib import load
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from sklearn.base import clone
-from sklearn.metrics import accuracy_score
-import joblib
-import warnings
-
 def predict_all(
     species: str,
-    metric_key: str = "best_balanced_test_acc",  # z.B. "best_accuracy_test"
     prefer_generic: bool = False,
     models_dir: str | Path | None = None,
     include_inference: bool = True,
     reuse_csv: bool = True,
-    use_cv_train_predictions: bool = True,
+    use_cv_train_predictions: bool = False,
 ) -> pd.DataFrame:
-    """Return dataframe with best-model predictions for Train/Test/Inference.
-
-    Train: Out-of-fold predictions (OOF) using 'Fold' column.
-    Test + Inference: Predictions from model retrained on full Train.
-    """
+    """Return dataframe with model predictions for species using existing Fold splits."""
 
     splits_dir, models_dir, csv_path = _base_paths(
         species, prefer_generic, models_dir
     )
 
-    # Falls CSV schon existiert
     if reuse_csv and csv_path.exists():
         return pd.read_csv(csv_path)
 
     if not splits_dir.is_dir():
-        warnings.warn(f"Split directory for {species!r} not found – skipping.")
+        warnings.warn(f"Split directory for {species!r} not found – skipping.", UserWarning)
         return pd.DataFrame()
 
-    # Splits laden
+    # Lade Splits
     split_names = ["train", "test"]
     if include_inference and (splits_dir / "inference.parquet").exists():
         split_names.append("inference")
     splits = {n: splits_dir / f"{n}.parquet" for n in split_names}
-    dfs = {name: pd.read_parquet(p) for name, p in splits.items()}
+    dfs = {n: pd.read_parquet(p) for n, p in splits.items()}
 
+    # Spaltennamen säubern
     for name, df in dfs.items():
         df.columns = df.columns.str.replace(r"[.\-]", "_", regex=True).str.replace("T", "t")
         df["__split__"] = name
 
-    # Bestes Modell laden
-    best_model_path = models_dir / metric_key / f"{species}.joblib"
-    if not best_model_path.exists():
-        raise FileNotFoundError(f"No model found at {best_model_path}")
-    best_model = joblib.load(best_model_path)
+    # Vorhersagen pro Modell
+    for key, subdir in MODELS.items():
+        clf = load(models_dir / subdir / f"{species}.joblib")
 
-    # Features bestimmen
-    num_cols = dfs["train"].select_dtypes(include=np.number).columns
-    feature_cols = [c for c in num_cols if not c.startswith("pred_") and c != "Fold"]
+        # OOF im Train
+        if use_cv_train_predictions and "train" in dfs:
+            df_train = dfs["train"]
+            feature_cols = [c for c in df_train.select_dtypes(include=np.number).columns 
+                            if not c.startswith("pred_") and c != "Fold"]
 
-    # OOF Predictions für Train
-    if use_cv_train_predictions and "Fold" in dfs["train"].columns:
-        n_samples = len(dfs["train"])
-        oof_preds = np.empty(n_samples, dtype=object)  # Strings zulassen
-        oof_proba_f = np.empty(n_samples, dtype=float)
-        oof_proba_m = np.empty(n_samples, dtype=float)
+            df_train[f"pred_{key}_cv_sex"] = np.nan
+            df_train[f"pred_{key}_cv_proba_f"] = np.nan
+            df_train[f"pred_{key}_cv_proba_m"] = np.nan
 
-        for fold in sorted(dfs["train"]["Fold"].unique()):
-            tr_idx = dfs["train"].index[dfs["train"]["Fold"] != fold]
-            val_idx = dfs["train"].index[dfs["train"]["Fold"] == fold]
+            for fold in sorted(df_train["Fold"].unique()):
+                tr_idx = df_train.index[df_train["Fold"] != fold]
+                val_idx = df_train.index[df_train["Fold"] == fold]
 
-            X_tr, y_tr = dfs["train"].loc[tr_idx, feature_cols], dfs["train"].loc[tr_idx, "sex"]
-            X_val = dfs["train"].loc[val_idx, feature_cols]
+                X_tr, y_tr = df_train.loc[tr_idx, feature_cols], df_train.loc[tr_idx, "sex"].map({"f": 0, "m": 1})
+                X_val = df_train.loc[val_idx, feature_cols]
 
-            mdl = clone(best_model).fit(X_tr, y_tr)
-            preds = mdl.predict(X_val)
-            proba = mdl.predict_proba(X_val)
+                mdl = clone(clf).fit(X_tr, y_tr)
+                preds = mdl.predict(X_val)
+                proba = mdl.predict_proba(X_val)
 
-            oof_preds[val_idx] = preds
-            oof_proba_f[val_idx] = proba[:, 0]
-            oof_proba_m[val_idx] = proba[:, 1]
+                df_train.loc[val_idx, f"pred_{key}_cv_sex"] = preds
+                df_train.loc[val_idx, f"pred_{key}_cv_proba_f"] = proba[:, 0]
+                df_train.loc[val_idx, f"pred_{key}_cv_proba_m"] = proba[:, 1]
 
-        dfs["train"]["pred_sex"] = oof_preds
-        dfs["train"]["pred_proba_f"] = oof_proba_f
-        dfs["train"]["pred_proba_m"] = oof_proba_m
-    else:
-        X_train, y_train = dfs["train"][feature_cols], dfs["train"]["sex"]
-        mdl = clone(best_model).fit(X_train, y_train)
-        proba = mdl.predict_proba(X_train)
-        dfs["train"]["pred_sex"] = mdl.predict(X_train)
-        dfs["train"]["pred_proba_f"] = proba[:, 0]
-        dfs["train"]["pred_proba_m"] = proba[:, 1]
+        # Final-Model für Test & Inference
+        if "test" in dfs or "inference" in dfs:
+            # auf vollem Train fitten
+            X_full, y_full = df_train[feature_cols], df_train["sex"].map({"f": 0, "m": 1})
+            final_mdl = clone(clf).fit(X_full, y_full)
 
-    # Retrain auf ganzem Trainset für Test und Inference
-    X_train_full, y_train_full = dfs["train"][feature_cols], dfs["train"]["sex"]
-    final_model = clone(best_model).fit(X_train_full, y_train_full)
+            for split_name in ["test", "inference"]:
+                if split_name not in dfs:
+                    continue
+                df_split = dfs[split_name]
+                X = df_split[feature_cols]
+                preds = final_mdl.predict(X)
+                proba = final_mdl.predict_proba(X)
 
-    for split in ["test", "inference"]:
-        if split in dfs:
-            X_split = dfs[split][feature_cols]
-            proba = final_model.predict_proba(X_split)
-            dfs[split]["pred_sex"] = final_model.predict(X_split)
-            dfs[split]["pred_proba_f"] = proba[:, 0]
-            dfs[split]["pred_proba_m"] = proba[:, 1]
+                df_split[f"pred_{key}_sex"] = preds
+                df_split[f"pred_{key}_proba_f"] = proba[:, 0]
+                df_split[f"pred_{key}_proba_m"] = proba[:, 1]
 
-    # Zusammenführen und Speichern
+
+    # Zusammenführen & Speichern
     all_df = pd.concat(dfs.values(), ignore_index=True)
     all_df.to_csv(csv_path, index=False)
     return all_df
-
-
 
 
 

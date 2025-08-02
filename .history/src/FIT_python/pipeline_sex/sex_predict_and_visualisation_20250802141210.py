@@ -180,7 +180,6 @@ import warnings
 
 def predict_all(
     species: str,
-    metric_key: str = "best_balanced_test_acc",  # z.B. "best_accuracy_test"
     prefer_generic: bool = False,
     models_dir: str | Path | None = None,
     include_inference: bool = True,
@@ -216,11 +215,14 @@ def predict_all(
         df.columns = df.columns.str.replace(r"[.\-]", "_", regex=True).str.replace("T", "t")
         df["__split__"] = name
 
-    # Bestes Modell laden
-    best_model_path = models_dir / metric_key / f"{species}.joblib"
-    if not best_model_path.exists():
-        raise FileNotFoundError(f"No model found at {best_model_path}")
-    best_model = joblib.load(best_model_path)
+    # Bestes Modell aus best_models.csv laden
+    best_models_path = models_dir / "best_models.csv"
+    if not best_models_path.exists():
+        raise FileNotFoundError(f"No best_models.csv found at {best_models_path}")
+    df_best = pd.read_csv(best_models_path)
+    best_row = df_best[df_best["best_metric"] == "balanced_test_acc"].iloc[0]
+    best_clf_path = models_dir / f"best_balanced_test_acc" / f"{species}.joblib"
+    best_model = joblib.load(best_clf_path)
 
     # Features bestimmen
     num_cols = dfs["train"].select_dtypes(include=np.number).columns
@@ -228,11 +230,7 @@ def predict_all(
 
     # OOF Predictions für Train
     if use_cv_train_predictions and "Fold" in dfs["train"].columns:
-        n_samples = len(dfs["train"])
-        oof_preds = np.empty(n_samples, dtype=object)  # Strings zulassen
-        oof_proba_f = np.empty(n_samples, dtype=float)
-        oof_proba_m = np.empty(n_samples, dtype=float)
-
+        oof_preds, oof_proba_f, oof_proba_m = [], [], []
         for fold in sorted(dfs["train"]["Fold"].unique()):
             tr_idx = dfs["train"].index[dfs["train"]["Fold"] != fold]
             val_idx = dfs["train"].index[dfs["train"]["Fold"] == fold]
@@ -243,10 +241,9 @@ def predict_all(
             mdl = clone(best_model).fit(X_tr, y_tr)
             preds = mdl.predict(X_val)
             proba = mdl.predict_proba(X_val)
-
-            oof_preds[val_idx] = preds
-            oof_proba_f[val_idx] = proba[:, 0]
-            oof_proba_m[val_idx] = proba[:, 1]
+            oof_preds.extend(preds)
+            oof_proba_f.extend(proba[:, 0])
+            oof_proba_m.extend(proba[:, 1])
 
         dfs["train"]["pred_sex"] = oof_preds
         dfs["train"]["pred_proba_f"] = oof_proba_f
@@ -275,7 +272,6 @@ def predict_all(
     all_df = pd.concat(dfs.values(), ignore_index=True)
     all_df.to_csv(csv_path, index=False)
     return all_df
-
 
 
 
