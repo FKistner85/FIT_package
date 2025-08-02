@@ -401,17 +401,41 @@ def plot_confusion(df: pd.DataFrame) -> None:
     if "__split__" not in df.columns:
         raise KeyError("DataFrame is missing the '__split__' column")
 
-    train = df[(df["__split__"] == "train") & df["sex"].isin(["f", "m"])]
-    test = df[(df["__split__"] == "test") & df["sex"].isin(["f", "m"])]
+    # Map labels to 'F'/'M' for display.  Accept both string and numeric
+    # encodings and drop any rows with unknown values so that scikit-learn's
+    # metrics do not see a mix of valid and invalid targets.
+    mapping = {
+        "f": "F",
+        "m": "M",
+        "female": "F",
+        "male": "M",
+        "F": "F",
+        "M": "M",
+        0: "F",
+        1: "M",
+    }
+
+    df_mapped = df.copy()
+    df_mapped["true_label"] = df_mapped["sex"].map(mapping)
+    df_mapped["pred_label"] = df_mapped["pred_sex"].map(mapping)
+
+    train = df_mapped[
+        (df_mapped["__split__"] == "train")
+        & df_mapped["true_label"].isin(["F", "M"])
+        & df_mapped["pred_label"].isin(["F", "M"])
+    ]
+    test = df_mapped[
+        (df_mapped["__split__"] == "test")
+        & df_mapped["true_label"].isin(["F", "M"])
+        & df_mapped["pred_label"].isin(["F", "M"])
+    ]
     if train.empty or test.empty:
         return
 
-    # Map labels to 'F'/'M' for display
-    mapping = {"f": "F", "m": "M"}
-    y_true_train = train["sex"].map(mapping)
-    y_true_test = test["sex"].map(mapping)
-    y_pred_train = train["pred_sex"].map(mapping)
-    y_pred_test = test["pred_sex"].map(mapping)
+    y_true_train = train["true_label"]
+    y_true_test = test["true_label"]
+    y_pred_train = train["pred_label"]
+    y_pred_test = test["pred_label"]
 
     cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
     cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
