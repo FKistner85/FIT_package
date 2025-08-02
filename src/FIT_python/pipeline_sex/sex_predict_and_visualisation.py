@@ -487,144 +487,173 @@ def plot_confusion_and_inference(df: pd.DataFrame) -> None:
 
 
 # === Plots für Qualitäts-Heatmaps ===
-def plot_quality_grouped(df):
+def plot_quality_grouped(df: pd.DataFrame) -> None:
+    """Plot quality overview for train and test splits."""
+
     apply_style()
-    # true_label
-    df = df.copy()
-    df = df[df["sex"].isin(["f", "m"])]
-    df["true_label"] = map_sex(df["sex"])
-    # pred_label & Correct pro Modell
-    pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
-    for col in pred_cols:
-        key = col.split("_")[1]
-        df[f"pred_label_{key}"] = df[col].map({0: "Female", 1: "Male"})
 
-    # True wenn irgendein Modell richtig war
+    splits = ["train", "test"] if "__split__" in df.columns else [None]
+    for split in splits:
+        df_sub = df if split is None else df[df["__split__"] == split]
+        if df_sub.empty:
+            continue
 
-    pred_label_cols = [c for c in df if c.startswith("pred_label_")]
-    if not pred_label_cols:
-        raise KeyError("No prediction label columns found in dataframe")
+        # true_label
+        df_plot = df_sub.copy()
+        df_plot = df_plot[df_plot["sex"].isin(["f", "m"])]
+        df_plot["true_label"] = map_sex(df_plot["sex"])
+        # pred_label & Correct pro Modell
+        pred_cols = [c for c in df_plot if c.startswith("pred_") and c.endswith("_sex")]
+        for col in pred_cols:
+            key = col.split("_")[1]
+            df_plot[f"pred_label_{key}"] = df_plot[col].map({0: "Female", 1: "Male"})
 
-    df["Correct"] = np.any([df[c] == df["true_label"] for c in pred_label_cols], axis=0)
+        # True wenn irgendein Modell richtig war
+        pred_label_cols = [c for c in df_plot if c.startswith("pred_label_")]
+        if not pred_label_cols:
+            raise KeyError("No prediction label columns found in dataframe")
 
-    # Klassifizierung
-    def label(acc: float) -> str:
-        if acc >= 0.9:
-            return "High"
-        if acc >= 0.7:
-            return "Moderate"
-        if acc >= 0.5:
-            return "Low"
-        return "Misclassified"
-
-    # Erstelle Heatmaps a) und b) nebeneinander
-    cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
-    height = plt.rcParams["figure.figsize"][1] * 0.75
-    fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(plt.rcParams["figure.figsize"][0], height),
-        sharey=True,
-    )
-    for ax, (tag, cols) in zip(
-        axes,
-        [
-            ("a)", ["trail", "true_label"]),
-            ("b)", ["individual_id", "true_label"]),
-        ],
-    ):
-        acc = df.groupby(cols)["Correct"].mean().reset_index(name="acc")
-        acc["Class"] = acc["acc"].map(label)
-        kvals = acc.drop(columns="acc")
-        pivot = kvals.pivot_table(
-            index="true_label",
-            columns="Class",
-            values=cols[0],
-            aggfunc="count",
-            fill_value=0,
-        ).reindex(columns=["High", "Moderate", "Low", "Misclassified"], fill_value=0)
-        proportions = pivot.div(pivot.sum(axis=1), axis=0).fillna(0)
-        counts = pivot.astype(int)
-        total = counts.values.sum()
-
-        # Annotation per cell
-        annot = counts.copy().astype(str)
-        for i in counts.index:
-            for j in counts.columns:
-                v = counts.at[i, j]
-                annot.at[i, j] = f"{v}\n({v/total:.0%})" if v > 0 else ""
-
-        sns.heatmap(
-            proportions,
-            annot=annot,
-            fmt="",
-            cmap=cmap,
-            vmin=0,
-            vmax=1,
-            linewidths=0.5,
-            linecolor="gray",
-            ax=ax,
+        df_plot["Correct"] = np.any(
+            [df_plot[c] == df_plot["true_label"] for c in pred_label_cols], axis=0
         )
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
-        ax.set_yticklabels(["Female", "Male"], rotation=0)
-        ax.set_title(tag, loc="left", fontweight="bold")
-        ax.set_xlabel("Quality")
-        if ax is axes[0]:
-            ax.set_ylabel("Sex")
-        else:
-            ax.set_ylabel("")
-            ax.tick_params(axis="y", labelleft=False)
 
-    # previously annotated as "(trail)" or "(animal)" on the right side of
-    # the plot. These labels caused visual artefacts in the heatmaps and have
-    # been removed.
-    # Legends were intentionally removed to keep the focus on the heatmaps.
-    plt.tight_layout()
-    plt.show()
+        # Klassifizierung
+        def label(acc: float) -> str:
+            if acc >= 0.9:
+                return "High"
+            if acc >= 0.7:
+                return "Moderate"
+            if acc >= 0.5:
+                return "Low"
+            return "Misclassified"
+
+        # Erstelle Heatmaps a) und b) nebeneinander
+        cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
+        height = plt.rcParams["figure.figsize"][1] * 0.75
+        fig, axes = plt.subplots(
+            1,
+            2,
+            figsize=(plt.rcParams["figure.figsize"][0], height),
+            sharey=True,
+        )
+        for ax, (tag, cols) in zip(
+            axes,
+            [
+                ("a)", ["trail", "true_label"]),
+                ("b)", ["individual_id", "true_label"]),
+            ],
+        ):
+            acc = df_plot.groupby(cols)["Correct"].mean().reset_index(name="acc")
+            acc["Class"] = acc["acc"].map(label)
+            kvals = acc.drop(columns="acc")
+            pivot = kvals.pivot_table(
+                index="true_label",
+                columns="Class",
+                values=cols[0],
+                aggfunc="count",
+                fill_value=0,
+            ).reindex(
+                columns=["High", "Moderate", "Low", "Misclassified"], fill_value=0
+            )
+            proportions = pivot.div(pivot.sum(axis=1), axis=0).fillna(0)
+            counts = pivot.astype(int)
+            total = counts.values.sum()
+
+            # Annotation per cell
+            annot = counts.copy().astype(str)
+            for i in counts.index:
+                for j in counts.columns:
+                    v = counts.at[i, j]
+                    annot.at[i, j] = f"{v}\n({v/total:.0%})" if v > 0 else ""
+
+            sns.heatmap(
+                proportions,
+                annot=annot,
+                fmt="",
+                cmap=cmap,
+                vmin=0,
+                vmax=1,
+                linewidths=0.5,
+                linecolor="gray",
+                ax=ax,
+            )
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
+            ax.set_yticklabels(["Female", "Male"], rotation=0)
+            ax.set_title(tag, loc="left", fontweight="bold")
+            ax.set_xlabel("Quality")
+            if ax is axes[0]:
+                ax.set_ylabel("Sex")
+            else:
+                ax.set_ylabel("")
+                ax.tick_params(axis="y", labelleft=False)
+
+        if split is not None:
+            fig.suptitle(f"{split} set", y=1.02)
+        # previously annotated as "(trail)" or "(animal)" on the right side of
+        # the plot. These labels caused visual artefacts in the heatmaps and have
+        # been removed.
+        # Legends were intentionally removed to keep the focus on the heatmaps.
+        plt.tight_layout()
+        plt.show()
 
 
-def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path):
-    """Plot distribution of predicted sex probabilities for each individual."""
+
+
+def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path) -> None:
+    """Plot distribution of predicted sex probabilities for train and test."""
+
     apply_style()
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
     proba_cols = [c for c in df if c.startswith("pred_") and c.endswith("_proba_m")]
     if not proba_cols:
         raise ValueError(
-            "DataFrame contains no probability columns ending with '_proba_m'."
+            "DataFrame contains no probability columns ending with '_proba_m'.",
         )
-    agg = {c: "mean" for c in proba_cols}
-    agg["sex"] = "first"
-    grouped = df.groupby("individual_id").agg(agg).reset_index()
-    grouped["sex_std"] = map_sex(grouped["sex"])
+
     palette = {
         "Female": SEX_COLORS["Female"],
         "Male": SEX_COLORS["Male"],
         "Unknown": SEX_COLORS.get("Unknown", "#333333"),
     }
-    for col in proba_cols:
-        model = col.split("_")[1]
-        height = plt.rcParams["figure.figsize"][1] * 0.75
-        plt.figure(figsize=(plt.rcParams["figure.figsize"][0], height))
-        sns.histplot(
-            grouped,
-            x=col,
-            hue="sex_std",
-            element="step",
-            stat="density",
-            common_norm=False,
-            palette=palette,
-        )
-        plt.xticks(rotation=0)
-        plt.xlabel("Predicted probability male")
-        plt.ylabel("Density")
-        from FIT_python.caption_utils import save_caption
 
-        plt.tight_layout()
-        file = out_path / f"{model}_individual_probabilities.png"
-        plt.savefig(file)
-        save_caption(file, f"Predicted male probability for {model}")
-        plt.close()
+    splits = ["train", "test"] if "__split__" in df.columns else [None]
+    for split in splits:
+        df_sub = df if split is None else df[df["__split__"] == split]
+        if df_sub.empty:
+            continue
+        agg = {c: "mean" for c in proba_cols}
+        agg["sex"] = "first"
+        grouped = df_sub.groupby("individual_id").agg(agg).reset_index()
+        grouped["sex_std"] = map_sex(grouped["sex"])
+
+        for col in proba_cols:
+            model = col.split("_")[1]
+            height = plt.rcParams["figure.figsize"][1] * 0.75
+            plt.figure(figsize=(plt.rcParams["figure.figsize"][0], height))
+            sns.histplot(
+                grouped,
+                x=col,
+                hue="sex_std",
+                element="step",
+                stat="density",
+                common_norm=False,
+                palette=palette,
+            )
+            plt.xticks(rotation=0)
+            plt.xlabel("Predicted probability male")
+            plt.ylabel("Density")
+            from FIT_python.caption_utils import save_caption
+
+            plt.tight_layout()
+            suffix = f"_{split}" if split is not None else ""
+            file = out_path / f"{model}_individual_probabilities{suffix}.png"
+            plt.savefig(file)
+            save_caption(
+                file,
+                f"Predicted male probability for {model}{suffix.replace('_', ' ')}".strip(),
+            )
+            plt.close()
 
 
 def _plot_quality_heatmaps_single(
@@ -763,9 +792,17 @@ def plot_quality_heatmaps(
     apply_style()
 
     if pred_col is not None and proba_cols is not None:
-        df_sub = df.copy()
-        df_sub["true_label"] = map_sex(df_sub["sex"])
-        _plot_quality_heatmaps_single(df_sub, pred_col, proba_cols, title, group_by)
+        splits = ["train", "test"] if "__split__" in df.columns else [None]
+        for split in splits:
+            df_sub = df if split is None else df[df["__split__"] == split]
+            if df_sub.empty:
+                continue
+            df_sub = df_sub.copy()
+            df_sub["true_label"] = map_sex(df_sub["sex"])
+            sub_title = title if title is not None else (f"{split} set" if split else None)
+            _plot_quality_heatmaps_single(
+                df_sub, pred_col, proba_cols, sub_title, group_by
+            )
         return
 
     # Automatic generation for all models and splits
