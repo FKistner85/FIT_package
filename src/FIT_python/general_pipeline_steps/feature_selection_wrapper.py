@@ -155,7 +155,8 @@ class FeatureSelectionTransformer(TransformerMixin, BaseEstimator):
             self.feature_ranking_ = ranked[:k_max]
 
         elif self.method == "lasso":
-            lasso = LassoCV(cv=3, random_state=self.random_state).fit(arr, y)
+            y_enc = pd.Series(y).astype("category").cat.codes.to_numpy()
+            lasso = LassoCV(cv=3, random_state=self.random_state).fit(arr, y_enc)
             imp = np.abs(lasso.coef_)
             ranked = sorted(zip(feat_names, imp), key=lambda x: x[1], reverse=True)
             self.feature_ranking_ = ranked[:k_max]
