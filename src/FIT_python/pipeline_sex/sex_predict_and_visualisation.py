@@ -845,7 +845,11 @@ def plot_quality_heatmaps(
     for split in split_order:
         for col in pred_cols:
             model = col[len("pred_") : -len("_sex")]
-            probs = [f"pred_{model}_proba_f", f"pred_{model}_proba_m"]
+            model_prefix = f"{model}_" if model else ""
+            probs = [
+                f"pred_{model_prefix}proba_f",
+                f"pred_{model_prefix}proba_m",
+            ]
             df_sub = df[df["__split__"] == split].copy()
             df_sub = df_sub[df_sub["sex"].isin(["f", "m"])]
             df_sub = df_sub[df_sub[col].isin([0, 1])]
