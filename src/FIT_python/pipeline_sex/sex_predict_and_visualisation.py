@@ -15,6 +15,10 @@ from sklearn.base import clone
 
 DEFAULT_SPECIES = "eurasian_otter"
 
+# Map raw sex labels to integers for model training and back
+SEX_TO_INT = {"f": 0, "m": 1}
+INT_TO_SEX = {v: k for k, v in SEX_TO_INT.items()}
+
 
 def _base_paths(
     species: str = DEFAULT_SPECIES,
@@ -242,14 +246,15 @@ def predict_all(
             tr_idx = dfs["train"].index[dfs["train"]["Fold"] != fold]
             val_idx = dfs["train"].index[dfs["train"]["Fold"] == fold]
 
-            X_tr, y_tr = dfs["train"].loc[tr_idx, feature_cols], dfs["train"].loc[tr_idx, "sex"]
+            X_tr = dfs["train"].loc[tr_idx, feature_cols]
+            y_tr = dfs["train"].loc[tr_idx, "sex"].map(SEX_TO_INT)
             X_val = dfs["train"].loc[val_idx, feature_cols]
 
             mdl = clone(best_model).fit(X_tr, y_tr)
             preds = mdl.predict(X_val)
             proba = mdl.predict_proba(X_val)
 
-            oof_preds[val_idx] = preds
+            oof_preds[val_idx] = np.vectorize(INT_TO_SEX.get)(preds)
             oof_proba_f[val_idx] = proba[:, 0]
             oof_proba_m[val_idx] = proba[:, 1]
 
@@ -257,22 +262,26 @@ def predict_all(
         dfs["train"]["pred_proba_f"] = oof_proba_f
         dfs["train"]["pred_proba_m"] = oof_proba_m
     else:
-        X_train, y_train = dfs["train"][feature_cols], dfs["train"]["sex"]
+        X_train = dfs["train"][feature_cols]
+        y_train = dfs["train"]["sex"].map(SEX_TO_INT)
         mdl = clone(best_model).fit(X_train, y_train)
         proba = mdl.predict_proba(X_train)
-        dfs["train"]["pred_sex"] = mdl.predict(X_train)
+        train_preds = mdl.predict(X_train)
+        dfs["train"]["pred_sex"] = np.vectorize(INT_TO_SEX.get)(train_preds)
         dfs["train"]["pred_proba_f"] = proba[:, 0]
         dfs["train"]["pred_proba_m"] = proba[:, 1]
 
     # Retrain auf ganzem Trainset für Test und Inference
-    X_train_full, y_train_full = dfs["train"][feature_cols], dfs["train"]["sex"]
+    X_train_full = dfs["train"][feature_cols]
+    y_train_full = dfs["train"]["sex"].map(SEX_TO_INT)
     final_model = clone(best_model).fit(X_train_full, y_train_full)
 
     for split in ["test", "inference"]:
         if split in dfs:
             X_split = dfs[split][feature_cols]
             proba = final_model.predict_proba(X_split)
-            dfs[split]["pred_sex"] = final_model.predict(X_split)
+            preds = final_model.predict(X_split)
+            dfs[split]["pred_sex"] = np.vectorize(INT_TO_SEX.get)(preds)
             dfs[split]["pred_proba_f"] = proba[:, 0]
             dfs[split]["pred_proba_m"] = proba[:, 1]
 
