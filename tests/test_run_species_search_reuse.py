@@ -26,8 +26,8 @@ def test__run_species_search_reuse(tmp_path, monkeypatch):
     df_best = pd.DataFrame({"b": [2]})
     df_all.to_csv(results_dir / "all_results.csv", index=False)
     df_best.to_csv(results_dir / "best_models.csv", index=False)
-    (results_dir / "best_balanced_test_acc" / "otter.joblib").parent.mkdir(parents=True)
-    (results_dir / "best_balanced_test_acc" / "otter.joblib").write_bytes(b"0")
+    (results_dir / "best_mean_rank" / "otter.joblib").parent.mkdir(parents=True)
+    (results_dir / "best_mean_rank" / "otter.joblib").write_bytes(b"0")
 
     _run_species_search, _, env = _load_functions(root)
     g = env

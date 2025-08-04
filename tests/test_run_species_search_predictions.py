@@ -75,7 +75,15 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
         Path(path).write_bytes(b"0")
     monkeypatch.setattr(sc.joblib, "dump", fake_dump)
 
-    def fake_predict_all(species, models_dir, reuse_csv=False, prefer_generic=False, include_inference=False, use_cv_train_predictions=False):
+    def fake_predict_all(
+        species,
+        models_dir,
+        reuse_csv=False,
+        prefer_generic=False,
+        include_inference=False,
+        use_cv_train_predictions=False,
+        metric_key=None,
+    ):
         csv = Path(models_dir) / f"{species}_all_predictions.csv"
         if reuse_csv:
             return pd.read_csv(csv)
@@ -135,7 +143,15 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
         Path(path).write_bytes(b"0")
     monkeypatch.setattr(sc.joblib, "dump", fake_dump)
 
-    def fake_predict_all(species, models_dir, reuse_csv=False, prefer_generic=False, include_inference=False, use_cv_train_predictions=False):
+    def fake_predict_all(
+        species,
+        models_dir,
+        reuse_csv=False,
+        prefer_generic=False,
+        include_inference=False,
+        use_cv_train_predictions=False,
+        metric_key=None,
+    ):
         csv = Path(models_dir) / f"{species}_all_predictions.csv"
         if reuse_csv:
             return pd.read_csv(csv)
@@ -152,7 +168,7 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
 
-    model_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "best_balanced_test_acc" / "otter.joblib"
+    model_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "best_mean_rank" / "otter.joblib"
     assert model_path.exists()
 
 

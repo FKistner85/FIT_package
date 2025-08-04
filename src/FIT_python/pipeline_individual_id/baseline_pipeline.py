@@ -75,7 +75,7 @@ class DistanceBaseline:
             Path to the sex classifier. If ``use_sexmodel_prediction`` is
             ``True`` and no path is given, the classifier location is derived
             from the ``species`` column via
-            ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+            ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
         n_jobs:
             Number of parallel jobs for the underlying pipeline.
         debug:
@@ -99,9 +99,7 @@ class DistanceBaseline:
                 )
             species = str(base_df["species"].dropna().unique()[0])
             model_fp = (
-                PATHS["random_search"]
-                / "best_balanced_test_acc"
-                / f"{species}.joblib"
+                PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"
             )
 
         results = run_all_pairwise_projections_parallel(

@@ -157,7 +157,7 @@ def run(
         Path to a saved sex classifier.  If ``use_sexmodel_prediction`` is
         ``True`` and no path is provided, the model location is derived from the
         ``species`` column using
-        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+        ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
 
     Returns
     -------
@@ -192,9 +192,7 @@ def run(
             )
         species = str(df_all["species"].dropna().unique()[0])
         model_fp = (
-            PATHS["random_search"]
-            / "best_balanced_test_acc"
-            / f"{species}.joblib"
+            PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"
         )
 
     unique_ids = df_all[id_col].dropna().astype(str).unique()
