@@ -1,0 +1,163 @@
+"""Default configuration parameters for pipelines."""
+
+from FIT_python.config import GLOBAL_RANDOM_SEED
+
+SOFT_CONFIG = {
+    "data_split_and_summary": {
+        "sex_categories": ["Female", "Male"],
+        "split_labels": ["Train", "Test"],
+        "species_remap": {
+            "a_j_soemmeringii": "acinonyx_jubatus_soemmeringii",
+            "a_j_jubatus": "acinonyx_jubatus_jubatus",
+        },
+    },
+    "general_pipeline_steps": {
+        "outlier_defaults": {
+            "method": "clip",
+            "lower_quantile": 0.01,
+            "upper_quantile": 0.99,
+            "z_thresh": 3.0,
+        },
+        "scaler_default": {"method": "standard"},
+        "imputation_defaults": {
+            "n_estimators": 10,
+            "max_iter": 10,
+            "random_state": GLOBAL_RANDOM_SEED,
+        },
+        "dim_reducer_defaults": {
+            "method": "pca",
+            "n_components": 2,
+            "n_neighbors": 15,
+            "min_dist": 0.1,
+            "whiten": False,
+        },
+        # Columns that should be preserved when wrappers operate on DataFrames
+        # regardless of their data type. Pipelines may overwrite this entry at
+        # runtime to customise behaviour.
+        "metadata_cols": ["individual_id", "Trail", "sex", "id", "Fold"],
+    },
+    "pipeline_sex": {
+        "model_keys": [
+            "logreg_l2",
+            "logreg_l1",
+            "rf_small",
+            "rf_med",
+            "rf_large",
+            "knn_3",
+            "knn_5",
+            "knn_7",
+            "svm_linear",
+            "svm_rbf",
+            "xgb_std",
+            "xgb_hist",
+            "lgbm_std",
+            "lgbm_md10",
+            "lda",
+        ],
+        "search_spaces":{
+            "outlier": [None, "clip"], #, "zscore"
+            "scale": [None, "standard"], #, "robust"
+            "select__method": [ "lasso", "random_forest"], #None, "forward", "variance",
+            "select__k": [1, 2, 3, 4, 5, 6,7,8,9,10,11,12], #, 20, 50, 100
+            "reduce_pre__method": [None, ], #"pca", "umap", "tsne"
+            "reduce_post__method": [None,],  #"pca", "umap", "tsne"
+            "clf": None,  # placeholder, to be filled with MODELS
+        },
+        "metrics": [
+            "maj_test_pct",
+            "balanced_test_acc",
+            "accuracy_test",
+            "mean_test_neg_log_loss",
+        ],
+        "scoring": {
+            "accuracy": "accuracy",
+            "balanced_accuracy": "balanced_accuracy",
+            "neg_log_loss": "neg_log_loss",
+        },
+        "pipeline_order": [
+            "outlier",
+            "scale",
+            "reduce_pre__method",
+            "select__method",
+            "select__k",
+            "reduce_post__method",
+            "clf",
+        ],
+        "run_otter_search_sex": {
+            "n_iter":20,
+            "cv": "fold",
+            "random_state": GLOBAL_RANDOM_SEED,
+            "reuse_results": True,
+        },
+    },
+    "pipeline_individual_id": {
+        "pairwise_defaults": {
+            "k_features": 16,
+            "reducers": ["lda"],
+            "selection_method": "forward",
+            "n_components": 2,
+            "outlier_methods": None,
+            "scaler_methods": None,
+            "use_sexmodel_prediction": False,
+        },
+        "search_spaces": {
+            "outlier": [None ], #"clip", "zscore"
+            "scale": [ None,"standard"],# None,, "robust"
+            "select__method": [ "forward", "random_forest",  "lasso"], #None,
+            "select__k": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+            "reduce__method": [ "lda"], #"pca", "umap",
+            "n_components": [2], #, 3, 4
+            "use_sexmodel_prediction": [False, True],
+        },
+        "trail_generation_defaults": {
+            "sample_size": 9,
+            "subsample_sizes": [3, 5, 7],
+            "n_candidates": 20,
+        },
+        "sequential_holdout_val_sizes": [2, 4, 6, 8],
+    },
+    "gui_annotator": {
+        "default_scale": 1.0,
+        # Default window size (w, h) in a widescreen ratio. The application
+        # will automatically constrain this based on the available screen
+        # resolution at runtime.
+        "display_size": [1280, 720],
+    },
+    "dataset_summary": {
+        "species_labels": {
+            "amur_tiger": {
+                "common": "Amur Tiger",
+                "latin": "Panthera tigris altaica",
+            },
+            "bengal_tiger": {
+                "common": "Bengal Tiger",
+                "latin": "Panthera tigris tigris",
+            },
+            "cheetah": {
+                "common": "Cheetah",
+                "latin": "Acinonyx jubatus",
+            },
+            "eurasian_otter": {
+                "common": "Eurasian Otter",
+                "latin": "Lutra lutra",
+            },
+            "giant_panda": {
+                "common": "Giant Panda",
+                "latin": "Ailuropoda melanoleuca",
+            },
+            "lowlandtapir": {
+                "common": "Lowland Tapir",
+                "latin": "Tapirus terrestris",
+            },
+            "mountain_lion": {
+                "common": "Mountain Lion",
+                "latin": "Puma concolor",
+            },
+            "white_rhino": {
+                "common": "White Rhinoceros",
+                "latin": "Ceratotherium simum",
+            },
+        }
+    },
+    "experiment": {"name": "dissertation_notebook"},
+}
