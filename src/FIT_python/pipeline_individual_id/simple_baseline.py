@@ -248,6 +248,10 @@ def run_baseline_all_species(
     *,
     reuse_summary: bool = True,
     n_jobs: int = -1,
+    selection_method: str | None = None,
+    reducers: Iterable[str] | str | None = None,
+    n_components: int | Iterable[int] | None = None,
+    scaler_methods: Iterable[str] | str | None = None,
 ) -> None:
     """Evaluate the baseline for every species using sequential holdouts.
 
@@ -273,6 +277,10 @@ def run_baseline_all_species(
     n_jobs : int, optional
         Parallel jobs forwarded to :func:`sequential_holdout.run`.  ``-1`` uses
         all available CPU cores.
+    selection_method, reducers, n_components, scaler_methods : optional
+        Parameters forwarded to :func:`sequential_holdout.run` controlling
+        feature selection, dimensionality reduction and scaling. Defaults are
+        taken from ``SOFT_CONFIG['pipeline_individual_id']['pairwise_defaults']``.
     """
 
     exp_dir = Path(exp_dir)
@@ -334,6 +342,10 @@ def run_baseline_all_species(
             cutoff=ward,
             reuse_summary=reuse_summary,
             n_jobs=n_jobs,
+            selection_method=selection_method,
+            reducers=reducers,
+            n_components=n_components,
+            scaler_methods=scaler_methods,
         )
 
 
