@@ -193,7 +193,7 @@ def main(species: str = "eurasian_otter") -> None:
             reducers=["umap"],
             n_components=2,
             use_sexmodel_prediction=True,
-            sexmodel_path=str(config.PATHS["random_search"] / "best_balanced_test_acc" / f"{species}.joblib"),
+            sexmodel_path=str(config.PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"),
             n_jobs=1,
         )
         results["umap"] = _confusion_from_results(res2)

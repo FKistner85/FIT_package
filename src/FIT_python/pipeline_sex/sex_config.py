@@ -408,6 +408,10 @@ def _run_species_search(
     out_path_rank.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(best_pipe_rank, out_path_rank)
 
+    generic_dir_rank = PATHS["random_search"] / "best_mean_rank"
+    generic_dir_rank.mkdir(parents=True, exist_ok=True)
+    shutil.copy(out_path_rank, generic_dir_rank / f"{species}.joblib")
+
     print(
         f"✅ Best-Overall-Rank Modell für Spezies '{species}' gespeichert unter:\n   {out_path_rank}"
     )
@@ -478,6 +482,7 @@ def _run_species_search(
         reuse_csv=False,
         prefer_generic=False,
         include_inference=False,
+        metric_key="best_mean_rank",
     )
 
     return df_all, df_best

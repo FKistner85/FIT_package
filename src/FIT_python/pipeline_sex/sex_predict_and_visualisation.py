@@ -70,6 +70,7 @@ MODELS = {
     "maj_pct": "best_maj_test_pct",
     "neg_log_loss": "best_mean_test_neg_log_loss",
     "accuracy": "best_accuracy_test",
+    "mean_rank": "best_mean_rank",
 }
 
 def predict_simple_baseline(

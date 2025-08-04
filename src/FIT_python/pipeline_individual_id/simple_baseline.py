@@ -387,7 +387,7 @@ def run_simple_baseline_all_species(
         Path to a saved sex model forwarded to :func:`run_fold_cv` when
         ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
         resolved automatically for each species using
-        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+        ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -437,9 +437,7 @@ def run_simple_baseline_all_species(
         model_fp = sexmodel_path
         if use_sexmodel_prediction and model_fp is None:
             model_fp = (
-                PATHS["random_search"]
-                / "best_balanced_test_acc"
-                / f"{species_dir.name}.joblib"
+                PATHS["random_search"] / "best_mean_rank" / f"{species_dir.name}.joblib"
             )
 
         kwargs = dict(
@@ -599,19 +597,22 @@ def load_sex_predictions(
     *,
     prefer_generic: bool = True,
     models_dir: str | Path | None = None,
+    metric_key: str = "best_mean_rank",
 ) -> pd.DataFrame:
     """Return sex-model predictions for ``species``.
 
     This is a thin wrapper around :func:`predict_all` from the sex classification
     pipeline.  The helper simply forwards the parameters and returns the
     resulting DataFrame so that the individual ID baseline can load the
-    predictions without importing the full sex pipeline here.
+    predictions without importing the full sex pipeline here.  The ``metric_key``
+    selects which saved model to use and defaults to ``"best_mean_rank"``.
     """
 
     from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
 
     return predict_all(
         species,
+        metric_key=metric_key,
         prefer_generic=prefer_generic,
         models_dir=models_dir,
     )
@@ -699,7 +700,7 @@ def run_fold_cv(
         Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
         ``True`` and no path is given, the function attempts to resolve the
         model path from the ``species`` column using
-        ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+        ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
     """
 
     from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
@@ -736,9 +737,7 @@ def run_fold_cv(
             )
         species = str(df_all["species"].dropna().unique()[0])
         model_fp = (
-            PATHS["random_search"]
-            / "best_balanced_test_acc"
-            / f"{species}.joblib"
+            PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"
         )
 
     if fold_col not in df_all.columns:
