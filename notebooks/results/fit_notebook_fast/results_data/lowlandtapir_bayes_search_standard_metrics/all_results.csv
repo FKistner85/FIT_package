@@ -1,0 +1,24 @@
+species,mean_test_accuracy,mean_test_balanced_accuracy,mean_test_neg_log_loss,clf,outlier,reduce_post__method,reduce_pre__method,scale,select__k,select__method,female_train_acc,male_train_acc,balanced_train_acc,accuracy_train,female_test_acc,male_test_acc,balanced_test_acc,accuracy_test,female_full_acc,male_full_acc,balanced_full_acc,accuracy_full,maj_train_count,maj_train_wrong,maj_train_pct,maj_test_count,maj_test_wrong,maj_test_pct,maj_full_count,maj_full_wrong,maj_full_pct,pipeline_id
+lowlandtapir,0.487027623178866,0.48936446109221643,-1.3639424096314712,"RandomForestClassifier(n_estimators=20, n_jobs=-1)",None,None,None,None,12,lasso,1.0,1.0,1.0,1.0,0.6649350649350649,0.4448051948051948,0.5415214866434379,0.5421686746987951,0.92946001367054,0.8693659281894576,0.9100769927536232,0.909952606635071,28,0,1.0,5,3,0.625,33,3,0.9166666666666666,"outlier=None;scale=None;reduce_pre__method=None;select__method=lasso;select__k=12;reduce_post__method=None;clf=RandomForestClassifier(n_estimators=20, n_jobs=-1)"
+lowlandtapir,0.5393152387890622,0.5327834301314645,-1.47572120854916,"XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)",None,None,None,FeatureScalerTransformer(method='robust'),10,random_forest,1.0,1.0,1.0,1.0,0.5074675324675325,0.4094967532467533,0.4335075493612079,0.43373493975903615,0.896308954203691,0.8610580595874714,0.8879302536231884,0.8886255924170616,28,0,1.0,3,5,0.375,31,5,0.8611111111111112,"outlier=None;scale=FeatureScalerTransformer(method='robust');reduce_pre__method=None;select__method=random_forest;select__k=10;reduce_post__method=None;clf=XGBClassifier(base_score=None, booster=None, callbacks=None,
+              colsample_bylevel=None, colsample_bynode=None,
+              colsample_bytree=None, device=None, early_stopping_rounds=None,
+              enable_categorical=False, eval_metric=None, feature_types=None,
+              feature_weights=None, gamma=None, grow_policy=None,
+              importance_type=None, interaction_constraints=None,
+              learning_rate=None, max_bin=None, max_cat_threshold=None,
+              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,
+              max_leaves=None, min_child_weight=None, missing=nan,
+              monotone_constraints=None, multi_strategy=None, n_estimators=100,
+              n_jobs=None, num_parallel_tree=None, ...)"
+lowlandtapir,0.4559769377458431,0.4427718271686481,-1.0464677940330038,"RandomForestClassifier(max_depth=15, n_estimators=50, n_jobs=-1)",None,None,None,FeatureScalerTransformer(),5,lasso,1.0,1.0,1.0,1.0,0.4012987012987013,0.5795454545454546,0.48315911730545874,0.4819277108433735,0.8739576213260423,0.9010695187165776,0.8953351449275362,0.8981042654028436,28,0,1.0,2,6,0.25,30,6,0.8333333333333334,"outlier=None;scale=FeatureScalerTransformer();reduce_pre__method=None;select__method=lasso;select__k=5;reduce_post__method=None;clf=RandomForestClassifier(max_depth=15, n_estimators=50, n_jobs=-1)"

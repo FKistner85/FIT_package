@@ -1,0 +1,6 @@
+pipeline,fold,bcr,pred_count,true_count,erd,ward_cutoff,cutoff_low,cutoff_high,tp,fp,tn,fn,n_pairs,ccc
+random_forest_no_out_standard_k16_lda_nc2_sex_on,0,0.7416666666666667,7,7,0.0,3.084573564116218,2.841917397838145,3.327229730394291,3,1,59,3,66,
+random_forest_no_out_standard_k16_lda_nc2_sex_on,1,0.85,7,7,0.0,3.7712581106163285,3.574522516331327,3.96799370490133,7,0,81,3,91,
+random_forest_no_out_standard_k16_lda_nc2_sex_on,2,0.625,7,7,0.0,2.9345607568003342,2.8117804711665437,3.0573410424341247,2,0,70,6,78,
+random_forest_no_out_standard_k16_lda_nc2_sex_on,3,0.65,7,7,0.0,3.481206494113643,3.3887911398194905,3.5736218484077957,3,0,95,7,105,
+random_forest_no_out_standard_k16_lda_nc2_sex_on,4,0.625,7,7,0.0,3.602670042090664,3.3326816923868297,3.872658391794498,2,0,83,6,91,

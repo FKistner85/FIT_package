@@ -1,0 +1,2 @@
+species,cv_bal_acc,test_bal_acc,cv_true_same_pred_same,cv_true_same_pred_diff,cv_true_diff_pred_same,cv_true_diff_pred_diff,test_true_same_pred_same,test_true_same_pred_diff,test_true_diff_pred_same,test_true_diff_pred_diff,top5_features
+cheetah,0.9611292962356792,0.9356140350877193,100,4,24,587,22,3,2,226,dist_euclidean;median_euclidean_between

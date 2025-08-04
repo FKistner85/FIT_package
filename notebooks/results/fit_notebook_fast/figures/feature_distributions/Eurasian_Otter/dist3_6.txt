@@ -1,0 +1,1 @@
+Histogram of dist3_6 before and after cleaning.

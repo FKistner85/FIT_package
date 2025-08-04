@@ -1,0 +1,2 @@
+species,cv_bal_acc,test_bal_acc,cv_true_same_pred_same,cv_true_same_pred_diff,cv_true_diff_pred_same,cv_true_diff_pred_diff,test_true_same_pred_same,test_true_same_pred_diff,test_true_diff_pred_same,test_true_diff_pred_diff,top5_features
+white_rhino,0.898543951905564,0.8698214285714285,209,32,85,1127,77,3,156,544,dist_euclidean;median_euclidean_between
