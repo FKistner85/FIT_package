@@ -392,17 +392,14 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
     return all_df
 
 
-# === Plots für Confusion & Inference ===
-def plot_confusion(df: pd.DataFrame) -> None:
-    """Plot confusion matrices for train (CV) and test predictions.
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from sklearn.metrics import confusion_matrix
 
-    The new :func:`predict_all` function no longer stores model specific
-    prediction columns such as ``pred_<model>_sex``.  Instead, predictions for
-    the best model are available in a single ``pred_sex`` column.  This
-    implementation therefore directly uses this column for both train and test
-    splits and, when available, compares the train split's out-of-fold
-    predictions with the test predictions.
-    """
+def plot_confusion(df: pd.DataFrame) -> None:
+    """Plot confusion matrices (train + test) mit a)/b) Titeln und Count + % in den Zellen."""
 
     apply_style()
 
@@ -411,18 +408,9 @@ def plot_confusion(df: pd.DataFrame) -> None:
     if "__split__" not in df.columns:
         raise KeyError("DataFrame is missing the '__split__' column")
 
-    # Map labels to 'F'/'M' for display.  Accept both string and numeric
-    # encodings and drop any rows with unknown values so that scikit-learn's
-    # metrics do not see a mix of valid and invalid targets.
     mapping = {
-        "f": "F",
-        "m": "M",
-        "female": "F",
-        "male": "M",
-        "F": "F",
-        "M": "M",
-        0: "F",
-        1: "M",
+        "f": "F", "m": "M", "female": "F", "male": "M",
+        "F": "F", "M": "M", 0: "F", 1: "M",
     }
 
     df_mapped = df.copy()
@@ -442,29 +430,42 @@ def plot_confusion(df: pd.DataFrame) -> None:
     if train.empty or test.empty:
         return
 
-    y_true_train = train["true_label"]
-    y_true_test = test["true_label"]
-    y_pred_train = train["pred_label"]
-    y_pred_test = test["pred_label"]
+    y_true_train, y_pred_train = train["true_label"], train["pred_label"]
+    y_true_test, y_pred_test   = test["true_label"],  test["pred_label"]
 
     cm_train = confusion_matrix(y_true_train, y_pred_train, labels=["F", "M"])
-    cm_test = confusion_matrix(y_true_test, y_pred_test, labels=["F", "M"])
+    cm_test  = confusion_matrix(y_true_test,  y_pred_test,  labels=["F", "M"])
 
-    height = plt.rcParams["figure.figsize"][1] * 0.6
-    fig, axes = plt.subplots(1, 2, figsize=(8, height), sharey=True)
-    mats = [(cm_train, "a)"), (cm_test, "b)")]
+    # Prozentwerte berechnen
+    cm_train_percent = cm_train / cm_train.sum(axis=1, keepdims=True) * 100
+    cm_test_percent  = cm_test  / cm_test.sum(axis=1, keepdims=True) * 100
 
-    for ax, (cm, title) in zip(axes, mats):
+    # Labels "Count (XX%)"
+    annot_train = np.array([
+        [f"{cm_train[i, j]} ({cm_train_percent[i, j]:.0f}%)" for j in range(2)] for i in range(2)
+    ])
+    annot_test = np.array([
+        [f"{cm_test[i, j]} ({cm_test_percent[i, j]:.0f}%)" for j in range(2)] for i in range(2)
+    ])
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+    mats = [
+        (cm_train_percent, annot_train, r"\textbf{a)}"),
+        (cm_test_percent,  annot_test,  r"\textbf{b)}"),
+    ]
+
+    for ax, (cm, annot, title) in zip(axes, mats):
         sns.heatmap(
-            cm / cm.sum(axis=1, keepdims=True),
-            annot=True,
-            fmt=".2f",
+            cm,
+            annot=annot,
+            fmt="",
             cmap="Blues",
+            cbar=False,
             xticklabels=["Female", "Male"],
             yticklabels=["Female", "Male"],
             ax=ax,
         )
-        ax.set_title(title, loc="left", fontweight="bold")
+        ax.set_title(title, fontsize=12, fontweight="bold", loc="left")
         ax.set_xlabel("Predicted Sex")
         if ax is axes[0]:
             ax.set_ylabel("True Sex")
@@ -476,6 +477,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
 
     plt.tight_layout()
     plt.show()
+
 
 
 def plot_inference(df: pd.DataFrame) -> None:
@@ -566,8 +568,8 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
         for ax, (tag, cols) in zip(
             axes,
             [
-                ("c)", ["trail", "true_label"]),
-                ("d)", ["individual_id", "true_label"]),
+                ("a)", ["trail", "true_label"]),
+                ("b)", ["individual_id", "true_label"]),
             ],
         ):
             acc = df_plot.groupby(cols).apply(classify_majority).reset_index(name="Class")
@@ -605,13 +607,15 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
             ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
             ax.set_yticklabels(["Female", "Male"], rotation=0)
             ax.set_title(tag, loc="left", fontweight="bold")
-            ax.set_xlabel("Prediction Confidence")
+            ax.set_xlabel("Quality")
             if ax is axes[0]:
                 ax.set_ylabel("Sex")
             else:
                 ax.set_ylabel("")
                 ax.tick_params(axis="y", labelleft=False)
 
+        if split is not None:
+            fig.suptitle(f"{split} set", y=1.02)
 
         plt.tight_layout()
         plt.show()
@@ -789,7 +793,7 @@ def _plot_quality_heatmaps_single(
     axes[1].set_title("b)", loc="left", fontweight="bold")
     axes[1].set(ylabel="")
     for ax in axes:
-        ax.set_xlabel("Prediction Confidence")
+        ax.set_xlabel("Prediction Quality")
         labels = ["High", "Moderate", "Low"]
         if group_by is not None:
             labels.append("Misclassified")

@@ -464,7 +464,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
             yticklabels=["Female", "Male"],
             ax=ax,
         )
-        ax.set_title(title, loc="left", fontweight="bold")
+        ax.set_title(title)
         ax.set_xlabel("Predicted Sex")
         if ax is axes[0]:
             ax.set_ylabel("True Sex")
@@ -566,8 +566,8 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
         for ax, (tag, cols) in zip(
             axes,
             [
-                ("c)", ["trail", "true_label"]),
-                ("d)", ["individual_id", "true_label"]),
+                ("a)", ["trail", "true_label"]),
+                ("b)", ["individual_id", "true_label"]),
             ],
         ):
             acc = df_plot.groupby(cols).apply(classify_majority).reset_index(name="Class")
@@ -605,13 +605,15 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
             ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
             ax.set_yticklabels(["Female", "Male"], rotation=0)
             ax.set_title(tag, loc="left", fontweight="bold")
-            ax.set_xlabel("Prediction Confidence")
+            ax.set_xlabel("Quality")
             if ax is axes[0]:
                 ax.set_ylabel("Sex")
             else:
                 ax.set_ylabel("")
                 ax.tick_params(axis="y", labelleft=False)
 
+        if split is not None:
+            fig.suptitle(f"{split} set", y=1.02)
 
         plt.tight_layout()
         plt.show()
@@ -688,116 +690,101 @@ def _plot_quality_heatmaps_single(
     df_sub: pd.DataFrame,
     pred_col: str,
     proba_cols: list[str],
-    title: str | None = None,
     group_by: str | None = None,
 ) -> None:
-    """Plot prediction quality heatmaps for a single model and split.
+    """Erweiterte Version: erstellt eine 2x2 Matrix (a–d) mit Quality Heatmaps."""
 
-    When ``group_by`` is provided, predictions are aggregated by this column
-    (e.g. ``"trail"`` or ``"individual_id"``) before computing the quality
-    categories.  This ensures each group is counted only once using a majority
-    vote across its predictions.
-    """
-
-    df = df_sub.copy()
-    df["pred_label"] = df[pred_col].map({0: "Female", 1: "Male"})
-    df["Correct"] = df["pred_label"] == df["true_label"]
-    df["Max_Prob"] = df[proba_cols].max(axis=1)
-    df["Quality"] = df["Max_Prob"].apply(
-        lambda p: "High" if p > 0.9 else ("Moderate" if p > 0.7 else "Low")
-    )
-
-    if group_by is not None:
-        grouped = df.groupby([group_by, "true_label"])
-        df = grouped.agg(
-            correct_rate=("Correct", "mean"),
-        ).reset_index()
-        df["Correct"] = df["correct_rate"] > 0.5
-        df["Quality"] = df["correct_rate"].apply(
-            lambda p: (
-                "High"
-                if p > 0.9
-                else ("Moderate" if p > 0.7 else ("Low" if p > 0.5 else "Misclassified"))
-            )
+    def make_counts(df, group_by):
+        df = df.copy()
+        df["pred_label"] = df[pred_col].map({0: "Female", 1: "Male"})
+        df["Correct"] = df["pred_label"] == df["true_label"]
+        df["Max_Prob"] = df[proba_cols].max(axis=1)
+        df["Quality"] = df["Max_Prob"].apply(
+            lambda p: "High" if p > 0.9 else ("Moderate" if p > 0.7 else "Low")
         )
 
-    idx = pd.MultiIndex.from_product(
-        [["Female", "Male"], [True, False]], names=["true_label", "Correct"]
-    )
-    columns = ["High", "Moderate", "Low"]
-    if group_by is not None:
-        columns.append("Misclassified")
-    counts = (
-        df.groupby(["true_label", "Correct", "Quality"]).size().unstack(fill_value=0)
-    ).reindex(index=idx, columns=columns, fill_value=0)
-
-    if counts.values.sum() == 0:
-        print("    → No data to plot")
-        return
-
-    normed = counts.div(counts.sum(axis=1), axis=0).fillna(0)
-
-    def make_annot(block: pd.DataFrame) -> pd.DataFrame:
-        total = block.values.sum()
-        return block.applymap(
-            lambda x: (
-                f"{int(x)}\n({int(round(x / total * 100))}%)"
-                if total > 0
-                else "0\n(0%)"
+        if group_by is not None:
+            grouped = df.groupby([group_by, "true_label"])
+            df = grouped.agg(correct_rate=("Correct", "mean")).reset_index()
+            df["Correct"] = df["correct_rate"] > 0.5
+            df["Quality"] = df["correct_rate"].apply(
+                lambda p: "High" if p > 0.9 else ("Moderate" if p > 0.7 else ("Low" if p > 0.5 else "Misclassified"))
             )
-        )
 
-    annot_corr = make_annot(counts.xs(True, level="Correct"))
-    annot_incorr = make_annot(counts.xs(False, level="Correct"))
+        idx = pd.MultiIndex.from_product([["Female", "Male"], [True, False]], names=["true_label", "Correct"])
+        columns = ["High", "Moderate", "Low"]
+        if group_by is not None:
+            columns.append("Misclassified")
+
+        counts = (
+            df.groupby(["true_label", "Correct", "Quality"]).size().unstack(fill_value=0)
+        ).reindex(index=idx, columns=columns, fill_value=0)
+
+        if counts.values.sum() == 0:
+            return None, None
+
+        normed = counts.div(counts.sum(axis=1), axis=0).fillna(0)
+
+        def make_annot(block: pd.DataFrame) -> pd.DataFrame:
+            total = block.values.sum()
+            return block.applymap(
+                lambda x: f"{int(x)}\n({int(round(x / total * 100))}%)" if total > 0 else "0\n(0%)"
+            )
+
+        return normed, make_annot
+
+    # Vier verschiedene Filter definieren
+    filters = [
+        (df_sub[df_sub["__split__"] == "train"], True, "a)"),   # korrekt train
+        (df_sub[df_sub["__split__"] == "train"], False, "b)"),  # falsch train
+        (df_sub[df_sub["__split__"] == "test"], True, "c)"),    # korrekt test
+        (df_sub[df_sub["__split__"] == "test"], False, "d)"),   # falsch test
+    ]
 
     green_cmap = LinearSegmentedColormap.from_list("green", ["white", "mediumseagreen"])
     red_cmap = LinearSegmentedColormap.from_list("red", ["white", "crimson"])
 
-    height = plt.rcParams["figure.figsize"][1] * 0.75
-    fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(plt.rcParams["figure.figsize"][0], height),
-        sharey=True,
-    )
-    sns.heatmap(
-        normed.xs(True, level="Correct"),
-        annot=annot_corr,
-        fmt="",
-        cmap=green_cmap,
-        vmin=0,
-        vmax=1,
-        linewidths=0.5,
-        linecolor="gray",
-        ax=axes[0],
-        cbar=True,
-    )
-    axes[0].set_title("a)", loc="left", fontweight="bold")
-    axes[0].set(ylabel="Sex")
-    sns.heatmap(
-        normed.xs(False, level="Correct"),
-        annot=annot_incorr,
-        fmt="",
-        cmap=red_cmap,
-        vmin=0,
-        vmax=1,
-        linewidths=0.5,
-        linecolor="gray",
-        ax=axes[1],
-        cbar=True,
-    )
-    axes[1].set_title("b)", loc="left", fontweight="bold")
-    axes[1].set(ylabel="")
-    for ax in axes:
-        ax.set_xlabel("Prediction Confidence")
+    fig, axes = plt.subplots(2, 2, figsize=(10, 9))
+    axes = axes.flatten()
+
+    for ax, (df_filt, correct_flag, label) in zip(axes, filters):
+        normed, make_annot = make_counts(df_filt, group_by)
+        if normed is None:
+            ax.axis("off")
+            continue
+
+        if correct_flag:
+            block = normed.xs(True, level="Correct")
+            annot = make_annot(block)
+            cmap = green_cmap
+        else:
+            block = normed.xs(False, level="Correct")
+            annot = make_annot(block)
+            cmap = red_cmap
+
+        sns.heatmap(
+            block,
+            annot=annot,
+            fmt="",
+            cmap=cmap,
+            vmin=0,
+            vmax=1,
+            linewidths=0.5,
+            linecolor="gray",
+            ax=ax,
+            cbar=True,
+        )
+        ax.set_title(label, loc="left", fontweight="bold")
+        ax.set_xlabel("Prediction Quality")
         labels = ["High", "Moderate", "Low"]
         if group_by is not None:
             labels.append("Misclassified")
         ax.set_xticklabels(labels, rotation=0)
         ax.set_yticklabels(["Female", "Male"], rotation=0)
-    # no super title so subfigures can be labelled externally
+
     plt.tight_layout()
     plt.show()
+
 
 
 def plot_quality_heatmaps(

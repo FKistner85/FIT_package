@@ -566,8 +566,8 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
         for ax, (tag, cols) in zip(
             axes,
             [
-                ("c)", ["trail", "true_label"]),
-                ("d)", ["individual_id", "true_label"]),
+                ("a)", ["trail", "true_label"]),
+                ("b)", ["individual_id", "true_label"]),
             ],
         ):
             acc = df_plot.groupby(cols).apply(classify_majority).reset_index(name="Class")

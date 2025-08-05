@@ -566,8 +566,8 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
         for ax, (tag, cols) in zip(
             axes,
             [
-                ("c)", ["trail", "true_label"]),
-                ("d)", ["individual_id", "true_label"]),
+                ("a)", ["trail", "true_label"]),
+                ("b)", ["individual_id", "true_label"]),
             ],
         ):
             acc = df_plot.groupby(cols).apply(classify_majority).reset_index(name="Class")
@@ -605,7 +605,7 @@ def plot_quality_grouped(df: pd.DataFrame) -> None:
             ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
             ax.set_yticklabels(["Female", "Male"], rotation=0)
             ax.set_title(tag, loc="left", fontweight="bold")
-            ax.set_xlabel("Prediction Confidence")
+            ax.set_xlabel("Quality")
             if ax is axes[0]:
                 ax.set_ylabel("Sex")
             else:
@@ -789,7 +789,7 @@ def _plot_quality_heatmaps_single(
     axes[1].set_title("b)", loc="left", fontweight="bold")
     axes[1].set(ylabel="")
     for ax in axes:
-        ax.set_xlabel("Prediction Confidence")
+        ax.set_xlabel("Prediction Quality")
         labels = ["High", "Moderate", "Low"]
         if group_by is not None:
             labels.append("Misclassified")

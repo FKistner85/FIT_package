@@ -1,0 +1,9 @@
+Species,Balanced Accuracy (Test),Accuracy (Test),Majority Vote Individual Accuracy (Test),Female Accuracy (Test),Male Accuracy (Test),Accuracy (CV),Balanced Accuracy (CV),Log Loss (CV)
+Mountain Lion,1.0,1.0,1.0,1.0,1.0,0.845,0.845,-0.378
+Amur Tiger,0.981,0.975,1.0,0.952,1.0,0.922,0.929,-0.334
+Bengal Tiger,0.98,0.972,1.0,1.0,0.892,0.825,0.799,-0.427
+Eurasian Otter,0.832,0.822,1.0,0.753,0.88,0.827,0.828,-0.385
+Giant Panda,0.806,0.782,0.778,0.964,0.516,0.738,0.669,-0.56
+Cheetah,0.643,0.636,0.75,0.747,0.66,0.366,0.355,-0.891
+White Rhino,0.59,0.413,0.444,0.221,0.946,0.461,0.584,-0.896
+Lowlandtapir,0.584,0.598,0.5,0.516,0.651,0.508,0.564,-0.769
