@@ -58,7 +58,7 @@ DEFAULT_TARGETS = ["species", "individual_id", "trail", "sex"]
 
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
-GLOBAL_RANDOM_SEED = 987
+GLOBAL_RANDOM_SEED = 123
 TEST_SIZE = 0.3
 NUM_FOLDS = 5
 DEBUG_MODE = False
@@ -84,7 +84,7 @@ SPECIES_MODEL_MAP = {
     "acinonyx_jubatus": "cheetah",
     "lutra_lutra": "eurasian_otter",
     "ailuropoda_melanoleuca": "giant_panda",
-    "tapirus_terrestris": "lowland_tapir",
+    "tapirus_terrestris": "lowlandtapir",
     "puma_concolor": "mountain_lion",
     "ceratotherium_simum": "white_rhino",
 }
