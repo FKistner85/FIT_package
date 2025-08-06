@@ -56,9 +56,17 @@ OTTER_POINT_MAP_PATH = PROCESSED_DIR / "otter_point_map.json"
 OTTER_META_COLS = ["id", "date", "location", "dataorigin", "substrate"]
 DEFAULT_TARGETS = ["species", "individual_id", "trail", "sex"]
 
+SEXMODEL_SETTINGS = {
+    "search_type": "bayes_search",       # oder "random_search"
+    "metric_key": "balanced_accuracy",  # oder hier sex model für pair definieren "best_mean_rank"
+}
+BAYES_REFIT = "balanced_accuracy"
+
+SEX_PREDICT_METRIC ="balanced_accuracy"
+
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
-GLOBAL_RANDOM_SEED = 123
+GLOBAL_RANDOM_SEED = 12345
 TEST_SIZE = 0.3
 NUM_FOLDS = 5
 DEBUG_MODE = False

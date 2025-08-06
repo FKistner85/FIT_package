@@ -18,7 +18,8 @@ from skopt.space import Categorical
 from sklearn.model_selection import PredefinedSplit
 from tqdm.auto import tqdm
 from tqdm_joblib import tqdm_joblib
-from sklearn.metrics import accuracy_score, balanced_accuracy_score,  roc_auc_score, brier_score_loss
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+    
 
 from FIT_python.data_split_and_summary.transform_wrapper import NumericTransformer
 from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
@@ -89,6 +90,8 @@ from FIT_python.config import (
     GROUP_COL,
     NUM_FOLDS,
     PATHS,
+    BAYES_REFIT,
+    SEX_PREDICT_METRIC
 )
 
 PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
@@ -245,7 +248,7 @@ def _run_species_search(
         search_spaces=SEARCH_SPACES,
         n_iter=n_iter,
         scoring=SCORING,
-        refit="accuracy",
+        refit=BAYES_REFIT,
         cv=cv,
         n_jobs=-1,
         random_state=random_state,
@@ -292,9 +295,26 @@ def _run_species_search(
             "mean_test_neg_log_loss": cv_res["mean_test_neg_log_loss"][i],
             **clean_params,
         }
+
         mdl = clone(pipe).set_params(**clean_params).fit(X_tr, y_tr)
         y_tr_pred = mdl.predict(X_tr)
         y_te_pred = mdl.predict(X_te)
+
+        # Wahrscheinlichkeiten für AUC (nur wenn vorhanden)
+                # Wahrscheinlichkeiten für AUC (nur wenn vorhanden)
+        try:
+            y_te_proba = mdl.predict_proba(X_te)[:, 1]
+
+            # ❌ vorher: np.vstack([X_tr, X_te])  → bricht, weil kein DF
+            # ✅ neu: concat mit Pandas
+            X_all = pd.concat([X_tr, X_te], axis=0)
+            y_all_proba = mdl.predict_proba(X_all)[:, 1]
+
+        except AttributeError:
+            y_te_proba = None
+            y_all_proba = None
+
+
         y_all_true = np.concatenate([y_tr, y_te])
         y_all_pred = np.concatenate([y_tr_pred, y_te_pred])
         ids_all = np.concatenate([ids_tr, ids_te])
@@ -317,20 +337,44 @@ def _run_species_search(
         acc_all = accuracy_score(y_all_true, y_all_pred)
         bal_all = balanced_accuracy_score(y_all_true, y_all_pred)
 
+        # Neue Metriken
+        f1_te = f1_score(y_te, y_te_pred)
+        prec_te = precision_score(y_te, y_te_pred)
+        rec_te = recall_score(y_te, y_te_pred)
+        auc_te = roc_auc_score(y_te, y_te_proba) if y_te_proba is not None else float("nan")
+
+        f1_all = f1_score(y_all_true, y_all_pred)
+        prec_all = precision_score(y_all_true, y_all_pred)
+        rec_all = recall_score(y_all_true, y_all_pred)
+        auc_all = roc_auc_score(y_all_true, y_all_proba) if y_all_proba is not None else float("nan")
+
         record.update(
             {
                 "female_train_acc": fem_tr,
                 "male_train_acc": mal_tr,
                 "balanced_train_acc": bal_tr,
                 "accuracy_train": acc_tr,
+
                 "female_test_acc": fem_te,
                 "male_test_acc": mal_te,
                 "balanced_test_acc": bal_te,
                 "accuracy_test": acc_te,
+
+                "f1_test": f1_te,
+                "precision_test": prec_te,
+                "recall_test": rec_te,
+                "roc_auc_test": auc_te,
+
                 "female_full_acc": fem_all,
                 "male_full_acc": mal_all,
                 "balanced_full_acc": bal_all,
                 "accuracy_full": acc_all,
+
+                "f1_full": f1_all,
+                "precision_full": prec_all,
+                "recall_full": rec_all,
+                "roc_auc_full": auc_all,
+
                 "maj_train_count": ct_tr,
                 "maj_train_wrong": wr_tr,
                 "maj_train_pct": pct_tr,
@@ -480,9 +524,9 @@ def _run_species_search(
         species,
         models_dir=PATHS["random_search"],
         reuse_csv=False,
-        prefer_generic=False,
+        prefer_generic=True,
         include_inference=False,
-        metric_key="best_mean_rank",
+        metric_key=SEX_PREDICT_METRIC,
     )
 
     return df_all, df_best

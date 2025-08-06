@@ -57,9 +57,9 @@ SOFT_CONFIG = {
         "search_spaces":{
             "outlier": [None, "clip"], #, "zscore"
             "scale": [None, "standard"], #, "robust"
-            "select__method": [ "lasso", "random_forest"], #None, "forward", "variance",
-            "select__k": [1, 2, 3, 4, 5, 6,7,8,9,10,11,12], #, 20, 50, 100
-            "reduce_pre__method": [None, ], #"pca", "umap", "tsne"
+            "select__method": [ "lasso", "random_forest","forward"], #None, "forward", "variance",
+            "select__k": [1, 2, 3, 4, 5, 6,7,8,9,10,11,12,13,14,15], #, 20, 50, 100
+            "reduce_pre__method": [None,"pca" ], #"pca", "umap", "tsne"
             "reduce_post__method": [None,],  #"pca", "umap", "tsne"
             "clf": None,  # placeholder, to be filled with MODELS
         },
@@ -73,6 +73,10 @@ SOFT_CONFIG = {
             "accuracy": "accuracy",
             "balanced_accuracy": "balanced_accuracy",
             "neg_log_loss": "neg_log_loss",
+            "f1": "f1",
+            "precision": "precision",
+            "recall": "recall",
+            "roc_auc": "roc_auc"
         },
         "pipeline_order": [
             "outlier",
@@ -84,7 +88,7 @@ SOFT_CONFIG = {
             "clf",
         ],
         "run_otter_search_sex": {
-            "n_iter": 100,
+            "n_iter": 5,
             "cv": "fold",
             "random_state": GLOBAL_RANDOM_SEED,
             "reuse_results": True,
