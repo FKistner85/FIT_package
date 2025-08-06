@@ -196,7 +196,7 @@ def main(species: str = "eurasian_otter") -> None:
             use_sexmodel_prediction=True,
             sexmodel_path=str(
                 get_species_paths(species)["models"]
-                / "best_mean_rank"
+                / config.SEX_PREDICT_METRIC
                 / f"{species}.joblib"
             ),
             n_jobs=1,

@@ -69,8 +69,9 @@ def test_pairwise_pipeline_autodetects_sexmodel(tmp_path, monkeypatch):
         raise RuntimeError("stop")
 
     monkeypatch.setattr(pp, "load", fake_load)
+    metric = cfg.SEX_PREDICT_METRIC
     from FIT_python.utils import get_species_paths
-    expected = get_species_paths("sp")["models"] / "best_mean_rank" / "sp.joblib"
+    expected = get_species_paths("sp")["models"] / metric / "sp.joblib"
     expected.parent.mkdir(parents=True, exist_ok=True)
     expected.write_bytes(b"0")
 

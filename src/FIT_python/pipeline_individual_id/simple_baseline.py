@@ -16,7 +16,7 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
-from FIT_python.config import SPLITS_DIR
+from FIT_python.config import RESULTS_DATA_DIR, SPLITS_DIR, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
@@ -400,7 +400,7 @@ def run_simple_baseline_all_species(
         Path to a saved sex model forwarded to :func:`run_fold_cv` when
         ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
         resolved automatically for each species using
-        ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
+        ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -445,13 +445,14 @@ def run_simple_baseline_all_species(
             preds = load_sex_predictions(
                 species_dir.name,
                 models_dir=models_dir,
+                metric_key=SEX_PREDICT_METRIC,
             )
 
         model_fp = sexmodel_path
         if use_sexmodel_prediction and model_fp is None:
             model_fp = (
                 get_species_paths(species_dir.name)["models"]
-                / "best_mean_rank"
+                / SEX_PREDICT_METRIC
                 / f"{species_dir.name}.joblib"
             )
 
@@ -612,7 +613,7 @@ def load_sex_predictions(
     *,
     prefer_generic: bool = True,
     models_dir: str | Path | None = None,
-    metric_key: str = "best_mean_rank",
+    metric_key: str = SEX_PREDICT_METRIC,
 ) -> pd.DataFrame:
     """Return sex-model predictions for ``species``.
 
@@ -620,7 +621,7 @@ def load_sex_predictions(
     pipeline.  The helper simply forwards the parameters and returns the
     resulting DataFrame so that the individual ID baseline can load the
     predictions without importing the full sex pipeline here.  The ``metric_key``
-    selects which saved model to use and defaults to ``"best_mean_rank"``.
+    selects which saved model to use and defaults to :data:`SEX_PREDICT_METRIC`.
     """
 
     from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
@@ -715,7 +716,7 @@ def run_fold_cv(
         Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
         ``True`` and no path is given, the function attempts to resolve the
         model path from the ``species`` column using
-        ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
+        ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
     """
 
     from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
@@ -752,7 +753,7 @@ def run_fold_cv(
             )
         species = str(df_all["species"].dropna().unique()[0])
         paths = get_species_paths(species)
-        model_fp = paths["models"] / "best_mean_rank" / f"{species}.joblib"
+        model_fp = paths["models"] / SEX_PREDICT_METRIC / f"{species}.joblib"
 
     if fold_col not in df_all.columns:
         raise KeyError(f"DataFrame must contain '{fold_col}' column")
