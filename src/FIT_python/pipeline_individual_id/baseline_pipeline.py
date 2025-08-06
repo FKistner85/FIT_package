@@ -15,6 +15,7 @@ import pandas as pd
 
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
 from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.utils import get_species_paths
 
 
 class DistanceBaseline:
@@ -74,7 +75,7 @@ class DistanceBaseline:
             Path to the sex classifier. If ``use_sexmodel_prediction`` is
             ``True`` and no path is given, the classifier location is derived
             from the ``species`` column via
-            ``get_species_paths(species)['search']/best_mean_rank.joblib``.
+            ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
         n_jobs:
             Number of parallel jobs for the underlying pipeline.
         debug:
@@ -117,12 +118,8 @@ class DistanceBaseline:
             metric_folder = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"].get(
                 "metric_folder", "best_mean_rank"
             )
-            model_fp = (
-                cfg.RESULTS_DATA_DIR
-                / f"{species}_bayes_search_standard_metrics"
-                / metric_folder
-                / f"{species}.joblib"
-            )
+            paths = get_species_paths(species)
+            model_fp = paths["models"] / metric_folder / f"{species}.joblib"
 
             if not model_fp.is_file():
                 raise FileNotFoundError(f"Sex model file not found: {model_fp}")

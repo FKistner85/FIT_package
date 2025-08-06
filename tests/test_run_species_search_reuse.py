@@ -20,14 +20,12 @@ def _load_functions(tmp_root):
 
 def test__run_species_search_reuse(tmp_path, monkeypatch):
     root = tmp_path
-    results_dir = root / "results" / "data" / "otter_bayes_search_standard_metrics"
+    results_dir = root / "results" / "data" / "otter" / "search"
     results_dir.mkdir(parents=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})
     df_all.to_csv(results_dir / "all_results.csv", index=False)
     df_best.to_csv(results_dir / "best_models.csv", index=False)
-    (results_dir / "best_mean_rank" / "otter.joblib").parent.mkdir(parents=True)
-    (results_dir / "best_mean_rank" / "otter.joblib").write_bytes(b"0")
 
     _run_species_search, _, env = _load_functions(root)
     g = env
@@ -40,16 +38,30 @@ def test__run_species_search_reuse(tmp_path, monkeypatch):
         def fit(self, X, y):
             called["flag"] = True
 
+    def fake_get_species_paths(species):
+        base = root / "results" / "data" / species
+        paths = {
+            "search": base / "search",
+            "models": base / "models",
+            "predictions": base / "predictions",
+            "heatmaps": base / "heatmaps",
+            "logs": base / "logs",
+            "splits": root / "data" / "splits" / species,
+        }
+        for p in paths.values():
+            p.mkdir(parents=True, exist_ok=True)
+        return paths
+
     g.update({
         "BayesSearchCV": DummySearch,
         "pd": pd,
         "RESULTS_DATA_DIR": root / "results" / "data",
         "SPLITS_DIR": root / "data" / "splits",
+        "get_species_paths": fake_get_species_paths,
     })
 
     got_all, got_best = _run_species_search(
         "otter",
-        "otter_bayes_search_standard_metrics",
         1,
         2,
         0,
@@ -64,7 +76,7 @@ def test__run_species_search_reuse(tmp_path, monkeypatch):
 def test_run_species_search_reuse(tmp_path, monkeypatch):
     root = tmp_path
     (root / "data" / "splits" / "otter").mkdir(parents=True)
-    results_dir = root / "results" / "data" / "otter_bayes_search_standard_metrics"
+    results_dir = root / "results" / "data" / "otter" / "search"
     results_dir.mkdir(parents=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})
@@ -81,11 +93,26 @@ def test_run_species_search_reuse(tmp_path, monkeypatch):
         def fit(self, X, y):
             called["flag"] = True
 
+    def fake_get_species_paths(species):
+        base = root / "results" / "data" / species
+        paths = {
+            "search": base / "search",
+            "models": base / "models",
+            "predictions": base / "predictions",
+            "heatmaps": base / "heatmaps",
+            "logs": base / "logs",
+            "splits": root / "data" / "splits" / species,
+        }
+        for p in paths.values():
+            p.mkdir(parents=True, exist_ok=True)
+        return paths
+
     env.update({
         "BayesSearchCV": DummySearch,
         "pd": pd,
         "RESULTS_DATA_DIR": root / "results" / "data",
         "SPLITS_DIR": root / "data" / "splits",
+        "get_species_paths": fake_get_species_paths,
     })
     env["_run_species_search"] = _run_species_search
 

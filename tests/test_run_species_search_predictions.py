@@ -101,7 +101,7 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
     monkeypatch.setattr(sc, "predict_all", fake_predict_all)
 
     df_all, df_best = sc._run_species_search(
-        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=GLOBAL_RANDOM_SEED, reuse_results=False
+        "otter", n_iter=1, cv=2, random_state=GLOBAL_RANDOM_SEED, reuse_results=False
     )
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
@@ -172,13 +172,13 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
     monkeypatch.setattr(sc, "predict_all", fake_predict_all)
 
     df_all, df_best = sc._run_species_search(
-        "otter", "otter_bayes_search_standard_metrics", n_iter=1, cv=2, random_state=GLOBAL_RANDOM_SEED, reuse_results=False
+        "otter", n_iter=1, cv=2, random_state=GLOBAL_RANDOM_SEED, reuse_results=False
     )
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
 
     from FIT_python.utils import get_species_paths
-    model_path = get_species_paths("otter")["search"] / "best_mean_rank" / "otter.joblib"
+    model_path = get_species_paths("otter")["models"] / "best_mean_rank" / "otter.joblib"
     assert model_path.exists()
 
 
@@ -193,7 +193,11 @@ def test_run_species_search_reuses_results(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
-    results_dir = cfg.RESULTS_DATA_DIR / "otter_bayes_search_standard_metrics"
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
+    results_dir = cfg.RESULTS_DATA_DIR / "otter" / "search"
     results_dir.mkdir(parents=True, exist_ok=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})
@@ -214,7 +218,6 @@ def test_run_species_search_reuses_results(tmp_path, monkeypatch):
 
     got_all, got_best = sc._run_species_search(
         "otter",
-        "otter_bayes_search_standard_metrics",
         n_iter=1,
         cv=2,
         random_state=GLOBAL_RANDOM_SEED,

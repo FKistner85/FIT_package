@@ -243,7 +243,7 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
 
     assert captured["use_sexmodel_prediction"] is True
     from FIT_python.utils import get_species_paths
-    expected = get_species_paths("sp")["search"] / "best_mean_rank.joblib"
+    expected = get_species_paths("sp")["models"] / "best_mean_rank" / "sp.joblib"
     assert Path(captured["sexmodel_path"]) == expected
     assert (root / "exp" / "sp" / "summary.csv").exists()
 

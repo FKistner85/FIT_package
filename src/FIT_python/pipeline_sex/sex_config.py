@@ -1,8 +1,6 @@
 """Configuration and search utilities for sex classification pipelines."""
 
 from __future__ import annotations
-from pathlib import Path
-import shutil
 import pandas as pd
 import numpy as np
 import warnings
@@ -175,7 +173,6 @@ def prepare_eurasian_otter() -> None:
 
 def _run_species_search(
     species: str,
-    base_dir_suffix: str,
     n_iter: int,
     cv: int | str,
     random_state: int,
@@ -189,15 +186,19 @@ def _run_species_search(
     Parameters
     ----------
     reuse_results:
-        When ``True`` and result CSVs exist in ``base_dir_suffix`` the search
-        is skipped and the files are loaded instead.
+        When ``True`` and result CSVs exist in the species search directory the
+        search is skipped and the files are loaded instead.
     """
-    base_dir = RESULTS_DATA_DIR / base_dir_suffix
-    all_csv = base_dir / "all_results.csv"
-    best_csv = base_dir / "best_models.csv"
+    paths = get_species_paths(species)
+    search_dir = paths["search"]
+    models_dir = paths["models"]
+    heatmaps_dir = paths["heatmaps"]
+
+    all_csv = search_dir / "all_results.csv"
+    best_csv = search_dir / "best_models.csv"
     if reuse_results and all_csv.exists() and best_csv.exists():
-        df_all = pd.read_csv(all_csv)
-        df_best = pd.read_csv(best_csv)
+        df_all = pd.read_csv(all_csv).apply(pd.to_numeric, errors="ignore")
+        df_best = pd.read_csv(best_csv).apply(pd.to_numeric, errors="ignore")
         return df_all, df_best
 
     species_dir = SPLITS_DIR / species
@@ -261,9 +262,10 @@ def _run_species_search(
         else getattr(search.cv, "n_splits", search.cv.get_n_splits())
     )
     total_fits = search.n_iter * folds
-    base_dir.mkdir(parents=True, exist_ok=True)
+    search_dir.mkdir(parents=True, exist_ok=True)
     for m in METRICS:
-        (base_dir / f"best_{m}").mkdir(exist_ok=True)
+        (models_dir / f"best_{m}").mkdir(parents=True, exist_ok=True)
+    (models_dir / "best_mean_rank").mkdir(parents=True, exist_ok=True)
 
     raw_records = []
     best_records = []
@@ -409,12 +411,8 @@ def _run_species_search(
         best_record["best_metric"] = metric
 
         best_pipe = clone(pipe).set_params(**clean_best).fit(X_tr, y_tr)
-        out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
+        out_path = models_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
-
-        generic_dir = get_species_paths(species)["search"] / f"best_{metric}"
-        generic_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy(out_path, generic_dir / f"{species}.joblib")
 
         print(
             f"✅ Modell für Spezies '{species}', Kriterium '{metric}' gespeichert unter:\n   {out_path}"
@@ -448,21 +446,16 @@ def _run_species_search(
     best_record_rank["best_metric"] = "mean_rank"
 
     best_pipe_rank = clone(pipe).set_params(**clean_best_rank).fit(X_tr, y_tr)
-    out_path_rank = base_dir / "best_mean_rank" / f"{species}.joblib"
-    out_path_rank.parent.mkdir(parents=True, exist_ok=True)
+    out_path_rank = models_dir / "best_mean_rank" / f"{species}.joblib"
     joblib.dump(best_pipe_rank, out_path_rank)
-
-    generic_dir_rank = get_species_paths(species)["search"] / "best_mean_rank"
-    generic_dir_rank.mkdir(parents=True, exist_ok=True)
-    shutil.copy(out_path_rank, generic_dir_rank / f"{species}.joblib")
 
     print(
         f"✅ Best-Overall-Rank Modell für Spezies '{species}' gespeichert unter:\n   {out_path_rank}"
     )
     best_records.append(best_record_rank)
 
-    all_csv = base_dir / "all_results.csv"
-    best_csv = base_dir / "best_models.csv"
+    all_csv = search_dir / "all_results.csv"
+    best_csv = search_dir / "best_models.csv"
     df_all = pd.DataFrame(raw_records).fillna("None")
     df_best = pd.DataFrame(best_records).fillna("None")
 
@@ -515,14 +508,12 @@ def _run_species_search(
             )
         )
 
-    plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
-
-    plot_hyperparam_heatmap(df_heat, base_dir / "hyperparam_search")
+    plot_hyperparam_heatmap(df_heat, heatmaps_dir / "hyperparam_search")
 
     # Create prediction CSVs for downstream pipelines
     predict_all(
         species,
-        models_dir=get_species_paths(species)["search"],
+        models_dir=models_dir,
         reuse_csv=False,
         prefer_generic=True,
         include_inference=False,
@@ -543,25 +534,13 @@ def run_otter_search_sex(
         "reuse_results", True
     ),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Run BayesSearchCV for the Eurasian otter dataset.
+    """Run BayesSearchCV for the Eurasian otter dataset."""
 
-    Parameters
-    ----------
-    n_iter : int, optional
-        Number of iterations for :class:`skopt.BayesSearchCV`.
-    cv : int or str, optional
-        Cross-validation strategy forwarded to :func:`run_species_search`.
-    random_state : int, optional
-        Random seed controlling the search.
-    reuse_results : bool, optional
-        When ``True`` previously saved search results are loaded from
-        ``get_species_paths(species)['search']``.
-    """
-    return run_species_search(
-        species_filter=["eurasian_otter"],
-        n_iter=n_iter,
-        cv=cv,
-        random_state=random_state,
+    return _run_species_search(
+        "eurasian_otter",
+        n_iter,
+        cv,
+        random_state,
         reuse_results=reuse_results,
     )
 
@@ -576,26 +555,7 @@ def run_species_search(
         "reuse_results", True
     ),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Run the search for all species in ``SPLITS_DIR``.
-
-    Parameters
-    ----------
-    species_filter : list[str], optional
-        Restrict the search to these species names.
-    n_iter : int, optional
-        Number of iterations for :class:`skopt.BayesSearchCV`.
-    cv : int or str, optional
-        Cross-validation strategy (``"fold"`` or integer).
-    random_state : int, optional
-        Random seed controlling the search.
-    reuse_results : bool, optional
-        When ``True`` previously saved results are reused if present.
-
-    Returns
-    -------
-    tuple[pandas.DataFrame, pandas.DataFrame]
-        Combined results of all searches and the best parameters per species.
-    """
+    """Run the search for all species in ``SPLITS_DIR``."""
     all_dfs: list[pd.DataFrame] = []
     best_dfs: list[pd.DataFrame] = []
     for species_dir in sorted(SPLITS_DIR.iterdir()):
@@ -606,7 +566,6 @@ def run_species_search(
             continue
         df_all, df_best = _run_species_search(
             species,
-            f"{species}_bayes_search_standard_metrics",
             n_iter,
             cv,
             random_state,

@@ -400,7 +400,7 @@ def run_simple_baseline_all_species(
         Path to a saved sex model forwarded to :func:`run_fold_cv` when
         ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
         resolved automatically for each species using
-        ``get_species_paths(species)['search']/best_mean_rank.joblib``.
+        ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -450,8 +450,9 @@ def run_simple_baseline_all_species(
         model_fp = sexmodel_path
         if use_sexmodel_prediction and model_fp is None:
             model_fp = (
-                get_species_paths(species_dir.name)["search"]
-                / "best_mean_rank.joblib"
+                get_species_paths(species_dir.name)["models"]
+                / "best_mean_rank"
+                / f"{species_dir.name}.joblib"
             )
 
         kwargs = dict(
@@ -714,7 +715,7 @@ def run_fold_cv(
         Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
         ``True`` and no path is given, the function attempts to resolve the
         model path from the ``species`` column using
-        ``get_species_paths(species)['search']/best_mean_rank.joblib``.
+        ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
     """
 
     from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
@@ -750,7 +751,8 @@ def run_fold_cv(
                 "sexmodel_path must be provided when use_sexmodel_prediction=True"
             )
         species = str(df_all["species"].dropna().unique()[0])
-        model_fp = get_species_paths(species)["search"] / "best_mean_rank.joblib"
+        paths = get_species_paths(species)
+        model_fp = paths["models"] / "best_mean_rank" / f"{species}.joblib"
 
     if fold_col not in df_all.columns:
         raise KeyError(f"DataFrame must contain '{fold_col}' column")
