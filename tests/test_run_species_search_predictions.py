@@ -100,10 +100,11 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
 
-    csv_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "otter_all_predictions.csv"
+    from FIT_python.utils import get_species_paths
+    csv_path = get_species_paths("otter")["search"] / "otter_all_predictions.csv"
     assert csv_path.exists()
 
-    df = sc.predict_all("otter", models_dir=cfg.RESULTS_DATA_DIR / "random_search_standard_metrics", reuse_csv=True)
+    df = sc.predict_all("otter", models_dir=get_species_paths("otter")["search"], reuse_csv=True)
     pd.testing.assert_frame_equal(df, pd.DataFrame({"a": [1]}))
 
 
@@ -168,7 +169,8 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
     assert isinstance(df_all, pd.DataFrame)
     assert isinstance(df_best, pd.DataFrame)
 
-    model_path = cfg.RESULTS_DATA_DIR / "random_search_standard_metrics" / "best_mean_rank" / "otter.joblib"
+    from FIT_python.utils import get_species_paths
+    model_path = get_species_paths("otter")["search"] / "best_mean_rank" / "otter.joblib"
     assert model_path.exists()
 
 
@@ -179,17 +181,16 @@ def test_run_species_search_reuses_results(tmp_path, monkeypatch):
     build_train_df().to_parquet(data_dir / "train.parquet", index=False)
     build_test_df().to_parquet(data_dir / "test.parquet", index=False)
 
-    results_dir = root / "results" / "data" / "otter_bayes_search_standard_metrics"
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
+    import FIT_python.config as cfg
+    importlib.reload(cfg)
+    results_dir = cfg.RESULTS_DATA_DIR / "otter_bayes_search_standard_metrics"
     results_dir.mkdir(parents=True, exist_ok=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})
     df_all.to_csv(results_dir / "all_results.csv", index=False)
     df_best.to_csv(results_dir / "best_models.csv", index=False)
-
-    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
-    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
-    import FIT_python.config as cfg
-    importlib.reload(cfg)
     import FIT_python.pipeline_sex.sex_config as sc
     importlib.reload(sc)
 

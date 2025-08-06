@@ -18,7 +18,8 @@ from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
-from FIT_python.config import RESULTS_DATA_DIR, PATHS
+from FIT_python.config import RESULTS_DATA_DIR
+from FIT_python.utils import get_species_paths
 from FIT_python.soft_config import SOFT_CONFIG
 
 # Local modules
@@ -80,7 +81,7 @@ def run_all_pairwise_projections_parallel(
     0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
        precompute ``predict_proba``. When no ``sexmodel_path`` is given, the
        classifier location is derived from the ``species`` column via
-       ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
+       ``get_species_paths(species)['search']/best_mean_rank.joblib``.
     1. Clean the base DataFrame.
     2. Apply pipeline steps: outlier cleaning and feature scaling.
     3. Perform feature selection once with ``k_max`` on the **scaled** data.
@@ -114,9 +115,7 @@ def run_all_pairwise_projections_parallel(
                     "sexmodel_path must be provided when use_sexmodel_prediction=True"
                 )
             species = str(df["species"].dropna().unique()[0])
-            model_fp = (
-                PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"
-            )
+            model_fp = get_species_paths(species)["search"] / "best_mean_rank.joblib"
 
         model_fp = Path(model_fp)
         if not model_fp.is_file():

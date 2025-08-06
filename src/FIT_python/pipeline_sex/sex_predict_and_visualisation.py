@@ -7,7 +7,8 @@ import warnings
 from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
-from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, PATHS, SEX_PREDICT_METRIC
+from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, SEX_PREDICT_METRIC
+from FIT_python.utils import get_species_paths
 from FIT_python.Visualisations.plot_style import SEX_COLORS, SEX_VALUE_MAP
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 from sklearn.base import clone
@@ -42,23 +43,13 @@ def _base_paths(
         models = Path(models_dir)
         # Heuristically resolve the directory containing the saved models
         if not any((models / d).exists() for d in MODELS.values()):
-            # Common experiment layout puts the models under
-            # ``results/data/random_search_standard_metrics`` relative to the
-            # experiment root.  When ``models_dir`` points to the experiment
-            # directory or ``models`` subfolder, adjust accordingly.
             candidate = models / "results" / "data" / "random_search_standard_metrics"
             if not candidate.exists() and models.name == "models":
                 candidate = models.parent / "results" / "data" / "random_search_standard_metrics"
             if candidate.exists():
                 models = candidate
     else:
-        specific = PATHS["random_search"].with_name(
-            f"{species}_random_search_standard_metrics"
-        )
-        generic = PATHS["random_search"]
-        models = generic if prefer_generic else specific
-        if not models.exists():
-            models = specific if prefer_generic else generic
+        models = get_species_paths(species)["search"]
 
     csv = Path(models) / f"{species}_all_predictions.csv"
     return splits, Path(models), csv

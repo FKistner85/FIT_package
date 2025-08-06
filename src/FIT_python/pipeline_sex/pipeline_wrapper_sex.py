@@ -25,6 +25,7 @@ from FIT_python.config import (
     PATHS,
 )
 import FIT_python.config as config
+from FIT_python.utils import get_species_paths
 from FIT_python.utils import debug_report
 from FIT_python.soft_config import SOFT_CONFIG
 
@@ -218,10 +219,6 @@ class PipelineWrapper:
         self.n_jobs = n_jobs
         self.debug = debug
 
-        self._model_dir = PATHS["sex_models"]
-        self._model_dir.mkdir(parents=True, exist_ok=True)
-        self._best_dir = PATHS["sex_models_best"]
-        self._best_dir.mkdir(parents=True, exist_ok=True)
 
     def prepare(self):
         """Run data import, splitting and summary exactly once."""
@@ -260,6 +257,11 @@ class PipelineWrapper:
 
                 key = species_dir.name
                 best_acc_per_species.setdefault(key, -np.inf)
+
+                species_paths = get_species_paths(key)
+                model_dir = species_paths["models"]
+                model_dir.mkdir(parents=True, exist_ok=True)
+                best_dir = model_dir
 
                 train_fp = species_dir / "train.parquet"
                 test_fp = species_dir / "test.parquet"
@@ -448,7 +450,7 @@ class PipelineWrapper:
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
-        raw_out = PATHS["raw_results"]
+        raw_out = PATHS["results"] / "raw_results.csv"
         df_new.to_csv(raw_out, mode="a", header=not raw_out.exists(), index=False)
 
         # aggregate timing columns
@@ -502,7 +504,7 @@ class PipelineWrapper:
                 f"__redpre-{row['reduce_pre_method'] or 'none'}"
                 f"__redpost-{row['reduce_post_method'] or 'none'}.joblib"
             )
-            model_path = self._model_dir / fname_all
+            model_path = model_dir / fname_all
             if model_path.exists():
                 if self.debug or config.DEBUG_MODE:
                     print(f"🔁 Lade bestehendes Modell {fname_all}")
@@ -515,7 +517,7 @@ class PipelineWrapper:
                 dump(final_pipe, model_path)
 
             # 2) Best model per species
-            best_path = self._best_dir / f"{species}.joblib"
+            best_path = best_dir / f"{species}.joblib"
             if row["test_balanced_accuracy"] >= best_acc_per_species[species]:
                 dump(final_pipe, best_path)
                 best_acc_per_species[species] = row["test_balanced_accuracy"]

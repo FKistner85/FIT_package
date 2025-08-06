@@ -89,10 +89,10 @@ from FIT_python.config import (
     DEFAULT_TARGETS,
     GROUP_COL,
     NUM_FOLDS,
-    PATHS,
     BAYES_REFIT,
-    SEX_PREDICT_METRIC
+    SEX_PREDICT_METRIC,
 )
+from FIT_python.utils import get_species_paths
 
 PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
 
@@ -412,7 +412,7 @@ def _run_species_search(
         out_path = base_dir / f"best_{metric}" / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
 
-        generic_dir = PATHS["random_search"] / f"best_{metric}"
+        generic_dir = get_species_paths(species)["search"] / f"best_{metric}"
         generic_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(out_path, generic_dir / f"{species}.joblib")
 
@@ -452,7 +452,7 @@ def _run_species_search(
     out_path_rank.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(best_pipe_rank, out_path_rank)
 
-    generic_dir_rank = PATHS["random_search"] / "best_mean_rank"
+    generic_dir_rank = get_species_paths(species)["search"] / "best_mean_rank"
     generic_dir_rank.mkdir(parents=True, exist_ok=True)
     shutil.copy(out_path_rank, generic_dir_rank / f"{species}.joblib")
 
@@ -522,7 +522,7 @@ def _run_species_search(
     # Create prediction CSVs for downstream pipelines
     predict_all(
         species,
-        models_dir=PATHS["random_search"],
+        models_dir=get_species_paths(species)["search"],
         reuse_csv=False,
         prefer_generic=True,
         include_inference=False,
@@ -555,7 +555,7 @@ def run_otter_search_sex(
         Random seed controlling the search.
     reuse_results : bool, optional
         When ``True`` previously saved search results are loaded from
-        ``PATHS['random_search']``.
+        ``get_species_paths(species)['search']``.
     """
     return run_species_search(
         species_filter=["eurasian_otter"],
