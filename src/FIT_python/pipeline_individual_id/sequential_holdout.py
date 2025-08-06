@@ -8,7 +8,7 @@ from typing import Iterable, Sequence
 import numpy as np
 import pandas as pd
 
-from FIT_python.config import RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED
+from FIT_python.config import RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
 from FIT_python.soft_config import SOFT_CONFIG
 
@@ -158,7 +158,7 @@ def run(
         Path to a saved sex classifier.  If ``use_sexmodel_prediction`` is
         ``True`` and no path is provided, the model location is derived from the
         ``species`` column using
-        ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
+        ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
 
     Returns
     -------
@@ -193,7 +193,7 @@ def run(
             )
         species = str(df_all["species"].dropna().unique()[0])
         paths = get_species_paths(species)
-        model_fp = paths["models"] / "best_mean_rank" / f"{species}.joblib"
+        model_fp = paths["models"] / SEX_PREDICT_METRIC / f"{species}.joblib"
 
     unique_ids = df_all[id_col].dropna().astype(str).unique()
     splits = sequential_holdout_ids(unique_ids, val_sizes=val_sizes, n_iter=iterations, random_state=random_state)

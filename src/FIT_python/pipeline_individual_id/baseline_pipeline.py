@@ -16,6 +16,7 @@ import pandas as pd
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.utils import get_species_paths
+from FIT_python.config import SEX_PREDICT_METRIC
 
 
 class DistanceBaseline:
@@ -75,7 +76,7 @@ class DistanceBaseline:
             Path to the sex classifier. If ``use_sexmodel_prediction`` is
             ``True`` and no path is given, the classifier location is derived
             from the ``species`` column via
-            ``get_species_paths(species)['models']/best_mean_rank/{species}.joblib``.
+            ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
         n_jobs:
             Number of parallel jobs for the underlying pipeline.
         debug:
@@ -116,7 +117,7 @@ class DistanceBaseline:
 
             # Immer Bayes-Ordner nutzen, Metric soft-coded
             metric_folder = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"].get(
-                "metric_folder", "best_mean_rank"
+                "metric_folder", SEX_PREDICT_METRIC
             )
             paths = get_species_paths(species)
             model_fp = paths["models"] / metric_folder / f"{species}.joblib"

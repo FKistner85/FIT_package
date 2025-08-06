@@ -152,8 +152,10 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
     preds = pd.DataFrame({"id": [0], "pred_f_proba_f": [0.5]})
     calls = []
 
-    def fake_load(species, models_dir=None):
-        calls.append((species, models_dir))
+    metric = cfg.SEX_PREDICT_METRIC
+
+    def fake_load(species, models_dir=None, metric_key=None):
+        calls.append((species, models_dir, metric_key))
         return preds
 
     from pathlib import Path
@@ -179,7 +181,7 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
         models_dir=root / "models",
     )
 
-    assert calls == [("sp", root / "models")]
+    assert calls == [("sp", root / "models", metric)]
     assert (root / "exp" / "sp" / "summary.csv").exists()
 
 
@@ -243,7 +245,8 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
 
     assert captured["use_sexmodel_prediction"] is True
     from FIT_python.utils import get_species_paths
-    expected = get_species_paths("sp")["models"] / "best_mean_rank" / "sp.joblib"
+    metric = cfg.SEX_PREDICT_METRIC
+    expected = get_species_paths("sp")["models"] / metric / "sp.joblib"
     assert Path(captured["sexmodel_path"]) == expected
     assert (root / "exp" / "sp" / "summary.csv").exists()
 
