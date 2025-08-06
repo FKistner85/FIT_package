@@ -261,7 +261,9 @@ class PipelineWrapper:
                 species_paths = get_species_paths(key)
                 model_dir = species_paths["models"]
                 model_dir.mkdir(parents=True, exist_ok=True)
-                best_dir = model_dir
+                metric = config.SEX_PREDICT_METRIC
+                best_dir = model_dir / metric
+                best_dir.mkdir(parents=True, exist_ok=True)
 
                 train_fp = species_dir / "train.parquet"
                 test_fp = species_dir / "test.parquet"
@@ -482,6 +484,11 @@ class PipelineWrapper:
         for _, row in df_new.iterrows():
             species = row["species"]
             mk = row["model"]
+            species_paths = get_species_paths(species)
+            model_dir = species_paths["models"]
+            model_dir.mkdir(parents=True, exist_ok=True)
+            best_dir = model_dir / config.SEX_PREDICT_METRIC
+            best_dir.mkdir(parents=True, exist_ok=True)
             df_t = _DATA_CACHE[species]["train"]
             y_t = df_t["sex"].map({"f": 0, "m": 1})
             X_t = df_t.drop(columns=["Fold", "sex"])
