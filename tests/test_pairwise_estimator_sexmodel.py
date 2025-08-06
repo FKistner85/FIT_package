@@ -70,7 +70,7 @@ def test_pairwise_pipeline_autodetects_sexmodel(tmp_path, monkeypatch):
 
     monkeypatch.setattr(pp, "load", fake_load)
     from FIT_python.utils import get_species_paths
-    expected = get_species_paths("sp")["search"] / "best_mean_rank.joblib"
+    expected = get_species_paths("sp")["models"] / "best_mean_rank" / "sp.joblib"
     expected.parent.mkdir(parents=True, exist_ok=True)
     expected.write_bytes(b"0")
 
