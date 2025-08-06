@@ -192,7 +192,6 @@ def _run_species_search(
     paths = get_species_paths(species)
     search_dir = paths["search"]
     models_dir = paths["models"]
-    heatmaps_dir = paths["heatmaps"]
 
     all_csv = search_dir / "all_results.csv"
     best_csv = search_dir / "best_models.csv"
@@ -473,8 +472,14 @@ def _run_species_search(
 
     if conv_msgs:
         counts = Counter(conv_msgs)
-        for msg, cnt in counts.items():
-            print(f"⚠️ {msg} (occurred {cnt} times)")
+        logs_dir = paths["logs"]
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log_file = logs_dir / "convergence_warnings.log"
+        with log_file.open("w", encoding="utf-8") as fh:
+            for msg, cnt in counts.items():
+                line = f"{msg} (occurred {cnt} times)"
+                print(f"⚠️ {line}")
+                fh.write(line + "\n")
 
     # --- df_heat für Hyperparameter-Heatmap vorbereiten ---
     df_heat = df_all.rename(
@@ -508,7 +513,7 @@ def _run_species_search(
             )
         )
 
-    plot_hyperparam_heatmap(df_heat, heatmaps_dir / "hyperparam_search")
+    plot_hyperparam_heatmap(df_heat, paths["heatmaps"] / "hyperparam_search")
 
     # Create prediction CSVs for downstream pipelines
     predict_all(

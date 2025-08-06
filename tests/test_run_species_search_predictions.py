@@ -3,6 +3,8 @@ import importlib
 import types
 import sys
 from pathlib import Path
+import warnings
+from sklearn.exceptions import ConvergenceWarning
 
 from FIT_python.config import GLOBAL_RANDOM_SEED
 
@@ -226,3 +228,79 @@ def test_run_species_search_reuses_results(tmp_path, monkeypatch):
 
     pd.testing.assert_frame_equal(got_all, df_all)
     pd.testing.assert_frame_equal(got_best, df_best)
+
+
+def test_run_species_search_writes_logs(tmp_path, monkeypatch):
+    root = tmp_path
+    data_dir = root / "data" / "splits" / "otter"
+    data_dir.mkdir(parents=True)
+    build_train_df().to_parquet(data_dir / "train.parquet", index=False)
+    build_test_df().to_parquet(data_dir / "test.parquet", index=False)
+
+    monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
+    monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
+    import FIT_python.config as cfg
+    importlib.reload(cfg)
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
+    import FIT_python.pipeline_sex.sex_config as sc
+    importlib.reload(sc)
+
+    class DummySearch:
+        def __init__(self, estimator=None, search_spaces=None, n_iter=1, scoring=None, refit=None, cv=None, n_jobs=None, random_state=None, verbose=None):
+            self.cv = cv
+            self.n_iter = n_iter
+            self.cv_results_ = {
+                "params": [{}],
+                "mean_test_accuracy": [1.0],
+                "mean_test_balanced_accuracy": [1.0],
+                "mean_test_neg_log_loss": [0.0],
+            }
+
+        def fit(self, X, y):
+            warnings.warn("dummy convergence", ConvergenceWarning)
+            return self
+
+    monkeypatch.setattr(sc, "BayesSearchCV", DummySearch)
+    monkeypatch.setattr(sc, "plot_hyperparam_heatmap", lambda *a, **k: None)
+
+    def fake_dump(obj, path):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_bytes(b"0")
+    monkeypatch.setattr(sc.joblib, "dump", fake_dump)
+
+    def fake_predict_all(
+        species,
+        models_dir,
+        reuse_csv=False,
+        prefer_generic=False,
+        include_inference=False,
+        use_cv_train_predictions=False,
+        metric_key=None,
+    ):
+        from FIT_python.utils import get_species_paths
+        paths = get_species_paths(species)
+        csv = paths["predictions"] / f"{species}_all_predictions.csv"
+        if reuse_csv:
+            return pd.read_csv(csv)
+        csv.parent.mkdir(parents=True, exist_ok=True)
+        df = pd.DataFrame({"a": [1]})
+        df.to_csv(csv, index=False)
+        return df
+
+    monkeypatch.setattr(sc, "predict_all", fake_predict_all)
+
+    sc._run_species_search(
+        "otter",
+        n_iter=1,
+        cv=2,
+        random_state=GLOBAL_RANDOM_SEED,
+        reuse_results=False,
+    )
+
+    from FIT_python.utils import get_species_paths
+    log_path = get_species_paths("otter")["logs"] / "convergence_warnings.log"
+    assert log_path.exists()
+    assert "dummy convergence" in log_path.read_text()
