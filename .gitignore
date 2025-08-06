@@ -17,6 +17,9 @@ Thumbs.db
 /results/*.parquet
 /results/*.joblib
 
+results/*
+!results/.gitkeep
+
 results/**/*.parquet
 results/**/*.joblib
 
