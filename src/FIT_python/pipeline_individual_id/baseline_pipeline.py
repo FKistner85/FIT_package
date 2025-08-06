@@ -15,7 +15,6 @@ import pandas as pd
 
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
 from FIT_python.soft_config import SOFT_CONFIG
-from FIT_python.config import PATHS
 
 
 class DistanceBaseline:
@@ -75,7 +74,7 @@ class DistanceBaseline:
             Path to the sex classifier. If ``use_sexmodel_prediction`` is
             ``True`` and no path is given, the classifier location is derived
             from the ``species`` column via
-            ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
+            ``get_species_paths(species)['search']/best_mean_rank.joblib``.
         n_jobs:
             Number of parallel jobs for the underlying pipeline.
         debug:

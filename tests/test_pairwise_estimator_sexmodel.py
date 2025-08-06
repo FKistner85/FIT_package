@@ -69,7 +69,8 @@ def test_pairwise_pipeline_autodetects_sexmodel(tmp_path, monkeypatch):
         raise RuntimeError("stop")
 
     monkeypatch.setattr(pp, "load", fake_load)
-    expected = cfg.PATHS["random_search"] / "best_mean_rank" / "sp.joblib"
+    from FIT_python.utils import get_species_paths
+    expected = get_species_paths("sp")["search"] / "best_mean_rank.joblib"
     expected.parent.mkdir(parents=True, exist_ok=True)
     expected.write_bytes(b"0")
 

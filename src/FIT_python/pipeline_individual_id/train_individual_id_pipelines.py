@@ -38,6 +38,7 @@ from FIT_python.pipeline_individual_id import (
     pairwise_individual_id_pipeline,
 )
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
+from FIT_python.utils import get_species_paths
 
 
 def _ensure_splits(species: str) -> Path:
@@ -88,7 +89,7 @@ def _add_sex_predictions(species: str, dfs: dict[str, pd.DataFrame]) -> None:
     pred_df = predict_all(
         species,
         prefer_generic=True,
-        models_dir=config.PATHS["random_search"],
+        models_dir=get_species_paths(species)["search"],
         use_cv_train_predictions=True,
     )
     sex_cols = [c for c in pred_df.columns if c.startswith("pred_")]
@@ -193,7 +194,9 @@ def main(species: str = "eurasian_otter") -> None:
             reducers=["umap"],
             n_components=2,
             use_sexmodel_prediction=True,
-            sexmodel_path=str(config.PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"),
+            sexmodel_path=str(
+                get_species_paths(species)["search"] / "best_mean_rank.joblib"
+            ),
             n_jobs=1,
         )
         results["umap"] = _confusion_from_results(res2)

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from FIT_python.config import RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED
+from FIT_python.utils import get_species_paths
 from FIT_python.soft_config import SOFT_CONFIG
 
 from .evaluation import (
@@ -157,7 +158,7 @@ def run(
         Path to a saved sex classifier.  If ``use_sexmodel_prediction`` is
         ``True`` and no path is provided, the model location is derived from the
         ``species`` column using
-        ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
+        ``get_species_paths(species)['search']/best_mean_rank.joblib``.
 
     Returns
     -------
@@ -191,9 +192,7 @@ def run(
                 "sexmodel_path must be provided when use_sexmodel_prediction=True"
             )
         species = str(df_all["species"].dropna().unique()[0])
-        model_fp = (
-            PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"
-        )
+        model_fp = get_species_paths(species)["search"] / "best_mean_rank.joblib"
 
     unique_ids = df_all[id_col].dropna().astype(str).unique()
     splits = sequential_holdout_ids(unique_ids, val_sizes=val_sizes, n_iter=iterations, random_state=random_state)

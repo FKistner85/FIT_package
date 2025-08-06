@@ -8,16 +8,21 @@ from datetime import datetime
 # ---------------------------------------------------------------------
 # 1. Determine Experiment Root (always results/)
 # ---------------------------------------------------------------------
-cwd = Path.cwd()
-base_root = cwd / "results"
+_root_env = os.getenv("FIT_EXPERIMENT_ROOT")
+if _root_env is not None:
+    _experiment_root = Path(_root_env)
+else:
+    cwd = Path.cwd()
+    base_root = cwd / "results"
 
-# Optional: wähle Experiment-Name über ENV-Variable oder Timestamp
-exp_name = os.getenv("FIT_EXPERIMENT_NAME")
-if exp_name is None:
-    exp_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # Optional: wähle Experiment-Name über ENV-Variable oder Timestamp
+    exp_name = os.getenv("FIT_EXPERIMENT_NAME")
+    if exp_name is None:
+        exp_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-# Jetzt klarer Pfad: results/<experiment_name>
-_experiment_root = base_root / exp_name
+    # Jetzt klarer Pfad: results/<experiment_name>
+    _experiment_root = base_root / exp_name
+
 _experiment_root.mkdir(parents=True, exist_ok=True)
 
 # RAW-Daten unabhängig vom Experiment
@@ -35,8 +40,10 @@ else:
 EXPERIMENT_ROOT = _experiment_root
 
 DATA_DIR = EXPERIMENT_ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 CLEANED_DIR = DATA_DIR / "cleaned"
 SPLITS_DIR = DATA_DIR / "splits"
+SPLITS_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DIR = DATA_DIR / "processed"
 PROCESSED_SPLITS_DIR = PROCESSED_DIR / "splits"
 SCALED_DIR = PROCESSED_DIR / "scaled"
@@ -74,13 +81,14 @@ DEBUG_MODE = False
 # ---------------------------------------------------------------------
 # 4. PATHS Dictionary
 # ---------------------------------------------------------------------
+# Only keep global locations. Species-specific directories are resolved
+# dynamically via ``get_species_paths`` from ``FIT_python.utils``.
 PATHS = {
+    "experiment_root": EXPERIMENT_ROOT,
+    "results": RESULTS_DATA_DIR,
+    "figures": FIGURES_DIR,
+    "raw_data": RAW_DIR,
     "pipeline_cache": RESULTS_DATA_DIR / "pipeline_cache",
-    "sex_models": RESULTS_DATA_DIR / "sex_models",
-    "sex_models_best": RESULTS_DATA_DIR / "sex_models_best",
-    "raw_results": RESULTS_DATA_DIR / "raw_results.csv",
-    "random_search": RESULTS_DATA_DIR / "random_search_standard_metrics",
-    "individual_id_results": RESULTS_DATA_DIR / "individual_id_pipelines",
 }
 
 # ---------------------------------------------------------------------

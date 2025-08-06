@@ -16,7 +16,8 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
-from FIT_python.config import SPLITS_DIR, PATHS
+from FIT_python.config import SPLITS_DIR
+from FIT_python.utils import get_species_paths
 from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from . import sequential_holdout
@@ -399,7 +400,7 @@ def run_simple_baseline_all_species(
         Path to a saved sex model forwarded to :func:`run_fold_cv` when
         ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
         resolved automatically for each species using
-        ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
+        ``get_species_paths(species)['search']/best_mean_rank.joblib``.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -449,7 +450,8 @@ def run_simple_baseline_all_species(
         model_fp = sexmodel_path
         if use_sexmodel_prediction and model_fp is None:
             model_fp = (
-                PATHS["random_search"] / "best_mean_rank" / f"{species_dir.name}.joblib"
+                get_species_paths(species_dir.name)["search"]
+                / "best_mean_rank.joblib"
             )
 
         kwargs = dict(
@@ -712,7 +714,7 @@ def run_fold_cv(
         Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
         ``True`` and no path is given, the function attempts to resolve the
         model path from the ``species`` column using
-        ``PATHS['random_search']/best_mean_rank/<species>.joblib``.
+        ``get_species_paths(species)['search']/best_mean_rank.joblib``.
     """
 
     from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
@@ -748,9 +750,7 @@ def run_fold_cv(
                 "sexmodel_path must be provided when use_sexmodel_prediction=True"
             )
         species = str(df_all["species"].dropna().unique()[0])
-        model_fp = (
-            PATHS["random_search"] / "best_mean_rank" / f"{species}.joblib"
-        )
+        model_fp = get_species_paths(species)["search"] / "best_mean_rank.joblib"
 
     if fold_col not in df_all.columns:
         raise KeyError(f"DataFrame must contain '{fold_col}' column")
