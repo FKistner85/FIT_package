@@ -2,38 +2,53 @@ import pandas as pd
 import importlib
 import pytest
 
+
 def test_predict_all_reuse_csv(tmp_path, monkeypatch):
     root = tmp_path
-    csv_dir = root / 'results' / 'data' / 'random_search_standard_metrics'
-    csv_dir.mkdir(parents=True)
     (root / 'data').mkdir()
-    csv_file = csv_dir / 'otter_all_predictions.csv'
-    data = pd.DataFrame({'a':[1], 'b':[2]})
-    data.to_csv(csv_file, index=False)
-
     monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
     monkeypatch.setenv('FIT_RAW_DIR', str(root / 'data' / 'raw'))
     import FIT_python.config as cfg
     importlib.reload(cfg)
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
+    from FIT_python.utils import get_species_paths
+
+    paths = get_species_paths('otter')
+    csv_file = paths['predictions'] / 'otter_all_predictions.csv'
+    csv_file.parent.mkdir(parents=True, exist_ok=True)
+    data = pd.DataFrame({'a': [1], 'b': [2]})
+    data.to_csv(csv_file, index=False)
+
     import FIT_python.pipeline_sex.sex_predict_and_visualisation as sp
     importlib.reload(sp)
 
-    df = sp.predict_all('otter', models_dir=csv_dir, reuse_csv=True)
+    df = sp.predict_all('otter', reuse_csv=True)
     pd.testing.assert_frame_equal(df, data)
 
 
 def test_predict_all_missing_csv(tmp_path, monkeypatch):
     root = tmp_path
-    csv_dir = root / 'results' / 'data' / 'random_search_standard_metrics'
-    csv_dir.mkdir(parents=True)
     (root / 'data').mkdir()
 
     monkeypatch.setenv('FIT_EXPERIMENT_ROOT', str(root))
     monkeypatch.setenv('FIT_RAW_DIR', str(root / 'data' / 'raw'))
     import FIT_python.config as cfg
     importlib.reload(cfg)
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
     import FIT_python.pipeline_sex.sex_predict_and_visualisation as sp
     importlib.reload(sp)
 
+    from FIT_python.utils import get_species_paths
+    paths = get_species_paths('otter')
+    csv_file = paths['predictions'] / 'otter_all_predictions.csv'
+    if csv_file.exists():
+        csv_file.unlink()
+
     with pytest.raises(FileNotFoundError):
-        sp.predict_all('otter', models_dir=csv_dir, reuse_csv=True)
+        sp.predict_all('otter', reuse_csv=True)

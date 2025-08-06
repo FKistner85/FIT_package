@@ -50,6 +50,10 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
     import FIT_python.pipeline_sex.sex_config as sc
     importlib.reload(sc)
 
@@ -84,7 +88,9 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
         use_cv_train_predictions=False,
         metric_key=None,
     ):
-        csv = Path(models_dir) / f"{species}_all_predictions.csv"
+        from FIT_python.utils import get_species_paths
+        paths = get_species_paths(species)
+        csv = paths["predictions"] / f"{species}_all_predictions.csv"
         if reuse_csv:
             return pd.read_csv(csv)
         csv.parent.mkdir(parents=True, exist_ok=True)
@@ -101,10 +107,10 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
     assert isinstance(df_best, pd.DataFrame)
 
     from FIT_python.utils import get_species_paths
-    csv_path = get_species_paths("otter")["search"] / "otter_all_predictions.csv"
+    csv_path = get_species_paths("otter")["predictions"] / "otter_all_predictions.csv"
     assert csv_path.exists()
 
-    df = sc.predict_all("otter", models_dir=get_species_paths("otter")["search"], reuse_csv=True)
+    df = sc.predict_all("otter", models_dir=get_species_paths("otter")["models"], reuse_csv=True)
     pd.testing.assert_frame_equal(df, pd.DataFrame({"a": [1]}))
 
 
@@ -153,7 +159,9 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
         use_cv_train_predictions=False,
         metric_key=None,
     ):
-        csv = Path(models_dir) / f"{species}_all_predictions.csv"
+        from FIT_python.utils import get_species_paths
+        paths = get_species_paths(species)
+        csv = paths["predictions"] / f"{species}_all_predictions.csv"
         if reuse_csv:
             return pd.read_csv(csv)
         csv.parent.mkdir(parents=True, exist_ok=True)

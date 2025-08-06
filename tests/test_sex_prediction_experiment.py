@@ -28,17 +28,23 @@ def test_sex_prediction_experiment_reuse(tmp_path, monkeypatch):
     df.to_parquet(data_dir / "train.parquet", index=False)
     df.to_parquet(data_dir / "test.parquet", index=False)
 
-    preds_dir = root / "results" / "data" / "random_search_standard_metrics"
-    preds_dir.mkdir(parents=True)
-    pd.DataFrame({"id": [0], "pred_dummy_proba_f": [0.5]}).to_csv(
-        preds_dir / "otter_all_predictions.csv", index=False
-    )
-
     monkeypatch.setenv("FIT_EXPERIMENT_ROOT", str(root))
     monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
 
     importlib.reload(cfg)
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
+    from FIT_python.utils import get_species_paths
+
+    paths = get_species_paths("otter")
+    preds_dir = paths["predictions"]
+    preds_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"id": [0], "pred_dummy_proba_f": [0.5]}).to_csv(
+        preds_dir / "otter_all_predictions.csv", index=False
+    )
     from FIT_python.soft_config import SOFT_CONFIG
 
     SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
@@ -59,14 +65,14 @@ def test_sex_prediction_experiment_reuse(tmp_path, monkeypatch):
 
     exp_dir = root / "exp"
     sb.run_sex_prediction_experiment(
-        exp_dir, best_k=1, cutoff={}, models_dir=preds_dir, reuse_results=False
+        exp_dir, best_k=1, cutoff={}, models_dir=paths["models"], reuse_results=False
     )
 
     with_df = pd.read_csv(exp_dir / "otter" / "with_sex" / "summary.csv")
     without_df = pd.read_csv(exp_dir / "otter" / "without_sex" / "summary.csv")
 
     sb.run_sex_prediction_experiment(
-        exp_dir, best_k=1, cutoff={}, models_dir=preds_dir, reuse_results=True
+        exp_dir, best_k=1, cutoff={}, models_dir=paths["models"], reuse_results=True
     )
 
     pd.testing.assert_frame_equal(
