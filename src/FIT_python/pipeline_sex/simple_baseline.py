@@ -26,7 +26,9 @@ from FIT_python.general_pipeline_steps.feature_selection_wrapper import (
 from . import grouped_metrics
 
 
-def predict_simple_baseline(species: str, exp_dir: Path, **kwargs) -> pd.DataFrame:
+def predict_simple_baseline(
+    species: str, models_dir: Path | None = None, **kwargs
+) -> pd.DataFrame:
     """Delegate to :func:`sex_predict_and_visualisation.predict_simple_baseline`."""
 
     from importlib import reload
@@ -34,7 +36,7 @@ def predict_simple_baseline(species: str, exp_dir: Path, **kwargs) -> pd.DataFra
 
     sp = reload(sp)
     sp._load_split = _load_split
-    return sp.predict_simple_baseline(species, exp_dir, **kwargs)
+    return sp.predict_simple_baseline(species, models_dir=models_dir, **kwargs)
 
 
 def _load_split(fp: Path) -> pd.DataFrame:
@@ -179,7 +181,10 @@ def run_simple_baseline_all_species(
         if save_predictions:
             # generate predictions only for the train and test splits
             predict_simple_baseline(
-                sdir.name, exp_dir, include_inference=False, reuse_csv=False
+                sdir.name,
+                models_dir=model_dir,
+                include_inference=False,
+                reuse_csv=False,
             )
 
         records.append(

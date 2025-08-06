@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from FIT_python.config import RESULTS_DATA_DIR
+from FIT_python.config import RESULTS_DATA_DIR, DATA_DIR
 
 
 def get_species_paths(species: str) -> dict[str, Path]:
@@ -17,8 +17,9 @@ def get_species_paths(species: str) -> dict[str, Path]:
     base_dir.mkdir(parents=True, exist_ok=True)
 
     paths: dict[str, Path] = {}
-    for name in ["models", "predictions", "heatmaps", "logs", "search", "splits"]:
+    for name in ["models", "predictions", "heatmaps", "logs", "search"]:
         path = base_dir / name
         path.mkdir(parents=True, exist_ok=True)
         paths[name] = path
+    paths["splits"] = DATA_DIR / "splits" / species
     return paths

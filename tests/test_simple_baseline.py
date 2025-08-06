@@ -32,16 +32,28 @@ def test_simple_baseline_runs(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
     import FIT_python.pipeline_sex.simple_baseline as sb
     importlib.reload(sb)
 
     out_dir = root / "exp"
     df = sb.run_simple_baseline_all_species(out_dir, n_jobs=1)
 
+    import FIT_python.utils.paths as paths_mod
+    importlib.reload(paths_mod)
+    import FIT_python.utils as utils
+    importlib.reload(utils)
+    from FIT_python.utils import get_species_paths
+    paths = get_species_paths("otter")
+
     assert (out_dir / "raw_results.csv").exists()
     assert (out_dir / "models" / "otter.joblib").exists()
-    assert (out_dir / "otter_baseline_predictions.csv").exists()
-    pd.read_csv(out_dir / "otter_baseline_predictions.csv")
+    pred_csv = paths["predictions"] / "otter_baseline_predictions.csv"
+    assert pred_csv.exists()
+    pd.read_csv(pred_csv)
     expected_cols = {
         "species",
         "accuracy",

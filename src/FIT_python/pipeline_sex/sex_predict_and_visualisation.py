@@ -13,60 +13,14 @@ from FIT_python.Visualisations.plot_style import SEX_COLORS, SEX_VALUE_MAP
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 from sklearn.base import clone
 
-
-DEFAULT_SPECIES = "eurasian_otter"
-
 # Map raw sex labels to integers for model training and back
 SEX_TO_INT = {"f": 0, "m": 1}
 INT_TO_SEX = {v: k for k, v in SEX_TO_INT.items()}
 
 
-def _base_paths(
-    species: str = DEFAULT_SPECIES,
-    prefer_generic: bool = True,
-    models_dir: str | Path | None = None,
-) -> tuple[Path, Path, Path]:
-    """Return split dir, model dir and output CSV for ``species``.
-
-    If ``models_dir`` is provided, it is used directly.  Otherwise the function
-    falls back to the species-specific directory under
-    ``results/data``. When ``prefer_generic`` is ``True`` or the species
-    directory does not exist, ``random_search_standard_metrics`` is used
-    instead.  This enables notebooks that work on a single species to load
-    custom models while the all-species notebook can still rely on the generic
-    directory.
-    """
-
-    splits = DATA_DIR / "splits" / species
-
-    if models_dir is not None:
-        models = Path(models_dir)
-        # Heuristically resolve the directory containing the saved models
-        if not any((models / d).exists() for d in MODELS.values()):
-            candidate = models / "results" / "data" / "random_search_standard_metrics"
-            if not candidate.exists() and models.name == "models":
-                candidate = models.parent / "results" / "data" / "random_search_standard_metrics"
-            if candidate.exists():
-                models = candidate
-    else:
-        models = get_species_paths(species)["search"]
-
-    csv = Path(models) / f"{species}_all_predictions.csv"
-    return splits, Path(models), csv
-
-
-# === Modelle definieren ===
-MODELS = {
-    "balanced_acc": "best_balanced_test_acc",
-    "maj_pct": "best_maj_test_pct",
-    "neg_log_loss": "best_mean_test_neg_log_loss",
-    "accuracy": "best_accuracy_test",
-    "mean_rank": "best_mean_rank",
-}
-
 def predict_simple_baseline(
     species: str,
-    exp_dir: Path,
+    models_dir: Path | None = None,
     *,
     include_inference: bool = True,
     reuse_csv: bool = True,
@@ -77,15 +31,17 @@ def predict_simple_baseline(
     ----------
     species:
         Species folder under ``data/splits``.
-    exp_dir:
-        Directory containing the trained models produced by
-        :func:`run_simple_baseline_all_species`.
+    models_dir:
+        Optional directory containing the trained baseline model. When
+        ``None`` the path from :func:`get_species_paths` is used.
     include_inference:
         Include the ``inference`` split when it exists.
     reuse_csv:
         When ``True`` the function expects ``{species}_baseline_predictions.csv``
-        to exist in ``exp_dir``. If the file is missing a ``FileNotFoundError``
-        is raised. Set to ``False`` to recompute the predictions.
+        to exist in the predictions directory returned by
+        :func:`get_species_paths`. If the file is missing a
+        ``FileNotFoundError`` is raised. Set to ``False`` to recompute the
+        predictions.
 
     Returns
     -------
@@ -95,10 +51,11 @@ def predict_simple_baseline(
         ``pred_baseline_proba_m``.
     """
 
-    exp_dir = Path(exp_dir)
-    splits_dir = DATA_DIR / "splits" / species
-    csv_path = exp_dir / f"{species}_baseline_predictions.csv"
-
+    paths = get_species_paths(species)
+    splits_dir = paths["splits"]
+    csv_path = paths["predictions"] / f"{species}_baseline_predictions.csv"
+    model_dir = Path(models_dir) if models_dir is not None else paths["models"]
+    model_path = model_dir / f"{species}.joblib"
     if reuse_csv:
         if csv_path.exists():
             return pd.read_csv(csv_path)
@@ -114,7 +71,6 @@ def predict_simple_baseline(
         )
         return pd.DataFrame()
 
-    model_path = exp_dir / "models" / f"{species}.joblib"
     clf = load(model_path)
 
     split_names = ["train", "test"]
@@ -189,9 +145,10 @@ def predict_all(
     Test + Inference: Predictions from model retrained on full Train.
     """
 
-    splits_dir, models_dir, csv_path = _base_paths(
-        species, prefer_generic, models_dir
-    )
+    paths = get_species_paths(species)
+    splits_dir = paths["splits"]
+    models_dir = Path(models_dir) if models_dir is not None else paths["models"]
+    csv_path = paths["predictions"] / f"{species}_all_predictions.csv"
 
     # When reuse_csv=True the predictions must already exist on disk
     if reuse_csv:
