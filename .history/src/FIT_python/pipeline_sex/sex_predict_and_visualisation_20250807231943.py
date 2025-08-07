@@ -429,111 +429,41 @@ def plot_confusion(df: pd.DataFrame) -> None:
 
 
 def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
-    """
-    Plot predicted sex counts for train and test splits grouped by individual_id,
-    sorted by majority sex (Female first, then Male), with a separating line.
-    Creates a combined 2x1 plot (a) train, (b) test per prediction column.
-    """
+    """Plot predicted sex counts for train and test splits grouped by individual_id."""
     apply_style()
 
     pred_cols = [c for c in df if c.startswith("pred_") and c.endswith("_sex")]
     if not pred_cols:
         raise KeyError("DataFrame contains no prediction columns")
 
-    if "__split__" not in df.columns:
-        raise KeyError("DataFrame lacks '__split__' column")
-
-    available_splits = set(df["__split__"].unique())
-    splits = [s for s in ("train", "test") if s in available_splits]
-    if not splits:
+    # Prüfen, ob überhaupt train oder test vorhanden
+    available_splits = df["__split__"].unique()
+    if not any(s in available_splits for s in ("train", "test")):
         return
 
-    def build_pivot_sorted(sub: pd.DataFrame, col: str) -> tuple[pd.DataFrame, int]:
-        tmp = sub.copy()
-        tmp[col] = tmp[col].map(SEX_VALUE_MAP)
+    for split in ["train", "test"]:
+        if split not in available_splits:
+            continue
 
-        # Wahrer Sex (True = Female, False = Male)
-        if "sex" not in tmp.columns:
-            raise KeyError("DataFrame lacks 'sex' column for true sex sorting")
-        tmp["true_female"] = tmp["sex"].map(SEX_VALUE_MAP) == "Female"
+        sub = df[df["__split__"] == split].copy()
+        for col in pred_cols:
+            sub[col] = sub[col].map(SEX_VALUE_MAP)
 
-        # Pivot für absolute Counts
-        pivot = tmp.pivot_table(index="individual_id", columns=col, aggfunc="size", fill_value=0)
-        pivot = pivot.reindex(columns=["Female", "Male"], fill_value=0)
-
-        # Relative Mehrheitswerte berechnen
-        total_counts = pivot.sum(axis=1)
-        female_ratio = pivot["Female"] / total_counts
-        male_ratio   = pivot["Male"] / total_counts
-
-        # IDs pro echter Sexgruppe
-        true_female_ids = tmp.loc[tmp["true_female"], "individual_id"].unique()
-        true_male_ids   = tmp.loc[~tmp["true_female"], "individual_id"].unique()
-
-        # Female-Gruppe: absteigend nach Female-Ratio
-        female_df = pivot.loc[pivot.index.isin(true_female_ids)].assign(ratio=female_ratio).sort_values(
-            by="ratio", ascending=False
-        ).drop(columns="ratio")
-
-        # Male-Gruppe: absteigend nach Male-Ratio
-        male_df = pivot.loc[pivot.index.isin(true_male_ids)].assign(ratio=male_ratio).sort_values(
-            by="ratio", ascending=False
-        ).drop(columns="ratio")
-
-        # Zusammenführen
-        pivot_sorted = pd.concat([female_df, male_df])
-        female_count = len(female_df)
-
-        return pivot_sorted, female_count
-
-
-
-    for col in pred_cols:
-        fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharey=False)
-        fig.subplots_adjust(hspace=0.35)
-
-        female_color = SEX_COLORS.get("Female", "#1f77b4")
-        male_color   = SEX_COLORS.get("Male",   "#ff7f0e")
-
-        for i, split in enumerate(["train", "test"]):
-            ax = axes[i]
-            if split not in splits:
-                ax.axis("off")
-                ax.set_title(f"{'a' if i == 0 else 'b'}) {split.capitalize()} (no data)")
-                continue
-
-            sub = df[df["__split__"] == split].copy()
-            if sub.empty:
-                ax.axis("off")
-                ax.set_title(f"{'a' if i == 0 else 'b'}) {split.capitalize()} (empty)")
-                continue
-
-            if "individual_id" not in sub.columns:
-                raise KeyError("DataFrame lacks 'individual_id' column")
-
-            pivot_sorted, female_count = build_pivot_sorted(sub, col)
-            pivot_sorted.plot.bar(
-                ax=ax, stacked=True, width=0.9,
-                color=[female_color, male_color], legend=False
+            # Gruppierung nach individual_id
+            pivot = sub.pivot_table(
+                index="individual_id", columns=col, aggfunc="size", fill_value=0
             )
 
-            if 0 < female_count < len(pivot_sorted):
-                ax.axvline(female_count - 0.5, linestyle="--", linewidth=1, color="#222222")
+            colors = [SEX_COLORS.get(c, "#333333") for c in pivot.columns]
+            ax = pivot.plot.bar(stacked=True, figsize=(10, 4), color=colors)
 
-            ax.set_xlabel("Individual ID")
-            ax.set_ylabel("Count")
-            panel = "a" if i == 0 else "b"
-            ax.set_title(f"{panel})", loc="left", fontweight="bold")
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
-
-        handles = [
-            plt.Rectangle((0, 0), 1, 1, color=female_color, label="Female"),
-            plt.Rectangle((0, 0), 1, 1, color=male_color,   label="Male"),
-        ]
-        fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False)
-        plt.tight_layout(rect=(0, 0, 1, 0.96))
-        plt.show()
-
+            plt.xlabel("Individual ID")
+            plt.ylabel("Count")
+            ax.legend(title="Predicted", labels=pivot.columns)
+            plt.title(f"{split.capitalize()} set")
+            plt.xticks(rotation=45, ha="right")
+            plt.tight_layout()
+            plt.show()
 
 
 def plot_inference(df: pd.DataFrame) -> None:
