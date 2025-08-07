@@ -63,11 +63,18 @@ SOFT_CONFIG = {
             "reduce_post__method": [None,],  #"pca", "umap", "tsne"
             "clf": None,  # placeholder, to be filled with MODELS
         },
+        # Metrics for which the best model should be persisted. The keys here
+        # correspond to entries in ``scoring`` above, except for
+        # ``maj_test_pct`` which represents the majority-vote baseline.
         "metrics": [
             "maj_test_pct",
-            "balanced_test_acc",
-            "accuracy_test",
-            "mean_test_neg_log_loss",
+            "accuracy",
+            "balanced_accuracy",
+            "neg_log_loss",
+            "f1",
+            "precision",
+            "recall",
+            "roc_auc",
         ],
         "scoring": {
             "accuracy": "accuracy",
