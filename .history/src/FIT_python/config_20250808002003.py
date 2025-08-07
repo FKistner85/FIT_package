@@ -78,47 +78,6 @@ SEX_PREDICT_METRIC = "balanced_accuracy"
 
 
 
-# ---------------------------------------------------------------------
-# 3b. Visualisation defaults
-# ---------------------------------------------------------------------
-
-
-def _lighten(color: str, amount: float) -> str:
-    """Return a lighter shade of ``color``.
-
-    ``amount`` specifies the blend ratio with white where ``0`` returns the
-    original colour and ``1`` returns white.
-    """
-
-    color = color.lstrip("#")
-    r = int(color[0:2], 16) / 255
-    g = int(color[2:4], 16) / 255
-    b = int(color[4:6], 16) / 255
-    r = round((r + (1 - r) * amount) * 255)
-    g = round((g + (1 - g) * amount) * 255)
-    b = round((b + (1 - b) * amount) * 255)
-    return f"#{r:02x}{g:02x}{b:02x}"
-
-
-SEX_VALUE_MAP = {
-    "f": "Female",
-    "F": "Female",
-    0: "Female",
-    "m": "Male",
-    "M": "Male",
-    1: "Male",
-}
-
-SEX_COLORS = {
-    "Female": "#800000",  # dark red
-    "Male": "#000080",  # navy
-    "Unknown": "#FFA500",  # orange
-}
-
-TRAIN_COLORS = SEX_COLORS
-TEST_COLORS = {k: _lighten(v, 0.5) for k, v in SEX_COLORS.items()}
-
-
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
 GLOBAL_RANDOM_SEED = 12345
@@ -319,14 +278,6 @@ CONFIG = {
         # will automatically constrain this based on the available screen
         # resolution at runtime.
         "display_size": [1280, 720],
-    },
-    "visualisation": {
-        "sex": {
-            "value_map": SEX_VALUE_MAP,
-            "colors": SEX_COLORS,
-            "train_colors": TRAIN_COLORS,
-            "test_colors": TEST_COLORS,
-        }
     },
     "dataset_summary": {
         "species_labels": {

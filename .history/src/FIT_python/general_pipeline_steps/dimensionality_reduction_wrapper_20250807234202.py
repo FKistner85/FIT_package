@@ -8,11 +8,14 @@ from sklearn.manifold import TSNE, MDS, Isomap
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap
 from FIT_python.utils import debug_report
-from FIT_python.config import CONFIG, DEFAULT_METADATA_COLS
+from FIT_python.config import CONFIG
 
 # Metadata columns that should be passed through unchanged when the input is a
 # DataFrame. These columns are ignored during dimensionality reduction. The
 # actual list is read from :data:`CONFIG` so pipelines can override it.
+DEFAULT_METADATA_COLS = set(
+    CONFIG["general_pipeline_steps"].get("metadata_cols", [])
+)
 
 
 class DimensionalityReducerTransformer(TransformerMixin, BaseEstimator):
