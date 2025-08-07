@@ -1,7 +1,7 @@
 # geometric_pairwise_projection.py
 
 ## Überblick
-Führt paarweise Projektionen mit optionalen Sex-Modell-Wahrscheinlichkeiten aus und cached die Resultate.
+Führt paarweise Projektionen mit optionalen Sex-Modell-Wahrscheinlichkeiten aus.
 Die Funktion projiziert die Merkmale in einen reduzierten Raum und berechnet anschließend Distanzen zwischen den Individuen. Zwischenergebnisse werden per Joblib gespeichert, was parallele Ausführung ermöglicht. Hohe Geschwindigkeit ist ein Vorteil, während der Speicherbedarf anwachsen kann.
 
 ## Wichtige Bestandteile

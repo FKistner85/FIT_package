@@ -11,7 +11,7 @@ Model preparation is handled by `pipeline_wrapper_sex.get_pipeline_steps` which 
 
 `PipelineWrapper.train()` iterates over species directories in `data/splits` and performs five-fold cross-validation using `cross_val_predict(method="predict_proba")`. Balanced accuracy is computed from the out-of-fold predictions. Processing times are measured with `perf_counter` and the resulting balanced accuracies are appended to `results/data/raw_results.csv` alongside the selected features and hyperparameters.【F:docs/pipeline_sex_methodology.md†L37-L46】 After fitting, each configuration is refit on the full training data and stored with `joblib.dump()` in `results/data/sex_models`; the best model per species is mirrored to `sex_models_best` for easy prediction.【F:docs/pipeline_sex_methodology.md†L48-L49】
 
-Reproducibility is promoted by caching intermediate results via `joblib.Memory`, saving split files as Parquet and reusing a global random seed from `config.py`.【F:docs/pipeline_sex_methodology.md†L52-L55】 The recorded metrics can be compared to prior literature on sex classification using gait characteristics, e.g. Hotelling (1933) for PCA and Tibshirani (1996) for LASSO.
+Reproducibility is promoted by saving split files as Parquet and reusing a global random seed from `config.py`. The recorded metrics can be compared to prior literature on sex classification using gait characteristics, e.g. Hotelling (1933) for PCA and Tibshirani (1996) for LASSO.
 
 ## Methodik: Sex-Klassifikations-Pipeline (Deutsch)
 Der Ablauf startet mit `DataImportWrapper.clean_all()`, das die Rohdaten aus `data/raw` einliest, Spaltennamen vereinheitlicht und numerische Felder über `transform_utils.convert_numeric` aufbereitet. Die bereinigten Tabellen landen in `data/cleaned`.

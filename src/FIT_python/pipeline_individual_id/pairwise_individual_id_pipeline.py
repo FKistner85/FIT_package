@@ -38,7 +38,7 @@ from FIT_python.general_pipeline_steps.feature_scaler_wrapper import (
 )
 from FIT_python.pipeline_individual_id.utils import map_indices
 
-from typing import List, Dict, Union, Optional, Tuple
+from typing import List, Dict, Union, Optional
 from scipy.spatial.distance import cdist
 
 
@@ -169,23 +169,6 @@ def run_all_pairwise_projections_parallel(
     else:
         scalers = [None]
 
-    # --- Cache outlier & scaling steps for all method combinations ---
-    preprocessed_cache: Dict[Tuple[Optional[str], Optional[str]], pd.DataFrame] = {}
-    for out_method in outs:
-        for scaler_method in scalers:
-            X_fit = df_fit[feature_cols]
-            X_base = df_base[feature_cols]
-            if out_method:
-                out = OutlierCleanerTransformer(method=out_method)
-                out.fit(X_fit)
-                X_fit = out.transform(X_fit)
-                X_base = out.transform(X_base)
-            if scaler_method:
-                scaler = FeatureScalerTransformer(method=scaler_method)
-                scaler.fit(X_fit)
-                X_base = scaler.transform(X_base)
-            preprocessed_cache[(out_method, scaler_method)] = X_base
-
     def process_pair(i: int, comp: Dict) -> List[Dict]:
 
         out = []
@@ -226,10 +209,20 @@ def run_all_pairwise_projections_parallel(
         # 4) iterate over outlier and scaler methods
         for out_method in outs:
             for scaler_method in scalers:
-                df_proc = preprocessed_cache[(out_method, scaler_method)]
-                df_a = df_proc.loc[ids_a]
-                df_b = df_proc.loc[ids_b]
-                df_r = df_proc.loc[rcv_ids]
+                X_fit = df_fit[feature_cols]
+                X_base = df_base[feature_cols]
+                if out_method:
+                    out = OutlierCleanerTransformer(method=out_method)
+                    out.fit(X_fit)
+                    X_fit = out.transform(X_fit)
+                    X_base = out.transform(X_base)
+                if scaler_method:
+                    scaler = FeatureScalerTransformer(method=scaler_method)
+                    scaler.fit(X_fit)
+                    X_base = scaler.transform(X_base)
+                df_a = X_base.loc[ids_a]
+                df_b = X_base.loc[ids_b]
+                df_r = X_base.loc[rcv_ids]
 
                 selector = FeatureSelectionTransformer(method=selection_method, k=k_max)
                 X_ab_proc = pd.concat([df_a, df_b], ignore_index=True)
