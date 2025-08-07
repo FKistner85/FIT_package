@@ -10,6 +10,7 @@ samples.
 from __future__ import annotations
 
 from typing import Iterable, List, Dict, Optional
+from pathlib import Path
 
 import pandas as pd
 
@@ -44,6 +45,10 @@ class DistanceBaseline:
         sexmodel_path: str | None = None,
         n_jobs: int = -1,
         debug: bool = False,
+        tag: str | None = None,
+        fold: int | str | None = None,
+        master_fp: Path | None = None,
+        origin: str = "test",
     ) -> pd.DataFrame:
         """Run the distance baseline on the given comparisons.
 
@@ -81,6 +86,9 @@ class DistanceBaseline:
             Number of parallel jobs for the underlying pipeline.
         debug:
             Forwarded to the projection function for verbose output.
+        tag, fold, master_fp, origin:
+            When ``master_fp`` is provided, the resulting DataFrame is annotated
+            with ``origin``/``tag``/``fold`` and appended to this parquet file.
         """
         df_rcv = train_df.copy()
         if "individual_id" in df_rcv.columns:
@@ -142,4 +150,12 @@ class DistanceBaseline:
             fit_df=df_rcv,
         )
 
-        return pd.DataFrame(results)
+        df_res = pd.DataFrame(results)
+        if master_fp is not None:
+            df_mp = df_res.copy()
+            df_mp["origin"] = origin
+            df_mp["tag"] = tag
+            df_mp["fold"] = fold
+            df_mp.to_parquet(master_fp, append=True)
+
+        return df_res

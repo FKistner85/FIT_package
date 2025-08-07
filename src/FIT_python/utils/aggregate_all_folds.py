@@ -7,42 +7,45 @@ import pandas as pd
 
 
 def aggregate_all_folds(base_dir: Path | str, out_path: Path | None = None) -> pd.DataFrame:
-    """Combine per-species ``all_folds.csv`` tables.
+    """Combine cross-validation pairs from ``master_pairs.parquet`` files.
 
     Parameters
     ----------
     base_dir:
-        Directory containing one sub-folder per species with an
-        ``all_folds.csv`` file.
+        Directory containing one sub-folder per species with a
+        ``master_pairs.parquet`` file.
     out_path:
-        Optional location where the combined CSV should be written.
-        When not provided, the file is saved as ``all_species_folds.csv``
+        Optional location where the combined table should be written.
+        When not provided, the file is saved as ``all_species_folds.parquet``
         inside ``base_dir``.
 
     Returns
     -------
     pandas.DataFrame
-        Concatenated data frame of all folds with an added ``species`` column.
+        Concatenated data frame of all cross-validation pairs with an added
+        ``species`` column.
     """
     base_dir = Path(base_dir)
     tables: list[pd.DataFrame] = []
     for species_dir in sorted(base_dir.iterdir()):
         if not species_dir.is_dir():
             continue
-        csv_fp = species_dir / "all_folds.csv"
-        if not csv_fp.exists():
+        master_fp = species_dir / "master_pairs.parquet"
+        if not master_fp.exists():
             continue
-        df = pd.read_csv(csv_fp)
+        df = pd.read_parquet(master_fp)
+        if "origin" in df.columns:
+            df = df[df["origin"] == "cv"]
         df["species"] = species_dir.name
         tables.append(df)
 
     if not tables:
-        raise FileNotFoundError(f"No 'all_folds.csv' found under {base_dir}")
+        raise FileNotFoundError(f"No 'master_pairs.parquet' found under {base_dir}")
 
     result = pd.concat(tables, ignore_index=True)
 
     if out_path is None:
-        out_path = base_dir / "all_species_folds.csv"
-    result.to_csv(out_path, index=False)
+        out_path = base_dir / "all_species_folds.parquet"
+    result.to_parquet(out_path, index=False)
 
     return result
