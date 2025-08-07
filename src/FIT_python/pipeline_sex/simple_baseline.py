@@ -27,7 +27,10 @@ from . import grouped_metrics
 
 
 def predict_simple_baseline(
-    species: str, models_dir: Path | None = None, **kwargs
+    species: str,
+    exp_dir: Path | None = None,
+    models_dir: Path | None = None,
+    **kwargs,
 ) -> pd.DataFrame:
     """Delegate to :func:`sex_predict_and_visualisation.predict_simple_baseline`."""
 
@@ -36,7 +39,9 @@ def predict_simple_baseline(
 
     sp = reload(sp)
     sp._load_split = _load_split
-    return sp.predict_simple_baseline(species, models_dir=models_dir, **kwargs)
+    return sp.predict_simple_baseline(
+        species, exp_dir=exp_dir, models_dir=models_dir, **kwargs
+    )
 
 
 def _load_split(fp: Path) -> pd.DataFrame:

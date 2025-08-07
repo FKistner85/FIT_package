@@ -20,6 +20,7 @@ INT_TO_SEX = {v: k for k, v in SEX_TO_INT.items()}
 
 def predict_simple_baseline(
     species: str,
+    exp_dir: Path | None = None,
     models_dir: Path | None = None,
     *,
     include_inference: bool = True,
@@ -31,9 +32,13 @@ def predict_simple_baseline(
     ----------
     species:
         Species folder under ``data/splits``.
+    exp_dir:
+        Optional experiment directory containing a ``models`` subdirectory.
+        When provided, models are loaded from ``exp_dir / 'models'``.
     models_dir:
-        Optional directory containing the trained baseline model. When
-        ``None`` the path from :func:`get_species_paths` is used.
+        Optional directory containing the trained baseline model. When both
+        ``exp_dir`` and ``models_dir`` are ``None`` the path from
+        :func:`get_species_paths` is used.
     include_inference:
         Include the ``inference`` split when it exists.
     reuse_csv:
@@ -54,7 +59,12 @@ def predict_simple_baseline(
     paths = get_species_paths(species)
     splits_dir = paths["splits"]
     csv_path = paths["predictions"] / f"{species}_baseline_predictions.csv"
-    model_dir = Path(models_dir) if models_dir is not None else paths["models"]
+    if models_dir is not None:
+        model_dir = Path(models_dir)
+    elif exp_dir is not None:
+        model_dir = Path(exp_dir) / "models"
+    else:
+        model_dir = paths["models"]
     model_path = model_dir / f"{species}.joblib"
     if reuse_csv:
         if csv_path.exists():
