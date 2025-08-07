@@ -696,6 +696,8 @@ def run_fold_cv(
         "pairwise_defaults"
     ]["use_sexmodel_prediction"],
     sexmodel_path: str | None = None,
+    tag: str | None = None,
+    master_fp: Path | None = None,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using predefined folds.
 
@@ -717,6 +719,11 @@ def run_fold_cv(
         ``True`` and no path is given, the function attempts to resolve the
         model path from the ``species`` column using
         ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
+    tag : str, optional
+        Identifier written to the master pairs table.
+    master_fp : Path, optional
+        If provided, per-fold pairwise results are appended to this parquet
+        file with additional ``origin`` and ``tag`` annotations.
     """
 
     from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
@@ -803,6 +810,13 @@ def run_fold_cv(
 
         df_res["fold"] = fold
         all_parts.append(df_res.copy())
+
+        if master_fp is not None:
+            df_mp = df_res.copy()
+            df_mp["origin"] = "cv"
+            df_mp["tag"] = tag
+            df_mp["fold"] = fold
+            df_mp.to_parquet(master_fp, append=True)
 
         pipeline_name = (
             df_res["pipeline"].iloc[0] if "pipeline" in df_res.columns else ""
