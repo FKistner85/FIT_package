@@ -326,3 +326,50 @@ def test_plot_umap_by_group(tmp_path: Path):
         color_col="color",
     )
     assert out.exists()
+
+
+def test_plot_umap_train_test_inference(tmp_path: Path, monkeypatch):
+    from FIT_python.Visualisations import plots_utils as pu
+    import seaborn as sns
+
+    train_df = pd.DataFrame(
+        {
+            "UMAP1": [0],
+            "UMAP2": [0],
+            "individual_id": ["i1"],
+            "sex": ["Male"],
+            "dataorigin": ["train"],
+        }
+    )
+    test_df = pd.DataFrame(
+        {
+            "UMAP1": [1],
+            "UMAP2": [1],
+            "individual_id": ["i2"],
+            "sex": ["Female"],
+            "dataorigin": ["test"],
+        }
+    )
+    infer_df = pd.DataFrame({"UMAP1": [0.5], "UMAP2": [0.5], "trial": ["t1"]})
+
+    captured: list[str] = []
+
+    def fake_scatter(ax, x, y, color, marker, label=""):
+        captured.append(color)
+
+    monkeypatch.setattr(pu, "_scatter_points", fake_scatter)
+
+    out = pu.plot_umap_train_test_inference(train_df, test_df, infer_df, tmp_path, "mix.png")
+    assert out.exists()
+
+    combos = pd.concat([train_df, test_df])["sex"].astype(str) + "_" + pd.concat(
+        [train_df, test_df]
+    )["dataorigin"].astype(str)
+    from matplotlib.colors import to_hex
+
+    unique = sorted(combos.unique())
+    palette = sns.color_palette("tab10", n_colors=len(unique))
+    color_map = {u: to_hex(c) for u, c in zip(unique, palette)}
+
+    expected = [color_map["Male_train"], color_map["Female_test"], "#FFD700"]
+    assert captured == expected
