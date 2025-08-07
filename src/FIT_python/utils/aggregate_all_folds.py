@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+
 
 import pandas as pd
 
 
-def aggregate_all_folds(base_dir: Path | str, out_path: Path | None = None) -> pd.DataFrame:
-    """Combine cross-validation pairs from ``master_pairs.parquet`` files.
+def aggregate_all_folds(
+    base_dir: Path | str,
+    out_path: Path | None = None,
+    origin: str = "cv",
+) -> pd.DataFrame:
+    """Combine pairs from ``master_pairs.parquet`` files.
 
     Parameters
     ----------
@@ -18,6 +22,9 @@ def aggregate_all_folds(base_dir: Path | str, out_path: Path | None = None) -> p
         Optional location where the combined table should be written.
         When not provided, the file is saved as ``all_species_folds.parquet``
         inside ``base_dir``.
+    origin:
+        Value of the ``origin`` column to filter by. Typical values are ``"cv"``
+        and ``"test"``. Rows with other origins are dropped.
 
     Returns
     -------
@@ -35,7 +42,7 @@ def aggregate_all_folds(base_dir: Path | str, out_path: Path | None = None) -> p
             continue
         df = pd.read_parquet(master_fp)
         if "origin" in df.columns:
-            df = df[df["origin"] == "cv"]
+            df = df[df["origin"] == origin]
         df["species"] = species_dir.name
         tables.append(df)
 

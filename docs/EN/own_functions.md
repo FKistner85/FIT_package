@@ -1582,22 +1582,24 @@ pandas.DataFrame
     Table with one row per species containing the evaluation metrics.
 
 ## FIT_python.utils.aggregate_all_folds.aggregate_all_folds
-Combine per-species ``all_folds.csv`` tables.
+Combine per-species ``master_pairs.parquet`` tables.
 
 Parameters
 ----------
 base_dir:
-    Directory containing one sub-folder per species with an
-    ``all_folds.csv`` file.
+    Directory containing one sub-folder per species with a
+    ``master_pairs.parquet`` file.
 out_path:
-    Optional location where the combined CSV should be written.
-    When not provided, the file is saved as ``all_species_folds.csv``
+    Optional location where the combined parquet should be written.
+    When not provided, the file is saved as ``all_species_folds.parquet``
     inside ``base_dir``.
+origin:
+    ``origin`` label to filter by (e.g. ``"cv"`` or ``"test"``).
 
 Returns
 -------
 pandas.DataFrame
-    Concatenated data frame of all folds with an added ``species`` column.
+    Concatenated data frame of all pairs with an added ``species`` column.
 
 ## FIT_python.utils.debug_utils.debug_report
 Print debug statistics if ``config.DEBUG_MODE`` is True.
