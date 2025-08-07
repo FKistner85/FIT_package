@@ -8,9 +8,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from FIT_python.config import SPLITS_DIR
+from FIT_python.config import SPLITS_DIR, CONFIG
 from FIT_python.caption_utils import save_caption
-from FIT_python.Visualisations.plot_style import SEX_COLORS, apply_style
+from FIT_python.Visualisations.plot_style import apply_style
 from .pipeline_wrapper_sex import PipelineWrapper
 
 
@@ -231,7 +231,10 @@ def plot_accuracy_by_sex(df: pd.DataFrame, fig_dir: Path) -> Path:
         y="value",
         hue="sex",
         order=order,
-        palette={k: SEX_COLORS[k] for k in ["Female", "Male"]},
+        palette={
+            k: CONFIG["visualisation"]["sex"]["colors"][k]
+            for k in ["Female", "Male"]
+        },
         ax=ax,
     )
     ax.set_xlabel("Species")

@@ -7,12 +7,7 @@ from typing import Dict
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from FIT_python.Visualisations.plot_style import (
-    apply_style,
-    TRAIN_COLORS,
-    TEST_COLORS,
-    map_sex,
-)
+from FIT_python.Visualisations.plot_style import apply_style, map_sex
 from FIT_python.config import CONFIG
 
 
@@ -174,8 +169,8 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
     sexes = cfg["sex_categories"]
     splits = cfg["split_labels"]
     colors = {
-        "Train": TRAIN_COLORS,
-        "Test": TEST_COLORS,
+        "Train": CONFIG["visualisation"]["sex"]["train_colors"],
+        "Test": CONFIG["visualisation"]["sex"]["test_colors"],
     }
 
     SPECIES_REMAP = cfg["species_remap"]

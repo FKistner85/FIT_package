@@ -162,7 +162,11 @@ def test_umap_colors_use_id_palette(tmp_path: Path, monkeypatch):
 def test_umap_colors_use_sex_palette(tmp_path: Path, monkeypatch):
     from FIT_python.Visualisations import plots_utils as pu
 
-    monkeypatch.setattr(pu, "SEX_COLORS", {"Female": "pink", "Male": "cyan"})
+    monkeypatch.setitem(
+        pu.CONFIG["visualisation"]["sex"],
+        "colors",
+        {"Female": "pink", "Male": "cyan"},
+    )
     monkeypatch.setattr(pu, "ID_COLORS", {"A": "red", "B": "blue"})
     monkeypatch.setattr(pu, "ID_MARKERS", {"A": "o", "B": "s"})
 

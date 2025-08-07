@@ -18,7 +18,7 @@ from sklearn.feature_selection import SelectKBest, f_classif
 
 from FIT_python.caption_utils import save_caption
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
-from FIT_python.Visualisations.plot_style import SEX_COLORS
+from FIT_python.config import CONFIG
 from FIT_python.Visualisations.id_style import (
     ID_COLORS,
     ID_MARKERS,
@@ -237,7 +237,7 @@ def plot_individual_boxplots(df, top4_feats, fig_dir, filename, mapping=None):
             y=feat,
             ax=ax,
             hue="sex_mapped",
-            palette=SEX_COLORS,
+            palette=CONFIG["visualisation"]["sex"]["colors"],
             dodge=False,
             order=ind_order,
             hue_order=["Female", "Male"],
@@ -277,7 +277,7 @@ def plot_sex_boxplots(
             data=plot_df,
             ax=ax,
             hue="sex_mapped",
-            palette={k: SEX_COLORS[k] for k in order},
+            palette={k: CONFIG["visualisation"]["sex"]["colors"][k] for k in order},
             order=order,
             hue_order=order,
             legend=False,
@@ -433,7 +433,7 @@ def plot_umap_scatter(
         x="UMAP1",
         y="UMAP2",
         hue="sex_mapped",
-        palette={k: SEX_COLORS[k] for k in order},
+        palette={k: CONFIG["visualisation"]["sex"]["colors"][k] for k in order},
         hue_order=order,
         alpha=0.7,
         edgecolor="none",
@@ -472,7 +472,7 @@ def plot_umap_centroid_outliers(df, title, cols=6):
             levels=5,
             alpha=0.4,
             ax=ax,
-            color=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            color=CONFIG["visualisation"]["sex"]["colors"][subset["sex_mapped"].iloc[0]],
         )
         # b) Alle Punkte
         ax.scatter(
@@ -481,7 +481,7 @@ def plot_umap_centroid_outliers(df, title, cols=6):
             s=20,
             edgecolor="w",
             linewidth=0.5,
-            c=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            c=CONFIG["visualisation"]["sex"]["colors"][subset["sex_mapped"].iloc[0]],
         )
         # c) Centroid‑Outlier als rote Kreuze
         out = subset[subset["is_outlier_centroid"]]
@@ -852,7 +852,7 @@ def plot_individual_boxplots(
             x=id_col,
             y=feat,
             hue="sex_mapped",
-            palette=SEX_COLORS,
+            palette=CONFIG["visualisation"]["sex"]["colors"],
             dodge=False,
             order=ind_order,
             hue_order=["Female", "Male"],
@@ -952,8 +952,8 @@ def plot_umap_by_individual(
     legend : bool, optional
         If ``True`` (default), draw a legend showing the individuals.
     use_sex_colors : bool, optional
-        If ``True``, color individuals according to their sex using
-        :data:`~FIT_python.Visualisations.plot_style.SEX_COLORS` instead of
+        If ``True``, color individuals according to their sex using the
+        configuration's sex palette instead of
         :data:`~FIT_python.Visualisations.id_style.ID_COLORS`.
     """
 
@@ -988,7 +988,9 @@ def plot_umap_by_individual(
     color_lookup = {}
     if use_sex_colors:
         for ind, subset in df.groupby("individual_id"):
-            color_lookup[ind] = SEX_COLORS[subset["sex_mapped"].iloc[0]]
+            color_lookup[ind] = CONFIG["visualisation"]["sex"]["colors"][
+                subset["sex_mapped"].iloc[0]
+            ]
     else:
         for ind in df["individual_id"].unique():
             color_lookup[ind] = ID_COLORS.get(ind, "black")
@@ -1250,13 +1252,13 @@ def plot_umap_centroid_outliers(
             levels=5,
             alpha=0.4,
             ax=ax,
-            color=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            color=CONFIG["visualisation"]["sex"]["colors"][subset["sex_mapped"].iloc[0]],
         )
         _scatter_points(
             ax,
             subset["UMAP1"],
             subset["UMAP2"],
-            SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            CONFIG["visualisation"]["sex"]["colors"][subset["sex_mapped"].iloc[0]],
             "o",
         )
         out = subset[subset["is_outlier_centroid"]]
@@ -1348,7 +1350,7 @@ def plot_umap_centroid_outliers(
             levels=5,
             alpha=0.4,
             ax=ax,
-            color=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            color=CONFIG["visualisation"]["sex"]["colors"][subset["sex_mapped"].iloc[0]],
         )
 
         # 2) Scatter all points
@@ -1358,7 +1360,7 @@ def plot_umap_centroid_outliers(
             s=20,
             edgecolor="w",
             linewidth=0.5,
-            c=SEX_COLORS[subset["sex_mapped"].iloc[0]],
+            c=CONFIG["visualisation"]["sex"]["colors"][subset["sex_mapped"].iloc[0]],
         )
 
         # 3) Mark centroid‑based outliers if present
