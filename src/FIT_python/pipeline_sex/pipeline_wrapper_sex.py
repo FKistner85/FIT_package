@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from typing import Optional, Union, List
-from joblib import Memory, dump, load
+from joblib import dump, load
 from time import perf_counter
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -23,14 +23,12 @@ from FIT_python.config import (
     FIGURES_DIR,
     GLOBAL_RANDOM_SEED,
     PATHS,
-    _DATA_CACHE,
-    PIPE_SEARCH
-    
+    PIPE_SEARCH,
+    CONFIG,
 )
 import FIT_python.config as config
 from FIT_python.utils import get_species_paths
 from FIT_python.utils import debug_report
-from FIT_python.config import CONFIG
 
 # Utility functions
 from FIT_python.data_split_and_summary.split_utils import (
@@ -59,13 +57,6 @@ from FIT_python.general_pipeline_steps.models import MODELS
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import (
     plot_hyperparam_heatmap,
 )
-
-# Cache for sklearn Pipelines
-_cache_dir = PATHS["pipeline_cache"]
-memory = Memory(location=_cache_dir, verbose=0)
-
-# In-memory cache of loaded splits
-
 
 
 def get_pipeline_steps(
@@ -272,21 +263,16 @@ class PipelineWrapper:
                     continue
 
                 # load data
-                if key in _DATA_CACHE:
-                    df_train = _DATA_CACHE[key]["train"]
-                    df_test = _DATA_CACHE[key]["test"]
-                else:
-                    df_train = (
-                        pd.read_parquet(train_fp)
-                        .dropna(subset=["sex"])
-                        .query("sex in ['f','m']")
-                    )
-                    df_test = (
-                        pd.read_parquet(test_fp)
-                        .dropna(subset=["sex"])
-                        .query("sex in ['f','m']")
-                    )
-                    _DATA_CACHE[key] = {"train": df_train, "test": df_test}
+                df_train = (
+                    pd.read_parquet(train_fp)
+                    .dropna(subset=["sex"])
+                    .query("sex in ['f','m']")
+                )
+                df_test = (
+                    pd.read_parquet(test_fp)
+                    .dropna(subset=["sex"])
+                    .query("sex in ['f','m']")
+                )
 
                 y_train = df_train["sex"].map({"f": 0, "m": 1})
                 y_test = df_test["sex"].map({"f": 0, "m": 1})
@@ -328,7 +314,7 @@ class PipelineWrapper:
                                 st.debug = self.debug
                             except Exception:
                                 pass
-                    pipe = Pipeline(steps, memory=memory)
+                    pipe = Pipeline(steps)
                     if self.debug or config.DEBUG_MODE:
                         print(
                             f"Training {key} – {mk} "
@@ -449,7 +435,6 @@ class PipelineWrapper:
                 # persist CV predictions for this species
                 df_train.to_parquet(train_fp, index=False)
                 df_train.to_csv(species_dir / "train.csv", index=False)
-                _DATA_CACHE[key]["train"] = df_train
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
@@ -490,7 +475,8 @@ class PipelineWrapper:
             model_dir.mkdir(parents=True, exist_ok=True)
             best_dir = model_dir / config.SEX_PREDICT_METRIC
             best_dir.mkdir(parents=True, exist_ok=True)
-            df_t = _DATA_CACHE[species]["train"]
+            species_dir = SPLITS_DIR / species
+            df_t = pd.read_parquet(species_dir / "train.parquet")
             y_t = df_t["sex"].map({"f": 0, "m": 1})
             X_t = df_t.drop(columns=["Fold", "sex"])
             steps = get_pipeline_steps(

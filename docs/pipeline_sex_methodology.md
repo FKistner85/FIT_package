@@ -50,7 +50,6 @@ This document summarises the workflow implemented in the notebook `pipeline_sex_
 - **Loading** – Models can be reloaded with `joblib.load()` to classify new footprints without repeating preprocessing.
 
 ### 7. Reproducibility
-- **Caching** – `joblib.Memory` caches intermediate results, accelerating repeated runs.
 - **Random Seeds** – A project-wide seed from `config.py` is used by all stochastic operations (imputation, random forest, etc.) to ensure repeatability.
 - **Data Integrity** – Intermediate data sets are saved as Parquet files to maintain schema and type information.
 
@@ -72,6 +71,6 @@ This document summarises the workflow implemented in the notebook `pipeline_sex_
 6. **Hyperparameter Search** – In the notebook `RandomizedSearchCV` samples pipeline configurations and model parameters. Results are logged to `raw_results.csv`.
 7. **Save Models** – Trained pipelines are saved under `results/data/sex_models` and duplicated in `sex_models_best` when they outperform previous runs.
 8. **Predict** – Reload a saved model with `joblib.load()` to classify the sex of new footprints without repeating the full pipeline.
-9. **Reproducibility** – Consistent random seeds and cached intermediate results ensure that experiments can be reproduced exactly.
+9. **Reproducibility** – Consistent random seeds ensure that experiments can be reproduced exactly.
 10. **Progress Monitoring** – Long-running loops display a progress bar powered by `tqdm`. Install this package to see real-time feedback during training.
 

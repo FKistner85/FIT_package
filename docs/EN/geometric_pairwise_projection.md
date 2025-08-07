@@ -1,7 +1,7 @@
 # geometric_pairwise_projection.py
 
 ## Overview
-Runs pairwise projections with optional sex model probabilities and caches results.
+Runs pairwise projections with optional sex model probabilities.
 
 ## Key Components
 - generate_pairwise_comparisons_from_df
@@ -9,7 +9,7 @@ Runs pairwise projections with optional sex model probabilities and caches resul
 
 ### generate_pairwise_comparisons_from_df
 Builds a list of trail pairings with fold assignments for cross‑validation. The
-result can be cached with joblib to speed up repeated experiments. The input
+result can be stored with joblib to reuse in later experiments. The input
 DataFrame must contain individual identifiers and sufficient samples per trail
 size.
 Set ``evaluation=True`` to skip fold handling when the DataFrame lacks a ``fold``
