@@ -25,3 +25,4 @@ results/**/*.joblib
 
 results/**/split_proportions.png
 results/**/split_proportions.svg
+/notebooks/results/fit_notebook_fast/figures/feature_distributions
