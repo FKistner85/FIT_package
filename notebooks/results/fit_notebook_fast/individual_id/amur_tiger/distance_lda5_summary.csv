@@ -1,2 +1,2 @@
-species,cv_bal_acc,test_bal_acc,cv_true_same_pred_same,cv_true_same_pred_diff,cv_true_diff_pred_same,cv_true_diff_pred_diff,test_true_same_pred_same,test_true_same_pred_diff,test_true_diff_pred_same,test_true_diff_pred_diff,top5_features
-amur_tiger,0.959126984126984,0.9474141677531509,38,2,12,366,12,1,5,172,dist_euclidean;mean_euclidean_between
+species,cv_bal_acc,test_bal_acc,top5_features
+amur_tiger,0.948598479200835,0.9332898739678401,dist_euclidean;median_euclidean_between;dist_manhattan;median_manhattan_between;median_cosine_between

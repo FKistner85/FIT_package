@@ -1,2 +1,2 @@
-species,cv_bal_acc,test_bal_acc,cv_true_same_pred_same,cv_true_same_pred_diff,cv_true_diff_pred_same,cv_true_diff_pred_diff,test_true_same_pred_same,test_true_same_pred_diff,test_true_diff_pred_same,test_true_diff_pred_diff,top5_features
-lowlandtapir,0.8078817733990148,0.9726027397260274,20,9,15,188,5,0,4,69,dist_euclidean;median_euclidean_between
+species,cv_bal_acc,test_bal_acc,top5_features
+lowlandtapir,0.8645320197044335,0.8794520547945206,dist_euclidean;dist_manhattan;dist_cosine;dist_braycurtis;median_braycurtis_between

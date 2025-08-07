@@ -1,2 +1,2 @@
-species,cv_bal_acc,test_bal_acc,cv_true_same_pred_same,cv_true_same_pred_diff,cv_true_diff_pred_same,cv_true_diff_pred_diff,test_true_same_pred_same,test_true_same_pred_diff,test_true_diff_pred_same,test_true_diff_pred_diff,top5_features
-bengal_tiger,0.9058161708619374,0.9901960784313726,58,11,11,369,4,0,1,50,dist_euclidean;median_euclidean_between
+species,cv_bal_acc,test_bal_acc,top5_features
+bengal_tiger,0.9236079328756674,0.9761904761904762,median_euclidean_between;median_manhattan_between;dist_cosine;median_cosine_between;dist_braycurtis
