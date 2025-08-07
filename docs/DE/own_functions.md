@@ -922,6 +922,12 @@ random_state:
 out_dir:
     Directory to write per-split CSV results. Defaults to
     ``RESULTS_DATA_DIR / 'individual_id'``.
+tag:
+    Optionales Label, das bei Angabe von ``master_fp`` zusammen mit den
+    Rohdaten gespeichert wird.
+master_fp:
+    Parquet-Datei, in die die Rohdaten der einzelnen Splits angehängt werden,
+    sofern angegeben.
 n_jobs:
     Parallel jobs for the pairwise projection step.  ``-1`` uses all cores.
 reuse_summary:
