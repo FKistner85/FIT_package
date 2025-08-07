@@ -160,9 +160,12 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
 
     from pathlib import Path
 
-    def fake_run(*args, sex_predictions=None, out_dir=None, **kwargs):
+    def fake_run(*args, sex_predictions=None, out_dir=None, tag=None, master_fp=None, **kwargs):
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         assert sex_predictions is preds
+        assert master_fp == Path(out_dir) / "master_pairs.parquet"
+        expected_tag = f"{SOFT_CONFIG['pipeline_individual_id']['pairwise_defaults']['selection_method']}_k1_sex_off"
+        assert tag == expected_tag
         df_out = pd.DataFrame({"bcr": [1.0]})
         df_out.to_json(Path(out_dir) / "summary.json", orient="records")
         return df_out
