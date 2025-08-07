@@ -304,3 +304,25 @@ def test_embedding_display_labels(tmp_path: Path, monkeypatch):
         mapping={"A": "Ind_1"},
     )
     assert labels[-1] == "Ind_1"
+
+
+def test_plot_umap_by_group(tmp_path: Path):
+    from FIT_python.Visualisations import plots_utils as pu
+
+    df = pd.DataFrame(
+        {
+            "UMAP1": [0, 1, 0, 1],
+            "UMAP2": [0, 0, 1, 1],
+            "trial": ["t1", "t1", "t2", "t2"],
+            "color": ["red", "red", "yellow", "yellow"],
+        }
+    )
+
+    out = pu.plot_umap_by_group(
+        df,
+        tmp_path,
+        "group.png",
+        group_col="trial",
+        color_col="color",
+    )
+    assert out.exists()

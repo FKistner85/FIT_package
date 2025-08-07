@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from ast import literal_eval
 import warnings
+import itertools
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
@@ -1026,6 +1027,110 @@ def plot_umap_by_individual(
     fig.savefig(out, dpi=150)
     plt.close(fig)
     save_caption(out, f"{xcol}/{ycol} UMAP by individual")
+    return out
+
+
+def plot_umap_by_group(
+    df: pd.DataFrame,
+    fig_dir: Path,
+    filename: str | Path,
+    group_col: str,
+    xcol: str = "UMAP1",
+    ycol: str = "UMAP2",
+    marker_map: dict | None = None,
+    color_col: str | None = None,
+    default_color: str = "black",
+    *,
+    legend: bool = True,
+) -> Path:
+    """Scatter UMAP coordinates grouped by an arbitrary column.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Must contain ``xcol`` and ``ycol`` coordinates.  Optionally a
+        ``color_col`` specifying colors per row.
+    group_col : str
+        Column used to group points and assign markers.
+    marker_map : dict, optional
+        Mapping from group values to matplotlib markers.  When omitted a set of
+        distinct markers is cycled.
+    color_col : str, optional
+        Column providing colors.  When omitted all points are drawn with
+        ``default_color``.
+    default_color : str, optional
+        Fallback color used when ``color_col`` is ``None``.
+    legend : bool, optional
+        If ``True`` (default), draw a legend for the groups.
+    """
+
+    from matplotlib.lines import Line2D
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    if marker_map is None:
+        markers = [
+            "o",
+            "s",
+            "^",
+            "v",
+            "<",
+            ">",
+            "P",
+            "X",
+            "D",
+            "*",
+            "+",
+            "x",
+            "|",
+            "_",
+            "1",
+            "2",
+            "3",
+            "4",
+            "8",
+            "p",
+            "H",
+            "h",
+            "d",
+            ".",
+            ",",
+        ]
+        marker_cycle = itertools.cycle(markers)
+        marker_map = {val: next(marker_cycle) for val in df[group_col].unique()}
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    legend_handles = []
+    for name, subset in df.groupby(group_col):
+        color = default_color
+        if color_col and color_col in subset.columns:
+            color = subset[color_col].iloc[0]
+        marker = marker_map.get(name, "o")
+        _scatter_points(ax, subset[xcol], subset[ycol], color, marker, label=str(name))
+        legend_handles.append(
+            Line2D(
+                [0],
+                [0],
+                marker=marker,
+                color="w",
+                markerfacecolor=color,
+                markeredgecolor="black",
+                markersize=6,
+                label=str(name),
+            )
+        )
+
+    ax.set_xlabel(xcol)
+    ax.set_ylabel(ycol)
+    if legend:
+        ax.legend(handles=legend_handles, title=group_col, fontsize="small")
+
+    fig.tight_layout()
+    out = fig_dir / filename
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, f"{xcol}/{ycol} UMAP by {group_col}")
     return out
 
 
