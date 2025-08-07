@@ -18,9 +18,15 @@ def main() -> None:
     parser.add_argument(
         "-o", "--output", type=Path, default=None, help="Output parquet path"
     )
+    parser.add_argument(
+        "--origin",
+        type=str,
+        default="cv",
+        choices=["cv", "test"],
+        help="Filter pairs by origin label",
+    )
     args = parser.parse_args()
-
-    df = aggregate_all_folds(args.exp_dir, args.output)
+    df = aggregate_all_folds(args.exp_dir, args.output, origin=args.origin)
     print(f"[INFO] combined {len(df)} rows")
 
 
