@@ -18,7 +18,7 @@ from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
 from FIT_python.config import RESULTS_DATA_DIR, SPLITS_DIR, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from . import sequential_holdout
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
@@ -271,31 +271,31 @@ def run_baseline_all_species(
     selection_method, reducers, n_components, scaler_methods : optional
         Parameters forwarded to :func:`sequential_holdout.run` controlling
         feature selection, dimensionality reduction and scaling. Defaults are
-        taken from ``SOFT_CONFIG['pipeline_individual_id']['pairwise_defaults']``.
+        taken from ``CONFIG['pipeline_individual_id']['pairwise_defaults']``.
     """
 
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
 
     if selection_method is None:
-        selection_method = SOFT_CONFIG["pipeline_individual_id"][
+        selection_method = CONFIG["pipeline_individual_id"][
             "pairwise_defaults"
         ]["selection_method"]
 
     if selection_method is None:
-        selection_method = SOFT_CONFIG["pipeline_individual_id"][
+        selection_method = CONFIG["pipeline_individual_id"][
             "pairwise_defaults"
         ]["selection_method"]
     if reducers is None:
-        reducers = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        reducers = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
             "reducers"
         ]
     if n_components is None:
-        n_components = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        n_components = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
             "n_components"
         ]
     if scaler_methods is None:
-        scaler_methods = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        scaler_methods = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
             "scaler_methods"
         ]
 
@@ -409,7 +409,7 @@ def run_simple_baseline_all_species(
     exp_dir.mkdir(parents=True, exist_ok=True)
 
     if selection_method is None:
-        selection_method = SOFT_CONFIG["pipeline_individual_id"][
+        selection_method = CONFIG["pipeline_individual_id"][
             "pairwise_defaults"
         ]["selection_method"]
 
@@ -679,26 +679,26 @@ def run_fold_cv(
     subsample: bool = False,
     cutoff: float | None = None,
     overlap_prob: float = 0.5,
-    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    selection_method: str = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "selection_method"
     ],
-    reducers: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"][
+    reducers: Iterable[str] | str | None = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["reducers"],
-    n_components: int | Iterable[int] = SOFT_CONFIG["pipeline_individual_id"][
+    n_components: int | Iterable[int] = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["n_components"],
     outlier_methods: Iterable[str]
     | str
-    | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    | None = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "outlier_methods"
     ],
     scaler_methods: Iterable[str]
     | str
-    | None = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    | None = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "scaler_methods"
     ],
-    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"][
+    use_sexmodel_prediction: bool = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["use_sexmodel_prediction"],
     sexmodel_path: str | None = None,

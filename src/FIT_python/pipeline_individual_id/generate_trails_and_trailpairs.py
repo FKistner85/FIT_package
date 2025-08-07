@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Union, Optional, Any, Iterable
 import numpy as np
 import pandas as pd
 from FIT_python.config import GLOBAL_RANDOM_SEED
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 __all__ = [
     "select_or_generate_trails",
@@ -30,7 +30,7 @@ def select_or_generate_trails(
     strategy: str = "generate",
     individual_col: str = "individual_id",
     trail_col: str = "trail",
-    sample_size: int = SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"],
+    sample_size: int = CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"],
     random_state: int = GLOBAL_RANDOM_SEED,
 ) -> pd.DataFrame:
     """Return existing trails or generate new ones.
@@ -48,7 +48,7 @@ def select_or_generate_trails(
         Column containing trail identifiers. Defaults to ``"trail"``.
     sample_size : int, optional
         Number of observations per generated trail. Defaults to
-        ``SOFT_CONFIG['pipeline_individual_id']['trail_generation_defaults']['sample_size']``.
+        ``CONFIG['pipeline_individual_id']['trail_generation_defaults']['sample_size']``.
     random_state : int, optional
         Seed for random sampling. Defaults to ``GLOBAL_RANDOM_SEED``.
 
@@ -83,9 +83,9 @@ def generate_subsamples(
     trail_col: str = "trail",
     id_col: str = "id",
     individual_col: str = "individual_id",
-    sample_size: int = SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"],
-    subsample_sizes: Tuple[int, ...] = tuple(SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["subsample_sizes"]),
-    n_candidates: int = SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["n_candidates"],
+    sample_size: int = CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"],
+    subsample_sizes: Tuple[int, ...] = tuple(CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["subsample_sizes"]),
+    n_candidates: int = CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["n_candidates"],
     random_state: int = GLOBAL_RANDOM_SEED,
 ) -> Dict[str, List[str]]:
     """Create diverse subsamples for each trail."""

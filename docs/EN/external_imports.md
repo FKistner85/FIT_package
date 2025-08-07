@@ -20,7 +20,7 @@
 - general_pipeline_steps
 - generate_trails_and_trailpairs
 - gui_app
-- id_config
+- search
 - importlib
 - imputation_wrapper
 - inspect
@@ -44,7 +44,7 @@
 - re
 - scipy
 - seaborn
-- sex_config
+- search
 - sex_predict_and_visualisation
 - shutil
 - simple_baseline

@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def _load_functions(tmp_root):
-    sc_path = Path(__file__).resolve().parents[1] / "src" / "FIT_python" / "pipeline_sex" / "sex_config.py"
+    sc_path = Path(__file__).resolve().parents[1] / "src" / "FIT_python" / "pipeline_sex" / "search.py"
     source = sc_path.read_text()
     module = ast.parse(source)
     funcs = [n for n in module.body if isinstance(n, ast.FunctionDef) and n.name in {"_run_species_search", "run_species_search"}]

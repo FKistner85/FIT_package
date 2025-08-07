@@ -31,7 +31,6 @@ from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import (
     DimensionalityReducerTransformer,
 )
 from FIT_python.general_pipeline_steps.models import MODELS
-from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python.pipeline_sex.grouped_metrics import (
     individual_accuracies,
     individual_majority_stats,
@@ -89,10 +88,11 @@ from FIT_python.config import (
     NUM_FOLDS,
     BAYES_REFIT,
     SEX_PREDICT_METRIC,
+    CONFIG,
 )
 from FIT_python.utils import get_species_paths
 
-PIPE_CFG = SOFT_CONFIG["pipeline_sex"]
+PIPE_CFG = CONFIG["pipeline_sex"]
 
 MODEL_KEYS = PIPE_CFG["model_keys"]
 
@@ -137,24 +137,8 @@ SEARCH_SPACES = {
 
 
 SCORING = PIPE_CFG["scoring"]
-
-# Map scoring keys to evaluation dataframe columns
-SCORING_TO_EVAL = {
-    "accuracy": "accuracy_test",
-    "balanced_accuracy": "balanced_test_acc",
-    "neg_log_loss": "mean_test_neg_log_loss",
-    "f1": "f1_test",
-    "precision": "precision_test",
-    "recall": "recall_test",
-    "roc_auc": "roc_auc_test",
-    # Additional metrics not part of SCORING but useful for ranking
-    "maj_test_pct": "maj_test_pct",
-}
-
-# Only keep metrics that are present in the scoring configuration or
-# the additional ``maj_test_pct`` metric above.
-METRIC_MAP = {k: v for k, v in SCORING_TO_EVAL.items() if k in SCORING or k == "maj_test_pct"}
-
+SCORING_TO_EVAL = PIPE_CFG["scoring_to_eval"]
+METRIC_MAP = PIPE_CFG["metric_map"]
 PIPELINE_ORDER = PIPE_CFG["pipeline_order"]
 
 

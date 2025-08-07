@@ -8,7 +8,7 @@ from .baseline_sex import (
     plot_majority_comparison,
     plot_accuracy_by_sex,
 )
-from .sex_config import (
+from .search import (
     run_otter_search_sex,
     run_other_species_search,
     run_species_search,

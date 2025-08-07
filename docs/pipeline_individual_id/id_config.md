@@ -1,4 +1,4 @@
-# id_config.py
+# search.py
 
 `PairwiseEstimator` wraps `run_all_pairwise_projections_parallel` so it can be used inside `BayesSearchCV`:
 
@@ -28,7 +28,7 @@ class PairwiseEstimator:
         )
         return pd.DataFrame(res)
 ```
-【F:src/FIT_python/pipeline_individual_id/id_config.py†L48-L121】
+【F:src/FIT_python/pipeline_individual_id/search.py†L48-L121】
 
 The Bayesian search space includes ``"est__use_sexmodel_prediction"`` to toggle
 appending sex-model predictions during optimisation.

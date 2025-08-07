@@ -15,7 +15,6 @@ from typing import Any, Dict, Iterable
 import pandas as pd
 import numpy as np
 
-from FIT_python.soft_config import SOFT_CONFIG
 from FIT_python import config
 
 # Paths ----------------------------------------------------------------------

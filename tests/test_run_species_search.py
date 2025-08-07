@@ -47,9 +47,9 @@ def test_run_species_search_executes(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
-    import FIT_python.soft_config as scfg
-    scfg.SOFT_CONFIG["pipeline_sex"]["run_otter_search_sex"]["cv"] = "fold"
-    import FIT_python.pipeline_sex.sex_config as sc
+    import FIT_python.config as scfg
+    scfg.CONFIG["pipeline_sex"]["run_otter_search_sex"]["cv"] = "fold"
+    import FIT_python.pipeline_sex.search as sc
     importlib.reload(sc)
     captured = {}
 
