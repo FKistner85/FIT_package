@@ -281,6 +281,11 @@ def run_baseline_all_species(
         selection_method = SOFT_CONFIG["pipeline_individual_id"][
             "pairwise_defaults"
         ]["selection_method"]
+
+    if selection_method is None:
+        selection_method = SOFT_CONFIG["pipeline_individual_id"][
+            "pairwise_defaults"
+        ]["selection_method"]
     if reducers is None:
         reducers = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
             "reducers"
@@ -353,6 +358,7 @@ def run_simple_baseline_all_species(
     reducers: Iterable[str] | str | None = None,
     n_components: int | Iterable[int] | None = None,
     scaler_methods: Iterable[str] | str | None = None,
+    overwrite: bool = False,
 ) -> None:
     """Evaluate cross-validation folds for every species.
 
@@ -394,16 +400,25 @@ def run_simple_baseline_all_species(
     selection_method, reducers, n_components, scaler_methods : optional
         Parameters forwarded to :func:`run_fold_cv` controlling feature
         selection, dimensionality reduction and scaling.
+    overwrite : bool, optional
+        When ``True`` existing entries in ``master_pairs.parquet`` are
+        recomputed.  Otherwise finished runs are skipped.
     """
 
     exp_dir = Path(exp_dir)
     exp_dir.mkdir(parents=True, exist_ok=True)
+
+    if selection_method is None:
+        selection_method = SOFT_CONFIG["pipeline_individual_id"][
+            "pairwise_defaults"
+        ]["selection_method"]
 
     for species_dir in tqdm(sorted(SPLITS_DIR.iterdir()), desc="Species"):
         if not species_dir.is_dir():
             continue
 
         out_dir = exp_dir / species_dir.name
+        master_fp = out_dir / "master_pairs.parquet"
 
         try:
             df = _load_splits(species_dir, include_test=False)
@@ -440,6 +455,10 @@ def run_simple_baseline_all_species(
                 / f"{species_dir.name}.joblib"
             )
 
+        tag = f"{selection_method}_k{k}_{'sex_on' if use_sexmodel_prediction else 'sex_off'}"
+        if not overwrite and is_run_done(species_dir.name, tag, master_fp):
+            continue
+
         kwargs = dict(
             sex_predictions=preds,
             out_dir=out_dir,
@@ -461,6 +480,9 @@ def run_simple_baseline_all_species(
         run_fold_cv(
             df,
             feature_cols,
+            tag=tag,
+            master_fp=master_fp,
+            overwrite=overwrite,
             **kwargs,
         )
 
