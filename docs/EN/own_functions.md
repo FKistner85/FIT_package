@@ -288,16 +288,16 @@ Class to import, clean, and convert data from raw files.
 Return a human readable species label.
 
 ## FIT_python.data_split_and_summary.dataset_summary.generate_dataset_overview
-Create a CSV summary of all raw datasets and return it as a DataFrame.
+Create a Parquet summary of all raw datasets and return it as a DataFrame.
 
 Parameters
 ----------
 raw_dir:
-    Directory containing the raw CSV footprint tables.
-out_csv:
+    Directory containing the raw footprint tables.
+out_path:
     Destination of the generated overview table.
-reuse_csv:
-    When ``True`` and ``out_csv`` already exists, the CSV is loaded and
+reuse:
+    When ``True`` and ``out_path`` already exists, the Parquet file is loaded and
     returned instead of recomputing the statistics.
 
 ## FIT_python.data_split_and_summary.datasplit_and_summary_wraper.SplitWrapper
@@ -374,7 +374,7 @@ Titles use italic scientific names.
 ## FIT_python.data_split_and_summary.summary_data_wrapper.SummaryWrapper
 
 ## FIT_python.data_split_and_summary.summary_data_wrapper.run_summary
-Create CSV and plots summarising each split separately.
+Create Parquet and plots summarising each split separately.
 
 ## FIT_python.data_split_and_summary.transform_utils.convert_numeric
 Convert feature columns to float, replacing comma decimal separators.

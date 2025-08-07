@@ -30,23 +30,23 @@ def _species_label(name: str, df: pd.DataFrame) -> str:
 
 
 def generate_dataset_overview(
-    raw_dir: Path, out_csv: Path, reuse_csv: bool = True
+    raw_dir: Path, out_path: Path, reuse: bool = True
 ) -> pd.DataFrame:
-    """Create a CSV summary of all raw datasets and return it as a DataFrame.
+    """Create a Parquet summary of all raw datasets.
 
     Parameters
     ----------
     raw_dir:
-        Directory containing the raw CSV footprint tables.
-    out_csv:
+        Directory containing the raw footprint tables.
+    out_path:
         Destination of the generated overview table.
-    reuse_csv:
-        When ``True`` and ``out_csv`` already exists, the CSV is loaded and
-        returned instead of recomputing the statistics.
+    reuse:
+        When ``True`` and ``out_path`` already exists, the Parquet file is loaded
+        and returned instead of recomputing the statistics.
     """
 
-    if reuse_csv and out_csv.exists():
-        return pd.read_csv(out_csv)
+    if reuse and out_path.exists():
+        return pd.read_parquet(out_path)
 
     importer = DataImporter(raw_dir, target_cols=DEFAULT_TARGETS)
     dfs = importer.run()
@@ -64,6 +64,6 @@ def generate_dataset_overview(
         rows.append(row)
 
     overview_df = pd.DataFrame(rows)
-    out_csv.parent.mkdir(parents=True, exist_ok=True)
-    overview_df.to_csv(out_csv, index=False)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    overview_df.to_parquet(out_path, index=False, compression="gzip")
     return overview_df
