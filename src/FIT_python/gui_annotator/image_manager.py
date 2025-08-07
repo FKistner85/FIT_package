@@ -7,10 +7,10 @@ from typing import Optional
 
 from PIL import Image
 
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python import config
 
-CFG = SOFT_CONFIG.get("gui_annotator", {})
+CFG = CONFIG.get("gui_annotator", {})
 RAW_DIR = config.RAW_DIR / "images"
 PROCESSED_DIR = config.PROCESSED_DIR / "images"
 DEFAULT_SCALE = float(CFG.get("default_scale", 1.0))

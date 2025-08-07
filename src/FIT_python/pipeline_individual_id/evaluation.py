@@ -1,7 +1,7 @@
 from __future__ import annotations
 from ast import literal_eval
 from typing import Iterable, List, Dict
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 import numpy as np
 from scipy.stats import chi2
@@ -17,7 +17,7 @@ from typing import Iterable, List, Dict
 
 from collections import Counter
 from typing import Iterable, Mapping
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 import FIT_python.config as config
 
 import pandas as pd
@@ -27,7 +27,7 @@ from sklearn.metrics import confusion_matrix
 def sequential_holdout_ids(
     unique_ids: Iterable[str],
     val_sizes: Iterable[int] = tuple(
-        SOFT_CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
+        CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
     ),
     n_iter: int = 1,
     random_state: int | None = None,

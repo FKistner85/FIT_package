@@ -10,13 +10,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import math
 import numpy as np
 
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python import config
 from FIT_python.gui_annotator import image_manager
 from FIT_python.gui_annotator.annotation_canvas import AnnotationCanvas, Landmark
 from FIT_python.utils.transformations import TransformationPipeline
 
-CFG = SOFT_CONFIG.get("gui_annotator", {})
+CFG = CONFIG.get("gui_annotator", {})
 RAW_DIR = config.RAW_DIR / "images"
 ANNOTATION_DIR = config.PROCESSED_DIR / "annotations"
 

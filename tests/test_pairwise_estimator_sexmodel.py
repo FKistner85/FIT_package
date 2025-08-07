@@ -11,7 +11,7 @@ def test_search_space_contains_use_sexmodel_prediction(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(tmp_path / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
-    ic = importlib.import_module("FIT_python.pipeline_individual_id.id_config")
+    ic = importlib.import_module("FIT_python.pipeline_individual_id.search")
     assert "est__use_sexmodel_prediction" in ic.SEARCH_SPACES
     cats = list(ic.SEARCH_SPACES["est__use_sexmodel_prediction"].categories)
     assert cats == [False, True]
@@ -22,7 +22,7 @@ def test_pairwise_estimator_passes_sexmodel_args(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(tmp_path / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
-    ic = importlib.import_module("FIT_python.pipeline_individual_id.id_config")
+    ic = importlib.import_module("FIT_python.pipeline_individual_id.search")
     def fake_gen(_df):
         return [], None
 

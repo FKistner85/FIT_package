@@ -6,7 +6,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python.utils import debug_report
 
 
@@ -16,18 +16,18 @@ class ImputationWrapper(TransformerMixin, BaseEstimator):
     The wrapper configures :class:`~sklearn.impute.IterativeImputer` with a
     :class:`~sklearn.ensemble.RandomForestRegressor` estimator. Default values
     for ``n_estimators``, ``max_iter`` and ``random_state`` are taken from the
-    :data:`SOFT_CONFIG` dictionary.
+    :data:`CONFIG` dictionary.
     """
 
     def __init__(
         self,
-        n_estimators: int = SOFT_CONFIG["general_pipeline_steps"][
+        n_estimators: int = CONFIG["general_pipeline_steps"][
             "imputation_defaults"
         ]["n_estimators"],
-        max_iter: int = SOFT_CONFIG["general_pipeline_steps"]["imputation_defaults"][
+        max_iter: int = CONFIG["general_pipeline_steps"]["imputation_defaults"][
             "max_iter"
         ],
-        random_state: int = SOFT_CONFIG["general_pipeline_steps"][
+        random_state: int = CONFIG["general_pipeline_steps"][
             "imputation_defaults"
         ]["random_state"],
     ):

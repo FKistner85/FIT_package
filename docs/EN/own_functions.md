@@ -432,7 +432,7 @@ Impute missing numeric values using ``IterativeImputer``.
 The wrapper configures :class:`~sklearn.impute.IterativeImputer` with a
 :class:`~sklearn.ensemble.RandomForestRegressor` estimator. Default values
 for ``n_estimators``, ``max_iter`` and ``random_state`` are taken from the
-:data:`SOFT_CONFIG` dictionary.
+:data:`CONFIG` dictionary.
 
 ## FIT_python.general_pipeline_steps.outlier_wrapper.CentroidOutlierTransformer
 Mark or remove outliers per individual in UMAP space.
@@ -521,10 +521,10 @@ current implementation of the underlying helpers.
 Create a lazy wrapper for ``func_name`` from ``simple_baseline``.
 
 ## FIT_python.pipeline_individual_id.__init__.run_id_search
-Lazy wrapper around :func:`id_config.run_species_search`.
+Lazy wrapper around :func:`search.run_species_search`.
 
 All parameters – including ``cv`` for the cross-validation strategy – are
-forwarded to :func:`~FIT_python.pipeline_individual_id.id_config.run_species_search`
+forwarded to :func:`~FIT_python.pipeline_individual_id.search.run_species_search`
 which performs a :class:`skopt.BayesSearchCV` over the pairwise ID pipeline.
 
 ## FIT_python.pipeline_individual_id.baseline_pipeline.DistanceBaseline
@@ -671,7 +671,7 @@ trail_col : str, optional
     Column containing trail identifiers. Defaults to ``"trail"``.
 sample_size : int, optional
     Number of observations per generated trail. Defaults to
-    ``SOFT_CONFIG['pipeline_individual_id']['trail_generation_defaults']['sample_size']``.
+    ``CONFIG['pipeline_individual_id']['trail_generation_defaults']['sample_size']``.
 random_state : int, optional
     Seed for random sampling. Defaults to ``GLOBAL_RANDOM_SEED``.
 
@@ -701,14 +701,14 @@ dict[str, list[dict[str, pd.DataFrame]]]
     dictionary contains ``train_df`` and ``val_df`` along with
     ``iteration`` and ``n_val`` information.
 
-## FIT_python.pipeline_individual_id.id_config.PairwiseEstimator
+## FIT_python.pipeline_individual_id.search.PairwiseEstimator
 Estimator that computes pairwise distances using the embedding pipeline.
 
 All preprocessing steps including outlier cleaning, scaling, feature
 selection and dimensionality reduction are handled inside
 :func:`run_all_pairwise_projections_parallel`.
 
-## FIT_python.pipeline_individual_id.id_config.run_species_search
+## FIT_python.pipeline_individual_id.search.run_species_search
 Run BayesSearchCV for all species in ``SPLITS_DIR``.
 
 Parameters
@@ -916,7 +916,7 @@ iterations:
     Number of sequential holdout iterations.
 val_sizes:
     Validation sizes passed to :func:`sequential_holdout_ids`. Defaults to
-    ``SOFT_CONFIG['pipeline_individual_id']['sequential_holdout_val_sizes']``.
+    ``CONFIG['pipeline_individual_id']['sequential_holdout_val_sizes']``.
 random_state:
     Random seed for the split generator. Defaults to ``GLOBAL_RANDOM_SEED``.
 out_dir:
@@ -1362,14 +1362,14 @@ Construct the list of ``(name, transformer)`` steps based on the chosen hyperpar
 ## FIT_python.pipeline_sex.pipeline_wrapper_sex.plot_pipeline_timings
 Create a bar chart of average seconds per preprocessing step.
 
-## FIT_python.pipeline_sex.sex_config.EstimatorWrapper
+## FIT_python.pipeline_sex.search.EstimatorWrapper
 Simple container for an estimator without ``__len__``/``__iter__``.
 
 The wrapper proxies all estimator methods/attributes so it can be used
 transparently inside a :class:`~sklearn.pipeline.Pipeline` while ensuring
 that optimization libraries treat it as an atomic object.
 
-## FIT_python.pipeline_sex.sex_config._run_species_search
+## FIT_python.pipeline_sex.search._run_species_search
 Run the hyperparameter search for a single species.
 
 Parameters
@@ -1378,10 +1378,10 @@ reuse_results:
     When ``True`` and result CSVs exist in ``base_dir_suffix`` the search
     is skipped and the files are loaded instead.
 
-## FIT_python.pipeline_sex.sex_config.prepare_eurasian_otter
+## FIT_python.pipeline_sex.search.prepare_eurasian_otter
 Prepare splits only for the Eurasian otter dataset.
 
-## FIT_python.pipeline_sex.sex_config.run_other_species_search
+## FIT_python.pipeline_sex.search.run_other_species_search
 Run the search for all species except the Eurasian otter.
 
 Parameters
@@ -1393,7 +1393,7 @@ cv : int or str, optional
 random_state : int, optional
     Random seed controlling the search.
 
-## FIT_python.pipeline_sex.sex_config.run_otter_search_sex
+## FIT_python.pipeline_sex.search.run_otter_search_sex
 Run BayesSearchCV for the Eurasian otter dataset.
 
 Parameters
@@ -1408,7 +1408,7 @@ reuse_results : bool, optional
     When ``True`` previously saved search results are loaded from
     ``PATHS['random_search']``.
 
-## FIT_python.pipeline_sex.sex_config.run_species_search
+## FIT_python.pipeline_sex.search.run_species_search
 Run the search for all species in ``SPLITS_DIR``.
 
 Parameters

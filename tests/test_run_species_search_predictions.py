@@ -54,7 +54,7 @@ def test_run_species_search_creates_predictions(tmp_path, monkeypatch):
     importlib.reload(paths_mod)
     import FIT_python.utils as utils
     importlib.reload(utils)
-    import FIT_python.pipeline_sex.sex_config as sc
+    import FIT_python.pipeline_sex.search as sc
     importlib.reload(sc)
 
     class DummySearch:
@@ -125,7 +125,7 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
     monkeypatch.setenv("FIT_RAW_DIR", str(root / "data" / "raw"))
     import FIT_python.config as cfg
     importlib.reload(cfg)
-    import FIT_python.pipeline_sex.sex_config as sc
+    import FIT_python.pipeline_sex.search as sc
     importlib.reload(sc)
 
     class DummySearch:
@@ -203,7 +203,7 @@ def test_run_species_search_reuses_results(tmp_path, monkeypatch):
     df_best = pd.DataFrame({"b": [2]})
     df_all.to_csv(results_dir / "all_results.csv", index=False)
     df_best.to_csv(results_dir / "best_models.csv", index=False)
-    import FIT_python.pipeline_sex.sex_config as sc
+    import FIT_python.pipeline_sex.search as sc
     importlib.reload(sc)
 
     class DummySearch:

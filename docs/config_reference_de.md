@@ -1,6 +1,6 @@
 # Konfigurationsreferenz
 
-Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden können. **Alle automatisch erstellten Codes müssen ihre Werte aus `FIT_python.soft_config.SOFT_CONFIG` lesen und dürfen keine festen Literale verwenden.**
+Dieses Dokument listet alle Parameter auf, die im Repository eingestellt werden können. **Alle automatisch erstellten Codes müssen ihre Werte aus `FIT_python.config.CONFIG` lesen und dürfen keine festen Literale verwenden.**
 
 ## data_split_and_summary
 - `sex_categories`: Kategorien zur Zusammenfassung der Datensätze. Der

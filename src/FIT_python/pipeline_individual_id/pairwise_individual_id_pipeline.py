@@ -20,7 +20,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
 from FIT_python.config import RESULTS_DATA_DIR, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 # Local modules
 from FIT_python.pipeline_individual_id.rcv_sampling import generate_rcv
@@ -48,23 +48,23 @@ def run_all_pairwise_projections_parallel(
     feature_cols: List[str],
     *,
     sample_col: str = "id",
-    k_features: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    k_features: Union[int, List[int]] = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "k_features"
     ],
-    reducers: List[str] = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"],
-    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    reducers: List[str] = CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"],
+    selection_method: str = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "selection_method"
     ],
-    n_components: Union[int, List[int]] = SOFT_CONFIG["pipeline_individual_id"][
+    n_components: Union[int, List[int]] = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["n_components"],
-    outlier_methods: Union[str, List[str], None] = SOFT_CONFIG["pipeline_individual_id"][
+    outlier_methods: Union[str, List[str], None] = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["outlier_methods"],
-    scaler_methods: Union[str, List[str], None] = SOFT_CONFIG["pipeline_individual_id"][
+    scaler_methods: Union[str, List[str], None] = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["scaler_methods"],
-    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    use_sexmodel_prediction: bool = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "use_sexmodel_prediction"
     ],
     sexmodel_path: str | None = None,
@@ -494,29 +494,29 @@ def run_embedding_once_pipeline(
     *,
     feature_cols: List[str],
     sample_col: str = "id",
-    k_features: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
-    reducer: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
-    selection_method: str = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    k_features: int = CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
+    reducer: str = CONFIG["pipeline_individual_id"]["pairwise_defaults"]["reducers"][0],
+    selection_method: str = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "selection_method"
     ],
-    n_components: int = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
+    n_components: int = CONFIG["pipeline_individual_id"]["pairwise_defaults"]["n_components"],
     outlier_method: str | None = (
-        SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"][0]
+        CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"][0]
         if isinstance(
-            SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"],
+            CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"],
             list,
         )
-        else SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"]
+        else CONFIG["pipeline_individual_id"]["pairwise_defaults"]["outlier_methods"]
     ),
     scaler_method: str | None = (
-        SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"][0]
+        CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"][0]
         if isinstance(
-            SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"],
+            CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"],
             list,
         )
-        else SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"]
+        else CONFIG["pipeline_individual_id"]["pairwise_defaults"]["scaler_methods"]
     ),
-    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    use_sexmodel_prediction: bool = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "use_sexmodel_prediction"
     ],
     sexmodel_path: str | None = None,

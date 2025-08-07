@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler, RobustScaler
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python.utils import debug_report
 
 
@@ -14,7 +14,7 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        method: str = SOFT_CONFIG["general_pipeline_steps"]["scaler_default"]["method"],
+        method: str = CONFIG["general_pipeline_steps"]["scaler_default"]["method"],
         **scaler_kwargs,
     ):
         """Create the transformer.
@@ -23,7 +23,7 @@ class FeatureScalerTransformer(TransformerMixin, BaseEstimator):
         ----------
         method:
             Scaling strategy. Options: ``'standard'`` or ``'robust'``.
-            Defaults to the value from :data:`SOFT_CONFIG`.
+            Defaults to the value from :data:`CONFIG`.
         scaler_kwargs:
             Additional arguments passed to the underlying scaler.
         """

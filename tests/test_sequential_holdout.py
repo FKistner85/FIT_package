@@ -24,8 +24,8 @@ def build_df():
 def test_run_produces_summary(tmp_path):
     df = build_df()
     preds = pd.DataFrame({'pred_f': 0.5, 'pred_m': 0.5}, index=df['id'])
-    from FIT_python.soft_config import SOFT_CONFIG
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    from FIT_python.config import CONFIG
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
     summary = run(df, ['f1', 'f2'], preds, val_sizes=[2], iterations=1, out_dir=tmp_path, n_jobs=1)
     assert not summary.empty
     assert 'bcr' in summary.columns
@@ -59,9 +59,9 @@ def test_k_features_influences_results(tmp_path):
 
     df = build_df()
     preds = pd.DataFrame({"pred_f": 0.5, "pred_m": 0.5}, index=df["id"])
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     out1 = tmp_path / "k1"
     out2 = tmp_path / "k2"
@@ -103,9 +103,9 @@ def test_k_features_influences_results(tmp_path):
 
 def test_reuse_summary(tmp_path):
     df = build_df()
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
         "sample_size"
     ] = 1
 
@@ -133,9 +133,9 @@ def test_reuse_summary(tmp_path):
 def test_all_splits_csv(tmp_path):
     df = build_df()
     preds = pd.DataFrame({"pred_f": 0.5, "pred_m": 0.5}, index=df["id"])
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
         "sample_size"
     ] = 1
 
@@ -162,9 +162,9 @@ def test_all_splits_csv(tmp_path):
 def test_master_fp_appends(tmp_path):
     df = build_df()
     preds = pd.DataFrame({"pred_f": 0.5, "pred_m": 0.5}, index=df["id"])
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     master_fp = tmp_path / "master.parquet"
     run(

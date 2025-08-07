@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.pipeline import Pipeline
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python.utils import debug_report
 from FIT_python.general_pipeline_steps.dimensionality_reduction_wrapper import (
     DimensionalityReducerTransformer,
@@ -24,16 +24,16 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        method: str = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"][
+        method: str = CONFIG["general_pipeline_steps"]["outlier_defaults"][
             "method"
         ],
-        lower_quantile: float = SOFT_CONFIG["general_pipeline_steps"][
+        lower_quantile: float = CONFIG["general_pipeline_steps"][
             "outlier_defaults"
         ]["lower_quantile"],
-        upper_quantile: float = SOFT_CONFIG["general_pipeline_steps"][
+        upper_quantile: float = CONFIG["general_pipeline_steps"][
             "outlier_defaults"
         ]["upper_quantile"],
-        z_thresh: float = SOFT_CONFIG["general_pipeline_steps"]["outlier_defaults"][
+        z_thresh: float = CONFIG["general_pipeline_steps"]["outlier_defaults"][
             "z_thresh"
         ],
     ):
@@ -43,13 +43,13 @@ class OutlierCleanerTransformer(TransformerMixin, BaseEstimator):
         ----------
         method:
             Cleaning algorithm. Options: ``'clip'`` or ``'zscore'``.
-            Defaults to the value from :data:`SOFT_CONFIG`.
+            Defaults to the value from :data:`CONFIG`.
         lower_quantile, upper_quantile:
             Bounds used when ``method='clip'``. Defaults come from
-            :data:`SOFT_CONFIG`.
+            :data:`CONFIG`.
         z_thresh:
             Z-score threshold when ``method='zscore'``. Default from
-            :data:`SOFT_CONFIG`.
+            :data:`CONFIG`.
         """
         if method not in ("clip", "zscore"):
             raise ValueError("method must be 'clip' or 'zscore'")

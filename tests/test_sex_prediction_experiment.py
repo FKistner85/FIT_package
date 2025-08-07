@@ -45,9 +45,9 @@ def test_sex_prediction_experiment_reuse(tmp_path, monkeypatch):
     pd.DataFrame({"id": [0], "pred_dummy_proba_f": [0.5]}).to_csv(
         preds_dir / "otter_all_predictions.csv", index=False
     )
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
         "sample_size"
     ] = 1
 

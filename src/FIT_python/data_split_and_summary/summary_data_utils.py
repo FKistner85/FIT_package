@@ -13,7 +13,7 @@ from FIT_python.Visualisations.plot_style import (
     TEST_COLORS,
     map_sex,
 )
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 
 def discover_splits(splits_dir: Path) -> Dict[str, Dict[str, Path]]:
@@ -109,7 +109,7 @@ def compute_summary(
     df["sex"] = map_sex(df["sex"])
     print(f"[DEBUG] sex value counts:\n{df['sex'].value_counts(dropna=False)}")
 
-    cfg = SOFT_CONFIG["data_split_and_summary"]
+    cfg = CONFIG["data_split_and_summary"]
     rows = []
     for sex in [*cfg["sex_categories"], "Unknown"]:
         sub = df[df["sex"] == sex]
@@ -170,7 +170,7 @@ def plot_summary_table(df_summary: pd.DataFrame, fig_dir: Path) -> None:
 
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    cfg = SOFT_CONFIG["data_split_and_summary"]
+    cfg = CONFIG["data_split_and_summary"]
     sexes = cfg["sex_categories"]
     splits = cfg["split_labels"]
     colors = {

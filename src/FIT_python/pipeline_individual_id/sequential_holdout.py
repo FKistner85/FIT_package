@@ -10,7 +10,7 @@ import pandas as pd
 
 from FIT_python.config import RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 from .evaluation import (
     sequential_holdout_ids,
@@ -101,13 +101,13 @@ def run(
     subsample: bool = False,
     cutoff: float | None = None,
     overlap_prob: float = 0.5,
-    outlier_methods: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"][
+    outlier_methods: Iterable[str] | str | None = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["outlier_methods"],
-    scaler_methods: Iterable[str] | str | None = SOFT_CONFIG["pipeline_individual_id"][
+    scaler_methods: Iterable[str] | str | None = CONFIG["pipeline_individual_id"][
         "pairwise_defaults"
     ]["scaler_methods"],
-    use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+    use_sexmodel_prediction: bool = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
         "use_sexmodel_prediction"
     ],
     sexmodel_path: str | None = None,
@@ -132,7 +132,7 @@ def run(
         Number of sequential holdout iterations.
     val_sizes:
         Validation sizes passed to :func:`sequential_holdout_ids`. Defaults to
-        ``SOFT_CONFIG['pipeline_individual_id']['sequential_holdout_val_sizes']``.
+        ``CONFIG['pipeline_individual_id']['sequential_holdout_val_sizes']``.
     random_state:
         Random seed for the split generator. Defaults to ``GLOBAL_RANDOM_SEED``.
     out_dir:
@@ -183,7 +183,7 @@ def run(
         tuple(val_sizes)
         if val_sizes is not None
         else tuple(
-            SOFT_CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
+            CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
         )
     )
     out_dir = Path(out_dir or RESULTS_DATA_DIR / "individual_id")

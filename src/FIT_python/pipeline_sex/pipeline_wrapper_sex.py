@@ -27,7 +27,7 @@ from FIT_python.config import (
 import FIT_python.config as config
 from FIT_python.utils import get_species_paths
 from FIT_python.utils import debug_report
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 # Utility functions
 from FIT_python.data_split_and_summary.split_utils import (
@@ -64,7 +64,7 @@ memory = Memory(location=_cache_dir, verbose=0)
 # In-memory cache of loaded splits
 _DATA_CACHE: dict[str, dict[str, pd.DataFrame]] = {}
 
-PIPE_SEARCH = SOFT_CONFIG["pipeline_sex"].get("search_spaces", {})
+PIPE_SEARCH = CONFIG["pipeline_sex"].get("search_spaces", {})
 
 
 def get_pipeline_steps(
@@ -186,20 +186,20 @@ class PipelineWrapper:
         ----------
         fs_method:
             Feature-selection algorithm. Valid choices are defined in
-            ``SOFT_CONFIG['pipeline_sex']['search_spaces']['select__method']``.
+            ``CONFIG['pipeline_sex']['search_spaces']['select__method']``.
         fs_k:
             Number of features selected when ``fs_method`` is not ``None``.
         impute_method:
             Imputation strategy. ``"miss_forest"`` or ``None``.
         outlier_method:
             Outlier cleaning method. Choices come from
-            ``SOFT_CONFIG['pipeline_sex']['search_spaces']['outlier']``.
+            ``CONFIG['pipeline_sex']['search_spaces']['outlier']``.
         scaler_method:
             Scaling approach. Choices come from
-            ``SOFT_CONFIG['pipeline_sex']['search_spaces']['scale']``.
+            ``CONFIG['pipeline_sex']['search_spaces']['scale']``.
         reduce_pre_method, reduce_post_method:
             Dimensionality reduction before/after selection. Valid options are
-            defined in ``SOFT_CONFIG['pipeline_sex']['search_spaces']`` under
+            defined in ``CONFIG['pipeline_sex']['search_spaces']`` under
             ``'reduce_pre__method'`` and ``'reduce_post__method'``.
         n_jobs:
             Number of parallel jobs used for cross-validation.

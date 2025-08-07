@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 from FIT_python.utils import get_species_paths
 from FIT_python.config import SEX_PREDICT_METRIC
 
@@ -33,13 +33,13 @@ class DistanceBaseline:
         reducers: List[str] | None = None,
         selection_method: str = "forward",
         n_components: int | List[int] = 2,
-        outlier_methods: Optional[List[str] | str] = SOFT_CONFIG["pipeline_individual_id"][
+        outlier_methods: Optional[List[str] | str] = CONFIG["pipeline_individual_id"][
             "pairwise_defaults"
         ]["outlier_methods"],
-        scaler_methods: Optional[List[str] | str] = SOFT_CONFIG["pipeline_individual_id"][
+        scaler_methods: Optional[List[str] | str] = CONFIG["pipeline_individual_id"][
             "pairwise_defaults"
         ]["scaler_methods"],
-        use_sexmodel_prediction: bool = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        use_sexmodel_prediction: bool = CONFIG["pipeline_individual_id"]["pairwise_defaults"][
             "use_sexmodel_prediction"
         ],
         sexmodel_path: str | None = None,
@@ -124,7 +124,7 @@ class DistanceBaseline:
             species = mapped_species
 
             # Immer Bayes-Ordner nutzen, Metric soft-coded
-            metric_folder = SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"].get(
+            metric_folder = CONFIG["pipeline_individual_id"]["pairwise_defaults"].get(
                 "metric_folder", SEX_PREDICT_METRIC
             )
             paths = get_species_paths(species)
@@ -137,7 +137,7 @@ class DistanceBaseline:
             list(val_comparisons),
             base_df,
             feature_cols,
-            k_features=SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
+            k_features=CONFIG["pipeline_individual_id"]["pairwise_defaults"]["k_features"],
             reducers=reducers or ["lda"],
             selection_method=selection_method,
             n_components=n_components,

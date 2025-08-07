@@ -1,11 +1,11 @@
 import importlib
 import pandas as pd
-from FIT_python import soft_config
+from FIT_python import config
 
 
 def test_metadata_overrides(monkeypatch):
     monkeypatch.setitem(
-        soft_config.SOFT_CONFIG["general_pipeline_steps"],
+        config.CONFIG["general_pipeline_steps"],
         "metadata_cols",
         ["keep_me"],
     )

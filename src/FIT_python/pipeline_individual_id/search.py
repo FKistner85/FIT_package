@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
@@ -11,7 +10,7 @@ from sklearn.pipeline import Pipeline
 from skopt import BayesSearchCV
 from skopt.space import Categorical
 
-from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR
+from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR, CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 
 from FIT_python.pipeline_individual_id.evaluation import separation_score
@@ -21,9 +20,8 @@ from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
 from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
     run_all_pairwise_projections_parallel,
 )
-from FIT_python.soft_config import SOFT_CONFIG
 
-PIPE_CFG = SOFT_CONFIG["pipeline_individual_id"]
+PIPE_CFG = CONFIG["pipeline_individual_id"]
 
 SEARCH_SPACE_CFG = PIPE_CFG.get("search_spaces", {})
 

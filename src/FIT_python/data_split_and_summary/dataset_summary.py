@@ -9,12 +9,12 @@ from FIT_python.data_split_and_summary.data_import_wrapper import DataImporter
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 from tqdm.auto import tqdm
 from FIT_python.config import DEFAULT_TARGETS
-from FIT_python.soft_config import SOFT_CONFIG
+from FIT_python.config import CONFIG
 
 
 def _species_label(name: str, df: pd.DataFrame) -> str:
     """Return a human readable species label."""
-    cfg = SOFT_CONFIG.get("dataset_summary", {}).get("species_labels", {})
+    cfg = CONFIG.get("dataset_summary", {}).get("species_labels", {})
     key = name.replace(" ", "_").lower()
     info = cfg.get(key)
     if info:

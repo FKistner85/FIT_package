@@ -92,9 +92,9 @@ def test_run_simple_baseline_all_species(tmp_path, monkeypatch):
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
@@ -140,9 +140,9 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"][
         "sample_size"
     ] = 1
 
@@ -164,7 +164,7 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         assert sex_predictions is preds
         assert master_fp == Path(out_dir) / "master_pairs.parquet"
-        expected_tag = f"{SOFT_CONFIG['pipeline_individual_id']['pairwise_defaults']['selection_method']}_k1_sex_off"
+        expected_tag = f"{CONFIG['pipeline_individual_id']['pairwise_defaults']['selection_method']}_k1_sex_off"
         assert tag == expected_tag
         df_out = pd.DataFrame({"bcr": [1.0]})
         df_out.to_json(Path(out_dir) / "summary.json", orient="records")
@@ -215,9 +215,9 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
@@ -281,9 +281,9 @@ def test_run_simple_baseline_all_species_forward_params(tmp_path, monkeypatch):
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
@@ -352,9 +352,9 @@ def test_run_simple_baseline_all_species_none_n_components(tmp_path, monkeypatch
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
@@ -412,9 +412,9 @@ def test_run_baseline_all_species_forward_params(tmp_path, monkeypatch):
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
@@ -490,9 +490,9 @@ def test_run_baseline_all_species_none_n_components(tmp_path, monkeypatch):
     import FIT_python.config as cfg
     import importlib
     importlib.reload(cfg)
-    from FIT_python.soft_config import SOFT_CONFIG
+    from FIT_python.config import CONFIG
 
-    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+    CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
 
     import FIT_python.pipeline_individual_id.simple_baseline as sb
     importlib.reload(sb)
@@ -520,7 +520,7 @@ def test_run_baseline_all_species_none_n_components(tmp_path, monkeypatch):
 
     assert (
         captured["n_components"]
-        == SOFT_CONFIG["pipeline_individual_id"]["pairwise_defaults"][
+        == CONFIG["pipeline_individual_id"]["pairwise_defaults"][
             "n_components"
         ]
     )
