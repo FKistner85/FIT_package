@@ -264,8 +264,8 @@ def _run_species_search(
     total_fits = search.n_iter * folds
     search_dir.mkdir(parents=True, exist_ok=True)
     for m in METRICS:
-        (models_dir / f"best_{m}").mkdir(parents=True, exist_ok=True)
-    (models_dir / "best_mean_rank").mkdir(parents=True, exist_ok=True)
+        (models_dir / m).mkdir(parents=True, exist_ok=True)
+    (models_dir / "mean_rank").mkdir(parents=True, exist_ok=True)
 
     raw_records = []
     best_records = []
@@ -411,7 +411,7 @@ def _run_species_search(
         best_record["best_metric"] = metric
 
         best_pipe = clone(pipe).set_params(**clean_best).fit(X_tr, y_tr)
-        out_path = models_dir / f"best_{metric}" / f"{species}.joblib"
+        out_path = models_dir / metric / f"{species}.joblib"
         joblib.dump(best_pipe, out_path)
 
         print(
@@ -446,7 +446,7 @@ def _run_species_search(
     best_record_rank["best_metric"] = "mean_rank"
 
     best_pipe_rank = clone(pipe).set_params(**clean_best_rank).fit(X_tr, y_tr)
-    out_path_rank = models_dir / "best_mean_rank" / f"{species}.joblib"
+    out_path_rank = models_dir / "mean_rank" / f"{species}.joblib"
     joblib.dump(best_pipe_rank, out_path_rank)
 
     print(

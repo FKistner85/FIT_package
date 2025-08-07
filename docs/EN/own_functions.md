@@ -738,7 +738,7 @@ Steps
 0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
    precompute ``predict_proba``. When no ``sexmodel_path`` is given, the
    classifier location is derived from the ``species`` column via
-   ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+   ``PATHS['random_search']/balanced_test_acc/<species>.joblib``.
 1. Clean the base DataFrame.
 2. Apply pipeline steps: outlier cleaning and feature scaling.
 3. Perform feature selection once with ``k_max`` on the **scaled** data.
@@ -944,7 +944,7 @@ sexmodel_path : str, optional
     Path to a saved sex classifier.  If ``use_sexmodel_prediction`` is
     ``True`` and no path is provided, the model location is derived from the
     ``species`` column using
-    ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+    ``PATHS['random_search']/balanced_test_acc/<species>.joblib``.
 
 Returns
 -------
@@ -1075,7 +1075,7 @@ sexmodel_path : str, optional
     Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
     ``True`` and no path is given, the function attempts to resolve the
     model path from the ``species`` column using
-    ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+    ``PATHS['random_search']/balanced_test_acc/<species>.joblib``.
 
 ## FIT_python.pipeline_individual_id.simple_baseline.run_sex_prediction_experiment
 Evaluate sequential holdouts with and without sex predictions.
@@ -1134,7 +1134,7 @@ sexmodel_path : str or Path, optional
     Path to a saved sex model forwarded to :func:`run_fold_cv` when
     ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
     resolved automatically for each species using
-    ``PATHS['random_search']/best_balanced_test_acc/<species>.joblib``.
+    ``PATHS['random_search']/balanced_test_acc/<species>.joblib``.
 models_dir : Path, optional
     Directory containing the saved sex models used by
     :func:`load_sex_predictions`.

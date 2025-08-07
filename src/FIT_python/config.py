@@ -65,11 +65,11 @@ DEFAULT_TARGETS = ["species", "individual_id", "trail", "sex"]
 
 SEXMODEL_SETTINGS = {
     "search_type": "bayes_search",       # oder "random_search"
-    "metric_key": "balanced_accuracy",  # oder hier sex model für pair definieren "best_mean_rank"
+    "metric_key": "balanced_accuracy",  # oder hier sex model für pair definieren "mean_rank"
 }
 BAYES_REFIT = "balanced_accuracy"
 
-SEX_PREDICT_METRIC ="balanced_accuracy"
+SEX_PREDICT_METRIC = "balanced_test_acc"
 
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"

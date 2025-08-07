@@ -178,7 +178,7 @@ def test_run_species_search_copies_best_model(tmp_path, monkeypatch):
     assert isinstance(df_best, pd.DataFrame)
 
     from FIT_python.utils import get_species_paths
-    model_path = get_species_paths("otter")["models"] / "best_mean_rank" / "otter.joblib"
+    model_path = get_species_paths("otter")["models"] / "mean_rank" / "otter.joblib"
     assert model_path.exists()
 
 
