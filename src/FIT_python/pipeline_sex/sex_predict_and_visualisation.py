@@ -7,9 +7,8 @@ import warnings
 from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
-from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, SEX_PREDICT_METRIC
+from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, SEX_PREDICT_METRIC, CONFIG
 from FIT_python.utils import get_species_paths
-from FIT_python.Visualisations.plot_style import SEX_COLORS, SEX_VALUE_MAP
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 from sklearn.base import clone
 
@@ -480,12 +479,60 @@ def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
     if not splits:
         return
 
-    female_color = SEX_COLORS.get("Female", "#1f77b4")
-    male_color   = SEX_COLORS.get("Male", "#ff7f0e")
+def build_pivot_sorted(sub: pd.DataFrame, col: str) -> tuple[pd.DataFrame, int]:
+    tmp = sub.copy()
+    tmp[col] = tmp[col].map(CONFIG["visualisation"]["sex"]["value_map"])
 
-    for col in pred_cols:
-        fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharey=False)
-        fig.subplots_adjust(hspace=0.35)
+    # Wahrer Sex (True = Female, False = Male)
+    if "sex" not in tmp.columns:
+        raise KeyError("DataFrame lacks 'sex' column for true sex sorting")
+    tmp["true_female"] = (
+        tmp["sex"].map(CONFIG["visualisation"]["sex"]["value_map"]) == "Female"
+    )
+
+    # Pivot für absolute Counts
+    pivot = tmp.pivot_table(index="individual_id", columns=col, aggfunc="size", fill_value=0)
+    pivot = pivot.reindex(columns=["Female", "Male"], fill_value=0)
+
+    # Relative Mehrheitswerte berechnen
+    total_counts = pivot.sum(axis=1)
+    female_ratio = pivot["Female"] / total_counts
+    male_ratio   = pivot["Male"] / total_counts
+
+    # IDs pro echter Sexgruppe
+    true_female_ids = tmp.loc[tmp["true_female"], "individual_id"].unique()
+    true_male_ids   = tmp.loc[~tmp["true_female"], "individual_id"].unique()
+
+    # Female-Gruppe: absteigend nach Female-Ratio
+    female_df = (
+        pivot.loc[pivot.index.isin(true_female_ids)]
+        .assign(ratio=female_ratio)
+        .sort_values(by="ratio", ascending=False)
+        .drop(columns="ratio")
+    )
+
+    # Male-Gruppe: absteigend nach Male-Ratio
+    male_df = (
+        pivot.loc[pivot.index.isin(true_male_ids)]
+        .assign(ratio=male_ratio)
+        .sort_values(by="ratio", ascending=False)
+        .drop(columns="ratio")
+    )
+
+    # Zusammenführen
+    pivot_sorted = pd.concat([female_df, male_df])
+    female_count = len(female_df)
+
+    return pivot_sorted, female_count
+
+
+for col in pred_cols:
+    fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharey=False)
+    fig.subplots_adjust(hspace=0.35)
+
+    female_color = CONFIG["visualisation"]["sex"]["colors"].get("Female", "#1f77b4")
+    male_color   = CONFIG["visualisation"]["sex"]["colors"].get("Male",   "#ff7f0e")
+
 
         for i, split in enumerate(["train", "test"]):
             ax = axes[i]
@@ -553,7 +600,7 @@ def plot_inference(df: pd.DataFrame) -> None:
 
     sub = df[df["__split__"] == "inference"].copy()
     for col in pred_cols:
-        sub[col] = sub[col].map(SEX_VALUE_MAP)
+        sub[col] = sub[col].map(CONFIG["visualisation"]["sex"]["value_map"])
 
         # Nur letzte Zahl aus Trail extrahieren
         sub["trail_num"] = sub["trail"].str.extract(r"(\d+)$")
@@ -563,7 +610,10 @@ def plot_inference(df: pd.DataFrame) -> None:
             index="loc_trail", columns=col, aggfunc="size", fill_value=0
         )
 
-        colors = [SEX_COLORS.get(c, "#333333") for c in pivot.columns]
+        colors = [
+            CONFIG["visualisation"]["sex"]["colors"].get(c, "#333333")
+            for c in pivot.columns
+        ]
         ax = pivot.plot.bar(stacked=True, figsize=(10, 4), color=colors)
 
         plt.xlabel("Location & Trail")
@@ -701,9 +751,11 @@ def plot_individual_probabilities(df: pd.DataFrame, out_dir: str | Path) -> None
         )
 
     palette = {
-        "Female": SEX_COLORS["Female"],
-        "Male": SEX_COLORS["Male"],
-        "Unknown": SEX_COLORS.get("Unknown", "#333333"),
+        "Female": CONFIG["visualisation"]["sex"]["colors"]["Female"],
+        "Male": CONFIG["visualisation"]["sex"]["colors"]["Male"],
+        "Unknown": CONFIG["visualisation"]["sex"]["colors"].get(
+            "Unknown", "#333333"
+        ),
     }
 
     splits = ["train", "test"] if "__split__" in df.columns else [None]
