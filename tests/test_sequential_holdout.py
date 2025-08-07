@@ -159,6 +159,35 @@ def test_all_splits_csv(tmp_path):
     assert len(df_all) == total_rows
 
 
+def test_master_fp_appends(tmp_path):
+    df = build_df()
+    preds = pd.DataFrame({"pred_f": 0.5, "pred_m": 0.5}, index=df["id"])
+    from FIT_python.soft_config import SOFT_CONFIG
+
+    SOFT_CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 1
+
+    master_fp = tmp_path / "master.parquet"
+    run(
+        df,
+        ["f1", "f2"],
+        preds,
+        val_sizes=[2],
+        iterations=2,
+        out_dir=tmp_path,
+        n_jobs=1,
+        master_fp=master_fp,
+        tag="unit",
+    )
+
+    assert master_fp.exists()
+    df_master = pd.read_parquet(master_fp)
+    expected_cols = {"origin", "tag", "split", "iteration", "n_val"}
+    assert expected_cols.issubset(df_master.columns)
+    assert (df_master["origin"] == "sequential_holdout").all()
+    assert (df_master["tag"] == "unit").all()
+    assert df_master["split"].nunique() == 2
+
+
 def test_evaluate_with_cutoff(tmp_path):
     from FIT_python.pipeline_individual_id.sequential_holdout import evaluate_with_cutoff
 

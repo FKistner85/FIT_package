@@ -92,6 +92,8 @@ def run(
     val_sizes: Iterable[int] | None = None,
     random_state: int = GLOBAL_RANDOM_SEED,
     out_dir: Path | None = None,
+    tag: str | None = None,
+    master_fp: Path | None = None,
     n_jobs: int = -1,
     reuse_summary: bool = True,
     k_features: int | None = None,
@@ -136,6 +138,12 @@ def run(
     out_dir:
         Directory to write per-split CSV results. Defaults to
         ``RESULTS_DATA_DIR / 'individual_id'``.
+    tag:
+        Optional identifier stored with raw split results when
+        ``master_fp`` is provided.
+    master_fp:
+        Optional Parquet file collecting raw split results. When given,
+        the per-split comparisons are appended to this file.
     n_jobs:
         Parallel jobs for the pairwise projection step.  ``-1`` uses all cores.
     reuse_summary:
@@ -167,7 +175,9 @@ def run(
         and true population sizes as well as the Ward cut-off statistics
         (``ward_cutoff``, ``cutoff_low``, ``cutoff_high``).  In addition to the
         per-split ``split_*.csv`` files, a combined ``all_splits.csv`` containing
-        all pairwise results is written to ``out_dir``.
+        all pairwise results is written to ``out_dir``. When ``master_fp`` is
+        provided, the raw per-split results are also appended to that Parquet
+        file.
     """
     val_sizes = (
         tuple(val_sizes)
@@ -181,6 +191,10 @@ def run(
     summary_fp = out_dir / "summary.csv"
     if reuse_summary and summary_fp.exists():
         return pd.read_csv(summary_fp)
+
+    master_fp = Path(master_fp) if master_fp is not None else None
+    if master_fp is not None:
+        master_fp.parent.mkdir(parents=True, exist_ok=True)
 
     df_all, pred_cols = _merge_predictions(df, sex_predictions, sample_col=sample_col)
     use_cols = list(feature_cols) + pred_cols
@@ -239,6 +253,16 @@ def run(
         df_res["iteration"] = split["iteration"]
         df_res["n_val"] = split["n_val"]
         all_parts.append(df_res.copy())
+
+        if master_fp is not None:
+            df_append = df_res.copy()
+            df_append["origin"] = "sequential_holdout"
+            if tag is not None:
+                df_append["tag"] = tag
+            if master_fp.exists():
+                existing = pd.read_parquet(master_fp)
+                df_append = pd.concat([existing, df_append], ignore_index=True)
+            df_append.to_parquet(master_fp, index=False)
 
         df_res["pred"] = compute_overlap_jsl_style_vec(df_res, p=overlap_prob)
         cm = compute_confusion(df_res, true_col="same_individual", pred_col="pred")
