@@ -451,42 +451,19 @@ def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
     def build_pivot_sorted(sub: pd.DataFrame, col: str) -> tuple[pd.DataFrame, int]:
         tmp = sub.copy()
         tmp[col] = tmp[col].map(SEX_VALUE_MAP)
-
-        # Wahrer Sex (True = Female, False = Male)
-        if "sex" not in tmp.columns:
-            raise KeyError("DataFrame lacks 'sex' column for true sex sorting")
-        tmp["true_female"] = tmp["sex"].map(SEX_VALUE_MAP) == "Female"
-
-        # Pivot für absolute Counts
         pivot = tmp.pivot_table(index="individual_id", columns=col, aggfunc="size", fill_value=0)
         pivot = pivot.reindex(columns=["Female", "Male"], fill_value=0)
 
-        # Relative Mehrheitswerte berechnen
-        total_counts = pivot.sum(axis=1)
-        female_ratio = pivot["Female"] / total_counts
-        male_ratio   = pivot["Male"] / total_counts
-
-        # IDs pro echter Sexgruppe
-        true_female_ids = tmp.loc[tmp["true_female"], "individual_id"].unique()
-        true_male_ids   = tmp.loc[~tmp["true_female"], "individual_id"].unique()
-
-        # Female-Gruppe: absteigend nach Female-Ratio
-        female_df = pivot.loc[pivot.index.isin(true_female_ids)].assign(ratio=female_ratio).sort_values(
-            by="ratio", ascending=False
-        ).drop(columns="ratio")
-
-        # Male-Gruppe: absteigend nach Male-Ratio
-        male_df = pivot.loc[pivot.index.isin(true_male_ids)].assign(ratio=male_ratio).sort_values(
-            by="ratio", ascending=False
-        ).drop(columns="ratio")
-
-        # Zusammenführen
-        pivot_sorted = pd.concat([female_df, male_df])
-        female_count = len(female_df)
-
-        return pivot_sorted, female_count
-
-
+        majority_is_female = (pivot["Female"] >= pivot["Male"])
+        total = pivot.sum(axis=1)
+        order = (
+            pd.DataFrame({"is_female": majority_is_female, "total": total})
+            .sort_values(by=["is_female", "total"], ascending=[False, False])
+            .index
+        )
+        pivot_sorted = pivot.loc[order]
+        female_count = majority_is_female.loc[order].sum()
+        return pivot_sorted, int(female_count)
 
     for col in pred_cols:
         fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharey=False)
@@ -523,7 +500,7 @@ def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
             ax.set_xlabel("Individual ID")
             ax.set_ylabel("Count")
             panel = "a" if i == 0 else "b"
-            ax.set_title(f"{panel})", loc="left", fontweight="bold")
+            ax.set_title(f"{panel}) {split.capitalize()} set – {col}")
             ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
 
         handles = [

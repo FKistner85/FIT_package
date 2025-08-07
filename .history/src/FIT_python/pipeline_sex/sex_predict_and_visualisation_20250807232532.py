@@ -429,7 +429,7 @@ def plot_confusion(df: pd.DataFrame) -> None:
 
 
 def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
-    """
+      """
     Plot predicted sex counts for train and test splits grouped by individual_id,
     sorted by majority sex (Female first, then Male), with a separating line.
     Creates a combined 2x1 plot (a) train, (b) test per prediction column.
@@ -448,50 +448,35 @@ def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
     if not splits:
         return
 
+    # Helper to build sorted pivot and split index
     def build_pivot_sorted(sub: pd.DataFrame, col: str) -> tuple[pd.DataFrame, int]:
         tmp = sub.copy()
         tmp[col] = tmp[col].map(SEX_VALUE_MAP)
-
-        # Wahrer Sex (True = Female, False = Male)
-        if "sex" not in tmp.columns:
-            raise KeyError("DataFrame lacks 'sex' column for true sex sorting")
-        tmp["true_female"] = tmp["sex"].map(SEX_VALUE_MAP) == "Female"
-
-        # Pivot für absolute Counts
         pivot = tmp.pivot_table(index="individual_id", columns=col, aggfunc="size", fill_value=0)
+
+        # Ensure both columns exist, in a fixed order
         pivot = pivot.reindex(columns=["Female", "Male"], fill_value=0)
 
-        # Relative Mehrheitswerte berechnen
-        total_counts = pivot.sum(axis=1)
-        female_ratio = pivot["Female"] / total_counts
-        male_ratio   = pivot["Male"] / total_counts
+        # Majority label per individual (tie -> Female first by convention)
+        majority_is_female = (pivot["Female"] >= pivot["Male"])
+        # Sort: all Females first, then Males; within groups by total desc
+        total = pivot.sum(axis=1)
+        order = (
+            pd.DataFrame({"is_female": majority_is_female, "total": total})
+            .sort_values(by=["is_female", "total"], ascending=[False, False])
+            .index
+        )
+        pivot_sorted = pivot.loc[order]
 
-        # IDs pro echter Sexgruppe
-        true_female_ids = tmp.loc[tmp["true_female"], "individual_id"].unique()
-        true_male_ids   = tmp.loc[~tmp["true_female"], "individual_id"].unique()
-
-        # Female-Gruppe: absteigend nach Female-Ratio
-        female_df = pivot.loc[pivot.index.isin(true_female_ids)].assign(ratio=female_ratio).sort_values(
-            by="ratio", ascending=False
-        ).drop(columns="ratio")
-
-        # Male-Gruppe: absteigend nach Male-Ratio
-        male_df = pivot.loc[pivot.index.isin(true_male_ids)].assign(ratio=male_ratio).sort_values(
-            by="ratio", ascending=False
-        ).drop(columns="ratio")
-
-        # Zusammenführen
-        pivot_sorted = pd.concat([female_df, male_df])
-        female_count = len(female_df)
-
-        return pivot_sorted, female_count
-
-
+        # Index where Female group ends (count of majority-female individuals)
+        female_count = majority_is_female.loc[order].sum()
+        return pivot_sorted, int(female_count)
 
     for col in pred_cols:
         fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharey=False)
         fig.subplots_adjust(hspace=0.35)
 
+        # Einheitliche Farben
         female_color = SEX_COLORS.get("Female", "#1f77b4")
         male_color   = SEX_COLORS.get("Male",   "#ff7f0e")
 
@@ -512,28 +497,35 @@ def plot_hist_predsex_train_test(df: pd.DataFrame) -> None:
                 raise KeyError("DataFrame lacks 'individual_id' column")
 
             pivot_sorted, female_count = build_pivot_sorted(sub, col)
+
+            # Plot stacked bars
             pivot_sorted.plot.bar(
                 ax=ax, stacked=True, width=0.9,
                 color=[female_color, male_color], legend=False
             )
 
+            # Trennlinie zwischen Majority-Female und Majority-Male
             if 0 < female_count < len(pivot_sorted):
                 ax.axvline(female_count - 0.5, linestyle="--", linewidth=1, color="#222222")
 
+            # Achsen & Titel
             ax.set_xlabel("Individual ID")
             ax.set_ylabel("Count")
             panel = "a" if i == 0 else "b"
-            ax.set_title(f"{panel})", loc="left", fontweight="bold")
+            ax.set_title(f"{panel}) {split.capitalize()} set – {col}")
+
+            # X-Ticks lesbar drehen
             ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
 
+        # Gemeinsame Legende oben mittig
         handles = [
-            plt.Rectangle((0, 0), 1, 1, color=female_color, label="Female"),
-            plt.Rectangle((0, 0), 1, 1, color=male_color,   label="Male"),
+            plt.Rectangle((0,0),1,1, color=female_color, label="Female"),
+            plt.Rectangle((0,0),1,1, color=male_color,   label="Male"),
         ]
         fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False)
-        plt.tight_layout(rect=(0, 0, 1, 0.96))
-        plt.show()
 
+        plt.tight_layout(rect=(0, 0, 1, 0.96))  # Platz für die Legende oben
+        plt.show()
 
 
 def plot_inference(df: pd.DataFrame) -> None:
