@@ -69,7 +69,10 @@ SEXMODEL_SETTINGS = {
 }
 BAYES_REFIT = "mean_rank"
 
-SEX_PREDICT_METRIC = "balanced_test_acc"
+# Default metric used when selecting the best sex-classification model.
+# Must match one of the keys in ``SCORING`` defined in
+# :mod:`FIT_python.pipeline_sex.sex_config`.
+SEX_PREDICT_METRIC = "balanced_accuracy"
 
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"

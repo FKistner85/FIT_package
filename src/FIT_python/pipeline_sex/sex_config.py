@@ -102,10 +102,10 @@ SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
 SEARCH_SPACES = {
     "outlier": Categorical(
         [
-            None, 
+            None,
             OutlierCleanerTransformer(method="clip", lower_quantile=0.01, upper_quantile=0.99),
             OutlierCleanerTransformer(method="clip", lower_quantile=0.05, upper_quantile=0.95),
-           
+
         ],
         transform="identity",
     ),
@@ -136,9 +136,24 @@ SEARCH_SPACES = {
 }
 
 
-METRICS = PIPE_CFG["metrics"]
-
 SCORING = PIPE_CFG["scoring"]
+
+# Map scoring keys to evaluation dataframe columns
+SCORING_TO_EVAL = {
+    "accuracy": "accuracy_test",
+    "balanced_accuracy": "balanced_test_acc",
+    "neg_log_loss": "mean_test_neg_log_loss",
+    "f1": "f1_test",
+    "precision": "precision_test",
+    "recall": "recall_test",
+    "roc_auc": "roc_auc_test",
+    # Additional metrics not part of SCORING but useful for ranking
+    "maj_test_pct": "maj_test_pct",
+}
+
+# Only keep metrics that are present in the scoring configuration or
+# the additional ``maj_test_pct`` metric above.
+METRIC_MAP = {k: v for k, v in SCORING_TO_EVAL.items() if k in SCORING or k == "maj_test_pct"}
 
 PIPELINE_ORDER = PIPE_CFG["pipeline_order"]
 
@@ -263,7 +278,7 @@ def _run_species_search(
     )
     total_fits = search.n_iter * folds
     search_dir.mkdir(parents=True, exist_ok=True)
-    for m in METRICS:
+    for m in METRIC_MAP:
         (models_dir / m).mkdir(parents=True, exist_ok=True)
     (models_dir / "mean_rank").mkdir(parents=True, exist_ok=True)
 
@@ -400,8 +415,8 @@ def _run_species_search(
         raw_records.append(record)
 
     df_eval = pd.DataFrame([r for r in raw_records if r["species"] == species])
-    for metric in METRICS:
-        best_idx = df_eval[metric].idxmax()
+    for metric, df_col in METRIC_MAP.items():
+        best_idx = df_eval[df_col].idxmax()
         best_params = cv_res["params"][best_idx]
         clean_best = {
             k: (v.estimator if isinstance(v, EstimatorWrapper) else v)
