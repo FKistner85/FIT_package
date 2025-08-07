@@ -24,7 +24,7 @@ def run_summary(
     force: bool = False,
     plot: bool = True,
 ) -> None:
-    """Create CSV and plots summarising each split separately."""
+    """Create Parquet and plots summarising each split separately."""
     splits = discover_splits(splits_dir)
     if not splits:
         raise RuntimeError(f"No split files found in {splits_dir}")
@@ -44,7 +44,7 @@ def run_summary(
         print(f"Skipping: {output_table} exists. Use --force to overwrite.")
     else:
         output_table.parent.mkdir(parents=True, exist_ok=True)
-        df_summary.to_csv(output_table, index=False)
+        df_summary.to_parquet(output_table, index=False, compression="gzip")
         print(f"[SUCCESS] summary written to {output_table}")
 
     if plot:
@@ -62,7 +62,7 @@ class SummaryWrapper:
         try:
             run_summary(
                 splits_dir or config.SPLITS_DIR,
-                output_table or config.RESULTS_DATA_DIR / "summary.csv",
+                output_table or config.RESULTS_DATA_DIR / "summary.parquet",
                 fig_dir or config.FIGURES_DIR / "summary",
                 force=True,
                 plot=True,

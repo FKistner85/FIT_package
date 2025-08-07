@@ -39,7 +39,7 @@ class SplitWrapper:
         print(f"\n📊 {name} – {n_rows} Zeilen | {n_individuals} Individuen | {n_trails} Trails")
         print(sex_counts.to_string())
 
-    def split_all(self, as_csv: bool = True, reuse_splits: bool = True) -> int:
+    def split_all(self, reuse_splits: bool = True) -> int:
         importer = DataImporter(raw_dir=self.input_dir, target_cols=DEFAULT_TARGETS)
         dfs = importer.run()
         if not dfs:
@@ -95,12 +95,12 @@ class SplitWrapper:
             for split_name, split_df in zip(
                 ["train", "test", "inference"], [train_df, test_df, inf_df]
             ):
-                split_df.to_parquet(out_dir / f"{split_name}.parquet", index=False)
-                if as_csv:
-                    split_df.to_csv(out_dir / f"{split_name}.csv", index=False)
+                split_df.to_parquet(
+                    out_dir / f"{split_name}.parquet", index=False, compression="gzip"
+                )
                 self.print_summary(split_df, f"{dataset} – {split_name}")
 
-            print(f"\n✅ {dataset} gespeichert (csv & parquet)")
+            print(f"\n✅ {dataset} gespeichert (parquet)")
 
         return 0
 
@@ -170,6 +170,6 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         # 5) Optional: Zusammenfassung & Plots
         run_summary(
             out_dir,
-            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_summary.csv",
+            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_summary.parquet",
             RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig",
         )

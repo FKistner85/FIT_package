@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-"""Build a combined annotation CSV from JSON files."""
+"""Build a combined annotation table from JSON files.
+
+The resulting file is stored as a Parquet dataset to reduce disk space and
+preserve column types.
+"""
 
 from __future__ import annotations
 
@@ -134,9 +138,9 @@ def build_records() -> list[Dict[str, Any]]:
 def main() -> None:
     records = build_records()
     df = pd.DataFrame(records)
-    out_path = config.PROCESSED_DIR / "annotations.csv"
+    out_path = config.PROCESSED_DIR / "annotations.parquet"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(out_path, index=False)
+    df.to_parquet(out_path, index=False, compression="gzip")
     print(f"[INFO] wrote {len(df)} rows to {out_path}")
 
 
