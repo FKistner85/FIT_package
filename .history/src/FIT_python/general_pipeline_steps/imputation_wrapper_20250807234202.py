@@ -89,8 +89,3 @@ class ImputationWrapper(TransformerMixin, BaseEstimator):
             X_out = self.imputer.transform(arr)
             debug_report(X_out, "impute")
             return X_out
-
-IMPUTERS = {
-    "rf_default": ImputationWrapper(),
-    "rf_big": ImputationWrapper(n_estimators=50, max_iter=20),
-}
