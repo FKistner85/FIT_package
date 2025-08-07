@@ -89,18 +89,57 @@ from FIT_python.config import (
     BAYES_REFIT,
     SEX_PREDICT_METRIC,
     CONFIG,
-    PIPE_CFG,
-    MODEL_KEYS,
-    SEARCH_SPACE_CFG,
-    SEARCH_SPACE_CFG,
-    SEARCH_SPACES,
-    SCORING,
-    SCORING_TO_EVAL,
-    METRIC_MAP,
-    PIPELINE_ORDER
 )
 from FIT_python.utils import get_species_paths
 
+PIPE_CFG = CONFIG["pipeline_sex"]
+
+MODEL_KEYS = PIPE_CFG["model_keys"]
+
+SEARCH_SPACE_CFG = PIPE_CFG["search_spaces"].copy()
+SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
+
+SEARCH_SPACES = {
+    "outlier": Categorical(
+        [
+            None,
+            OutlierCleanerTransformer(method="clip", lower_quantile=0.01, upper_quantile=0.99),
+            OutlierCleanerTransformer(method="clip", lower_quantile=0.05, upper_quantile=0.95),
+
+        ],
+        transform="identity",
+    ),
+    "scale": Categorical(
+        [
+            None,
+            FeatureScalerTransformer(method="standard"),
+            FeatureScalerTransformer(method="robust"),
+        ],
+        transform="identity",
+    ),
+    "select__method": Categorical(SEARCH_SPACE_CFG["select__method"]),
+    "select__k": Categorical(SEARCH_SPACE_CFG["select__k"]),
+    "reduce_pre__method": Categorical(SEARCH_SPACE_CFG["reduce_pre__method"]),
+    "reduce_post__method": Categorical(SEARCH_SPACE_CFG["reduce_post__method"]),
+    "clf": Categorical(
+        [
+            EstimatorWrapper(MODELS[k])
+            for k in (
+                "logreg_l2", "logreg_l1",   # Logistic Regression
+                "rf_small", "rf_med", "rf_large",   # Random Forest
+                "xgb_std", "xgb_hist", "xgb_deep", "xgb_shallow", "xgb_regularized",  # XGBoost
+                "lda",   # Linear Discriminant Analysis
+            )
+        ],
+        transform="identity",
+    ),
+}
+
+
+SCORING = PIPE_CFG["scoring"]
+SCORING_TO_EVAL = PIPE_CFG["scoring_to_eval"]
+METRIC_MAP = PIPE_CFG["metric_map"]
+PIPELINE_ORDER = PIPE_CFG["pipeline_order"]
 
 
 def prepare_eurasian_otter() -> None:

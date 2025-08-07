@@ -10,7 +10,7 @@ from sklearn.pipeline import Pipeline
 from skopt import BayesSearchCV
 from skopt.space import Categorical
 
-from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR
+from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR, CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 
 from FIT_python.pipeline_individual_id.evaluation import separation_score
@@ -20,6 +20,24 @@ from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import (
 from FIT_python.pipeline_individual_id.pairwise_individual_id_pipeline import (
     run_all_pairwise_projections_parallel,
 )
+
+PIPE_CFG = CONFIG["pipeline_individual_id"]
+
+SEARCH_SPACE_CFG = PIPE_CFG.get("search_spaces", {})
+
+SEARCH_SPACES = {
+    "est__outlier_method": Categorical(SEARCH_SPACE_CFG.get("outlier", [None])),
+    "est__scaler_method": Categorical(SEARCH_SPACE_CFG.get("scale", [None])),
+    "est__selection_method": Categorical(
+        SEARCH_SPACE_CFG.get("select__method", [None])
+    ),
+    "est__k_features": Categorical(SEARCH_SPACE_CFG.get("select__k", [5])),
+    "est__reducer": Categorical(SEARCH_SPACE_CFG.get("reduce__method", ["pca"])),
+    "est__n_components": Categorical(SEARCH_SPACE_CFG.get("n_components", [2])),
+    "est__use_sexmodel_prediction": Categorical(
+        SEARCH_SPACE_CFG.get("use_sexmodel_prediction", [False, True])
+    ),
+}
 
 
 class PairwiseEstimator:

@@ -23,8 +23,7 @@ from FIT_python.config import (
     FIGURES_DIR,
     GLOBAL_RANDOM_SEED,
     PATHS,
-    _DATA_CACHE,
-    PIPE_SEARCH
+    _DATA_CACHE
     
 )
 import FIT_python.config as config
@@ -66,6 +65,7 @@ memory = Memory(location=_cache_dir, verbose=0)
 
 # In-memory cache of loaded splits
 
+PIPE_SEARCH = CONFIG["pipeline_sex"].get("search_spaces", {})
 
 
 def get_pipeline_steps(

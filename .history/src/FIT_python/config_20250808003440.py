@@ -399,9 +399,7 @@ MODEL_KEYS = PIPE_CFG["model_keys"]
 SEARCH_SPACE_CFG = PIPE_CFG["search_spaces"].copy()
 SEARCH_SPACE_CFG["clf"] = [MODELS[k] for k in MODEL_KEYS]
 
-# Map raw sex labels to integers for model training and back
-SEX_TO_INT = {"f": 0, "m": 1}
-INT_TO_SEX = {v: k for k, v in SEX_TO_INT.items()}
+
 
 
 SCORING = PIPE_CFG["scoring"]
