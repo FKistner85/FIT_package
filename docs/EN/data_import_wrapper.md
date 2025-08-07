@@ -18,7 +18,9 @@ memory usage grows with the number of loaded files.
 Provides the `clean_all()` convenience method which writes the processed data to
 parquet files under the configured output directory. Use this wrapper for the
 one‑off preparation step before running any pipelines. Existing files will be
-overwritten and missing directories cause the process to abort.
+overwritten and missing directories cause the process to abort. Set
+``generate_histograms=True`` to additionally create feature distribution plots;
+by default no histograms are produced.
 
 ## References
 - https://pandas.pydata.org/docs/

@@ -102,10 +102,19 @@ class DataImportWrapper:
         """Initialize the wrapper."""
         pass
 
-    def clean_all(self) -> int:
+    def clean_all(self, generate_histograms: bool = False) -> int:
         """Load raw files, clean labels and save Parquet outputs.
 
-        Returns 0 on success, 1 on failure.
+        Parameters
+        ----------
+        generate_histograms : bool, optional
+            When ``True`` histogram plots of feature distributions are created
+            for each dataset. Defaults to ``False``.
+
+        Returns
+        -------
+        int
+            ``0`` on success, ``1`` on failure.
         """
         if not config.RAW_DIR.exists():
             msg = f"Required directory not found: {config.RAW_DIR}"
@@ -131,15 +140,18 @@ class DataImportWrapper:
 
             raw_df = raw_dfs.get(name)
             if raw_df is not None:
-                fig_dir = config.FIGURES_DIR / "feature_distributions" / name
-                try:
-                    from FIT_python.Visualisations.plots_utils import (
-                        plot_feature_distributions,
+                if generate_histograms:
+                    fig_dir = (
+                        config.FIGURES_DIR / "feature_distributions" / name
                     )
+                    try:
+                        from FIT_python.Visualisations.plots_utils import (
+                            plot_feature_distributions,
+                        )
 
-                    plot_feature_distributions(raw_df, df, fig_dir)
-                except Exception as exc:
-                    print(f"[WARN] plotting failed for {name}: {exc}")
+                        plot_feature_distributions(raw_df, df, fig_dir)
+                    except Exception as exc:
+                        print(f"[WARN] plotting failed for {name}: {exc}")
 
                 # correlation heatmap of feature groups
                 try:
