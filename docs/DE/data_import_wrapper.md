@@ -13,3 +13,6 @@ Der Wrapper kombiniert die Hilfsfunktionen zu einem konsistenten Ablauf. Eingele
 
 ## Annahmen und Einschränkungen
 Ausgelegt für Parquet-Ausgabe und numerische Konvertierung vor dem Skalieren.
+Optional können Histogramme der Merkmalsverteilungen mit
+``generate_histograms=True`` erzeugt werden; standardmäßig werden keine Plots
+erstellt.
