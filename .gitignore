@@ -26,3 +26,5 @@ results/**/*.joblib
 results/**/split_proportions.png
 results/**/split_proportions.svg
 /notebooks/results/fit_notebook_fast/figures/feature_distributions
+/notebooks/results/fit_notebook_fast/results_data/individual_id/eurasian_otter_train_1
+/notebooks/results/fit_notebook_fast/results_data/individual_id
