@@ -39,12 +39,9 @@ def discover_splits(splits_dir: Path) -> Dict[str, Dict[str, Path]]:
 def load_split_data(path: Path) -> pd.DataFrame:
     if not path.exists():
         raise RuntimeError(f"Split file not found: {path}")
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    elif path.suffix == ".csv":
-        df = pd.read_csv(path)
-    else:
+    if path.suffix != ".parquet":
         raise RuntimeError(f"Unsupported file type: {path.suffix}")
+    df = pd.read_parquet(path)
     if "sex" not in df.columns:
         raise RuntimeError(f"Missing 'sex' column in {path}")
     return df

@@ -1042,7 +1042,9 @@ def plot_umap_by_group(
     default_color: str = "black",
     *,
     legend: bool = True,
-) -> Path:
+    ax: plt.Axes | None = None,
+    save: bool = True,
+) -> Path | None:
     """Scatter UMAP coordinates grouped by an arbitrary column.
 
     Parameters
@@ -1099,7 +1101,10 @@ def plot_umap_by_group(
         marker_cycle = itertools.cycle(markers)
         marker_map = {val: next(marker_cycle) for val in df[group_col].unique()}
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 6))
+    else:
+        fig = ax.figure
 
     legend_handles = []
     for name, subset in df.groupby(group_col):
@@ -1126,11 +1131,92 @@ def plot_umap_by_group(
     if legend:
         ax.legend(handles=legend_handles, title=group_col, fontsize="small")
 
-    fig.tight_layout()
+    if save:
+        fig.tight_layout()
+        out = fig_dir / filename
+        fig.savefig(out, dpi=150)
+        if ax is None:
+            plt.close(fig)
+        save_caption(out, f"{xcol}/{ycol} UMAP by {group_col}")
+        return out
+    return None
+
+
+def plot_umap_train_test_inference(
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    infer_df: pd.DataFrame,
+    fig_dir: Path,
+    filename: str,
+) -> Path:
+    """Overlay train, test and inference UMAP scatter plots.
+
+    ``train_df`` and ``test_df`` are grouped by ``individual_id`` with colours
+    determined by the combination of ``sex`` and ``dataorigin``.  ``infer_df``
+    is grouped by ``trial`` and plotted in a constant yellow colour.  All
+    points are drawn on the same axes and the resulting figure is written to
+    ``fig_dir/filename``.
+    """
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    train_df = train_df.copy()
+    test_df = test_df.copy()
+    infer_df = infer_df.copy()
+
+    combos = pd.concat([train_df, test_df])["sex"].astype(str) + "_" + pd.concat(
+        [train_df, test_df]
+    )["dataorigin"].astype(str)
+    unique = sorted(combos.unique())
+    from matplotlib.colors import to_hex
+
+    palette = sns.color_palette("tab10", n_colors=len(unique))
+    color_map = {u: to_hex(c) for u, c in zip(unique, palette)}
+
+    for df in (train_df, test_df):
+        key = df["sex"].astype(str) + "_" + df["dataorigin"].astype(str)
+        df["color"] = key.map(color_map)
+
+    infer_df["color"] = "#FFD700"
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    plot_umap_by_group(
+        train_df,
+        fig_dir,
+        filename,
+        group_col="individual_id",
+        color_col="color",
+        legend=False,
+        ax=ax,
+        save=False,
+    )
+    plot_umap_by_group(
+        test_df,
+        fig_dir,
+        filename,
+        group_col="individual_id",
+        color_col="color",
+        legend=False,
+        ax=ax,
+        save=False,
+    )
+    plot_umap_by_group(
+        infer_df,
+        fig_dir,
+        filename,
+        group_col="trial",
+        color_col="color",
+        default_color="#FFD700",
+        legend=False,
+        ax=ax,
+        save=False,
+    )
+
     out = fig_dir / filename
     fig.savefig(out, dpi=150)
     plt.close(fig)
-    save_caption(out, f"{xcol}/{ycol} UMAP by {group_col}")
+    save_caption(out, "UMAP train/test/inference overlay")
     return out
 
 

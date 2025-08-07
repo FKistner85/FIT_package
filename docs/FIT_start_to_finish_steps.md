@@ -4,7 +4,7 @@ This file records the sequence of operations executed in `FIT_start_to_finish.ip
 
 ## Dataset Summary
 
-The notebook first calls `generate_dataset_overview` to build a CSV table describing all raw datasets. The function loops through each species, counts footprints, individuals and trails, and stores the results in `dataset_overview.csv`. If the CSV already exists it is loaded instead of recomputed.
+The notebook first calls `generate_dataset_overview` to build a Parquet table describing all raw datasets. The function loops through each species, counts footprints, individuals and trails, and stores the results in `dataset_overview.parquet`. If the file already exists it is loaded instead of recomputed.
 
 ## Data Cleaning
 
@@ -15,7 +15,7 @@ executed.
 
 ## Data Splits
 
-Next, `SplitWrapper().split_all(reuse_splits=True)` writes train/test splits for each species under `data/splits`. When the files already exist they are reused. Afterwards `run_summary(SPLITS_DIR, EXP_DIR/'split_summary.csv', EXP_DIR/'split_fig')` generates a CSV with split statistics and saves bar charts. Only the Eurasian otter summary and the overall footprint fraction plots are shown in the notebook output.
+Next, `SplitWrapper().split_all(reuse_splits=True)` writes train/test splits for each species under `data/splits`. When the files already exist they are reused. Afterwards `run_summary(SPLITS_DIR, EXP_DIR/'split_summary.parquet', EXP_DIR/'split_fig')` generates a Parquet file with split statistics and saves bar charts. Only the Eurasian otter summary and the overall footprint fraction plots are shown in the notebook output.
 
 ## Correlation Matrix
 

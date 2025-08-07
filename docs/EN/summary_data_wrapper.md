@@ -16,11 +16,11 @@ but can also be called directly from scripts.
 ### SummaryWrapper.summarize_all
 Convenient wrapper that calls `run_summary` using paths defined in the
 configuration. It handles exceptions and returns a status code so it can be used
-in automated pipelines. The method writes the final CSV summary and any figures
-to the results directory.
+in automated pipelines. The method writes the final Parquet summary and any
+figures to the results directory.
 
 ## References
 - https://pandas.pydata.org/docs/
 
 ## Assumptions and Limitations
-Writes CSV summary and figures under results directory.
+Writes Parquet summary and figures under results directory.
