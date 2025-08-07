@@ -77,7 +77,7 @@ def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
     ----------
     exp_dir:
         Root directory containing one subdirectory per species with a
-        ``summary.csv`` produced by the baseline helper.
+        ``summary.json`` produced by the baseline helper.
 
     Returns
     -------
@@ -86,13 +86,13 @@ def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
         and the concordance correlation coefficient (CCC).
     """
     exp_dir = Path(exp_dir)
-    csv_files = sorted(exp_dir.glob("*/summary.csv"))
-    if not csv_files:
-        raise FileNotFoundError(f"No 'summary.csv' found under {exp_dir}")
+    json_files = sorted(exp_dir.glob("*/summary.json"))
+    if not json_files:
+        raise FileNotFoundError(f"No 'summary.json' found under {exp_dir}")
 
     records: List[Dict[str, Any]] = []
-    for csv in csv_files:
-        df = pd.read_csv(csv)
+    for js in json_files:
+        df = pd.read_json(js)
         if df.empty:
             continue
         mean_bcr = df["bcr"].mean() if "bcr" in df.columns else float("nan")
@@ -106,11 +106,11 @@ def collect_id_metrics(exp_dir: Path) -> pd.DataFrame:
         else:
             ccc = float("nan")
         records.append(
-            {"species": csv.parent.name, "bcr": mean_bcr, "erd": mean_erd, "ccc": ccc}
+            {"species": js.parent.name, "bcr": mean_bcr, "erd": mean_erd, "ccc": ccc}
         )
 
     result = pd.DataFrame(records)
-    result.to_csv(exp_dir / "raw_results.csv", index=False)
+    result.to_json(exp_dir / "raw_results.json", orient="records")
     return result
 
 
@@ -172,8 +172,8 @@ def run_simple_baseline_otter(
         Append sex-model probabilities via :func:`load_sex_predictions` when
         ``True``.
     reuse_results : bool, optional
-        When ``True`` already existing summaries are loaded instead of
-        recomputing the baseline.
+        Forwarded to :func:`sequential_holdout.run` to optionally reuse
+        existing results.
 
     Returns
     -------
@@ -197,57 +197,24 @@ def run_simple_baseline_otter(
 
     best_summary: pd.DataFrame | None = None
 
-    # check if all results already exist
-    if reuse_results:
-        loaded = {}
-        summaries: dict[int, pd.DataFrame] = {}
-        for k in k_range:
-            k_dir = out_dir / f"k{k}"
-            sum_fp = k_dir / "summary.csv"
-            agg_fp = out_dir / f"summary_k{k}.csv"
-            if sum_fp.exists():
-                df_sum = pd.read_csv(sum_fp)
-                summaries[k] = df_sum
-            elif agg_fp.exists():
-                df_sum = pd.read_csv(agg_fp)
-            else:
-                loaded = None
-                break
-            mean_bcr = (
-                float(df_sum["bcr"].mean()) if "bcr" in df_sum.columns else float("nan")
-            )
-            loaded[k] = mean_bcr
-        if loaded is not None and loaded:
-            best_k = max(loaded, key=loaded.get)
-            best_bcr = loaded[best_k]
-            best_summary = summaries.get(best_k)
-            if use_sex_predictions and best_summary is not None:
-                best_summary.to_csv(out_dir / "summary_with_sex.csv", index=False)
-            return best_k
-
     for k in k_range:
         k_dir = out_dir / f"k{k}"
-        sum_fp = k_dir / "summary.csv"
-        agg_fp = out_dir / f"summary_k{k}.csv"
-
-        if reuse_results and sum_fp.exists():
-            summary = pd.read_csv(sum_fp)
-        elif reuse_results and agg_fp.exists():
-            summary = pd.read_csv(agg_fp)
-        else:
-            summary = sequential_holdout.run(
-                df,
-                feature_cols,
-                sex_predictions=sex_preds,
-                iterations=iterations,
-                out_dir=k_dir,
-                k_features=k,
-                trail_col="Trail",
-                subsample=False,
-            )
+        summary = sequential_holdout.run(
+            df,
+            feature_cols,
+            sex_predictions=sex_preds,
+            iterations=iterations,
+            out_dir=k_dir,
+            k_features=k,
+            trail_col="Trail",
+            subsample=False,
+            reuse_summary=reuse_results,
+        )
 
         agg = summary[["bcr", "pred_count", "true_count", "erd", "ccc"]].mean()
-        pd.DataFrame([agg]).to_csv(agg_fp, index=False)
+        pd.DataFrame([agg]).to_json(
+            out_dir / f"summary_k{k}.json", orient="records"
+        )
 
         mean_bcr = float(agg.get("bcr", float("nan")))
         if mean_bcr > best_bcr:
@@ -260,7 +227,7 @@ def run_simple_baseline_otter(
         raise RuntimeError("No valid results computed for otter baseline")
 
     if use_sex_predictions and best_summary is not None:
-        best_summary.to_csv(out_dir / "summary_with_sex.csv", index=False)
+        best_summary.to_json(out_dir / "summary_with_sex.json", orient="records")
 
     return best_k
 
@@ -332,9 +299,6 @@ def run_baseline_all_species(
             continue
 
         out_dir = exp_dir / species_dir.name
-        summary_fp = out_dir / "summary.csv"
-        if reuse_summary and summary_fp.exists():
-            continue
 
         # only use the training split to derive sequential holdouts
         try:
@@ -410,7 +374,7 @@ def run_simple_baseline_all_species(
         When ``True`` a subset of trail pairs is sampled for each fold via
         :func:`generate_pairwise_comparisons_from_df`.
     reuse_summary : bool, optional
-        Skip processing when ``exp_dir/<species>/summary.csv`` already exists.
+        When ``True`` existing results can be reused by :func:`run_fold_cv`.
     n_jobs : int, optional
         Parallel jobs forwarded to :func:`run_fold_cv`.  ``-1`` uses all cores.
     use_sex_predictions : bool, optional
@@ -440,9 +404,6 @@ def run_simple_baseline_all_species(
             continue
 
         out_dir = exp_dir / species_dir.name
-        summary_fp = out_dir / "summary.csv"
-        if reuse_summary and summary_fp.exists():
-            continue
 
         try:
             df = _load_splits(species_dir, include_test=False)
@@ -727,10 +688,10 @@ def run_fold_cv(
 
     The function iterates over unique values in ``fold_col`` and treats each
     fold as validation set while the remaining data forms the training set.  The
-    results for every fold are written to ``out_dir`` as ``fold_<n>.csv`` with a
-    combined ``summary.csv`` containing the evaluation metrics.  Summary rows
-    now also include a ``pipeline`` identifier describing the preprocessing and
-    reduction steps chosen inside
+    results for every fold can optionally be persisted in a master table via
+    ``master_fp``. A combined ``summary.json`` containing the evaluation metrics
+    is written to ``out_dir``. Summary rows include a ``pipeline`` identifier
+    describing the preprocessing and reduction steps chosen inside
     :func:`run_all_pairwise_projections_parallel`.
 
     Parameters
@@ -767,9 +728,9 @@ def run_fold_cv(
 
     out_dir = Path(out_dir or RESULTS_DATA_DIR / "individual_id")
     out_dir.mkdir(parents=True, exist_ok=True)
-    summary_fp = out_dir / "summary.csv"
+    summary_fp = out_dir / "summary.json"
     if reuse_summary and summary_fp.exists():
-        return pd.read_csv(summary_fp)
+        return pd.read_json(summary_fp)
 
     species = (
         str(df["species"].dropna().iloc[0])
@@ -777,7 +738,7 @@ def run_fold_cv(
         else "unknown"
     )
     if master_fp is not None and tag and not overwrite and is_run_done(species, tag, master_fp):
-        return pd.read_csv(summary_fp) if summary_fp.exists() else pd.DataFrame()
+        return pd.read_json(summary_fp) if summary_fp.exists() else pd.DataFrame()
 
     df_all, pred_cols = sequential_holdout._merge_predictions(
         df, sex_predictions, sample_col=sample_col
@@ -799,7 +760,6 @@ def run_fold_cv(
 
     folds = sorted(df_all[fold_col].dropna().unique())
 
-    all_parts: list[pd.DataFrame] = []
     summaries: list[dict[str, Any]] = []
 
     for fold in folds:
@@ -841,7 +801,6 @@ def run_fold_cv(
             continue
 
         df_res["fold"] = fold
-        all_parts.append(df_res.copy())
 
         if master_fp is not None:
             df_mp = df_res.copy()
@@ -895,12 +854,6 @@ def run_fold_cv(
             }
         )
 
-        df_res.to_csv(out_dir / f"fold_{fold}.csv", index=False)
-
-    if all_parts:
-        df_all_pairs = pd.concat(all_parts, ignore_index=True)
-        df_all_pairs.to_csv(out_dir / "all_folds.csv", index=False)
-
     summary_df = pd.DataFrame(summaries)
     if not summary_df.empty:
         ccc = concordance_correlation_coefficient(
@@ -909,5 +862,5 @@ def run_fold_cv(
         summary_df["ccc"] = ccc
     else:
         summary_df["ccc"] = float("nan")
-    summary_df.to_csv(summary_fp, index=False)
+    summary_df.to_json(summary_fp, orient="records")
     return summary_df

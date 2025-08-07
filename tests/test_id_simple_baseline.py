@@ -13,18 +13,18 @@ def test_collect_id_metrics(tmp_path):
         "pred_count": [5, 5],
         "true_count": [5, 5],
         "ccc": [1.0, 1.0],
-    }).to_csv(sp1 / "summary.csv", index=False)
+    }).to_json(sp1 / "summary.json", orient="records")
     pd.DataFrame({
         "bcr": [0.4, 0.6],
         "erd": [0.3, 0.4],
         "pred_count": [4, 4],
         "true_count": [5, 5],
         "ccc": [0.8, 0.8],
-    }).to_csv(sp2 / "summary.csv", index=False)
+    }).to_json(sp2 / "summary.json", orient="records")
 
     df = collect_id_metrics(tmp_path)
     assert set(df["species"]) == {"sp1", "sp2"}
-    assert (tmp_path / "raw_results.csv").exists()
+    assert (tmp_path / "raw_results.json").exists()
     s1 = df[df["species"] == "sp1"].iloc[0]
     assert abs(s1["bcr"] - 0.8) < 1e-6
 
@@ -109,7 +109,7 @@ def test_run_simple_baseline_all_species(tmp_path, monkeypatch):
         n_jobs=1,
     )
 
-    assert (root / "exp" / "sp" / "summary.csv").exists()
+    assert (root / "exp" / "sp" / "summary.json").exists()
 
 
 def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
@@ -164,7 +164,7 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         assert sex_predictions is preds
         df_out = pd.DataFrame({"bcr": [1.0]})
-        df_out.to_csv(Path(out_dir) / "summary.csv", index=False)
+        df_out.to_json(Path(out_dir) / "summary.json", orient="records")
         return df_out
 
     monkeypatch.setattr(sb, "load_sex_predictions", fake_load)
@@ -182,7 +182,7 @@ def test_run_simple_baseline_all_species_with_sex(tmp_path, monkeypatch):
     )
 
     assert calls == [("sp", root / "models", metric)]
-    assert (root / "exp" / "sp" / "summary.csv").exists()
+    assert (root / "exp" / "sp" / "summary.json").exists()
 
 
 def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
@@ -228,7 +228,7 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
         captured["use_sexmodel_prediction"] = use_sexmodel_prediction
         captured["sexmodel_path"] = sexmodel_path
         df_out = pd.DataFrame({"bcr": [1.0]})
-        df_out.to_csv(Path(out_dir) / "summary.csv", index=False)
+        df_out.to_json(Path(out_dir) / "summary.json", orient="records")
         return df_out
 
     monkeypatch.setattr(sb, "run_fold_cv", fake_run)
@@ -248,7 +248,7 @@ def test_run_simple_baseline_all_species_with_sexmodel(tmp_path, monkeypatch):
     metric = cfg.SEX_PREDICT_METRIC
     expected = get_species_paths("sp")["models"] / metric / "sp.joblib"
     assert Path(captured["sexmodel_path"]) == expected
-    assert (root / "exp" / "sp" / "summary.csv").exists()
+    assert (root / "exp" / "sp" / "summary.json").exists()
 
 
 def test_run_simple_baseline_all_species_forward_params(tmp_path, monkeypatch):
@@ -295,7 +295,7 @@ def test_run_simple_baseline_all_species_forward_params(tmp_path, monkeypatch):
         captured["n_components"] = n_components
         captured["scaler_methods"] = scaler_methods
         df_out = pd.DataFrame({"bcr": [1.0]})
-        df_out.to_csv(Path(out_dir) / "summary.csv", index=False)
+        df_out.to_json(Path(out_dir) / "summary.json", orient="records")
         return df_out
 
     monkeypatch.setattr(sb, "run_fold_cv", fake_run)
@@ -319,7 +319,7 @@ def test_run_simple_baseline_all_species_forward_params(tmp_path, monkeypatch):
         "n_components": 3,
         "scaler_methods": "standard",
     }
-    assert (root / "exp" / "sp" / "summary.csv").exists()
+    assert (root / "exp" / "sp" / "summary.json").exists()
 
 
 def test_run_simple_baseline_all_species_none_n_components(tmp_path, monkeypatch):
@@ -363,7 +363,7 @@ def test_run_simple_baseline_all_species_none_n_components(tmp_path, monkeypatch
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         captured["n_components"] = n_components
         df_out = pd.DataFrame({"bcr": [1.0]})
-        df_out.to_csv(Path(out_dir) / "summary.csv", index=False)
+        df_out.to_json(Path(out_dir) / "summary.json", orient="records")
         return df_out
 
     monkeypatch.setattr(sb, "run_fold_cv", fake_run)
@@ -379,7 +379,7 @@ def test_run_simple_baseline_all_species_none_n_components(tmp_path, monkeypatch
     )
 
     assert captured["n_components"] is None
-    assert (root / "exp" / "sp" / "summary.csv").exists()
+    assert (root / "exp" / "sp" / "summary.json").exists()
 
 
 def test_run_baseline_all_species_forward_params(tmp_path, monkeypatch):
