@@ -24,6 +24,29 @@ from . import sequential_holdout
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
 
 
+def is_run_done(species: str, tag: str, master_fp: Path) -> bool:
+    """Return ``True`` if ``master_fp`` already contains ``tag``.
+
+    Parameters
+    ----------
+    species:
+        Species identifier used solely for clearer debug messages.
+    tag:
+        Run tag searched inside ``master_fp``.
+    master_fp:
+        Path pointing to the ``master_pairs.parquet`` file.
+    """
+
+    master_fp = Path(master_fp)
+    if not master_fp.exists():
+        return False
+    try:
+        df = pd.read_parquet(master_fp, columns=["tag"])
+    except Exception:  # pragma: no cover - I/O issues should not fail runs
+        return False
+    return tag in df["tag"].astype(str).unique()
+
+
 def _pairs_to_array(
     trail_a: Iterable[str], trail_b: Iterable[str], distances: Iterable[float]
 ) -> tuple[np.ndarray, list[str]]:
@@ -698,6 +721,7 @@ def run_fold_cv(
     sexmodel_path: str | None = None,
     tag: str | None = None,
     master_fp: Path | None = None,
+    overwrite: bool = False,
 ) -> pd.DataFrame:
     """Evaluate pairwise pipeline using predefined folds.
 
@@ -746,6 +770,14 @@ def run_fold_cv(
     summary_fp = out_dir / "summary.csv"
     if reuse_summary and summary_fp.exists():
         return pd.read_csv(summary_fp)
+
+    species = (
+        str(df["species"].dropna().iloc[0])
+        if "species" in df.columns and not df["species"].dropna().empty
+        else "unknown"
+    )
+    if master_fp is not None and tag and not overwrite and is_run_done(species, tag, master_fp):
+        return pd.read_csv(summary_fp) if summary_fp.exists() else pd.DataFrame()
 
     df_all, pred_cols = sequential_holdout._merge_predictions(
         df, sex_predictions, sample_col=sample_col
