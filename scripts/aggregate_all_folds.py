@@ -9,9 +9,15 @@ from FIT_python.utils import aggregate_all_folds
 
 
 def main() -> None:
-    parser = ArgumentParser(description="Combine 'all_folds.csv' files across species")
-    parser.add_argument("exp_dir", type=Path, help="Experiment directory with species subfolders")
-    parser.add_argument("-o", "--output", type=Path, default=None, help="Output CSV path")
+    parser = ArgumentParser(
+        description="Combine cross-validation pairs from master tables"
+    )
+    parser.add_argument(
+        "exp_dir", type=Path, help="Experiment directory with species subfolders"
+    )
+    parser.add_argument(
+        "-o", "--output", type=Path, default=None, help="Output parquet path"
+    )
     args = parser.parse_args()
 
     df = aggregate_all_folds(args.exp_dir, args.output)
