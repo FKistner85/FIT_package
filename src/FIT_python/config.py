@@ -34,8 +34,15 @@ FEATURE_SELECTED_DIR = PROCESSED_DIR / "feature_selected"
 DIM_REDUCED_DIR = PROCESSED_DIR / "dim_reduced"
 NUMERIC_DIR = PROCESSED_DIR / "numeric"
 
-FIGURES_DIR = EXPERIMENT_ROOT / "figures"
-RESULTS_DATA_DIR = EXPERIMENT_ROOT / "results_data"
+# unified results directory with dedicated subfolders
+RESULTS_DIR = EXPERIMENT_ROOT / "results"
+RESULTS_SUBDIRS = {
+    name: RESULTS_DIR / name for name in ["dataprocessing", "sex_modelling", "individual_id"]
+}
+for path in RESULTS_SUBDIRS.values():
+    path.mkdir(parents=True, exist_ok=True)
+    (path / "figures").mkdir(parents=True, exist_ok=True)
+    (path / "tables").mkdir(parents=True, exist_ok=True)
 
 OTTER_LANDMARK_MAP_PATH = PROCESSED_DIR / "otter_landmark_map.json"
 OTTER_POINT_MAP_PATH = PROCESSED_DIR / "otter_point_map.json"
@@ -52,8 +59,10 @@ PATHS = {
     "feature_selected": FEATURE_SELECTED_DIR,
     "dim_reduced": DIM_REDUCED_DIR,
     "numeric": NUMERIC_DIR,
-    "figures": FIGURES_DIR,
-    "results": RESULTS_DATA_DIR,
+    "results": RESULTS_DIR,
+    "dataprocessing": RESULTS_SUBDIRS["dataprocessing"],
+    "sex_modelling": RESULTS_SUBDIRS["sex_modelling"],
+    "individual_id": RESULTS_SUBDIRS["individual_id"],
     "otter_landmark_map": OTTER_LANDMARK_MAP_PATH,
     "otter_point_map": OTTER_POINT_MAP_PATH,
 }
@@ -106,6 +115,12 @@ SPECIES_MODEL_MAP = {
     "puma_concolor": "mountain_lion",
     "ceratotherium_simum": "white_rhino",
 }
+
+# create species specific figures and tables folders
+for sub in RESULTS_SUBDIRS.values():
+    for species in SPECIES_MODEL_MAP.values():
+        (sub / species / "figures").mkdir(parents=True, exist_ok=True)
+        (sub / species / "tables").mkdir(parents=True, exist_ok=True)
 
 CONFIG = {
     "data_split_and_summary": {
@@ -166,7 +181,7 @@ CONFIG = {
 # Sex modeling
 # ============================================================================
 SEXMODEL_SETTINGS = {
-    "search_type": "bayes_search",
+    "sex_model": "bayes_search",
     "metric_key": "balanced_accuracy",
 }
 BAYES_REFIT = "balanced_accuracy"

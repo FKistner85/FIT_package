@@ -8,11 +8,6 @@ from .baseline_sex import (
     plot_majority_comparison,
     plot_accuracy_by_sex,
 )
-from .search import (
-    run_otter_search_sex,
-    run_other_species_search,
-    run_species_search,
-)
 from .simple_baseline import run_simple_baseline_all_species
 from .sex_predict_and_visualisation import (
     predict_all,
@@ -47,9 +42,6 @@ __all__ = [
     "plot_accuracy_comparison",
     "plot_majority_comparison",
     "plot_accuracy_by_sex",
-    "run_species_search",
-    "run_otter_search_sex",
-    "run_other_species_search",
 ]
 
 

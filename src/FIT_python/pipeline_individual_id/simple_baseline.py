@@ -16,7 +16,7 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
-from FIT_python.config import RESULTS_DATA_DIR, SPLITS_DIR, SEX_PREDICT_METRIC
+from FIT_python.config import PATHS, SPLITS_DIR, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
 from FIT_python.config import CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
@@ -748,7 +748,7 @@ def run_fold_cv(
     )
     import numpy as np
 
-    out_dir = Path(out_dir or RESULTS_DATA_DIR / "individual_id")
+    out_dir = Path(out_dir or PATHS["individual_id"] / "tables")
     out_dir.mkdir(parents=True, exist_ok=True)
     summary_fp = out_dir / "summary.json"
     if reuse_summary and summary_fp.exists():

@@ -144,7 +144,7 @@ def main(species: str = "eurasian_otter") -> None:
         unique_ids, val_sizes=[2, 4, 6, 8], n_iter=1, random_state=config.GLOBAL_RANDOM_SEED
     )
 
-    out_dir = config.RESULTS_DATA_DIR / "individual_id_pipelines"
+    out_dir = config.PATHS["individual_id"] / "tables" / "individual_id_pipelines"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     for split_idx, split in enumerate(splits):
@@ -163,7 +163,7 @@ def main(species: str = "eurasian_otter") -> None:
         ax.set_xlabel("Morphometric Features")
         ax.set_ylabel("Morphometric Features")
         fig.tight_layout()
-        fig_dir = config.FIGURES_DIR / "individual_id"
+        fig_dir = config.PATHS["individual_id"] / "figures"
         fig_dir.mkdir(parents=True, exist_ok=True)
         out_file = fig_dir / f"morph_corr_heatmap_split_{split_idx}.png"
         fig.savefig(out_file)

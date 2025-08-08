@@ -197,7 +197,7 @@ def test_run_species_search_reuses_results(tmp_path, monkeypatch):
     importlib.reload(paths_mod)
     import FIT_python.utils as utils
     importlib.reload(utils)
-    results_dir = cfg.RESULTS_DATA_DIR / "otter" / "search"
+    results_dir = cfg.PATHS["sex_modelling"] / "otter" / "search"
     results_dir.mkdir(parents=True, exist_ok=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})

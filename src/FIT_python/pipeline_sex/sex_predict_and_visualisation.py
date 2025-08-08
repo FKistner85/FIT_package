@@ -7,7 +7,10 @@ import warnings
 from pathlib import Path
 from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
-from FIT_python.config import DATA_DIR, RESULTS_DATA_DIR, SEX_PREDICT_METRIC, CONFIG, SEX_TO_INT, INT_TO_SEX
+from FIT_python.config import DATA_DIR, PATHS, SEX_PREDICT_METRIC, CONFIG
+
+SEX_TO_INT = {"f": 0, "m": 1}
+INT_TO_SEX = {0: "f", 1: "m"}
 from FIT_python.utils import get_species_paths
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 from sklearn.base import clone
@@ -342,7 +345,7 @@ def predict_all_species(species_list: list[str] | None = None) -> pd.DataFrame:
         return pd.DataFrame()
 
     all_df = pd.concat(dfs, ignore_index=True)
-    out_csv = RESULTS_DATA_DIR / "all_species_all_predictions.csv"
+    out_csv = PATHS["sex_modelling"] / "tables" / "all_species_all_predictions.csv"
     all_df.to_csv(out_csv, index=False)
     return all_df
 
@@ -524,66 +527,6 @@ def build_pivot_sorted(sub: pd.DataFrame, col: str) -> tuple[pd.DataFrame, int]:
     return pivot_sorted, female_count
 
 
-for col in pred_cols:
-    fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharey=False)
-    fig.subplots_adjust(hspace=0.35)
-
-    female_color = CONFIG["visualisation"]["sex"]["colors"].get("Female", "#1f77b4")
-    male_color   = CONFIG["visualisation"]["sex"]["colors"].get("Male",   "#ff7f0e")
-
-
-        for i, split in enumerate(["train", "test"]):
-            ax = axes[i]
-            ax.set_facecolor("white")  # kein graues Grid
-            ax.grid(False)
-
-            if split not in splits:
-                ax.axis("off")
-                continue
-
-            sub = df[df["__split__"] == split].copy()
-            if sub.empty:
-                ax.axis("off")
-                continue
-
-            pivot_sorted, female_count = build_pivot_sorted(sub, col)
-
-            # Ratio statt Count für x-Achse
-            total_counts = pivot_sorted.sum(axis=1)
-            female_ratio = pivot_sorted["Female"] / total_counts
-
-            # Plot
-            bars = pivot_sorted.div(total_counts, axis=0).plot.bar(
-                ax=ax, stacked=True, width=0.9,
-                color=[female_color, male_color], legend=False
-            )
-
-            # Counts in die jeweiligen Balken schreiben
-            for idx, (female_val, male_val) in enumerate(zip(pivot_sorted["Female"], pivot_sorted["Male"])):
-                if female_val > 0:
-                    ax.text(idx - 0.2, female_val/total_counts.iloc[idx]/2, str(female_val),
-                            ha="center", va="center", fontsize=8, color="white")
-                if male_val > 0:
-                    ax.text(idx + 0.2, 1 - male_val/total_counts.iloc[idx]/2, str(male_val),
-                            ha="center", va="center", fontsize=8, color="white")
-
-            # Trennlinie
-            if 0 < female_count < len(pivot_sorted):
-                ax.axvline(female_count - 0.5, linestyle="--", linewidth=1, color="#222222")
-
-            ax.set_xlabel("Individual ID")
-            ax.set_ylabel("Prediction ratio")
-            panel = "a" if i == 0 else "b"
-            ax.set_title(f"{panel})", loc="left", fontweight="bold")
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
-
-        handles = [
-            plt.Rectangle((0, 0), 1, 1, color=female_color, label="Female"),
-            plt.Rectangle((0, 0), 1, 1, color=male_color,   label="Male"),
-        ]
-        fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False)
-        plt.tight_layout(rect=(0, 0, 1, 0.96))
-        plt.show()
 
 
 

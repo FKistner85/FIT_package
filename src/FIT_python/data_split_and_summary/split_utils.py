@@ -11,7 +11,7 @@ from FIT_python.config import (
     NUM_FOLDS,
     GROUP_COL,
     SPLITS_DIR,
-    RESULTS_DATA_DIR,
+    PATHS,
 )
 from sklearn.model_selection import (
     StratifiedGroupKFold,
@@ -407,6 +407,10 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         # 5) Optional: Zusammenfassung & Plots
         run_summary(
             out_dir,
-            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_summary.csv",
-            RESULTS_DATA_DIR / f"{species.replace(' ','_').lower()}_fig",
+            PATHS["dataprocessing"]
+            / "tables"
+            / f"{species.replace(' ','_').lower()}_summary.csv",
+            PATHS["dataprocessing"]
+            / "figures"
+            / f"{species.replace(' ','_').lower()}_fig",
         )
