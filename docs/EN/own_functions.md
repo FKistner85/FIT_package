@@ -374,7 +374,8 @@ Titles use italic scientific names.
 ## FIT_python.data_split_and_summary.summary_data_wrapper.SummaryWrapper
 
 ## FIT_python.data_split_and_summary.summary_data_wrapper.run_summary
-Create Parquet and plots summarising each split separately.
+Create per-species Parquet summaries and plots. Output paths are resolved via
+`get_species_paths(section="dataprocessing", species)`.
 
 ## FIT_python.data_split_and_summary.transform_utils.convert_numeric
 Convert feature columns to float, replacing comma decimal separators.

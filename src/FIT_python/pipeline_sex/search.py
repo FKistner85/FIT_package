@@ -82,7 +82,6 @@ from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 from FIT_python.config import (
     RAW_DIR,
     SPLITS_DIR,
-    PATHS,
     DEFAULT_TARGETS,
     GROUP_COL,
     NUM_FOLDS,
@@ -124,11 +123,7 @@ def prepare_eurasian_otter() -> None:
     test_df.to_parquet(out_dir / "test.parquet", index=False)
     inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
-    run_summary(
-        out_dir,
-        PATHS["dataprocessing"] / "tables" / "eurasian_otter_summary.csv",
-        PATHS["dataprocessing"] / "figures" / "eurasian_otter_fig",
-    )
+    run_summary(out_dir, "eurasian_otter")
 
 
 def _run_species_search(

@@ -15,7 +15,7 @@ executed.
 
 ## Data Splits
 
-Next, `SplitWrapper().split_all(reuse_splits=True)` writes train/test splits for each species under `data/splits`. When the files already exist they are reused. Afterwards `run_summary(SPLITS_DIR, EXP_DIR/'split_summary.parquet', EXP_DIR/'split_fig')` generates a Parquet file with split statistics and saves bar charts. Only the Eurasian otter summary and the overall footprint fraction plots are shown in the notebook output.
+Next, `SplitWrapper().split_all(reuse_splits=True)` writes train/test splits for each species under `data/splits`. When the files already exist they are reused. Afterwards `SummaryWrapper().summarize_all()` generates per‑species Parquet summaries and bar charts in the corresponding result folders. Only the Eurasian otter summary and the overall footprint fraction plots are shown in the notebook output.
 
 ## Correlation Matrix
 

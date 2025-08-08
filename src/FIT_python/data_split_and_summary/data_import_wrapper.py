@@ -14,6 +14,7 @@ from FIT_python.data_split_and_summary.transform_utils import convert_numeric
 from tqdm.auto import tqdm
 import FIT_python.config as config
 from FIT_python.config import DEFAULT_TARGETS, OTTER_META_COLS
+from FIT_python.utils import get_species_paths
 import sys
 
 
@@ -140,13 +141,9 @@ class DataImportWrapper:
 
             raw_df = raw_dfs.get(name)
             if raw_df is not None:
+                species_paths = get_species_paths(name, section="dataprocessing")
                 if generate_histograms:
-                    fig_dir = (
-                        config.PATHS["dataprocessing"]
-                        / "figures"
-                        / "feature_distributions"
-                        / name
-                    )
+                    fig_dir = species_paths["figures"] / "feature_distributions"
                     try:
                         from FIT_python.Visualisations.plots_utils import (
                             plot_feature_distributions,
@@ -162,12 +159,7 @@ class DataImportWrapper:
                         plot_feature_correlations,
                     )
 
-                    corr_dir = (
-                        config.PATHS["dataprocessing"]
-                        / "figures"
-                        / "feature_correlations"
-                        / name
-                    )
+                    corr_dir = species_paths["figures"] / "feature_correlations"
                     plot_feature_correlations(df, corr_dir)
                 except Exception as exc:
                     print(f"[WARN] correlation plot failed for {name}: {exc}")
