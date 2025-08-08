@@ -81,7 +81,7 @@ def run_all_pairwise_projections_parallel(
     0. If ``use_sexmodel_prediction`` is ``True`` load the sex model and
        precompute ``predict_proba``. When no ``sexmodel_path`` is given, the
        classifier location is derived from the ``species`` column via
-       ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
+       ``get_species_paths(species, section='individual_id')['models']/SEX_PREDICT_METRIC/{species}.joblib``.
     1. Clean the base DataFrame.
     2. Apply pipeline steps: outlier cleaning and feature scaling.
     3. Perform feature selection once with ``k_max`` on the **scaled** data.
@@ -115,7 +115,7 @@ def run_all_pairwise_projections_parallel(
                     "sexmodel_path must be provided when use_sexmodel_prediction=True"
                 )
             species = str(df["species"].dropna().unique()[0])
-            paths = get_species_paths(species)
+            paths = get_species_paths(species, section="individual_id")
             model_fp = paths["models"] / SEX_PREDICT_METRIC / f"{species}.joblib"
 
         model_fp = Path(model_fp)

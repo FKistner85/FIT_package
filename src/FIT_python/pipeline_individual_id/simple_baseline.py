@@ -16,7 +16,7 @@ import seaborn as sns
 from FIT_python.caption_utils import save_caption
 from FIT_python.Visualisations.plot_style import apply_style
 from .population_estimation import concordance_correlation_coefficient
-from FIT_python.config import PATHS, SPLITS_DIR, SEX_PREDICT_METRIC
+from FIT_python.config import SPLITS_DIR, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
 from FIT_python.config import CONFIG
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
@@ -393,7 +393,7 @@ def run_simple_baseline_all_species(
         Path to a saved sex model forwarded to :func:`run_fold_cv` when
         ``use_sexmodel_prediction`` is ``True``.  When ``None`` the path is
         resolved automatically for each species using
-        ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
+        ``get_species_paths(species, section='individual_id')['models']/SEX_PREDICT_METRIC/{species}.joblib``.
     models_dir : Path, optional
         Directory containing the saved sex models used by
         :func:`load_sex_predictions`.
@@ -450,7 +450,7 @@ def run_simple_baseline_all_species(
         model_fp = sexmodel_path
         if use_sexmodel_prediction and model_fp is None:
             model_fp = (
-                get_species_paths(species_dir.name)["models"]
+                get_species_paths(species_dir.name, section="individual_id")["models"]
                 / SEX_PREDICT_METRIC
                 / f"{species_dir.name}.joblib"
             )
@@ -725,7 +725,7 @@ def run_fold_cv(
         Path to a saved sex classifier.  When ``use_sexmodel_prediction`` is
         ``True`` and no path is given, the function attempts to resolve the
         model path from the ``species`` column using
-        ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
+        ``get_species_paths(species, section='individual_id')['models']/SEX_PREDICT_METRIC/{species}.joblib``.
     tag : str, optional
         Identifier written to the master pairs table.
     master_fp : Path, optional
@@ -748,17 +748,21 @@ def run_fold_cv(
     )
     import numpy as np
 
-    out_dir = Path(out_dir or PATHS["individual_id"] / "tables")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    summary_fp = out_dir / "summary.json"
-    if reuse_summary and summary_fp.exists():
-        return pd.read_json(summary_fp)
-
     species = (
         str(df["species"].dropna().iloc[0])
         if "species" in df.columns and not df["species"].dropna().empty
         else "unknown"
     )
+    if out_dir is None:
+        paths = get_species_paths(species, section="individual_id")
+        out_dir = paths["tables"]
+    else:
+        out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    summary_fp = out_dir / "summary.json"
+    if reuse_summary and summary_fp.exists():
+        return pd.read_json(summary_fp)
+
     if master_fp is not None and tag and not overwrite and is_run_done(species, tag, master_fp):
         return pd.read_json(summary_fp) if summary_fp.exists() else pd.DataFrame()
 
@@ -774,7 +778,7 @@ def run_fold_cv(
                 "sexmodel_path must be provided when use_sexmodel_prediction=True"
             )
         species = str(df_all["species"].dropna().unique()[0])
-        paths = get_species_paths(species)
+        paths = get_species_paths(species, section="individual_id")
         model_fp = paths["models"] / SEX_PREDICT_METRIC / f"{species}.joblib"
 
     if fold_col not in df_all.columns:

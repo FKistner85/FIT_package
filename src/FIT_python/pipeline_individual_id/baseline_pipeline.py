@@ -81,7 +81,7 @@ class DistanceBaseline:
             Path to the sex classifier. If ``use_sexmodel_prediction`` is
             ``True`` and no path is given, the classifier location is derived
             from the ``species`` column via
-            ``get_species_paths(species)['models']/SEX_PREDICT_METRIC/{species}.joblib``.
+            ``get_species_paths(species, section='individual_id')['models']/SEX_PREDICT_METRIC/{species}.joblib``.
         n_jobs:
             Number of parallel jobs for the underlying pipeline.
         debug:
@@ -127,7 +127,7 @@ class DistanceBaseline:
             metric_folder = CONFIG["pipeline_individual_id"]["pairwise_defaults"].get(
                 "metric_folder", SEX_PREDICT_METRIC
             )
-            paths = get_species_paths(species)
+            paths = get_species_paths(species, section="individual_id")
             model_fp = paths["models"] / metric_folder / f"{species}.joblib"
 
             if not model_fp.is_file():
