@@ -197,7 +197,7 @@ class PipelineWrapper:
             If ``True`` the wrapper prints additional information and debugging
             statistics during training.
         """
-        PATHS["sex_modelling"].mkdir(parents=True, exist_ok=True)
+        get_species_paths(section="sex_modelling", species="")
         self.model_keys = model_keys or list(MODELS.keys())
         self.fs_method = fs_method
         self.fs_k = fs_k
@@ -248,7 +248,7 @@ class PipelineWrapper:
                 key = species_dir.name
                 best_acc_per_species.setdefault(key, -np.inf)
 
-                species_paths = get_species_paths(key)
+                species_paths = get_species_paths(section="sex_modelling", species=key)
                 model_dir = species_paths["models"]
                 model_dir.mkdir(parents=True, exist_ok=True)
                 metric = config.SEX_PREDICT_METRIC
@@ -436,7 +436,8 @@ class PipelineWrapper:
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
-        raw_out = PATHS["sex_modelling"] / "tables" / "raw_results.csv"
+        base_paths = get_species_paths(section="sex_modelling", species="")
+        raw_out = base_paths["tables"] / "raw_results.csv"
         df_new.to_csv(raw_out, mode="a", header=not raw_out.exists(), index=False)
 
         # aggregate timing columns
@@ -447,7 +448,7 @@ class PipelineWrapper:
             )
             time_df["step"] = time_df["step"].str.replace("time_", "", regex=False)
             plot_pipeline_timings(
-                time_df, PATHS["sex_modelling"] / "figures" / "pipeline_timings"
+                time_df, base_paths["figures"] / "pipeline_timings"
             )
 
         # summarise cross-validation scores by preprocessing options
@@ -460,7 +461,7 @@ class PipelineWrapper:
 
         # Visualise the hyperparameter search results
         plot_hyperparam_heatmap(
-            df_new, PATHS["sex_modelling"] / "figures" / "hyperparam_search"
+            df_new, base_paths["figures"] / "hyperparam_search"
         )
 
         if self.debug or config.DEBUG_MODE:
@@ -472,7 +473,7 @@ class PipelineWrapper:
         for _, row in df_new.iterrows():
             species = row["species"]
             mk = row["model"]
-            species_paths = get_species_paths(species)
+            species_paths = get_species_paths(section="sex_modelling", species=species)
             model_dir = species_paths["models"]
             model_dir.mkdir(parents=True, exist_ok=True)
             best_dir = model_dir / config.SEX_PREDICT_METRIC
