@@ -86,10 +86,11 @@ def _select_features(dfs: dict[str, pd.DataFrame]) -> List[str]:
 
 def _add_sex_predictions(species: str, dfs: dict[str, pd.DataFrame]) -> None:
     """Append sex model predictions as additional features."""
+    sex_paths = get_species_paths(species, section="sex_modelling")
     pred_df = predict_all(
         species,
         prefer_generic=True,
-        models_dir=get_species_paths(species)["search"],
+        models_dir=sex_paths["models"],
         use_cv_train_predictions=True,
     )
     sex_cols = [c for c in pred_df.columns if c.startswith("pred_")]
@@ -143,8 +144,8 @@ def main(species: str = "eurasian_otter") -> None:
     splits = sequential_holdout_ids(
         unique_ids, val_sizes=[2, 4, 6, 8], n_iter=1, random_state=config.GLOBAL_RANDOM_SEED
     )
-
-    out_dir = config.PATHS["individual_id"] / "tables" / "individual_id_pipelines"
+    paths = get_species_paths(species, section="individual_id")
+    out_dir = paths["tables"] / "individual_id_pipelines"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     for split_idx, split in enumerate(splits):
@@ -163,7 +164,7 @@ def main(species: str = "eurasian_otter") -> None:
         ax.set_xlabel("Morphometric Features")
         ax.set_ylabel("Morphometric Features")
         fig.tight_layout()
-        fig_dir = config.PATHS["individual_id"] / "figures"
+        fig_dir = paths["figures"]
         fig_dir.mkdir(parents=True, exist_ok=True)
         out_file = fig_dir / f"morph_corr_heatmap_split_{split_idx}.png"
         fig.savefig(out_file)
@@ -195,9 +196,7 @@ def main(species: str = "eurasian_otter") -> None:
             n_components=2,
             use_sexmodel_prediction=True,
             sexmodel_path=str(
-                get_species_paths(species)["models"]
-                / config.SEX_PREDICT_METRIC
-                / f"{species}.joblib"
+                paths["models"] / config.SEX_PREDICT_METRIC / f"{species}.joblib"
             ),
             n_jobs=1,
         )
