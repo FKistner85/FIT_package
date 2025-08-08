@@ -62,8 +62,9 @@ class SummaryWrapper:
         try:
             run_summary(
                 splits_dir or config.SPLITS_DIR,
-                output_table or config.RESULTS_DATA_DIR / "summary.parquet",
-                fig_dir or config.FIGURES_DIR / "summary",
+                output_table
+                or config.PATHS["dataprocessing"] / "tables" / "summary.parquet",
+                fig_dir or config.PATHS["dataprocessing"] / "figures" / "summary",
                 force=True,
                 plot=True,
             )

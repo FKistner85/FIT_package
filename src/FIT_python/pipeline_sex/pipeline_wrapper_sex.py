@@ -19,8 +19,6 @@ from sklearn.model_selection import cross_val_predict, PredefinedSplit
 
 from FIT_python.config import (
     SPLITS_DIR,
-    RESULTS_DATA_DIR,
-    FIGURES_DIR,
     GLOBAL_RANDOM_SEED,
     PATHS,
     PIPE_SEARCH,
@@ -199,7 +197,7 @@ class PipelineWrapper:
             If ``True`` the wrapper prints additional information and debugging
             statistics during training.
         """
-        RESULTS_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        PATHS["sex_modelling"].mkdir(parents=True, exist_ok=True)
         self.model_keys = model_keys or list(MODELS.keys())
         self.fs_method = fs_method
         self.fs_k = fs_k
@@ -438,7 +436,7 @@ class PipelineWrapper:
 
         # save raw_results.csv
         df_new = pd.DataFrame(records)
-        raw_out = PATHS["results"] / "raw_results.csv"
+        raw_out = PATHS["sex_modelling"] / "tables" / "raw_results.csv"
         df_new.to_csv(raw_out, mode="a", header=not raw_out.exists(), index=False)
 
         # aggregate timing columns
@@ -448,7 +446,9 @@ class PipelineWrapper:
                 df_new[time_cols].mean().rename_axis("step").reset_index(name="seconds")
             )
             time_df["step"] = time_df["step"].str.replace("time_", "", regex=False)
-            plot_pipeline_timings(time_df, Path(FIGURES_DIR) / "pipeline_timings")
+            plot_pipeline_timings(
+                time_df, PATHS["sex_modelling"] / "figures" / "pipeline_timings"
+            )
 
         # summarise cross-validation scores by preprocessing options
         self.pivot_cv = df_new.pivot_table(
@@ -459,7 +459,9 @@ class PipelineWrapper:
         )
 
         # Visualise the hyperparameter search results
-        plot_hyperparam_heatmap(df_new, Path(FIGURES_DIR) / "hyperparam_search")
+        plot_hyperparam_heatmap(
+            df_new, PATHS["sex_modelling"] / "figures" / "hyperparam_search"
+        )
 
         if self.debug or config.DEBUG_MODE:
             print("\nSummary of runs:")

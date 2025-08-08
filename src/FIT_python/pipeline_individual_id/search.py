@@ -10,7 +10,7 @@ from sklearn.pipeline import Pipeline
 from skopt import BayesSearchCV
 from skopt.space import Categorical
 
-from FIT_python.config import GLOBAL_RANDOM_SEED, RESULTS_DATA_DIR, SPLITS_DIR
+from FIT_python.config import GLOBAL_RANDOM_SEED, PATHS, SPLITS_DIR
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
 
 from FIT_python.pipeline_individual_id.evaluation import separation_score
@@ -177,7 +177,7 @@ def run_species_search(
         y_all = df_train["Trail"]
         search.fit(X_all, y_all)
 
-        out_dir = RESULTS_DATA_DIR / f"{species}_id_search"
+        out_dir = PATHS["individual_id"] / f"{species}_id_search"
         out_dir.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(search.cv_results_).to_csv(out_dir / "cv_results.csv", index=False)
 

@@ -82,7 +82,7 @@ from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 from FIT_python.config import (
     RAW_DIR,
     SPLITS_DIR,
-    RESULTS_DATA_DIR,
+    PATHS,
     DEFAULT_TARGETS,
     GROUP_COL,
     NUM_FOLDS,
@@ -126,8 +126,8 @@ def prepare_eurasian_otter() -> None:
 
     run_summary(
         out_dir,
-        RESULTS_DATA_DIR / "eurasian_otter_summary.csv",
-        RESULTS_DATA_DIR / "eurasian_otter_fig",
+        PATHS["dataprocessing"] / "tables" / "eurasian_otter_summary.csv",
+        PATHS["dataprocessing"] / "figures" / "eurasian_otter_fig",
     )
 
 

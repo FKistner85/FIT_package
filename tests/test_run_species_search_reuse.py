@@ -20,7 +20,7 @@ def _load_functions(tmp_root):
 
 def test__run_species_search_reuse(tmp_path, monkeypatch):
     root = tmp_path
-    results_dir = root / "results" / "data" / "otter" / "search"
+    results_dir = root / "results" / "sex_modelling" / "otter" / "search"
     results_dir.mkdir(parents=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})
@@ -39,13 +39,15 @@ def test__run_species_search_reuse(tmp_path, monkeypatch):
             called["flag"] = True
 
     def fake_get_species_paths(species):
-        base = root / "results" / "data" / species
+        base = root / "results" / "sex_modelling" / species
         paths = {
             "search": base / "search",
             "models": base / "models",
             "predictions": base / "predictions",
             "heatmaps": base / "heatmaps",
             "logs": base / "logs",
+            "figures": base / "figures",
+            "tables": base / "tables",
             "splits": root / "data" / "splits" / species,
         }
         for p in paths.values():
@@ -55,7 +57,7 @@ def test__run_species_search_reuse(tmp_path, monkeypatch):
     g.update({
         "BayesSearchCV": DummySearch,
         "pd": pd,
-        "RESULTS_DATA_DIR": root / "results" / "data",
+        "PATHS": {"sex_modelling": root / "results" / "sex_modelling"},
         "SPLITS_DIR": root / "data" / "splits",
         "get_species_paths": fake_get_species_paths,
     })
@@ -76,7 +78,7 @@ def test__run_species_search_reuse(tmp_path, monkeypatch):
 def test_run_species_search_reuse(tmp_path, monkeypatch):
     root = tmp_path
     (root / "data" / "splits" / "otter").mkdir(parents=True)
-    results_dir = root / "results" / "data" / "otter" / "search"
+    results_dir = root / "results" / "sex_modelling" / "otter" / "search"
     results_dir.mkdir(parents=True)
     df_all = pd.DataFrame({"a": [1]})
     df_best = pd.DataFrame({"b": [2]})
@@ -94,13 +96,15 @@ def test_run_species_search_reuse(tmp_path, monkeypatch):
             called["flag"] = True
 
     def fake_get_species_paths(species):
-        base = root / "results" / "data" / species
+        base = root / "results" / "sex_modelling" / species
         paths = {
             "search": base / "search",
             "models": base / "models",
             "predictions": base / "predictions",
             "heatmaps": base / "heatmaps",
             "logs": base / "logs",
+            "figures": base / "figures",
+            "tables": base / "tables",
             "splits": root / "data" / "splits" / species,
         }
         for p in paths.values():
@@ -110,7 +114,7 @@ def test_run_species_search_reuse(tmp_path, monkeypatch):
     env.update({
         "BayesSearchCV": DummySearch,
         "pd": pd,
-        "RESULTS_DATA_DIR": root / "results" / "data",
+        "PATHS": {"sex_modelling": root / "results" / "sex_modelling"},
         "SPLITS_DIR": root / "data" / "splits",
         "get_species_paths": fake_get_species_paths,
     })

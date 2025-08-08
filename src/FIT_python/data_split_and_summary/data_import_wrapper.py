@@ -142,7 +142,10 @@ class DataImportWrapper:
             if raw_df is not None:
                 if generate_histograms:
                     fig_dir = (
-                        config.FIGURES_DIR / "feature_distributions" / name
+                        config.PATHS["dataprocessing"]
+                        / "figures"
+                        / "feature_distributions"
+                        / name
                     )
                     try:
                         from FIT_python.Visualisations.plots_utils import (
@@ -159,7 +162,12 @@ class DataImportWrapper:
                         plot_feature_correlations,
                     )
 
-                    corr_dir = config.FIGURES_DIR / "feature_correlations" / name
+                    corr_dir = (
+                        config.PATHS["dataprocessing"]
+                        / "figures"
+                        / "feature_correlations"
+                        / name
+                    )
                     plot_feature_correlations(df, corr_dir)
                 except Exception as exc:
                     print(f"[WARN] correlation plot failed for {name}: {exc}")

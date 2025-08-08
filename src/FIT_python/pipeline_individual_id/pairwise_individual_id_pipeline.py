@@ -18,7 +18,7 @@ from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
-from FIT_python.config import RESULTS_DATA_DIR, SEX_PREDICT_METRIC
+from FIT_python.config import SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
 from FIT_python.config import CONFIG
 

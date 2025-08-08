@@ -8,7 +8,7 @@ from typing import Iterable, Sequence
 import numpy as np
 import pandas as pd
 
-from FIT_python.config import RESULTS_DATA_DIR, GLOBAL_RANDOM_SEED, SEX_PREDICT_METRIC
+from FIT_python.config import PATHS, GLOBAL_RANDOM_SEED, SEX_PREDICT_METRIC
 from FIT_python.utils import get_species_paths
 from FIT_python.config import CONFIG
 
@@ -137,7 +137,7 @@ def run(
         Random seed for the split generator. Defaults to ``GLOBAL_RANDOM_SEED``.
     out_dir:
         Directory to write per-split CSV results. Defaults to
-        ``RESULTS_DATA_DIR / 'individual_id'``.
+        ``PATHS['individual_id']``.
     tag:
         Optional identifier stored with raw split results when
         ``master_fp`` is provided.
@@ -186,7 +186,7 @@ def run(
             CONFIG["pipeline_individual_id"]["sequential_holdout_val_sizes"]
         )
     )
-    out_dir = Path(out_dir or RESULTS_DATA_DIR / "individual_id")
+    out_dir = Path(out_dir or PATHS["individual_id"] / "tables")
     out_dir.mkdir(parents=True, exist_ok=True)
     summary_fp = out_dir / "summary.csv"
     if reuse_summary and summary_fp.exists():
