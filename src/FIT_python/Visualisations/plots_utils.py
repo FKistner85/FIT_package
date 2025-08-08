@@ -891,18 +891,21 @@ def plot_individual_boxplots_2x1(
         id_col = "display_id"
     else:
         id_col = "individual_id"
+    sex_map = CONFIG["visualisation"]["sex"]["value_map"]
+    sex_categories = CONFIG["data_split_and_summary"]["sex_categories"]
+    dataset_shades = CONFIG["visualisation"].get("dataset", {}).get(
+        "color_shades", {}
+    )
 
-    df = df[df["sex_mapped"].isin(["Female", "Male"])].copy()
-    df = df[
-        df["dataorigin"].isin(
-            ["Own Data Collection", "Vetrecova et al", "Fieldprints Lower Saxony"]
-        )
-    ]
+    df = df.copy()
+    df["sex"] = df["sex"].map(lambda s: sex_map.get(s, "Unknown"))
+    df = df[df["sex"].isin(sex_categories)]
+    df = df[df["dataorigin"].isin(dataset_shades)]
 
     X = df[feature_cols].fillna(df[feature_cols].mean())
 
-    le_sex = LabelEncoder().fit(df["sex_mapped"])
-    y_sex = le_sex.transform(df["sex_mapped"])
+    le_sex = LabelEncoder().fit(df["sex"])
+    y_sex = le_sex.transform(df["sex"])
     f_vals_sex, _ = f_classif(X, y_sex)
     best_sex_feat = feature_cols[int(np.nanargmax(f_vals_sex))]
 
@@ -915,37 +918,31 @@ def plot_individual_boxplots_2x1(
 
     sex_colors = CONFIG["visualisation"]["sex"]["colors"]
 
-    def _shade_list(color: str) -> list[str]:
-        return [color, _lighten(color, 0.2), _lighten(color, 0.4)]
-
     sex_palette = {
-        sex: _shade_list(col)
-        for sex, col in sex_colors.items()
-        if sex in ("Female", "Male")
+        sex: {
+            origin: _lighten(color, dataset_shades[origin])
+            for origin in dataset_shades
+        }
+        for sex, color in sex_colors.items()
+        if sex in sex_categories
     }
 
-    origin_order = [
-        "Own Data Collection",
-        "Vetrecova et al",
-        "Fieldprints Lower Saxony",
-    ]
+    origin_order = list(dataset_shades.keys())
 
     def assign_color(row: pd.Series) -> str:
-        palette = sex_palette[row["sex_mapped"]]
-        idx = origin_order.index(row["dataorigin"]) % len(palette)
-        return palette[idx]
+        return sex_palette[row["sex"]][row["dataorigin"]]
 
     df["color"] = df.apply(assign_color, axis=1)
     color_dict = df.groupby(id_col)["color"].first().to_dict()
 
     female_means = (
-        df[df["sex_mapped"] == "Female"]
+        df[df["sex"] == "Female"]
         .groupby(id_col)[best_sex_feat]
         .mean()
         .sort_values(ascending=False)
     )
     male_means = (
-        df[df["sex_mapped"] == "Male"]
+        df[df["sex"] == "Male"]
         .groupby(id_col)[best_sex_feat]
         .mean()
         .sort_values(ascending=True)
@@ -970,8 +967,8 @@ def plot_individual_boxplots_2x1(
         ax.set_ylabel(feat)
 
     legend_elements = []
-    for sex in ["Female", "Male"]:
-        for color, origin in zip(sex_palette[sex], origin_order):
+    for sex in sex_categories:
+        for origin in origin_order:
             legend_elements.append(
                 Line2D(
                     [0],
@@ -979,7 +976,7 @@ def plot_individual_boxplots_2x1(
                     marker="s",
                     color="w",
                     label=f"{sex}, {origin}",
-                    markerfacecolor=color,
+                    markerfacecolor=sex_palette[sex][origin],
                     markersize=10,
                     markeredgecolor="black",
                 )

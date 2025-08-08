@@ -8,6 +8,7 @@ from FIT_python.Visualisations.plots_utils import (
     plot_pred_true_counts,
     plot_umap_by_individual,
     plot_embedding_by_individual,
+    plot_individual_boxplots_2x1,
 )
 
 
@@ -138,6 +139,28 @@ def test_plot_pred_true_counts(tmp_path: Path):
     )
     assert out.exists()
     assert out.stat().st_size > 0
+
+
+def test_plot_individual_boxplots_2x1(tmp_path: Path):
+    df = pd.DataFrame(
+        {
+            "individual_id": ["A", "A", "B", "B"],
+            "sex": ["f", "m", "F", "M"],
+            "dataorigin": [
+                "Own Data Collection",
+                "Own Data Collection",
+                "Vetrecova et al",
+                "Fieldprints Lower Saxony",
+            ],
+            "feat1": [1.0, 2.0, 3.0, 4.0],
+            "feat2": [1.1, 2.2, 3.3, 4.4],
+        }
+    )
+    out, feats = plot_individual_boxplots_2x1(
+        df, tmp_path, "box.png", ["feat1", "feat2"]
+    )
+    assert out.exists()
+    assert len(feats) == 2
 
 
 def test_umap_colors_use_id_palette(tmp_path: Path, monkeypatch):
