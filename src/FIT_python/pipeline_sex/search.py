@@ -149,13 +149,13 @@ def _run_species_search(
         When ``True`` and result CSVs exist in the species search directory the
         search is skipped and the files are loaded instead.
     """
-    paths = get_species_paths(species)
-    search_dir = paths["search"]
+    paths = get_species_paths(section="sex_modelling", species=species)
+    tables_dir = paths["tables"]
     models_dir = paths["models"]
-    heatmaps_dir = paths["heatmaps"]
+    figures_dir = paths["figures"]
 
-    all_csv = search_dir / "all_results.csv"
-    best_csv = search_dir / "best_models.csv"
+    all_csv = tables_dir / "all_results.csv"
+    best_csv = tables_dir / "best_models.csv"
     if reuse_results and all_csv.exists() and best_csv.exists():
         df_all = pd.read_csv(all_csv).apply(pd.to_numeric, errors="ignore")
         df_best = pd.read_csv(best_csv).apply(pd.to_numeric, errors="ignore")
@@ -222,7 +222,7 @@ def _run_species_search(
         else getattr(search.cv, "n_splits", search.cv.get_n_splits())
     )
     total_fits = search.n_iter * folds
-    search_dir.mkdir(parents=True, exist_ok=True)
+    tables_dir.mkdir(parents=True, exist_ok=True)
     for m in METRIC_MAP:
         (models_dir / m).mkdir(parents=True, exist_ok=True)
     (models_dir / "mean_rank").mkdir(parents=True, exist_ok=True)
@@ -414,8 +414,8 @@ def _run_species_search(
     )
     best_records.append(best_record_rank)
 
-    all_csv = search_dir / "all_results.csv"
-    best_csv = search_dir / "best_models.csv"
+    all_csv = tables_dir / "all_results.csv"
+    best_csv = tables_dir / "best_models.csv"
     df_all = pd.DataFrame(raw_records).fillna("None")
     df_best = pd.DataFrame(best_records).fillna("None")
 
@@ -468,7 +468,7 @@ def _run_species_search(
             )
         )
 
-    plot_hyperparam_heatmap(df_heat, heatmaps_dir / "hyperparam_search")
+    plot_hyperparam_heatmap(df_heat, figures_dir / "hyperparam_search")
 
     # Create prediction CSVs for downstream pipelines
     predict_all(
