@@ -90,6 +90,12 @@ SEX_COLORS = {"Female": "#800000", "Male": "#000080", "Unknown": "#FFA500"}
 TRAIN_COLORS = SEX_COLORS
 TEST_COLORS = {k: _lighten(v, 0.5) for k, v in SEX_COLORS.items()}
 
+DATASET_COLOR_SHADES = {
+    "Own Data Collection": 0.0,
+    "Vetrecova et al": 0.2,
+    "Fieldprints Lower Saxony": 0.4,
+}
+
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
 GLOBAL_RANDOM_SEED = 12345
@@ -160,7 +166,8 @@ CONFIG = {
             "colors": SEX_COLORS,
             "train_colors": TRAIN_COLORS,
             "test_colors": TEST_COLORS,
-        }
+        },
+        "dataset": {"color_shades": DATASET_COLOR_SHADES},
     },
     "dataset_summary": {
         "species_labels": {
