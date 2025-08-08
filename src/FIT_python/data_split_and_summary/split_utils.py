@@ -11,7 +11,6 @@ from FIT_python.config import (
     NUM_FOLDS,
     GROUP_COL,
     SPLITS_DIR,
-    PATHS,
 )
 from sklearn.model_selection import (
     StratifiedGroupKFold,
@@ -28,7 +27,15 @@ from pathlib import Path
 import pandas as pd
 
 
-from FIT_python.config import SPLITS_DIR, NUM_FOLDS, GROUP_COL, GLOBAL_RANDOM_SEED
+from FIT_python.config import (
+    SPLITS_DIR,
+    NUM_FOLDS,
+    GROUP_COL,
+    GLOBAL_RANDOM_SEED,
+    RAW_DIR,
+    DEFAULT_TARGETS,
+)
+from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 
 
 def stratified_individual_split(
@@ -405,12 +412,4 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
         # 5) Optional: Zusammenfassung & Plots
-        run_summary(
-            out_dir,
-            PATHS["dataprocessing"]
-            / "tables"
-            / f"{species.replace(' ','_').lower()}_summary.csv",
-            PATHS["dataprocessing"]
-            / "figures"
-            / f"{species.replace(' ','_').lower()}_fig",
-        )
+        run_summary(out_dir, species.replace(" ", "_" ).lower())

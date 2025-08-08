@@ -14,7 +14,6 @@ from FIT_python.data_split_and_summary.summary_data_wrapper import run_summary
 from FIT_python.config import (
     RAW_DIR,
     SPLITS_DIR,
-    PATHS,
     DEFAULT_TARGETS,
     GROUP_COL,
     NUM_FOLDS,
@@ -168,12 +167,4 @@ def prepare_all_splits(species_filter: Optional[List[str]] = None) -> None:
         inf_df.to_parquet(out_dir / "inference.parquet", index=False)
 
         # 5) Optional: Zusammenfassung & Plots
-        run_summary(
-            out_dir,
-            PATHS["dataprocessing"]
-            / "tables"
-            / f"{species.replace(' ','_').lower()}_summary.parquet",
-            PATHS["dataprocessing"]
-            / "figures"
-            / f"{species.replace(' ','_').lower()}_fig",
-        )
+        run_summary(out_dir, species.replace(" ", "_" ).lower())

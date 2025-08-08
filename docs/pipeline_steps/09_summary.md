@@ -2,8 +2,10 @@
 ## Overview
 
 `create_summary.py` compiles statistics for each dataset split. The
-`summary.py` CLI calls `run_summary` which in turn uses functions from
-`summary_utils` to aggregate counts and optionally create plots.
+`summary.py` CLI calls `run_summary` for each species, which in turn uses functions from
+`summary_utils` to aggregate counts and optionally create plots. Output files are
+written to the species-specific `figures` and `tables` directories resolved by
+`get_species_paths`.
 
 ## Key Functions
 - `summarize_dataset`

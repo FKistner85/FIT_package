@@ -14,17 +14,21 @@ from FIT_python.data_split_and_summary.summary_data_utils import (
 )
 import FIT_python.config as config
 from tqdm.auto import tqdm
+from FIT_python.utils import get_species_paths
 
 
 def run_summary(
     splits_dir: Path,
-    output_table: Path,
-    fig_dir: Path,
+    species: str,
     *,
     force: bool = False,
     plot: bool = True,
 ) -> None:
-    """Create Parquet and plots summarising each split separately."""
+    """Create Parquet and plots summarising each split for ``species``."""
+    paths = get_species_paths(species, section="dataprocessing")
+    output_table = paths["tables"] / "summary.parquet"
+    fig_dir = paths["figures"] / "summary"
+
     splits = discover_splits(splits_dir)
     if not splits:
         raise RuntimeError(f"No split files found in {splits_dir}")
@@ -56,18 +60,12 @@ class SummaryWrapper:
     def summarize_all(
         self,
         splits_dir: Path | None = None,
-        output_table: Path | None = None,
-        fig_dir: Path | None = None,
     ) -> int:
         try:
-            run_summary(
-                splits_dir or config.SPLITS_DIR,
-                output_table
-                or config.PATHS["dataprocessing"] / "tables" / "summary.parquet",
-                fig_dir or config.PATHS["dataprocessing"] / "figures" / "summary",
-                force=True,
-                plot=True,
-            )
+            base_dir = splits_dir or config.SPLITS_DIR
+            for species_dir in sorted(base_dir.iterdir()):
+                if species_dir.is_dir():
+                    run_summary(species_dir, species_dir.name, force=True, plot=True)
             return 0
         except Exception as exc:
             print(f"[ERROR] {exc}", file=sys.stderr)
