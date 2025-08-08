@@ -6,6 +6,7 @@ import warnings
 import itertools
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
 import numpy as np
 import pandas as pd
@@ -15,10 +16,11 @@ from scipy.spatial.distance import squareform
 from scipy.stats import chi2
 from IPython.display import Image, Markdown, display
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.preprocessing import LabelEncoder
 
 from FIT_python.caption_utils import save_caption
 from FIT_python.data_split_and_summary.data_import_utils import get_feature_cols
-from FIT_python.config import CONFIG
+from FIT_python.config import CONFIG, _lighten
 from FIT_python.Visualisations.id_style import (
     ID_COLORS,
     ID_MARKERS,
@@ -869,6 +871,132 @@ def plot_individual_boxplots(
     plt.close()
     save_caption(out, f"Boxplots of {top4_feats} grouped by individual")
     return out
+
+
+def plot_individual_boxplots_2x1(
+    df: pd.DataFrame,
+    fig_dir: Path,
+    filename: str,
+    feature_cols: list[str],
+    mapping: dict | None = None,
+) -> tuple[Path, list[str]]:
+    """Plot 2×1 boxplots for the best sex and individual features.
+
+    Returns the path to the saved figure and the chosen features.
+    """
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    if mapping is not None:
+        df = apply_display_mapping(df, mapping)
+        id_col = "display_id"
+    else:
+        id_col = "individual_id"
+
+    df = df[df["sex_mapped"].isin(["Female", "Male"])].copy()
+    df = df[
+        df["dataorigin"].isin(
+            ["Own Data Collection", "Vetrecova et al", "Fieldprints Lower Saxony"]
+        )
+    ]
+
+    X = df[feature_cols].fillna(df[feature_cols].mean())
+
+    le_sex = LabelEncoder().fit(df["sex_mapped"])
+    y_sex = le_sex.transform(df["sex_mapped"])
+    f_vals_sex, _ = f_classif(X, y_sex)
+    best_sex_feat = feature_cols[int(np.nanargmax(f_vals_sex))]
+
+    le_ind = LabelEncoder().fit(df[id_col])
+    y_ind = le_ind.transform(df[id_col])
+    f_vals_ind, _ = f_classif(X, y_ind)
+    best_ind_feat = feature_cols[int(np.nanargmax(f_vals_ind))]
+
+    final_feats = [best_sex_feat, best_ind_feat]
+
+    sex_colors = CONFIG["visualisation"]["sex"]["colors"]
+
+    def _shade_list(color: str) -> list[str]:
+        return [color, _lighten(color, 0.2), _lighten(color, 0.4)]
+
+    sex_palette = {
+        sex: _shade_list(col)
+        for sex, col in sex_colors.items()
+        if sex in ("Female", "Male")
+    }
+
+    origin_order = [
+        "Own Data Collection",
+        "Vetrecova et al",
+        "Fieldprints Lower Saxony",
+    ]
+
+    def assign_color(row: pd.Series) -> str:
+        palette = sex_palette[row["sex_mapped"]]
+        idx = origin_order.index(row["dataorigin"]) % len(palette)
+        return palette[idx]
+
+    df["color"] = df.apply(assign_color, axis=1)
+    color_dict = df.groupby(id_col)["color"].first().to_dict()
+
+    female_means = (
+        df[df["sex_mapped"] == "Female"]
+        .groupby(id_col)[best_sex_feat]
+        .mean()
+        .sort_values(ascending=False)
+    )
+    male_means = (
+        df[df["sex_mapped"] == "Male"]
+        .groupby(id_col)[best_sex_feat]
+        .mean()
+        .sort_values(ascending=True)
+    )
+    ind_order = female_means.index.tolist() + male_means.index.tolist()
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 10))
+    for ax, feat in zip(axes, final_feats):
+        sns.boxplot(
+            data=df,
+            x=id_col,
+            y=feat,
+            ax=ax,
+            hue=id_col,
+            palette=color_dict,
+            dodge=False,
+            order=ind_order,
+            legend=False,
+        )
+        ax.set_xlabel("")
+        ax.set_xticks([])
+        ax.set_ylabel(feat)
+
+    legend_elements = []
+    for sex in ["Female", "Male"]:
+        for color, origin in zip(sex_palette[sex], origin_order):
+            legend_elements.append(
+                Line2D(
+                    [0],
+                    [0],
+                    marker="s",
+                    color="w",
+                    label=f"{sex}, {origin}",
+                    markerfacecolor=color,
+                    markersize=10,
+                    markeredgecolor="black",
+                )
+            )
+    axes[0].legend(
+        handles=legend_elements,
+        title="Sex and Data Origin",
+        loc="upper left",
+        fontsize=9,
+    )
+
+    fig.tight_layout()
+    out = fig_dir / filename
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    save_caption(out, f"Boxplots of {final_feats} grouped by individual")
+    return out, final_feats
 
 
 def plot_embedding_by_individual(
