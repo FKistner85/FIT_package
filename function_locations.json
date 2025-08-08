@@ -8,6 +8,7 @@
   "apply_style": "src/FIT_python/Visualisations/plot_style.py",
   "plot_feature_correlation_matrix": "src/FIT_python/Visualisations/plots_utils.py",
   "plot_individual_boxplots": "src/FIT_python/Visualisations/plots_utils.py",
+  "plot_individual_boxplots_2x1": "src/FIT_python/Visualisations/plots_utils.py",
   "plot_sex_boxplots": "src/FIT_python/Visualisations/plots_utils.py",
   "plot_umap_scatter": "src/FIT_python/Visualisations/plots_utils.py",
   "plot_umap_centroid_outliers": "src/FIT_python/Visualisations/plots_utils.py",

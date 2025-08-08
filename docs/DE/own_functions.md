@@ -98,6 +98,9 @@ ohne x-Ticks und ohne Legende, speichert das Bild und gibt den Pfad zurück.
 ## FIT_python.Visualisations.plots_utils.plot_individual_boxplots
 Plot 2×2 boxplots grouped by individual and sex.
 
+## FIT_python.Visualisations.plots_utils.plot_individual_boxplots_2x1
+Zeichnet 2×1 Boxplots für das beste Sex- und Individuen-Feature.
+
 ## FIT_python.Visualisations.plots_utils.plot_pair_examples
 Plot example 50% confidence areas for TP/FP/FN/TN categories.
 
