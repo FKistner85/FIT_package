@@ -290,9 +290,9 @@ CONFIG["pipeline_individual_id"] = {
     },
     "search_spaces": {
         "outlier": [None],
-        "scale": [ "standard"],
+        "scale": ["standard"],
         "select__method": ["forward", "random_forest", "lasso"],
-        "select__k" = list(range(2, 31, 2)),
+        "select__k": list(range(2, 31, 2)),  # hier statt '=' ein ':'
         "reduce__method": ["lda"],
         "n_components": [2],
         "use_sexmodel_prediction": [False, True],
@@ -304,4 +304,3 @@ CONFIG["pipeline_individual_id"] = {
     },
     "sequential_holdout_val_sizes": [2, 4, 6, 8],
 }
-
