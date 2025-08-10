@@ -157,7 +157,7 @@ def predict_all(
     prefer_generic: bool = False,          # kept for API compatibility
     models_dir: str | Path | None = None,
     include_inference: bool = True,
-    reuse_csv: bool = True,
+    reuse_csv: bool = False,
     use_cv_train_predictions: bool = True,
 ) -> pd.DataFrame:
     """Return dataframe with best-model predictions for Train/Test/Inference.
