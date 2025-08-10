@@ -250,7 +250,7 @@ CONFIG["pipeline_sex"] = {
         "clf",
     ],
     "run_otter_search_sex": {
-        "n_iter": 30,
+        "n_iter": 3,
         "cv": "fold",
         "random_state": GLOBAL_RANDOM_SEED,
         "reuse_results": True,
@@ -290,9 +290,9 @@ CONFIG["pipeline_individual_id"] = {
     },
     "search_spaces": {
         "outlier": [None],
-        "scale": [None, "standard"],
+        "scale": [ "standard"],
         "select__method": ["forward", "random_forest", "lasso"],
-        "select__k": list(range(2, 31)),
+        "select__k" = list(range(2, 31, 2)),
         "reduce__method": ["lda"],
         "n_components": [2],
         "use_sexmodel_prediction": [False, True],

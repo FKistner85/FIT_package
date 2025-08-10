@@ -92,6 +92,39 @@ from FIT_python.config import (
 from FIT_python.utils import get_species_paths
 
 
+PIPE_CFG = CONFIG["pipeline_sex"]
+
+# scoring / metrics / pipeline order straight from CONFIG
+SCORING = PIPE_CFG["scoring"]
+METRIC_MAP = PIPE_CFG["metric_map"]
+PIPELINE_ORDER = PIPE_CFG["pipeline_order"]
+
+# build BayesSearchCV spaces from CONFIG
+_cfg_spaces = PIPE_CFG["search_spaces"]
+
+SEARCH_SPACES = {
+    # steps that toggle whole transformers: allow None or wrapped transformer
+    "outlier": Categorical(
+        [None] + ([EstimatorWrapper(OutlierCleanerTransformer(method="clip"))]
+                  if ("outlier" in _cfg_spaces and "clip" in _cfg_spaces["outlier"]) else [])
+    ),
+    "scale": Categorical(
+        [None] + ([EstimatorWrapper(FeatureScalerTransformer(method="standard"))]
+                  if ("scale" in _cfg_spaces and "standard" in _cfg_spaces["scale"]) else [])
+    ),
+
+    # plain parameter choices forwarded to existing steps
+    "select__method": Categorical(_cfg_spaces.get("select__method", ["forward"])),
+    "select__k":       Categorical(_cfg_spaces.get("select__k", list(range(1, 16)))),
+
+    # optional pre/post reducers (string params consumed by the reducers)
+    "reduce_pre__method":  Categorical(_cfg_spaces.get("reduce_pre__method", [None, "pca"])),
+    "reduce_post__method": Categorical(_cfg_spaces.get("reduce_post__method", [None])),
+
+    # classifier choices from MODELS via CONFIG model_keys
+    "clf": Categorical([EstimatorWrapper(MODELS[k]) for k in PIPE_CFG.get("model_keys", [])]),
+}
+
 
 def prepare_eurasian_otter() -> None:
     """Prepare splits only for the Eurasian otter dataset."""

@@ -9,6 +9,9 @@ from sklearn.metrics import confusion_matrix
 from matplotlib.colors import LinearSegmentedColormap
 from FIT_python.config import DATA_DIR, PATHS, SEX_PREDICT_METRIC, CONFIG
 
+
+
+
 SEX_TO_INT = {"f": 0, "m": 1}
 INT_TO_SEX = {0: "f", 1: "m"}
 from FIT_python.utils import get_species_paths
@@ -56,9 +59,12 @@ def predict_simple_baseline(
         ``pred_baseline_proba_m``.
     """
 
-    paths = get_species_paths(species)
-    splits_dir = paths["splits"]
-    csv_path = paths["predictions"] / f"{species}_baseline_predictions.csv"
+    paths = get_species_paths(section="sex_modelling", species=species)
+    splits_dir = PATHS["splits"] / species  # globaler splits-Pfad
+    models_dir = Path(models_dir) if models_dir is not None else paths["models"]
+    pred_dir = paths["predictions"] if "predictions" in paths else (PATHS["sex_modelling"] / species / "tables")
+    pred_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = pred_dir / f"{species}base_predcition.csv"    
     if models_dir is not None:
         model_dir = Path(models_dir)
     elif exp_dir is not None:
@@ -155,10 +161,12 @@ def predict_all(
     Test + Inference: Predictions from model retrained on full Train.
     """
 
-    paths = get_species_paths(species)
-    splits_dir = paths["splits"]
+    paths = get_species_paths(section="sex_modelling", species=species)
+    splits_dir = PATHS["splits"] / species  # globaler splits-Pfad
     models_dir = Path(models_dir) if models_dir is not None else paths["models"]
-    csv_path = paths["predictions"] / f"{species}_all_predictions.csv"
+    pred_dir = paths["predictions"] if "predictions" in paths else (PATHS["sex_modelling"] / species / "tables")
+    pred_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = pred_dir / f"{species}_all_predictions.csv"    if models_dir is not None:
 
     # When reuse_csv=True the predictions must already exist on disk
     if reuse_csv:
