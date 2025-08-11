@@ -1,1 +1,0 @@
-Histogram of dist3_15 before and after cleaning.

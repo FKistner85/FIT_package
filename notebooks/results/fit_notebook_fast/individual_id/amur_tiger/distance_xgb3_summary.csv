@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-amur_tiger,0.9680184881467124,0.920252064319861,dist_euclidean;median_manhattan_between;median_cosine_between

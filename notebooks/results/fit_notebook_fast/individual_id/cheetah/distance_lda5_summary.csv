@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-cheetah,0.9833242118181668,0.9912280701754386,dist_cosine;mean_cosine_between;median_cosine_between;dist_braycurtis;median_braycurtis_between

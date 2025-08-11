@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-mountain_lion,0.964821824827046,0.9368421052631579,dist_euclidean;dist_cosine;mean_cosine_between;dist_braycurtis;median_braycurtis_between

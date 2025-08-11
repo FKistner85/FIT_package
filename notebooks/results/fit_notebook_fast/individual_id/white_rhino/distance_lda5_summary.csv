@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-white_rhino,0.9485050552736143,0.9427798386171555,dist_cosine;mean_cosine_between;median_cosine_between;dist_braycurtis;median_braycurtis_between

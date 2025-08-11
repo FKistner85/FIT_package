@@ -1,1 +1,0 @@
-Histogram of v5 before and after cleaning.

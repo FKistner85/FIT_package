@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-giant_panda,0.973015873015873,0.9639175257731959,dist_euclidean;dist_manhattan;dist_cosine;median_cosine_between;median_braycurtis_between

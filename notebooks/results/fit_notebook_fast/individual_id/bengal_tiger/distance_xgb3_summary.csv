@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-bengal_tiger,0.9235888634630054,1.0,median_manhattan_between;dist_cosine;dist_braycurtis

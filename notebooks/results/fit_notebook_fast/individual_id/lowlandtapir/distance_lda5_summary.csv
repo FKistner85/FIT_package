@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-lowlandtapir,0.8645320197044335,0.8794520547945206,dist_euclidean;dist_manhattan;dist_cosine;dist_braycurtis;median_braycurtis_between

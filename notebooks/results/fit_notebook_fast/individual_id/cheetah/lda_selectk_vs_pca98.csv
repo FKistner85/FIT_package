@@ -1,3 +1,0 @@
-species,method,cv_bal_acc,test_bal_acc,best_k,selected_features,pca_n_components
-cheetah,SelectKBest,0.983,0.973,2.0,median_cosine_between;median_braycurtis_between,
-cheetah,PCA98,0.981,0.973,,,16.0

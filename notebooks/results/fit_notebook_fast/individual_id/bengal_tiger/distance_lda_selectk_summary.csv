@@ -1,2 +1,0 @@
-species,best_k,cv_bal_acc,test_bal_acc,selected_features
-bengal_tiger,7,0.9361174675819985,0.9761904761904762,median_euclidean_between;dist_manhattan;median_manhattan_between;dist_cosine;median_cosine_between;dist_braycurtis;median_braycurtis_between

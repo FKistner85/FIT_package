@@ -1,1 +1,0 @@
-Histogram of area8 before and after cleaning.

@@ -1,2 +1,0 @@
-species,cv_bal_acc,test_bal_acc,top5_features
-eurasian_otter,0.9406228008444757,0.8045454545454546,dist_cosine;dist_braycurtis;median_braycurtis_between

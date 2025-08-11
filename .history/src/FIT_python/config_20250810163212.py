@@ -98,7 +98,7 @@ DATASET_COLOR_SHADES = {
 
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
-GLOBAL_RANDOM_SEED = 69
+GLOBAL_RANDOM_SEED = 12345
 TEST_SIZE = 0.3
 NUM_FOLDS = 5
 DEBUG_MODE = False
@@ -222,50 +222,49 @@ CONFIG["pipeline_sex"] = {
         "clf": None,
     },
     "metrics": [
-    "maj_test_pct",
-    "accuracy",
-    "balanced_accuracy",
-    "neg_log_loss",
-    "f1",
-    "precision",
-    "recall",
-    "roc_auc",
-],
-"scoring": {
-    # "accuracy": "accuracy",
-    "balanced_accuracy": "balanced_accuracy",  # ← einzige aktive Scoring-Metrik
-    # "neg_log_loss": "neg_log_loss",
-    # "f1": "f1",
-    # "precision": "precision",
-    # "recall": "recall",
-    # "roc_auc": "roc_auc",
-},
-"pipeline_order": [
-    "outlier",
-    "scale",
-    "reduce_pre__method",
-    "select__method",
-    "select__k",
-    "reduce_post__method",
-    "clf",
-],
-"run_otter_search_sex": {
-    "n_iter": 100,
-    "cv": "fold",
-    "random_state": GLOBAL_RANDOM_SEED,
-    "reuse_results": True,
-},
-"scoring_to_eval": {
-    "accuracy": "accuracy_test",
-    "balanced_accuracy": "balanced_test_acc",
-    "neg_log_loss": "mean_test_neg_log_loss",
-    "f1": "f1_test",
-    "precision": "precision_test",
-    "recall": "recall_test",
-    "roc_auc": "roc_auc_test",
-    "maj_test_pct": "maj_test_pct",
-},
-
+        "maj_test_pct",
+        "accuracy",
+        "balanced_accuracy",
+        "neg_log_loss",
+        "f1",
+        "precision",
+        "recall",
+        "roc_auc",
+    ],
+    "scoring": {
+        "accuracy": "accuracy",
+        "balanced_accuracy": "balanced_accuracy",
+        "neg_log_loss": "neg_log_loss",
+        "f1": "f1",
+        "precision": "precision",
+        "recall": "recall",
+        "roc_auc": "roc_auc",
+    },
+    "pipeline_order": [
+        "outlier",
+        "scale",
+        "reduce_pre__method",
+        "select__method",
+        "select__k",
+        "reduce_post__method",
+        "clf",
+    ],
+    "run_otter_search_sex": {
+        "n_iter": 100,
+        "cv": "fold",
+        "random_state": GLOBAL_RANDOM_SEED,
+        "reuse_results": True,
+    },
+    "scoring_to_eval": {
+        "accuracy": "accuracy_test",
+        "balanced_accuracy": "balanced_test_acc",
+        "neg_log_loss": "mean_test_neg_log_loss",
+        "f1": "f1_test",
+        "precision": "precision_test",
+        "recall": "recall_test",
+        "roc_auc": "roc_auc_test",
+        "maj_test_pct": "maj_test_pct",
+    },
 }
 
 CONFIG["pipeline_sex"]["metric_map"] = {
