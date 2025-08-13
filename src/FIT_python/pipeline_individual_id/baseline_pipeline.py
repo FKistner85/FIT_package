@@ -11,10 +11,12 @@ from __future__ import annotations
 
 from typing import Iterable, List, Dict, Optional
 from pathlib import Path
+import time
 
 import pandas as pd
 
 from .pairwise_individual_id_pipeline import run_all_pairwise_projections_parallel
+from .generate_trails_and_trailpairs import generate_pairwise_comparisons_from_df
 from FIT_python.config import CONFIG
 from FIT_python.utils import get_species_paths
 from FIT_python.config import SEX_PREDICT_METRIC
@@ -159,3 +161,120 @@ class DistanceBaseline:
             df_mp.to_parquet(master_fp, append=True)
 
         return df_res
+
+
+def evaluate_test_and_inference(
+    train_df: pd.DataFrame,
+    df_test: pd.DataFrame,
+    feature_cols: List[str],
+    *,
+    df_inf: pd.DataFrame | None = None,
+    include_inference: bool = False,
+    master_pairs: list[pd.DataFrame] | None = None,
+    all_master_pairs: list[pd.DataFrame] | None = None,
+    species: str | None = None,
+    tag: str | None = None,
+    reducers: List[str] | None = None,
+    selection_method: str = "forward",
+    n_components: int | List[int] = 2,
+    outlier_methods: Optional[List[str] | str] = CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["outlier_methods"],
+    scaler_methods: Optional[List[str] | str] = CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["scaler_methods"],
+    use_sexmodel_prediction: bool = CONFIG["pipeline_individual_id"][
+        "pairwise_defaults"
+    ]["use_sexmodel_prediction"],
+    sexmodel_path: str | None = None,
+    n_jobs: int = -1,
+    master_fp: Path | None = None,
+) -> tuple[list[pd.DataFrame], list[pd.DataFrame]]:
+    """Evaluate DistanceBaseline on test and optionally inference pairs.
+
+    Parameters
+    ----------
+    train_df, df_test:
+        Training and test dataframes.
+    feature_cols:
+        Names of the morphometric feature columns to use.
+    df_inf:
+        Optional inference dataframe used when ``include_inference`` is ``True``.
+    include_inference:
+        When ``True`` inference pairs are generated and evaluated.
+    master_pairs, all_master_pairs:
+        Lists that will receive the per-origin results. New dataframes are
+        appended to these lists when provided.
+
+    Returns
+    -------
+    tuple[list[pd.DataFrame], list[pd.DataFrame]]
+        Updated ``master_pairs`` and ``all_master_pairs`` lists.
+    """
+
+    if master_pairs is None:
+        master_pairs = []
+    if all_master_pairs is None:
+        all_master_pairs = []
+
+    # --- Test pairs ---
+    if not df_test.empty:
+        comps_test = generate_pairwise_comparisons_from_df(df_test, trail_col="Trail")
+        start = time.time()
+        res_test = DistanceBaseline.run(
+            train_df,
+            comps_test,
+            feature_cols,
+            val_df=df_test,
+            reducers=reducers,
+            selection_method=selection_method,
+            n_components=n_components,
+            outlier_methods=outlier_methods,
+            scaler_methods=scaler_methods,
+            use_sexmodel_prediction=use_sexmodel_prediction,
+            sexmodel_path=sexmodel_path,
+            n_jobs=n_jobs,
+            tag=tag,
+            master_fp=master_fp,
+            origin="test",
+        )
+        res_test["origin"] = "test"
+        if species is not None:
+            res_test["species"] = species
+        if tag is not None:
+            res_test["tag"] = tag
+        res_test["runtime_s"] = time.time() - start
+        master_pairs.append(res_test)
+        all_master_pairs.append(res_test)
+
+    # --- Inference pairs ---
+    if include_inference and df_inf is not None and not df_inf.empty:
+        comps_inf = generate_pairwise_comparisons_from_df(df_inf, trail_col="Trail")
+        start = time.time()
+        res_inf = DistanceBaseline.run(
+            train_df,
+            comps_inf,
+            feature_cols,
+            val_df=df_inf,
+            reducers=reducers,
+            selection_method=selection_method,
+            n_components=n_components,
+            outlier_methods=outlier_methods,
+            scaler_methods=scaler_methods,
+            use_sexmodel_prediction=use_sexmodel_prediction,
+            sexmodel_path=sexmodel_path,
+            n_jobs=n_jobs,
+            tag=tag,
+            master_fp=master_fp,
+            origin="inference",
+        )
+        res_inf["origin"] = "inference"
+        if species is not None:
+            res_inf["species"] = species
+        if tag is not None:
+            res_inf["tag"] = tag
+        res_inf["runtime_s"] = time.time() - start
+        master_pairs.append(res_inf)
+        all_master_pairs.append(res_inf)
+
+    return master_pairs, all_master_pairs

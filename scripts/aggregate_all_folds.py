@@ -22,7 +22,7 @@ def main() -> None:
         "--origin",
         type=str,
         default="cv",
-        choices=["cv", "test"],
+        choices=["cv", "test", "inference"],
         help="Filter pairs by origin label",
     )
     args = parser.parse_args()

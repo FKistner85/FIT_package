@@ -1604,7 +1604,7 @@ out_path:
     When not provided, the file is saved as ``all_species_folds.parquet``
     inside ``base_dir``.
 origin:
-    ``origin`` label to filter by (e.g. ``"cv"`` or ``"test"``).
+    ``origin`` label to filter by (e.g. ``"cv"``, ``"test"`` or ``"inference"``).
 
 Returns
 -------
