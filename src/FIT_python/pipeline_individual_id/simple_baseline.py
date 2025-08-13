@@ -827,7 +827,21 @@ def run_fold_cv(
             df_mp["origin"] = "cv"
             if tag is not None:
                 df_mp["tag"] = tag
-            df_mp.to_parquet(master_fp, append=True)
+
+            # Nur Spalten ohne ndarray für drop_duplicates
+            subset_cols = [c for c in df_mp.columns if not isinstance(df_mp[c].iloc[0], (np.ndarray, list))]
+
+            if master_fp.exists():
+                old_df = pd.read_parquet(master_fp)
+                combined = pd.concat([old_df, df_mp], ignore_index=True)
+                combined = combined.drop_duplicates(subset=subset_cols)
+            else:
+                combined = df_mp
+
+            master_fp.parent.mkdir(parents=True, exist_ok=True)
+            combined.to_parquet(master_fp, index=False)
+
+
 
         # Für all_folds.csv sammeln (ohne origin/tag – der Aufrufer kann das nachträglich setzen)
         cv_pair_frames.append(df_res)
@@ -858,7 +872,7 @@ def run_fold_cv(
         summaries.append(
             {
                 "pipeline": (df_res["pipeline"].iloc[0] if "pipeline" in df_res.columns else ""),
-                "fold": fold,
+                "Fold": fold,
                 "bcr": bcr,
                 "pred_count": pred_n,
                 "true_count": true_n,
