@@ -63,8 +63,9 @@ these folds without creating new holdout sets.  Passing
 cross-validation. Results are stored in the respective species directories with
 one CSV per fold and a combined `summary.csv`.
 The helper `aggregate_all_folds(EXP_DIR/'fold_cv')` can collect all
-species `master_pairs.parquet` files (filtered by `origin="cv"`) into
-`all_species_folds.parquet` for further analysis.
+species `master_pairs.parquet` files (filtered by `origin="cv"`,
+`"test"` or `"inference"`) into `all_species_folds.parquet` for further
+analysis.
 
 ## Global Cut-off Evaluation
 

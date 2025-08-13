@@ -23,8 +23,8 @@ def aggregate_all_folds(
         When not provided, the file is saved as ``all_species_folds.parquet``
         inside ``base_dir``.
     origin:
-        Value of the ``origin`` column to filter by. Typical values are ``"cv"``
-        and ``"test"``. Rows with other origins are dropped.
+        Value of the ``origin`` column to filter by. Typical values are ``"cv"``,
+        ``"test"`` and ``"inference"``. Rows with other origins are dropped.
 
     Returns
     -------
