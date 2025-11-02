@@ -3,14 +3,12 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "FIT_python"
-version = "0.1.0"
-description = "FIT Otter: Data import and analysis pipeline"
-readme = "README.md"
-requires-python = ">=3.11"
-
-# Standard dependencies
-dependencies = [
+name = "FIT_python"                    # aus name=
+version = "0.1.0"                      # aus version=
+description = "FIT Otter: Data import and analysis pipeline"  # aus description=
+readme = "README.md"                   # Optional, falls du ein README hast
+requires-python = ">=3.11"             # aus python_requires=
+dependencies = [                       # aus install_requires=
   "pandas>=1.3",
   "xlrd>=1.2",
   "openpyxl>=3.0",
@@ -27,15 +25,14 @@ dependencies = [
   "scikit-optimize",
   "PyQt5",
   "tqdm",
-  "tqdm-joblib",        # ← hier rein, nicht nur dev
-  "joblib",
 ]
 
-authors = [
+
+
+authors = [                            # aus author=
   { name = "Frederick Kistner" }
 ]
 
-# Optional extras
 [project.optional-dependencies]
 dev = [
   "pytest",
@@ -45,9 +42,10 @@ dev = [
   "missingpy",
   "jupyterlab",
   "pyarrow",
+  "tqdm-joblib",
+  "joblib",
 ]
 torch = ["torch"]
 
-[tool.setuptools.packages.find]
-where = ["src"]                      # wichtig für deine Struktur
+[tool.setuptools.packages.find]        # Nachbildung von find_packages()
 include = ["FIT_python", "FIT_python.*"]
