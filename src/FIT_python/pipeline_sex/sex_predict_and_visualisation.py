@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
+from typing import Sequence
 
 import joblib
 import matplotlib.pyplot as plt
@@ -10,9 +11,21 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.base import clone
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import (
+    accuracy_score,
+    brier_score_loss,
+    confusion_matrix,
+    log_loss,
+    roc_auc_score,
+)
 
 from FIT_python.config import DATA_DIR, PATHS, SEX_PREDICT_METRIC, CONFIG
+from FIT_python.analysis.uncertainty import (
+    assign_confidence_bands,
+    bootstrap_confidence_interval,
+    build_calibration_table,
+    expected_calibration_error,
+)
 from FIT_python.utils import get_species_paths
 from FIT_python.Visualisations.plot_style import apply_style, map_sex
 
@@ -270,6 +283,354 @@ def predict_all(
     all_df = pd.concat(dfs.values(), ignore_index=True)
     all_df.to_csv(csv_path, index=False)
     return all_df
+
+
+# =============================================================================
+# Uncertainty & calibration summary
+# =============================================================================
+def summarise_uncertainty(
+    df: pd.DataFrame,
+    *,
+    species: str | None = None,
+    positive_label: str = "m",
+    n_bins: int = 10,
+    strategy: str = "quantile",
+    confidence_boundaries: Sequence[float] = (0.6, 0.8, 0.9),
+    bootstrap_iterations: int = 500,
+    bootstrap_confidence: float = 0.95,
+    random_state: int | None = None,
+    out_dir: Path | str | None = None,
+    create_plot: bool = True,
+) -> dict[str, pd.DataFrame]:
+    """Compute calibration and confidence metrics for a sex prediction dataframe.
+
+    Parameters
+    ----------
+    df:
+        Dataframe returned by :func:`predict_all` containing prediction
+        probabilities and split information.
+    species:
+        Optional species name used in plot titles and captions.
+    positive_label:
+        Target label treated as the positive class. Defaults to ``"m"``.
+    n_bins, strategy:
+        Parameters forwarded to :func:`build_calibration_table` and
+        :func:`expected_calibration_error`.
+    confidence_boundaries:
+        Boundaries for :func:`assign_confidence_bands`. When empty no discrete
+        confidence bands are created.
+    bootstrap_iterations, bootstrap_confidence, random_state:
+        Configuration for :func:`bootstrap_confidence_interval`. Set
+        ``bootstrap_iterations`` to ``0`` to disable interval estimation.
+    out_dir:
+        Optional directory for writing CSV summaries and plots.
+    create_plot:
+        When ``True`` a reliability diagram is written to ``out_dir``.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary containing dataframes for metrics, calibration bins,
+        confidence band counts and the annotated predictions.
+    """
+
+    if "__split__" not in df.columns:
+        raise KeyError("DataFrame requires a '__split__' column for grouping")
+    if "sex" not in df.columns:
+        raise KeyError("DataFrame is missing the 'sex' column")
+
+    positive_label = str(positive_label).lower()
+    if positive_label not in {"m", "f"}:
+        raise ValueError("positive_label must be 'm' or 'f'")
+
+    proba_col = f"pred_proba_{positive_label}"
+    if proba_col not in df.columns:
+        raise KeyError(f"Prediction column '{proba_col}' not found")
+
+    other_label = "f" if positive_label == "m" else "m"
+    other_proba_col = f"pred_proba_{other_label}"
+    df = df.copy()
+
+    df["sex"] = df["sex"].astype(str).str.lower()
+    if "pred_sex" in df.columns:
+        df["pred_sex"] = df["pred_sex"].astype(str).str.lower()
+    else:
+        df["pred_sex"] = np.where(df[proba_col] >= 0.5, positive_label, other_label)
+
+    proba = df[proba_col].astype(float)
+    if other_proba_col in df.columns:
+        other_proba = df[other_proba_col].astype(float)
+        max_conf = np.maximum(proba, other_proba)
+    else:
+        max_conf = np.maximum(proba, 1 - proba)
+    df["max_confidence"] = max_conf
+
+    boundaries = tuple(confidence_boundaries) if confidence_boundaries else tuple()
+    if boundaries:
+        df["confidence_band"] = assign_confidence_bands(
+            df["max_confidence"], boundaries=boundaries
+        )
+
+    metrics_rows: list[dict[str, float]] = []
+    calibration_rows: list[pd.DataFrame] = []
+    confidence_rows: list[pd.DataFrame] = []
+
+    log_loss_fn = lambda y, p: log_loss(
+        y,
+        np.clip(p, 1e-12, 1 - 1e-12),
+        labels=[0, 1],
+    )
+
+    groups = df.groupby("__split__", sort=False)
+    for split_idx, (split_name, split_df) in enumerate(groups):
+        y_true = (split_df["sex"] == positive_label).astype(int).to_numpy()
+        y_pred = (split_df["pred_sex"] == positive_label).astype(int).to_numpy()
+        proba_split = split_df[proba_col].astype(float).to_numpy()
+        max_conf_split = split_df["max_confidence"].to_numpy()
+
+        n_samples = len(split_df)
+        if n_samples == 0:
+            continue
+
+        metrics: dict[str, float] = {
+            "split": split_name,
+            "n_samples": float(n_samples),
+            "accuracy": float(accuracy_score(y_true, y_pred)),
+            "brier_score": float(brier_score_loss(y_true, proba_split)),
+            "log_loss": float(log_loss_fn(y_true, proba_split)),
+            "ece": float(
+                expected_calibration_error(
+                    y_true,
+                    proba_split,
+                    n_bins=n_bins,
+                    strategy=strategy,
+                )
+            ),
+            "mean_confidence": float(max_conf_split.mean()),
+            "median_confidence": float(np.median(max_conf_split)),
+        }
+
+        try:
+            metrics["roc_auc"] = float(roc_auc_score(y_true, proba_split))
+        except ValueError:
+            metrics["roc_auc"] = float("nan")
+
+        for boundary in boundaries:
+            metrics[f"share_below_{boundary:.2f}"] = float(
+                (max_conf_split < boundary).mean()
+            )
+
+        if bootstrap_iterations:
+            seed = None if random_state is None else random_state + split_idx
+            acc_ci = bootstrap_confidence_interval(
+                accuracy_score,
+                y_true,
+                y_pred,
+                n_bootstraps=bootstrap_iterations,
+                confidence=bootstrap_confidence,
+                random_state=seed,
+            )
+            metrics["accuracy_ci_lower"], metrics["accuracy_ci_upper"] = acc_ci
+
+            brier_ci = bootstrap_confidence_interval(
+                brier_score_loss,
+                y_true,
+                proba_split,
+                n_bootstraps=bootstrap_iterations,
+                confidence=bootstrap_confidence,
+                random_state=None if seed is None else seed + 1,
+            )
+            metrics["brier_ci_lower"], metrics["brier_ci_upper"] = brier_ci
+
+            log_ci = bootstrap_confidence_interval(
+                log_loss_fn,
+                y_true,
+                proba_split,
+                n_bootstraps=bootstrap_iterations,
+                confidence=bootstrap_confidence,
+                random_state=None if seed is None else seed + 2,
+            )
+            metrics["logloss_ci_lower"], metrics["logloss_ci_upper"] = log_ci
+
+            try:
+                roc_ci = bootstrap_confidence_interval(
+                    roc_auc_score,
+                    y_true,
+                    proba_split,
+                    n_bootstraps=bootstrap_iterations,
+                    confidence=bootstrap_confidence,
+                    random_state=None if seed is None else seed + 3,
+                )
+                metrics["roc_auc_ci_lower"], metrics["roc_auc_ci_upper"] = roc_ci
+            except ValueError:
+                metrics["roc_auc_ci_lower"] = float("nan")
+                metrics["roc_auc_ci_upper"] = float("nan")
+
+        metrics_rows.append(metrics)
+
+        calib = build_calibration_table(
+            y_true,
+            proba_split,
+            n_bins=n_bins,
+            strategy=strategy,
+        ).assign(split=split_name)
+        calibration_rows.append(calib)
+
+        if boundaries:
+            counts = (
+                split_df["confidence_band"]
+                .value_counts(sort=False)
+                .rename_axis("confidence_band")
+                .to_frame("count")
+                .reset_index()
+            )
+            counts["split"] = split_name
+            counts["fraction"] = counts["count"] / n_samples
+            confidence_rows.append(counts)
+
+    metrics_df = pd.DataFrame(metrics_rows)
+    calibration_df = (
+        pd.concat(calibration_rows, ignore_index=True)
+        if calibration_rows
+        else pd.DataFrame(
+            columns=[
+                "bin",
+                "bin_lower",
+                "bin_upper",
+                "count",
+                "mean_predicted",
+                "fraction_of_positives",
+                "split",
+            ]
+        )
+    )
+    confidence_df = (
+        pd.concat(confidence_rows, ignore_index=True)
+        if confidence_rows
+        else pd.DataFrame(columns=["confidence_band", "count", "split", "fraction"])
+    )
+
+    out_path: Path | None = None
+    if out_dir is not None:
+        out_path = Path(out_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        metrics_df.to_csv(out_path / "sex_uncertainty_metrics.csv", index=False)
+        calibration_df.to_csv(out_path / "sex_uncertainty_calibration.csv", index=False)
+        confidence_df.to_csv(
+            out_path / "sex_uncertainty_confidence_bands.csv", index=False
+        )
+
+        if boundaries:
+            first_boundary = boundaries[0]
+            low_conf = df[df["max_confidence"] < first_boundary]
+            if not low_conf.empty:
+                cols = ["__split__", "sex", "pred_sex", proba_col, "max_confidence"]
+                if other_proba_col in df.columns:
+                    cols.append(other_proba_col)
+                for opt in ["individual_id", "Trail", "trail", "sample_id"]:
+                    if opt in df.columns and opt not in cols:
+                        cols.append(opt)
+                low_conf.loc[:, cols].to_csv(
+                    out_path / "sex_uncertainty_low_confidence.csv", index=False
+                )
+
+        if create_plot and not calibration_df.empty:
+            apply_style()
+            fig, ax = plt.subplots(figsize=(6, 4))
+            for split_name, split_df in calibration_df.groupby("split"):
+                ax.plot(
+                    split_df["mean_predicted"],
+                    split_df["fraction_of_positives"],
+                    marker="o",
+                    label=str(split_name),
+                )
+            ax.plot([0, 1], [0, 1], linestyle="--", color="black", linewidth=1)
+            title = "Sex model reliability"
+            if species:
+                title += f" – {species}"
+            ax.set_title(title)
+            ax.set_xlabel("Mean predicted probability")
+            ax.set_ylabel("Fraction of positives")
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.legend(title="Split")
+            fig.tight_layout()
+            plot_path = out_path / "sex_uncertainty_reliability.png"
+            fig.savefig(plot_path)
+            try:
+                from FIT_python.caption_utils import save_caption
+
+                save_caption(
+                    plot_path,
+                    "Reliability diagram comparing predicted and empirical sex probabilities.",
+                )
+            except Exception:
+                pass
+            plt.close(fig)
+
+    return {
+        "metrics": metrics_df,
+        "calibration": calibration_df,
+        "confidence_bands": confidence_df,
+        "annotated_predictions": df,
+    }
+
+
+def create_uncertainty_report(
+    species: str,
+    *,
+    metric_key: str = SEX_PREDICT_METRIC,
+    models_dir: str | Path | None = None,
+    include_inference: bool = True,
+    reuse_csv: bool = False,
+    use_cv_train_predictions: bool = True,
+    out_dir: str | Path | None = None,
+    positive_label: str = "m",
+    n_bins: int = 10,
+    strategy: str = "quantile",
+    confidence_boundaries: Sequence[float] = (0.6, 0.8, 0.9),
+    bootstrap_iterations: int = 500,
+    bootstrap_confidence: float = 0.95,
+    random_state: int | None = None,
+    create_plot: bool = True,
+) -> dict[str, pd.DataFrame]:
+    """Generate confidence and calibration artefacts for a species."""
+
+    df = predict_all(
+        species,
+        metric_key=metric_key,
+        prefer_generic=False,
+        models_dir=models_dir,
+        include_inference=include_inference,
+        reuse_csv=reuse_csv,
+        use_cv_train_predictions=use_cv_train_predictions,
+    )
+
+    if df.empty:
+        return {
+            "metrics": pd.DataFrame(),
+            "calibration": pd.DataFrame(),
+            "confidence_bands": pd.DataFrame(),
+            "annotated_predictions": df,
+        }
+
+    if out_dir is None:
+        paths = get_species_paths(section="sex_modelling", species=species)
+        out_dir = paths["tables"] / "uncertainty"
+
+    return summarise_uncertainty(
+        df,
+        species=species,
+        positive_label=positive_label,
+        n_bins=n_bins,
+        strategy=strategy,
+        confidence_boundaries=confidence_boundaries,
+        bootstrap_iterations=bootstrap_iterations,
+        bootstrap_confidence=bootstrap_confidence,
+        random_state=random_state,
+        out_dir=out_dir,
+        create_plot=create_plot,
+    )
 
 
 # =============================================================================
