@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import inspect
+from importlib import import_module
 from pathlib import Path
 from typing import Callable
 
@@ -100,6 +101,29 @@ def run_id_search(*args, **kwargs):
     return _impl(*args, **kwargs)
 
 
+_LAZY_MODULES = {
+    "geometric_pairwise_projection": ".pairwise_individual_id_pipeline",
+    "pairwise_individual_id_pipeline": ".pairwise_individual_id_pipeline",
+}
+
+
+def __getattr__(name: str):
+    """Lazily expose heavy submodules on first access.
+
+    Historically :mod:`geometric_pairwise_projection` was a dedicated module.
+    The implementation now lives in :mod:`pairwise_individual_id_pipeline` but
+    callers – including existing notebooks – still import the old name.  To
+    maintain backwards compatibility without importing the heavy pipeline code
+    eagerly we resolve both names lazily the first time they are accessed.
+    """
+
+    if name in _LAZY_MODULES:
+        module = import_module(_LAZY_MODULES[name], __name__)
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 __all__ = [
     "run_simple_baseline_otter",
     "run_baseline_all_species",
@@ -108,5 +132,7 @@ __all__ = [
     "collect_id_metrics",
     "plot_bcr_comparison",
     "run_id_search",
+    "geometric_pairwise_projection",
+    "pairwise_individual_id_pipeline",
 ]
 
