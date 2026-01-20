@@ -54,16 +54,47 @@ def generate_dataset_overview(
     rows = []
     for name, df in tqdm(dfs.items(), desc="Datasets"):
         feature_cols = get_feature_cols(df)
+        
+        # Count individuals by sex
+        sex_col = df.get("sex", pd.Series())
+        individual_id_col = df.get("individual_id", pd.Series())
+        
+        # Count unique individuals per sex category
+        n_female = 0
+        n_male = 0
+        if not sex_col.empty and not individual_id_col.empty:
+            # Create a df with individual_id and sex, drop duplicates to count unique individuals
+            ind_sex = df[["individual_id", "sex"]].dropna().drop_duplicates(subset="individual_id")
+            # Normalize sex values to handle different formats (f/F/0/Female, m/M/1/Male)
+            ind_sex_norm = ind_sex["sex"].astype(str).str.lower().str.strip()
+            n_female = ind_sex_norm.isin(["f", "female", "0"]).sum()
+            n_male = ind_sex_norm.isin(["m", "male", "1"]).sum()
+        
         row = {
             "Species": _species_label(name, df),
             "No. of footprints": len(df),
-            "No. of known individuals": df.get("individual_id", pd.Series()).nunique(),
+            "No. of known individuals": individual_id_col.nunique(),
+            "No. of female individuals": n_female,
+            "No. of male individuals": n_male,
             "No. of trails": df.get("trail", pd.Series()).nunique(),
             "No. of measurements": len(feature_cols),
         }
         rows.append(row)
 
     overview_df = pd.DataFrame(rows)
+    
+    # Add total row at the end
+    total_row = {
+        "Species": "All Species Total",
+        "No. of footprints": overview_df["No. of footprints"].sum(),
+        "No. of known individuals": overview_df["No. of known individuals"].sum(),
+        "No. of female individuals": overview_df["No. of female individuals"].sum(),
+        "No. of male individuals": overview_df["No. of male individuals"].sum(),
+        "No. of trails": overview_df["No. of trails"].sum(),
+        "No. of measurements": overview_df["No. of measurements"].sum(),
+    }
+    overview_df = pd.concat([overview_df, pd.DataFrame([total_row])], ignore_index=True)
+    
     out_path.parent.mkdir(parents=True, exist_ok=True)
     overview_df.to_parquet(out_path, index=False, compression="gzip")
     return overview_df

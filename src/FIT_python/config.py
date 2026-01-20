@@ -3,6 +3,8 @@
 from pathlib import Path
 import os
 from datetime import datetime
+import json
+import hashlib
 
 # ============================================================================
 # Paths
@@ -35,7 +37,9 @@ DIM_REDUCED_DIR = PROCESSED_DIR / "dim_reduced"
 NUMERIC_DIR = PROCESSED_DIR / "numeric"
 
 # unified results directory with dedicated subfolders
-RESULTS_DIR = EXPERIMENT_ROOT / "results"
+# NOTE: EXPERIMENT_ROOT already points to the experiment-specific directory (e.g., "results/fit_notebook_final")
+# so we don't need an additional "results" subdirectory to avoid double nesting like "results/results/"
+RESULTS_DIR = EXPERIMENT_ROOT
 RESULTS_SUBDIRS = {
     name: RESULTS_DIR / name for name in ["dataprocessing", "sex_modelling", "individual_id"]
 }
@@ -98,7 +102,7 @@ DATASET_COLOR_SHADES = {
 
 GROUP_COL = "individual_id"
 STRATIFY_COL = "sex"
-GLOBAL_RANDOM_SEED =99
+GLOBAL_RANDOM_SEED =123
 TEST_SIZE = 0.3
 NUM_FOLDS = 5
 DEBUG_MODE = False
@@ -136,6 +140,11 @@ CONFIG = {
             "a_j_soemmeringii": "acinonyx_jubatus_soemmeringii",
             "a_j_jubatus": "acinonyx_jubatus_jubatus",
         },
+        "generate_histograms": False,
+        "reuse_overview": False,
+        "reuse_splits": True,
+        "fold_column_name": "Fold",
+        "trail_column_name": "Trail",
     },
     "general_pipeline_steps": {
         "outlier_defaults": {
@@ -156,8 +165,10 @@ CONFIG = {
             "n_neighbors": 15,
             "min_dist": 0.1,
             "whiten": False,
+            "supervised": False,
         },
         "metadata_cols": ["individual_id", "Trail", "sex", "id", "Fold"],
+        "n_jobs": -1,
     },
     "gui_annotator": {"default_scale": 1.0, "display_size": [1280, 720]},
     "visualisation": {
@@ -168,11 +179,30 @@ CONFIG = {
             "test_colors": TEST_COLORS,
         },
         "dataset": {"color_shades": DATASET_COLOR_SHADES},
+        "dpi": 300,
+        "figure_sizes": {
+            "umap_plot": (12, 8),
+            "benchmark_bar": (14, 7),
+            "histogram": (10, 8),
+            "cutoff_plot": (10, 6),
+            "dendrogram": (14, 6),
+            "scatter_reg": (7, 7),
+        },
+        "font_sizes": {
+            "axis_label": 12,
+            "legend": 10,
+            "title": 14,
+            "tick": 11,
+            "panel_label": 12,
+        },
+        "error_bar_capsize": 3,
+        "histogram_bins": 10,
+        "top_k_pipelines": 3,
     },
     "dataset_summary": {
         "species_labels": {
             "amur_tiger": {"common": "Amur Tiger", "latin": "Panthera tigris altaica"},
-            "bengal_tiger": {"common": "Bengal Tiger", "latin": "Panthera tigris tigris"},
+           "bengal_tiger": {"common": "Bengal Tiger", "latin": "Panthera tigris tigris"},
             "cheetah": {"common": "Cheetah", "latin": "Acinonyx jubatus"},
             "eurasian_otter": {"common": "Eurasian Otter", "latin": "Lutra lutra"},
             "giant_panda": {"common": "Giant Panda", "latin": "Ailuropoda melanoleuca"},
@@ -301,6 +331,8 @@ CONFIG["pipeline_individual_id"] = {
         "outlier_methods": None,
         "scaler_methods": None,
         "use_sexmodel_prediction": False,
+        "reuse_summary": False,
+        "overwrite_results": False,
     },
     "search_spaces": {
         "outlier": [None],
@@ -316,5 +348,146 @@ CONFIG["pipeline_individual_id"] = {
         "subsample_sizes": [3, 5, 7],
         "n_candidates": 20,
     },
+    "clustering": {
+        "alpha": 0.5,
+        "cutoff_range": {"start": 0.4, "stop": 4.2, "step": 0.1},
+        "distance_metrics": ["euclidean", "manhattan", "cosine", "chebyshev", "canberra", "braycurtis"],
+    },
+    "sequential_holdout": {
+        "iterations": 30,
+        "val_sizes_train": list(range(2, 21)),
+        "val_sizes_test": [2, 4, 6, 8],
+    },
     "sequential_holdout_val_sizes": [2, 4, 6, 8],
 }
+
+
+# ============================================================================
+# Config Logging System
+# ============================================================================
+def _serialize_config() -> dict:
+    """Serialize the current CONFIG to a JSON-compatible dict."""
+    def _convert(obj):
+        if isinstance(obj, Path):
+            return str(obj)
+        elif isinstance(obj, dict):
+            return {str(k): _convert(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [_convert(item) for item in obj]
+        elif isinstance(obj, (int, float, str, bool, type(None))):
+            return obj
+        else:
+            # For any other type, convert to string
+            return str(obj)
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "experiment_name": os.getenv("FIT_EXPERIMENT_NAME", "default"),
+        "experiment_root": str(EXPERIMENT_ROOT),
+        "raw_dir": str(RAW_DIR),
+        "global_random_seed": GLOBAL_RANDOM_SEED,
+        "num_folds": NUM_FOLDS,
+        "debug_mode": DEBUG_MODE,
+        "config": _convert(CONFIG),
+        "paths": _convert(PATHS),
+    }
+
+
+def _compute_config_hash(config_dict: dict) -> str:
+    """Compute a hash of the config to detect changes."""
+    # Exclude timestamp from hash computation
+    config_copy = config_dict.copy()
+    config_copy.pop("timestamp", None)
+    config_str = json.dumps(config_copy, sort_keys=True)
+    return hashlib.md5(config_str.encode()).hexdigest()[:8]
+
+
+def save_config_snapshot(reason: str = "manual") -> Path:
+    """Save a snapshot of the current configuration.
+    
+    Parameters
+    ----------
+    reason : str
+        Reason for the snapshot (e.g., "initial", "manual", "modified")
+        
+    Returns
+    -------
+    Path
+        Path to the saved config file
+    """
+    config_dict = _serialize_config()
+    config_hash = _compute_config_hash(config_dict)
+    
+    config_dir = EXPERIMENT_ROOT / "config_logs"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"config_{timestamp}_{config_hash}_{reason}.json"
+    filepath = config_dir / filename
+    
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, indent=2)
+    
+    # Also maintain a "latest" symlink/copy
+    latest_path = config_dir / "config_latest.json"
+    with open(latest_path, "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, indent=2)
+    
+    return filepath
+
+
+def _auto_log_config():
+    """Automatically log config on import if not already logged."""
+    config_dir = EXPERIMENT_ROOT / "config_logs"
+    latest_path = config_dir / "config_latest.json"
+    
+    current_config = _serialize_config()
+    current_hash = _compute_config_hash(current_config)
+    
+    should_save = True
+    reason = "initial"
+    
+    if latest_path.exists():
+        with open(latest_path, "r", encoding="utf-8") as f:
+            previous_config = json.load(f)
+        previous_hash = _compute_config_hash(previous_config)
+        
+        if current_hash == previous_hash:
+            should_save = False  # Config hasn't changed
+        else:
+            reason = "modified"
+    
+    if should_save:
+        filepath = save_config_snapshot(reason=reason)
+        if reason == "initial":
+            print(f"[CONFIG] Initial config saved to: {filepath.relative_to(EXPERIMENT_ROOT)}")
+        elif reason == "modified":
+            print(f"[CONFIG] Config changes detected and saved to: {filepath.relative_to(EXPERIMENT_ROOT)}")
+
+
+# Auto-log config on module import
+_auto_log_config()
+
+
+# ============================================================================
+# Public API for manual config logging
+# ============================================================================
+def log_config_change(reason: str = "manual_update"):
+    """Manually log a config snapshot after making changes.
+    
+    Use this in notebooks after modifying CONFIG parameters to track changes.
+    
+    Parameters
+    ----------
+    reason : str
+        Description of what was changed (e.g., "increased_num_folds", "changed_random_seed")
+        
+    Example
+    -------
+    >>> import FIT_python.config as cfg
+    >>> cfg.CONFIG["pipeline_individual_id"]["trail_generation_defaults"]["sample_size"] = 12
+    >>> cfg.log_config_change("changed_trail_sample_size_to_12")
+    """
+    filepath = save_config_snapshot(reason=reason)
+    print(f"[CONFIG] Config snapshot saved: {filepath.relative_to(EXPERIMENT_ROOT)}")
+    return filepath

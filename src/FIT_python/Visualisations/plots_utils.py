@@ -74,6 +74,15 @@ def plot_feature_correlation_matrix(
     }
 
     sel = sorted({c for cols in groups.values() for c in cols})
+    
+    # Validate that we have features to correlate
+    if len(sel) < 2:
+        print(f"[WARN] Insufficient features for correlation plot (found {len(sel)}), skipping.")
+        # Create empty placeholder file to indicate plot was attempted
+        placeholder = fig_dir / filename.replace('.png', '_skipped.txt')
+        placeholder.write_text(f"Correlation plot skipped: only {len(sel)} feature(s) found")
+        return placeholder
+    
     corr_full = num_df[sel].corr()
 
     fig, axes = plt.subplots(2, 2, figsize=plt.rcParams["figure.figsize"])
@@ -107,6 +116,15 @@ def plot_feature_correlation_matrix(
 
     # helper for single-group plots
     def single(ax, grp, cols, title):
+        if len(cols) < 2:
+            # Not enough features for correlation - show placeholder
+            ax.text(0.5, 0.5, f"N/A\n({len(cols)} feature)", 
+                   ha='center', va='center', fontsize=12, color='gray')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_title(title, loc="left")
+            return
+            
         corr = num_df[cols].corr()
         sns.heatmap(
             corr,

@@ -174,11 +174,12 @@ def generate_pairwise_comparisons_from_df(
     """Create pairwise trail comparisons.
 
     The function uses :func:`select_or_generate_trails` and
-    :func:`generate_subsamples` to obtain trail definitions. ``fold_a`` and
-    ``fold_b`` are read directly from ``fold_col`` in ``df`` with
-    ``same_fold`` indicating equality. If a ``substrate`` column exists or the
-    species is ``"eurasian_otter"`` then ``substrate_a`` and ``substrate_b`` are
-    added to each comparison.
+    :func:`generate_subsamples` to obtain trail definitions. Before generating
+    pairs, all footprints with NA or "unknown" trail values are filtered out
+    to ensure clean pairwise comparisons. ``fold_a`` and ``fold_b`` are read
+    directly from ``fold_col`` in ``df`` with ``same_fold`` indicating equality.
+    If a ``substrate`` column exists or the species is ``"eurasian_otter"``
+    then ``substrate_a`` and ``substrate_b`` are added to each comparison.
 
     When ``evaluation`` is ``True`` the ``fold`` column is ignored and the
     returned comparisons contain ``None`` for ``fold_a``/``fold_b`` and do not
@@ -192,6 +193,15 @@ def generate_pairwise_comparisons_from_df(
         trail_col=trail_col,
         random_state=random_state,
     )
+
+    # Filter out rows with NA or "unknown" in trail column before generating pairs
+    if trail_col in df.columns:
+        initial_count = len(df)
+        df = df[df[trail_col].notna()]
+        df = df[df[trail_col].astype(str).str.lower() != "unknown"]
+        filtered_count = len(df)
+        if initial_count != filtered_count:
+            print(f"[INFO] Filtered {initial_count - filtered_count} footprints with NA or 'unknown' trail values")
 
     if trails is None:
         if subsample:
