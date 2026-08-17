@@ -108,5 +108,10 @@ __all__ = [
     "collect_id_metrics",
     "plot_bcr_comparison",
     "run_id_search",
+    "evaluate_by_subsample_size",
+    "loo_footprint_effect",
 ]
+
+from FIT_python.pipeline_individual_id.evaluation import evaluate_by_subsample_size
+from FIT_python.pipeline_individual_id.generate_trails_and_trailpairs import loo_footprint_effect
 
