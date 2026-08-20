@@ -10,6 +10,8 @@ from .baseline_sex import (
 from .simple_baseline import run_simple_baseline_all_species
 from .sex_predict_and_visualisation import (
     predict_all,
+    summarise_uncertainty,
+    create_uncertainty_report,
     predict_simple_baseline,
     plot_confusion,
     plot_inference,
@@ -34,6 +36,8 @@ __all__ = [
     "plot_quality_heatmaps",
     "plot_model_quality_heatmaps",
     "plot_hyperparam_heatmap",
+    "summarise_uncertainty",
+    "create_uncertainty_report",
     "run_baseline_all_species",
     "run_simple_baseline_all_species",
     "predict_simple_baseline",

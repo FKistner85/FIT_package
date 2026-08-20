@@ -37,6 +37,7 @@ from FIT_python.pipeline_individual_id import (
     geometric_pairwise_projection,
     pairwise_individual_id_pipeline,
 )
+from FIT_python.pipeline_individual_id.uncertainty import summarise_pairwise_uncertainty
 from FIT_python.pipeline_sex.sex_predict_and_visualisation import predict_all
 from FIT_python.utils import get_species_paths
 
@@ -201,6 +202,19 @@ def main(species: str = "eurasian_otter") -> None:
             n_jobs=1,
         )
         results["umap"] = _confusion_from_results(res2)
+
+        res2_df = pd.DataFrame(res2)
+        if not res2_df.empty and "pred_same_proba" in res2_df.columns:
+            summarise_pairwise_uncertainty(
+                res2_df,
+                out_dir=out_dir / f"split_{split_idx}_umap_uncertainty",
+                bootstrap_iterations=200,
+                random_state=config.GLOBAL_RANDOM_SEED,
+            )
+        else:
+            print(
+                "[INFO] Skipping UMAP uncertainty summary – missing 'pred_same_proba' column"
+            )
 
         res3 = pairwise_individual_id_pipeline.run_embedding_once_pipeline(
             comps,
