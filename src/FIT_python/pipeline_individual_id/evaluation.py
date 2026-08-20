@@ -355,6 +355,79 @@ def report_skipped(skipped_counts: Mapping[str, int]) -> str:
     return "\n".join(lines)
 
 
+def evaluate_by_subsample_size(
+    results_df: pd.DataFrame,
+    *,
+    true_col: str = "same_individual",
+    pred_col: str = "pred",
+    trail_a_col: str = "trail_a_id",
+    trail_b_col: str = "trail_b_id",
+) -> pd.DataFrame:
+    """Return BCR, TPR and TNR broken down by subsample size.
+
+    The subsample size is extracted from the trail name which follows the
+    pattern ``<individual>_<total>_<n>_sub<ss>_sample<i>``.  Pairs where
+    either trail does not contain ``_sub`` are grouped under subsample size
+    ``None``.
+
+    Parameters
+    ----------
+    results_df:
+        DataFrame produced by the pairwise pipeline.  Must contain columns for
+        the trail names, ground-truth labels and predictions.
+    true_col:
+        Column with the true ``same_individual`` labels.
+    pred_col:
+        Column with the predicted labels.
+    trail_a_col:
+        Column holding the trail name for side A of each pair.
+    trail_b_col:
+        Column holding the trail name for side B of each pair.
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per subsample size with columns
+        ``[subsample_size, BCR, TPR, TNR, n_pairs]``.
+    """
+
+    import re
+
+    def _extract_ss(name: str) -> int | None:
+        m = re.search(r"_sub(\d+)_", str(name))
+        return int(m.group(1)) if m else None
+
+    df = results_df.copy()
+    df["_ss_a"] = df[trail_a_col].map(_extract_ss)
+    df["_ss_b"] = df[trail_b_col].map(_extract_ss)
+    # Use the minimum subsample size of the pair as grouping key so that
+    # comparisons involving one small trail are attributed to that size.
+    df["_ss"] = df[["_ss_a", "_ss_b"]].min(axis=1)
+
+    rows = []
+    for ss, grp in df.groupby("_ss", dropna=False):
+        try:
+            cm = compute_confusion(grp, true_col=true_col, pred_col=pred_col)
+            bcr = compute_bcr(cm)
+            tpr = cm.loc["true_same", "pred_same"] / cm.loc["true_same"].sum()
+            tnr = cm.loc["true_diff", "pred_diff"] / cm.loc["true_diff"].sum()
+        except Exception:
+            bcr = tpr = tnr = float("nan")
+        rows.append(
+            {
+                "subsample_size": ss,
+                "BCR": bcr,
+                "TPR": tpr,
+                "TNR": tnr,
+                "n_pairs": len(grp),
+            }
+        )
+
+    out = pd.DataFrame(rows, columns=["subsample_size", "BCR", "TPR", "TNR", "n_pairs"])
+    out = out.sort_values("subsample_size", ignore_index=True)
+    return out
+
+
 def average_trail_stats(summary_tables: Iterable[pd.DataFrame]) -> pd.Series:
     """Return the column-wise mean of ``summary_tables``.
 

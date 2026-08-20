@@ -10,6 +10,7 @@ __all__ = [
     "select_or_generate_trails",
     "generate_subsamples",
     "generate_pairs",
+    "loo_footprint_effect",
 ]
 
 
@@ -269,4 +270,137 @@ def generate_pairwise_comparisons_from_df(
 
     summary = pd.DataFrame({"n_pairs": [len(comparisons)], "n_trails": [len(trails)]})
     return comparisons, summary
+
+
+def loo_footprint_effect(
+    trail_ids: List[str],
+    df: pd.DataFrame,
+    pipeline,
+    *,
+    id_col: str = "id",
+    individual_col: str = "individual_id",
+    feature_cols: Optional[List[str]] = None,
+    full_bcr: Optional[float] = None,
+) -> pd.DataFrame:
+    """Measure the importance of each footprint via leave-one-out analysis.
+
+    For each footprint in ``trail_ids`` the function removes it from the set,
+    recomputes pairwise comparisons using the remaining footprints and evaluates
+    the pipeline.  The delta BCR relative to using all footprints is returned as
+    an importance score.
+
+    Parameters
+    ----------
+    trail_ids:
+        IDs of footprints belonging to the trail under investigation.
+    df:
+        Full dataset DataFrame; must contain at least ``id_col``,
+        ``individual_col`` and any ``feature_cols``.
+    pipeline:
+        A fitted pipeline object with a ``predict`` method that accepts the
+        pairwise comparison list and returns a results DataFrame with
+        ``same_individual`` and ``pred`` columns.
+    id_col:
+        Name of the unique footprint identifier column.
+    individual_col:
+        Name of the individual identifier column.
+    feature_cols:
+        Feature columns to pass to the pipeline.  If ``None`` the pipeline is
+        called without feature columns.
+    full_bcr:
+        BCR computed on all footprints.  Computed from ``trail_ids`` and ``df``
+        if not provided.
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per footprint with columns ``[footprint_id, bcr, delta_bcr]``
+        sorted descending by ``delta_bcr``.
+    """
+    from FIT_python.pipeline_individual_id.evaluation import (
+        compute_confusion,
+        compute_bcr,
+    )
+
+    trail_set = set(trail_ids)
+
+    # Determine the focal individual from the trail ids
+    focal_df = df[df[id_col].isin(trail_set)]
+    if focal_df.empty:
+        raise ValueError("None of trail_ids found in df[id_col]")
+    focal_individual = focal_df[individual_col].iloc[0]
+
+    # Footprints belonging to other individuals (always included in comparisons)
+    other_df = df[df[individual_col] != focal_individual]
+
+    def _run_comparisons(focal_ids: List[str]) -> float:
+        """Return BCR when the focal trail contains ``focal_ids`` footprints.
+
+        The focal trail is compared against one trail per other individual
+        using all of their available footprints in ``df``.
+        """
+        if not focal_ids:
+            return float("nan")
+
+        # Combine focal subset with other individuals
+        focal_sub = df[df[id_col].isin(focal_ids)]
+        combined_df = pd.concat([focal_sub, other_df], ignore_index=True)
+
+        if combined_df[individual_col].nunique() < 2:
+            return float("nan")
+
+        # Build one trail per individual
+        trails: Dict[str, List[str]] = {}
+        for ind, grp in combined_df.groupby(individual_col):
+            trail_name = f"{ind}_loo"
+            trails[trail_name] = grp[id_col].tolist()
+
+        pairs = generate_pairs(trails)
+        if not pairs:
+            return float("nan")
+
+        trail_to_ind = {f"{ind}_loo": ind for ind in combined_df[individual_col].unique()}
+        comparisons = []
+        for ta, tb in pairs:
+            ind_a = trail_to_ind[ta]
+            ind_b = trail_to_ind[tb]
+            comparisons.append(
+                {
+                    "ind_a": ind_a,
+                    "ind_b": ind_b,
+                    "trail_a_id": ta,
+                    "trail_b_id": tb,
+                    "samples_a": trails[ta],
+                    "samples_b": trails[tb],
+                    "same_individual": ind_a == ind_b,
+                }
+            )
+
+        results = pipeline.predict(comparisons)
+        if results is None or results.empty:
+            return float("nan")
+
+        try:
+            cm = compute_confusion(results)
+            return compute_bcr(cm)
+        except Exception:
+            return float("nan")
+
+    if full_bcr is None:
+        full_bcr = _run_comparisons(list(trail_set))
+
+    rows = []
+    for fp_id in trail_ids:
+        remaining = [i for i in trail_ids if i != fp_id]
+        bcr = _run_comparisons(remaining)
+        rows.append(
+            {
+                "footprint_id": fp_id,
+                "bcr": bcr,
+                "delta_bcr": full_bcr - bcr,
+            }
+        )
+
+    result = pd.DataFrame(rows, columns=["footprint_id", "bcr", "delta_bcr"])
+    return result.sort_values("delta_bcr", ascending=False, ignore_index=True)
 

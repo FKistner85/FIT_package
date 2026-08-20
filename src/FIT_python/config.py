@@ -313,7 +313,7 @@ CONFIG["pipeline_individual_id"] = {
     },
     "trail_generation_defaults": {
         "sample_size": 9,
-        "subsample_sizes": [3, 5, 7],
+        "subsample_sizes": [1, 2, 3, 4, 5, 6, 7, 8, 9],
         "n_candidates": 20,
     },
     "sequential_holdout_val_sizes": [2, 4, 6, 8],

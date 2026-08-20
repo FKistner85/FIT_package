@@ -1534,3 +1534,104 @@ def plot_umap_centroid_outliers(
 
     plt.tight_layout(rect=[0, 0, 0.95, 1])
     return fig
+
+
+
+def plot_subsample_size_learning_curve(
+    summary_df: pd.DataFrame,
+    *,
+    ax: "plt.Axes | None" = None,
+    title: str = "Identification quality vs. number of footprints",
+    save_path: "str | Path | None" = None,
+) -> "plt.Figure":
+    """Plot BCR, TPR and TNR against subsample size (learning curve).
+
+    Parameters
+    ----------
+    summary_df:
+        DataFrame returned by
+        :func:`~FIT_python.pipeline_individual_id.evaluation.evaluate_by_subsample_size`
+        with columns ``subsample_size``, ``BCR``, ``TPR``, ``TNR``.
+    ax:
+        Existing axes to draw on.  A new figure is created when ``None``.
+    title:
+        Plot title.
+    save_path:
+        If provided the figure is saved to this path.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(7, 4))
+    else:
+        fig = ax.get_figure()
+
+    df = summary_df.dropna(subset=["subsample_size"]).sort_values("subsample_size")
+    x = df["subsample_size"].astype(int)
+
+    ax.plot(x, df["BCR"], marker="o", label="BCR", color="#1f77b4", linewidth=2)
+    ax.plot(x, df["TPR"], marker="s", label="TPR", color="#2ca02c", linestyle="--")
+    ax.plot(x, df["TNR"], marker="^", label="TNR", color="#d62728", linestyle=":")
+    ax.axhline(0.5, color="gray", linestyle="--", linewidth=0.8, alpha=0.6, label="Chance (0.5)")
+
+    ax.set_xlabel("Number of footprints")
+    ax.set_ylabel("Rate")
+    ax.set_title(title)
+    ax.legend(loc="lower right")
+    ax.set_xticks(x)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig
+
+
+def plot_footprint_importance(
+    importance_df: pd.DataFrame,
+    *,
+    ax: "plt.Axes | None" = None,
+    title: str = "Footprint importance (Δ BCR when removed)",
+    save_path: "str | Path | None" = None,
+) -> "plt.Figure":
+    """Barplot of per-footprint importance as ΔBCR.
+
+    Parameters
+    ----------
+    importance_df:
+        DataFrame returned by
+        :func:`~FIT_python.pipeline_individual_id.generate_trails_and_trailpairs.loo_footprint_effect`
+        with columns ``footprint_id`` and ``delta_bcr``.
+    ax:
+        Existing axes to draw on.  A new figure is created when ``None``.
+    title:
+        Plot title.
+    save_path:
+        If provided the figure is saved to this path.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(max(5, len(importance_df) * 0.5 + 1), 4))
+    else:
+        fig = ax.get_figure()
+
+    df = importance_df.sort_values("delta_bcr", ascending=False).reset_index(drop=True)
+    colors = ["#2ca02c" if v >= 0 else "#d62728" for v in df["delta_bcr"]]
+
+    ax.bar(df["footprint_id"].astype(str), df["delta_bcr"], color=colors)
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_xlabel("Footprint ID")
+    ax.set_ylabel("Δ BCR (positive = important)")
+    ax.set_title(title)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", fontsize=8)
+    ax.grid(True, axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig
